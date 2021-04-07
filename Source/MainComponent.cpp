@@ -101,7 +101,7 @@ void MainComponent::openNewFile()
       mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
       reader->read(&mFileBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
       setAudioChannels(reader->numChannels, reader->numChannels);
-      mArcSpec.loadedBuffer(mFileBuffer);
+      mArcSpec.loadedBuffer(&mFileBuffer);
     }
   }
 }
