@@ -49,6 +49,12 @@ void ArcSpectrogram::drawSpectrogram()
   int curSample = 0;
   
   bool hasData = mAudioBuffer->getNumSamples() > mFftData.size();
+  mSpectrogramImage.clear(mSpectrogramImage.getBounds(), juce::Colours::black);
+
+  int numFrames = ((float)mAudioBuffer->getNumSamples() / mFftData.size()) + 1;
+  int pixPerFrame = juce::jmax(1, mSpectrogramImage.getWidth() / numFrames);
+  DBG("pixPFrame: " << pixPerFrame << ", numFrames: " << numFrames);
+  int curFrame = 0;
 
   while (hasData)
   {
@@ -61,31 +67,55 @@ void ArcSpectrogram::drawSpectrogram()
     mFftData.fill(0.0f);
     memcpy(mFftData.data(), startSample, numSamples);
 
-    // first, shuffle our image leftwards by 1 pixel..
-    mSpectrogramImage.moveImageSection(0, 0, 1, 0, rightHandEdge, imageHeight);
-
     // then render our FFT data..
     mForwardFFT.performFrequencyOnlyForwardTransform(mFftData.data());
 
     // find the range of values produced, so we can scale our rendering to
     // show up the detail clearly
     auto maxLevel = juce::FloatVectorOperations::findMinAndMax(mFftData.data(), mFftSize / 2);
-
+    auto startX = curFrame * pixPerFrame;
+    
     for (auto y = 1; y < imageHeight; ++y)
     {
       auto skewedProportionY = 1.0f - std::exp(std::log((float)y / (float)imageHeight) * 0.2f);
       auto fftDataIndex = (size_t)juce::jlimit(0, mFftSize / 2, (int)(skewedProportionY * mFftSize / 2));
       auto level = juce::jmap(mFftData[fftDataIndex], 0.0f, juce::jmax(maxLevel.getEnd(), 1e-5f), 0.0f, 1.0f);
-
-      mSpectrogramImage.setPixelAt(rightHandEdge, y, juce::Colour::fromHSV(level, 1.0f, level, 1.0f));
+      auto rainbowColour = getRainbowColour((float)y / imageHeight);
+      rainbowColour = rainbowColour.withAlpha(level);
+        for (auto x = startX; x < startX + pixPerFrame; ++x)
+        {
+          mSpectrogramImage.setPixelAt(x, y, rainbowColour);
+        }
     }
 
     repaint();
 
     curSample += mFftData.size();
+    curFrame++;
     if (curSample > mAudioBuffer->getNumSamples()) hasData = false;
   }
   mIsLoaded = true;
+}
+
+juce::Colour ArcSpectrogram::getRainbowColour(float value)
+{
+  int rStripe = (int)std::floor(value * 7);
+  float r, g, b;
+  switch (rStripe)
+  {
+  case 0: r = 1; g = 0; b = 0; break;
+  case 1: r = 1; g = 0.49; b = 0; break;
+  case 2: r = 1; g = 1; b = 0; break;
+  case 3: r = 0; g = 1; b = 0; break;
+  case 4: r = 0; g = 0; b = 1; break;
+  case 5: r = 0.29; g = 0; b = 0.5; break;
+  case 6: r = 0.58; g = 0; b = 0.83; break;
+  default:
+  {
+    r = 0; g = 0; b = 0; break;
+  }
+  }
+  return juce::Colour(r * 255.0f, g * 255.0f, b * 255.0f);
 }
 
 void ArcSpectrogram::loadedBuffer(juce::AudioSampleBuffer* buffer)

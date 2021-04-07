@@ -37,6 +37,7 @@ private:
   bool mIsLoaded = false;
 
   void drawSpectrogram();
+  juce::Colour getRainbowColour(float value);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
 };
