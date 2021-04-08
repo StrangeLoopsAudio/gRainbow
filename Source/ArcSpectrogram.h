@@ -38,7 +38,7 @@ private:
 
   void drawSpectrogram(juce::Graphics& g);
   void updateFft();
-  juce::Range<float> getFftMinMax();
+  juce::Range<float> getFftMinMax(int column);
   juce::Colour getRainbowColour(float value);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)

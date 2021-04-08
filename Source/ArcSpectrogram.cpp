@@ -88,7 +88,6 @@ void ArcSpectrogram::updateFft()
 void ArcSpectrogram::drawSpectrogram(juce::Graphics& g)
 {
   if (mFftData.empty()) return;
-  auto maxLevel = getFftMinMax();
   int startRadius = (getHeight() / 4.0f);
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
@@ -102,6 +101,7 @@ void ArcSpectrogram::drawSpectrogram(juce::Graphics& g)
     float radPerc = 1.0f - ((curRadius - startRadius) / (float)bowWidth);
     auto skewedProportionY = 1.0f - std::exp(std::log(radPerc) * 0.2f);
     auto specCol = (size_t)juce::jlimit(0, mFftSize / 2, (int)(skewedProportionY * mFftSize / 2));
+    auto maxLevel = getFftMinMax(specCol);
     auto rainbowColour = getRainbowColour(radPerc);
     g.setColour(rainbowColour);
     juce::Path pixPath;
@@ -128,24 +128,21 @@ void ArcSpectrogram::drawSpectrogram(juce::Graphics& g)
   }
 }
 
-juce::Range<float> ArcSpectrogram::getFftMinMax()
+juce::Range<float> ArcSpectrogram::getFftMinMax(int column)
 {
   if (mFftData.empty()) return juce::Range<float>(0, 0);
   float curMin = std::numeric_limits<float>::max();
   float curMax = std::numeric_limits<float>::min();
   for (auto i = 0; i < mFftData.size(); ++i)
   {
-    for (auto j = 0; j < mFftData[i].size(); ++j)
+    auto val = mFftData[i][column];
+    if (val < curMin)
     {
-      auto val = mFftData[i][j];
-      if (val < curMin)
-      {
-        curMin = val;
-      }
-      if (val > curMax)
-      {
-        curMax = val;
-      }
+      curMin = val;
+    }
+    if (val > curMax)
+    {
+      curMax = val;
     }
   }
   return juce::Range<float>(curMin, curMax);
