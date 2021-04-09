@@ -78,7 +78,7 @@ void MainComponent::resized()
   auto r = getLocalBounds();
   
   mBtnOpenFile.setBounds(r.removeFromTop(40));
-  mArcSpec.setBounds(r);
+  mArcSpec.setBounds(r.withSize(600, 300));
 }
 
 void MainComponent::openNewFile()

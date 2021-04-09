@@ -32,13 +32,17 @@ private:
 
   juce::dsp::FFT mForwardFFT;
   juce::AudioSampleBuffer* mAudioBuffer;
+  juce::Image mSpectrogramImage;
   std::array<float, mFftSize * 2> mFftFrame;
   std::vector<std::vector<float>> mFftData;
+  std::vector<juce::Range<float>> mFftFrameRanges;
+  juce::Range<float> mFftRange;
   bool mIsLoaded = false;
 
-  void drawSpectrogram(juce::Graphics& g);
+  void drawSpectrogramImage();
   void updateFft();
-  juce::Range<float> getFftMinMax(int column);
+  void updateFftRanges();
+  juce::Range<float> normalizeFftRange(int frame);
   juce::Colour getRainbowColour(float value);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
