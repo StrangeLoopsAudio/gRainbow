@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 #include "ArcSpectrogram.h"
+#include "Utils.h"
 #include <math.h>
 #include <limits.h>
 
@@ -108,7 +109,7 @@ void ArcSpectrogram::drawSpectrogramImage()
       //auto skewedProportionY = 1.0f - radPerc;
       auto specRow = (size_t)juce::jmap(skewedProportionY, 0.0f, (float)mFftSize / 3.5f);
       
-      auto rainbowColour = getRainbowColour(radPerc);
+      auto rainbowColour = Utils::getRainbowColour(radPerc);
       g.setColour(rainbowColour);
 
       auto level = juce::jmap(mFftData[i][specRow], 0.0f, juce::jmax(maxLevel.getEnd(), 1e-5f), 0.0f, 1.0f);
@@ -173,27 +174,6 @@ void ArcSpectrogram::updateFftRanges()
   }
   mFftRange.setStart(totalMin);
   mFftRange.setEnd(totalMax);
-}
-
-juce::Colour ArcSpectrogram::getRainbowColour(float value)
-{
-  int rStripe = (int)std::floor(value * 7);
-  float r, g, b;
-  switch (rStripe)
-  {
-  case 0: r = 1; g = 0; b = 0; break;
-  case 1: r = 1; g = 0.49; b = 0; break;
-  case 2: r = 1; g = 1; b = 0; break;
-  case 3: r = 0; g = 1; b = 0; break;
-  case 4: r = 0; g = 0; b = 1; break;
-  case 5: r = 0.29; g = 0; b = 0.5; break;
-  case 6: r = 0.58; g = 0; b = 0.83; break;
-  default:
-  {
-    r = 0; g = 0; b = 0; break;
-  }
-  }
-  return juce::Colour(r * 255.0f, g * 255.0f, b * 255.0f);
 }
 
 void ArcSpectrogram::loadedBuffer(juce::AudioSampleBuffer* buffer)

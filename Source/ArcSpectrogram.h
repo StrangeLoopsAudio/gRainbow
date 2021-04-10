@@ -43,7 +43,6 @@ private:
   void updateFft();
   void updateFftRanges();
   juce::Range<float> normalizeFftRange(int frame);
-  juce::Colour getRainbowColour(float value);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
 };

@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "ArcSpectrogram.h"
+#include "RainbowLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -28,10 +29,14 @@ private:
 
   void openNewFile();
 
-  juce::TextButton mBtnOpenFile;
-  ArcSpectrogram mArcSpec;
+  RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
   juce::AudioSampleBuffer mFileBuffer;
+
+  /* UI Components */
+  juce::TextButton mBtnOpenFile;
+  juce::Slider mSliderTest;
+  ArcSpectrogram mArcSpec;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

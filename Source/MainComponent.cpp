@@ -5,9 +5,15 @@ MainComponent::MainComponent()
 {
   mFormatManager.registerBasicFormats();
 
+  setLookAndFeel(&mRainbowLookAndFeel);
+
   mBtnOpenFile.setButtonText("Open File");
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
+
+  mSliderTest.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderTest.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  addAndMakeVisible(mSliderTest);
 
   addAndMakeVisible(mArcSpec);
 
@@ -29,6 +35,7 @@ MainComponent::MainComponent()
 
 MainComponent::~MainComponent()
 {
+  setLookAndFeel(nullptr);
   // This shuts down the audio device and clears the audio source.
   shutdownAudio();
 }
@@ -78,6 +85,7 @@ void MainComponent::resized()
   auto r = getLocalBounds();
   
   mBtnOpenFile.setBounds(r.removeFromTop(40));
+  mSliderTest.setBounds(r.removeFromTop(40).withWidth(80));
   mArcSpec.setBounds(r.withSize(600, 300));
 }
 
