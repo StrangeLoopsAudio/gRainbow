@@ -35,7 +35,10 @@ private:
 
   /* UI Components */
   juce::TextButton mBtnOpenFile;
-  juce::Slider mSliderTest;
+  juce::TextButton mBtnPlay;
+  juce::TextButton mBtnStop;
+  juce::Slider mSliderPosition;
+  juce::Label mLabelPosition;
   ArcSpectrogram mArcSpec;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)

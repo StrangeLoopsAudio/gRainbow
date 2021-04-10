@@ -31,18 +31,20 @@ void ArcSpectrogram::paint(juce::Graphics& g)
 {
   g.fillAll(juce::Colours::black);
 
+  // Draw fft
   g.drawImageAt(mSpectrogramImage, 0, 0);
 
-  /* juce::Path rainbowPath = juce::Path();
-  g.setColour(juce::Colours::black);
-  int curStripeStart = getHeight() / 4;
-  int stripeInc = (getHeight() - curStripeStart) / 7;
-  for (int i = 0; i < 8; i++)
-  {
-    rainbowPath.addCentredArc(getWidth() / 2.f, getHeight(), curStripeStart, curStripeStart, 0, 1.5 * M_PI, 2.5 * M_PI, true);
-    curStripeStart += stripeInc;
-  }
-  g.strokePath(rainbowPath, juce::PathStrokeType(4)); */
+  // Draw position marker
+  juce::Point<int> centerPoint = juce::Point<int>(getWidth() / 2, getHeight());
+  auto startPoint = centerPoint.getPointOnCircumference(getHeight() / 4.0f, (1.5 * M_PI) + (mPositionRatio * M_PI));
+  auto endPoint = centerPoint.getPointOnCircumference(getHeight(), (1.5 * M_PI) + (mPositionRatio * M_PI));
+  g.setColour(juce::Colours::white);
+  g.drawLine(juce::Line<float>(startPoint, endPoint), 2.0f);
+
+
+  // Draw borders
+  g.setColour(juce::Colours::white);
+  g.drawRect(getLocalBounds(), 2);
 }
 
 void ArcSpectrogram::resized()
@@ -88,7 +90,7 @@ void ArcSpectrogram::updateFft()
 void ArcSpectrogram::drawSpectrogramImage()
 {
   if (mFftData.empty()) return;
-  int startRadius = (getHeight() / 4.0f);
+  int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
   int height = juce::jmax(2.0f, bowWidth / (float)mFftFrame.size());
@@ -180,4 +182,10 @@ void ArcSpectrogram::loadedBuffer(juce::AudioSampleBuffer* buffer)
 {
   mAudioBuffer = buffer;
   updateFft();
+}
+
+void ArcSpectrogram::changePosition(float positionRatio)
+{
+  mPositionRatio = positionRatio;
+  repaint();
 }

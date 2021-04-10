@@ -11,9 +11,21 @@ MainComponent::MainComponent()
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
 
-  mSliderTest.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderTest.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  addAndMakeVisible(mSliderTest);
+  mBtnPlay.setButtonText("Play");
+  addAndMakeVisible(mBtnPlay);
+
+  mBtnStop.setButtonText("Stop");
+  addAndMakeVisible(mBtnStop);
+
+  mSliderPosition.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderPosition.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderPosition.setRange(0.0, 1.0, 0.01);
+  mSliderPosition.onValueChange = [this] { mArcSpec.changePosition(mSliderPosition.getValue()); };
+  addAndMakeVisible(mSliderPosition);
+
+  mLabelPosition.setText("Position", juce::dontSendNotification);
+  mLabelPosition.setJustificationType(juce::Justification::centred);
+  addAndMakeVisible(mLabelPosition);
 
   addAndMakeVisible(mArcSpec);
 
@@ -75,9 +87,7 @@ void MainComponent::releaseResources()
 void MainComponent::paint(juce::Graphics& g)
 {
   // (Our component is opaque, so we must completely fill the background with a solid colour)
-  g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-
-  // You can add your drawing code here!
+  g.fillAll(juce::Colours::black);
 }
 
 void MainComponent::resized()
@@ -85,7 +95,12 @@ void MainComponent::resized()
   auto r = getLocalBounds();
   
   mBtnOpenFile.setBounds(r.removeFromTop(40));
-  mSliderTest.setBounds(r.removeFromTop(40).withWidth(80));
+  auto playbackRect = r.removeFromTop(40);
+  mBtnPlay.setBounds(playbackRect.removeFromLeft(playbackRect.getWidth() / 2.0f));
+  mBtnStop.setBounds(playbackRect);
+  auto testSliderRect = r.removeFromTop(60).withWidth(80);
+  mSliderPosition.setBounds(testSliderRect.removeFromTop(40));
+  mLabelPosition.setBounds(testSliderRect);
   mArcSpec.setBounds(r.withSize(600, 300));
 }
 
