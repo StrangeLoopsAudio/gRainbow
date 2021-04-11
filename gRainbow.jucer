@@ -4,6 +4,8 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="ba9WAI" name="gRainbow">
     <GROUP id="{60D4D942-21D3-C19F-F50C-B527C5EBF681}" name="Source">
+      <FILE id="YlAALv" name="Grain.cpp" compile="1" resource="0" file="Source/Grain.cpp"/>
+      <FILE id="Amycig" name="Grain.h" compile="0" resource="0" file="Source/Grain.h"/>
       <FILE id="blwWJN" name="Utils.h" compile="0" resource="0" file="Source/Utils.h"/>
       <FILE id="xqANdX" name="RainbowLookAndFeel.cpp" compile="1" resource="0"
             file="Source/RainbowLookAndFeel.cpp"/>

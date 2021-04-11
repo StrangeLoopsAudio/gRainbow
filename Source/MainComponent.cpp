@@ -1,7 +1,8 @@
 #include "MainComponent.h"
 
 //==============================================================================
-MainComponent::MainComponent()
+MainComponent::MainComponent():
+  juce::Thread("granular thread")
 {
   mFormatManager.registerBasicFormats();
 
@@ -12,9 +13,11 @@ MainComponent::MainComponent()
   addAndMakeVisible(mBtnOpenFile);
 
   mBtnPlay.setButtonText("Play");
+  mBtnPlay.onClick = [this] { mShouldPlayTest = true; };
   addAndMakeVisible(mBtnPlay);
 
   mBtnStop.setButtonText("Stop");
+  mBtnStop.onClick = [this] { mShouldPlayTest = false; };
   addAndMakeVisible(mBtnStop);
 
   mSliderPosition.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
@@ -43,11 +46,15 @@ MainComponent::MainComponent()
     // Specify the number of input and output channels that we want to open
     setAudioChannels(2, 2);
   }
+
+  mTotalSamps = 0;
+  startThread();
 }
 
 MainComponent::~MainComponent()
 {
   setLookAndFeel(nullptr);
+  stopThread(4000);
   // This shuts down the audio device and clears the audio source.
   shutdownAudio();
 }
@@ -55,24 +62,45 @@ MainComponent::~MainComponent()
 //==============================================================================
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
-  // This function will be called when the audio device is started, or when
-  // its settings (i.e. sample rate, block size, etc) are changed.
+  mSampleRate = sampleRate;
+}
 
-  // You can use this function to initialise any resources you might need,
-  // but be careful - it will be called on the audio thread, not the GUI thread.
+void MainComponent::run()
+{
+  while (!threadShouldExit())
+  {
+    /* Delete expired grains */
+    for (int i = mGrains.size() - 1; i >= 0; --i)
+    {
+      if (mTotalSamps > (mGrains[i].trigTs + mGrains[i].duration))
+      {
+        mGrains.remove(i);
+      }
+    }
 
-  // For more details, see the help for AudioProcessor::prepareToPlay()
+    double testDuration = 1.0;
+
+    if (mFileBuffer.getNumSamples() > 0 && mShouldPlayTest/*&& mActiveNotes.size() > 0*/)
+    {
+      auto durSamples = testDuration * mSampleRate;
+      mGrains.add(Grain(durSamples, mSliderPosition.getValue() * mFileBuffer.getNumSamples(), mTotalSamps));
+    }
+    wait(testDuration * 1000);
+  }
 }
 
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
 {
-  // Your audio-processing code goes here!
-
-  // For more details, see the help for AudioProcessor::getNextAudioBlock()
-
-  // Right now we are not producing any data, in which case we need to clear the buffer
-  // (to prevent the output of random noise)
   bufferToFill.clearActiveBufferRegion();
+
+  for (int i = 0; i < bufferToFill.numSamples; ++i)
+  {
+    for (int g = 0; g < mGrains.size(); ++g)
+    {
+      mGrains[g].process(mFileBuffer, *(bufferToFill.buffer), mTotalSamps);
+    }
+    mTotalSamps++;
+  }
 }
 
 void MainComponent::releaseResources()

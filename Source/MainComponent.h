@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Grain.h"
 #include "ArcSpectrogram.h"
 #include "RainbowLookAndFeel.h"
 
@@ -9,7 +10,7 @@
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent : public juce::AudioAppComponent
+class MainComponent : public juce::AudioAppComponent, juce::Thread
 {
 public:
   //==============================================================================
@@ -25,13 +26,30 @@ public:
   void paint(juce::Graphics& g) override;
   void resized() override;
 
+  //==============================================================================
+  void run() override;
+
 private:
+
+  typedef struct GrainNote
+  {
+    int midiNote;
+    int voiceNum;
+    GrainNote(int midiNote, int voiceNum): midiNote(midiNote), voiceNum(voiceNum) {}
+  } GrainNote;
 
   void openNewFile();
 
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
-  juce::AudioSampleBuffer mFileBuffer;
+  juce::AudioBuffer<float> mFileBuffer;
+
+  /* Grain control */
+  juce::Array<Grain> mGrains;
+  long mTotalSamps;
+  juce::Array<GrainNote> mActiveNotes;
+  bool mShouldPlayTest = false;
+  double mSampleRate;
 
   /* UI Components */
   juce::TextButton mBtnOpenFile;

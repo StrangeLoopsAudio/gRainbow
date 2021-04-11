@@ -45,7 +45,6 @@ private:
   void drawSpectrogramImage();
   void updateFft();
   void updateFftRanges();
-  juce::Range<float> normalizeFftRange(int frame);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
 };

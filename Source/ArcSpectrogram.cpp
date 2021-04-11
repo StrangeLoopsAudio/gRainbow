@@ -41,7 +41,6 @@ void ArcSpectrogram::paint(juce::Graphics& g)
   g.setColour(juce::Colours::white);
   g.drawLine(juce::Line<float>(startPoint, endPoint), 2.0f);
 
-
   // Draw borders
   g.setColour(juce::Colours::white);
   g.drawRect(getLocalBounds(), 2);
@@ -100,8 +99,6 @@ void ArcSpectrogram::drawSpectrogramImage()
 
   for (auto i = 0; i < mFftData.size(); ++i)
   {
-    //auto maxLevel = normalizeFftRange(i);
-    auto maxLevel = mFftFrameRanges[i];
     for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius)
     {
       float arcLen = M_PI * curRadius * 2;
@@ -114,7 +111,7 @@ void ArcSpectrogram::drawSpectrogramImage()
       auto rainbowColour = Utils::getRainbowColour(radPerc);
       g.setColour(rainbowColour);
 
-      auto level = juce::jmap(mFftData[i][specRow], 0.0f, juce::jmax(maxLevel.getEnd(), 1e-5f), 0.0f, 1.0f);
+      auto level = juce::jmap(mFftData[i][specRow], 0.0f, juce::jmax(mFftRange.getEnd(), 1e-5f), 0.0f, 1.0f);
       g.setOpacity(level);
       
       float xPerc = (float)i / mFftData.size();
@@ -133,13 +130,6 @@ void ArcSpectrogram::drawSpectrogramImage()
       g.fillPath(rectPath, rotation);
     }
   }
-}
-
-juce::Range<float> ArcSpectrogram::normalizeFftRange(int frame)
-{
-  auto r = mFftFrameRanges[frame];
-  auto pullAmt = juce::jmap(r.getLength() / mFftRange.getLength(), 0.0f, mFftRange.getLength(), 1.0f, 10.0f);
-  return juce::Range<float>(r.getStart(), r.getEnd() * pullAmt);
 }
 
 void ArcSpectrogram::updateFftRanges()
