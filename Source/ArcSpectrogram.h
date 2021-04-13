@@ -15,36 +15,29 @@
 //==============================================================================
 /*
 */
-class ArcSpectrogram : public juce::Component
+class ArcSpectrogram : public juce::AnimatedAppComponent
 {
 public:
   ArcSpectrogram();
   ~ArcSpectrogram() override;
 
+  void update() override {};
   void paint(juce::Graphics&) override;
   void resized() override;
 
-  void loadedBuffer(juce::AudioSampleBuffer* buffer);
-  void changePosition(float positionRatio);
+  void updateSpectrogram(std::vector<std::vector<float>> &fftData);
+  void updatePositions(std::vector<float> positionRatios);
 
 private:
-  static constexpr auto mFftOrder = 10;
-  static constexpr auto mFftSize = 1 << mFftOrder;
-  juce::dsp::FFT mForwardFFT;
 
-  juce::AudioSampleBuffer* mAudioBuffer;
-  float mPositionRatio;
-  std::array<float, mFftSize * 2> mFftFrame;
-  std::vector<std::vector<float>> mFftData;
+  std::vector<float> mPositionRatios;
   std::vector<juce::Range<float>> mFftFrameRanges;
   juce::Range<float> mFftRange;
-  bool mIsLoaded = false;
   
   juce::Image mSpectrogramImage;
 
-  void drawSpectrogramImage();
-  void updateFft();
-  void updateFftRanges();
+  void drawSpectrogramImage(std::vector<std::vector<float>>& fftData);
+  void updateFftRanges(std::vector<std::vector<float>>& fftData);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
 };

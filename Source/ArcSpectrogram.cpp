@@ -17,10 +17,9 @@
 #include <limits.h>
 
 //==============================================================================
-ArcSpectrogram::ArcSpectrogram() : mForwardFFT(mFftOrder), mSpectrogramImage(juce::Image::RGB, 512, 512, true)
+ArcSpectrogram::ArcSpectrogram() : mSpectrogramImage(juce::Image::RGB, 512, 512, true)
 {
-  // In your constructor, you should add any child components, and
-  // initialise any special settings that your component needs.
+  setFramesPerSecond(10);
 }
 
 ArcSpectrogram::~ArcSpectrogram()
@@ -36,10 +35,13 @@ void ArcSpectrogram::paint(juce::Graphics& g)
 
   // Draw position marker
   juce::Point<int> centerPoint = juce::Point<int>(getWidth() / 2, getHeight());
-  auto startPoint = centerPoint.getPointOnCircumference(getHeight() / 4.0f, (1.5 * M_PI) + (mPositionRatio * M_PI));
-  auto endPoint = centerPoint.getPointOnCircumference(getHeight(), (1.5 * M_PI) + (mPositionRatio * M_PI));
   g.setColour(juce::Colours::white);
-  g.drawLine(juce::Line<float>(startPoint, endPoint), 2.0f);
+  for (float posRatio : mPositionRatios)
+  {
+    auto startPoint = centerPoint.getPointOnCircumference(getHeight() / 4.0f, (1.5 * M_PI) + (posRatio * M_PI));
+    auto endPoint = centerPoint.getPointOnCircumference(getHeight(), (1.5 * M_PI) + (posRatio * M_PI));
+    g.drawLine(juce::Line<float>(startPoint, endPoint), 2.0f);
+  }
 
   // Draw borders
   g.setColour(juce::Colours::white);
@@ -50,71 +52,35 @@ void ArcSpectrogram::resized()
 {
 }
 
-void ArcSpectrogram::updateFft()
+void ArcSpectrogram::drawSpectrogramImage(std::vector<std::vector<float>>& fftData)
 {
-  if (mAudioBuffer == nullptr) return;
-
-  const float* pBuffer = mAudioBuffer->getReadPointer(0);
-  int curSample = 0;
-  
-  bool hasData = mAudioBuffer->getNumSamples() > mFftFrame.size();
-
-  mFftData.clear();
-
-  while (hasData)
-  {
-    const float* startSample = &pBuffer[curSample];
-    int numSamples = mFftFrame.size();
-    if (curSample + mFftFrame.size() > mAudioBuffer->getNumSamples()) {
-      numSamples = (mAudioBuffer->getNumSamples() - curSample);
-    }
-    mFftFrame.fill(0.0f);
-    memcpy(mFftFrame.data(), startSample, numSamples);
-
-    // then render our FFT data..
-    mForwardFFT.performFrequencyOnlyForwardTransform(mFftFrame.data());
-
-    // Add fft data to our master array
-    mFftData.push_back(std::vector<float>(mFftFrame.begin(), mFftFrame.end()));
-
-    curSample += mFftFrame.size();
-    if (curSample > mAudioBuffer->getNumSamples()) hasData = false;
-  }
-  mIsLoaded = true;
-  updateFftRanges();
-  drawSpectrogramImage();
-  repaint();
-}
-
-void ArcSpectrogram::drawSpectrogramImage()
-{
-  if (mFftData.empty()) return;
+  if (fftData.empty()) return;
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
-  int height = juce::jmax(2.0f, bowWidth / (float)mFftFrame.size());
+  int height = juce::jmax(2.0f, bowWidth / (float)fftData[0].size());
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mSpectrogramImage = juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
   juce::Graphics g(mSpectrogramImage);
 
-  for (auto i = 0; i < mFftData.size(); ++i)
+  for (auto i = 0; i < fftData.size(); ++i)
   {
     for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius)
     {
       float arcLen = M_PI * curRadius * 2;
-      int pixPerEntry = arcLen / mFftData.size();
+      int pixPerEntry = arcLen / fftData.size();
       float radPerc = 1.0f - ((curRadius - startRadius) / (float)bowWidth);
       auto skewedProportionY = 1.0f - std::exp(std::log(radPerc) * 0.2f);
       //auto skewedProportionY = 1.0f - radPerc;
-      auto specRow = (size_t)juce::jmap(skewedProportionY, 0.0f, (float)mFftSize / 3.5f);
+      auto specRow = (size_t)juce::jmap(skewedProportionY, 0.0f, (float)(fftData[i].size() / 2.0f) / 3.5f);
       
       auto rainbowColour = Utils::getRainbowColour(radPerc);
       g.setColour(rainbowColour);
 
-      auto level = juce::jmap(mFftData[i][specRow], 0.0f, juce::jmax(mFftRange.getEnd(), 1e-5f), 0.0f, 1.0f);
+      auto level = juce::jmap(fftData[i][specRow], 0.0f, juce::jmax(mFftRange.getEnd(), 1e-5f), 0.0f, 1.0f);
       g.setOpacity(level);
       
-      float xPerc = (float)i / mFftData.size();
+      float xPerc = (float)i / fftData.size();
       float angleRad =  (M_PI * xPerc) - (M_PI / 2.0f);
       int width = pixPerEntry + 6;
       
@@ -132,19 +98,19 @@ void ArcSpectrogram::drawSpectrogramImage()
   }
 }
 
-void ArcSpectrogram::updateFftRanges()
+void ArcSpectrogram::updateFftRanges(std::vector<std::vector<float>>& fftData)
 {
   mFftFrameRanges.clear();
-  if (mFftData.empty()) return;
+  if (fftData.empty()) return;
   float totalMin = std::numeric_limits<float>::max();
   float totalMax = std::numeric_limits<float>::min();
-  for (auto i = 0; i < mFftData.size(); ++i)
+  for (auto i = 0; i < fftData.size(); ++i)
   {
     float curMin = std::numeric_limits<float>::max();
     float curMax = std::numeric_limits<float>::min();
-    for (auto j = 0; j < mFftFrame.size(); ++j)
+    for (auto j = 0; j < fftData[i].size(); ++j)
     {
-      auto val = mFftData[i][j];
+      auto val = fftData[i][j];
       if (val < curMin)
       {
         if (val < totalMin)
@@ -168,14 +134,15 @@ void ArcSpectrogram::updateFftRanges()
   mFftRange.setEnd(totalMax);
 }
 
-void ArcSpectrogram::loadedBuffer(juce::AudioSampleBuffer* buffer)
+void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>& fftData)
 {
-  mAudioBuffer = buffer;
-  updateFft();
+  updateFftRanges(fftData);
+  drawSpectrogramImage(fftData);
+  repaint();
 }
 
-void ArcSpectrogram::changePosition(float positionRatio)
+void ArcSpectrogram::updatePositions(std::vector<float> positionRatios)
 {
-  mPositionRatio = positionRatio;
-  repaint();
+  mPositionRatios = positionRatios;
+  //repaint();
 }

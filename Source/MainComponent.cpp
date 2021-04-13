@@ -2,7 +2,9 @@
 
 //==============================================================================
 MainComponent::MainComponent():
-  juce::Thread("granular thread")
+  mKeyboard(mKeyboardState, juce::MidiKeyboardComponent::horizontalKeyboard),
+  mSynth(mKeyboardState),
+  mForwardFFT(mFftOrder)
 {
   mFormatManager.registerBasicFormats();
 
@@ -13,17 +15,17 @@ MainComponent::MainComponent():
   addAndMakeVisible(mBtnOpenFile);
 
   mBtnPlay.setButtonText("Play");
-  mBtnPlay.onClick = [this] { mShouldPlayTest = true; };
+  mBtnPlay.onClick = [this] { mSynth.setIsPlaying(true); };
   addAndMakeVisible(mBtnPlay);
 
   mBtnStop.setButtonText("Stop");
-  mBtnStop.onClick = [this] { mShouldPlayTest = false; };
+  mBtnStop.onClick = [this] { mSynth.setIsPlaying(false); };
   addAndMakeVisible(mBtnStop);
 
   mSliderPosition.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderPosition.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderPosition.setRange(0.0, 1.0, 0.01);
-  mSliderPosition.onValueChange = [this] { mArcSpec.changePosition(mSliderPosition.getValue()); };
+  //mSliderPosition.onValueChange = [this] { mArcSpec.changePosition(mSliderPosition.getValue()); };
   addAndMakeVisible(mSliderPosition);
 
   mLabelPosition.setText("Position", juce::dontSendNotification);
@@ -31,6 +33,8 @@ MainComponent::MainComponent():
   addAndMakeVisible(mLabelPosition);
 
   addAndMakeVisible(mArcSpec);
+
+  addAndMakeVisible(mKeyboard);
 
   setSize(1200, 600);
 
@@ -47,60 +51,54 @@ MainComponent::MainComponent():
     setAudioChannels(2, 2);
   }
 
-  mTotalSamps = 0;
-  startThread();
+  startTimer(400); // Keyboard focus timer
 }
 
 MainComponent::~MainComponent()
 {
   setLookAndFeel(nullptr);
-  stopThread(4000);
   // This shuts down the audio device and clears the audio source.
   shutdownAudio();
+}
+
+void MainComponent::timerCallback()
+{
+  mKeyboard.grabKeyboardFocus();
+  stopTimer();
 }
 
 //==============================================================================
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
-  mSampleRate = sampleRate;
-}
-
-void MainComponent::run()
-{
-  while (!threadShouldExit())
-  {
-    /* Delete expired grains */
-    for (int i = mGrains.size() - 1; i >= 0; --i)
-    {
-      if (mTotalSamps > (mGrains[i].trigTs + mGrains[i].duration))
-      {
-        mGrains.remove(i);
-      }
-    }
-
-    double testDuration = 1.0;
-
-    if (mFileBuffer.getNumSamples() > 0 && mShouldPlayTest/*&& mActiveNotes.size() > 0*/)
-    {
-      auto durSamples = testDuration * mSampleRate;
-      mGrains.add(Grain(durSamples, mSliderPosition.getValue() * mFileBuffer.getNumSamples(), mTotalSamps));
-    }
-    wait(testDuration * 1000);
-  }
+  mMidiCollector.reset(sampleRate);
 }
 
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
 {
   bufferToFill.clearActiveBufferRegion();
 
-  for (int i = 0; i < bufferToFill.numSamples; ++i)
+  // fill a midi buffer with incoming messages from the midi input.
+  juce::MidiBuffer incomingMidi;
+  mMidiCollector.removeNextBlockOfMessages(incomingMidi, bufferToFill.numSamples);
+  mKeyboardState.processNextMidiBuffer(incomingMidi, 0, bufferToFill.numSamples, true);
+  if (!incomingMidi.isEmpty())
   {
-    for (int g = 0; g < mGrains.size(); ++g)
+    for (juce::MidiMessageMetadata md : incomingMidi)
     {
-      mGrains[g].process(mFileBuffer, *(bufferToFill.buffer), mTotalSamps);
+      if (md.getMessage().isNoteOn())
+      {
+        std::vector<int> positions = mSynth.playNote(md.getMessage().getNoteNumber(), 1);
+        std::vector<float> positionRatios;
+        for (int pos : positions)
+        {
+          positionRatios.push_back((float)pos / mFftData.size());
+        }
+        mArcSpec.updatePositions(positionRatios);
+      }
     }
-    mTotalSamps++;
   }
+
+  mSynth.process(bufferToFill.buffer);
 }
 
 void MainComponent::releaseResources()
@@ -129,7 +127,8 @@ void MainComponent::resized()
   auto testSliderRect = r.removeFromTop(60).withWidth(80);
   mSliderPosition.setBounds(testSliderRect.removeFromTop(40));
   mLabelPosition.setBounds(testSliderRect);
-  mArcSpec.setBounds(r.withSize(600, 300));
+  mArcSpec.setBounds(r.removeFromTop(300).withWidth(600));
+  mKeyboard.setBounds(r);
 }
 
 void MainComponent::openNewFile()
@@ -152,7 +151,41 @@ void MainComponent::openNewFile()
       mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
       reader->read(&mFileBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
       setAudioChannels(reader->numChannels, reader->numChannels);
-      mArcSpec.loadedBuffer(&mFileBuffer);
+      
+      updateFft(reader->sampleRate);
     }
   }
+}
+
+void MainComponent::updateFft(double sampleRate)
+{
+  const float* pBuffer = mFileBuffer.getReadPointer(0);
+  int curSample = 0;
+
+  bool hasData = mFileBuffer.getNumSamples() > mFftFrame.size();
+
+  mFftData.clear();
+
+  while (hasData)
+  {
+    const float* startSample = &pBuffer[curSample];
+    int numSamples = mFftFrame.size();
+    if (curSample + mFftFrame.size() > mFileBuffer.getNumSamples()) {
+      numSamples = (mFileBuffer.getNumSamples() - curSample);
+    }
+    mFftFrame.fill(0.0f);
+    memcpy(mFftFrame.data(), startSample, numSamples);
+
+    // then render our FFT data..
+    mForwardFFT.performFrequencyOnlyForwardTransform(mFftFrame.data());
+
+    // Add fft data to our master array
+    mFftData.push_back(std::vector<float>(mFftFrame.begin(), mFftFrame.end()));
+
+    curSample += mFftFrame.size();
+    if (curSample > mFileBuffer.getNumSamples()) hasData = false;
+  }
+  mArcSpec.updateSpectrogram(mFftData);
+  mSynth.setSampleRate(sampleRate);
+  mSynth.setFileBuffer(&mFileBuffer, &mFftData);
 }
