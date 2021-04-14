@@ -34,14 +34,16 @@ void GranularSynth::run()
       }
     }
 
-    double testDuration = 1.0;
-
-    if (mFileBuffer != nullptr && mShouldPlayTest/*&& mActiveNotes.size() > 0*/)
+    if (mFileBuffer != nullptr)
     {
-      auto durSamples = testDuration * mSampleRate;
-      mGrains.add(Grain(durSamples, 0.1 * mFileBuffer->getNumSamples(), mTotalSamps));
+      for (GrainNote &note : mActiveNotes)
+      {
+        auto durSamples = (mDuration * MAX_DURATION) * mSampleRate;
+        mGrains.add(Grain(durSamples, note.positionRatios[note.curPos++] * mFileBuffer->getNumSamples(), mTotalSamps));
+        note.curPos = note.curPos % note.positionRatios.size();
+      }
     }
-    wait(testDuration * 1000);
+    wait((mRate * MAX_RATE) + 20);
   }
 }
 
@@ -63,10 +65,11 @@ void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, std::vector<
   mFftData = fftData;
 }
 
-std::vector<int> GranularSynth::playNote(int midiNote, int k)
+std::vector<float> GranularSynth::playNote(int midiNote)
 {
-  std::vector<int> foundPositions;
+  std::vector<float> foundPositions;
   if (mFftData == nullptr) return foundPositions;
+  int k = (mDiversity * MAX_DIVERSITY) + 1;
   // look for times when frequency has high energy
   float noteFreq = juce::MidiMessage::getMidiNoteInHertz(midiNote);
   bool foundK = false;
@@ -91,18 +94,29 @@ std::vector<int> GranularSynth::playNote(int midiNote, int k)
       float maxFreq = (maxIndex * mSampleRate) / (curCol.size() / 2.0f);
       if (freqRange.contains(maxFreq))
       {
-        foundPositions.push_back(i);
+        foundPositions.push_back((float)i / mFftData->size());
       }
     }
     if (foundPositions.size() >= k) foundK = true;
     numSearches++;
+    if (numSearches > 5) break;
   }
 
   if (foundPositions.size() > k)
   {
     std::sort(foundPositions.begin(), foundPositions.end());
-    return std::vector<int>(foundPositions.begin() + foundPositions.size() - k, foundPositions.end());
+    foundPositions = std::vector<float>(foundPositions.begin() + foundPositions.size() - k, foundPositions.end());
   }
+
+  mActiveNotes.add(GrainNote(midiNote, foundPositions));
   
   return foundPositions;
+}
+
+void GranularSynth::stopNote(int midiNote)
+{
+  mActiveNotes.removeIf([midiNote](GrainNote& note)
+    {
+      return note.midiNote == midiNote;
+    });
 }

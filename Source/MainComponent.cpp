@@ -116,13 +116,12 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
     {
       if (md.getMessage().isNoteOn())
       {
-        std::vector<int> positions = mSynth.playNote(md.getMessage().getNoteNumber(), 2);
-        std::vector<float> positionRatios;
-        for (int pos : positions)
-        {
-          positionRatios.push_back((float)pos / mFftData.size());
-        }
+        std::vector<float> positionRatios = mSynth.playNote(md.getMessage().getNoteNumber());
         mArcSpec.updatePositions(positionRatios);
+      }
+      else if (md.getMessage().isNoteOff())
+      {
+        mSynth.stopNote(md.getMessage().getNoteNumber());
       }
     }
   }
@@ -153,10 +152,10 @@ void MainComponent::resized()
   mLogo.setBounds(titleSection.withSizeKeepingCentre(LOGO_HEIGHT * 2, titleSection.getHeight()));
   mBtnOpenFile.setBounds(titleSection.removeFromLeft(titleSection.getWidth() / 4));
   mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT));
-  mArcSpec.setBounds(r.withWidth(r.getWidth() / 2)
+  mArcSpec.setBounds(r.withWidth(r.getHeight() * 2)
     .withCentre(r.getPosition() + juce::Point<int>(r.getWidth() / 2, r.getHeight() / 2)));
   // Left Panel
-  auto leftPanel = r.removeFromLeft(r.getWidth() / 4);
+  auto leftPanel = r.removeFromLeft((r.getWidth() - mArcSpec.getWidth()) / 2);
   // Row 1
   auto row = leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT);
   // Diversity

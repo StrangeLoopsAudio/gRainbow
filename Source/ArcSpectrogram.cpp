@@ -146,5 +146,4 @@ void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>* fftData)
 void ArcSpectrogram::updatePositions(std::vector<float> positionRatios)
 {
   mPositionRatios = positionRatios;
-  //repaint();
 }
