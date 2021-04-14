@@ -15,7 +15,7 @@
 //==============================================================================
 /*
 */
-class ArcSpectrogram : public juce::AnimatedAppComponent
+class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread
 {
 public:
   ArcSpectrogram();
@@ -25,19 +25,22 @@ public:
   void paint(juce::Graphics&) override;
   void resized() override;
 
-  void updateSpectrogram(std::vector<std::vector<float>> &fftData);
+  void updateSpectrogram(std::vector<std::vector<float>> *fftData);
   void updatePositions(std::vector<float> positionRatios);
+
+  //============================================================================
+  void run() override;
 
 private:
 
   std::vector<float> mPositionRatios;
+  std::vector<std::vector<float>>* mFftData = nullptr;
   std::vector<juce::Range<float>> mFftFrameRanges;
   juce::Range<float> mFftRange;
   
   juce::Image mSpectrogramImage;
 
-  void drawSpectrogramImage(std::vector<std::vector<float>>& fftData);
-  void updateFftRanges(std::vector<std::vector<float>>& fftData);
+  void updateFftRanges();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
 };

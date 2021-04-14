@@ -17,7 +17,8 @@
 #include <limits.h>
 
 //==============================================================================
-ArcSpectrogram::ArcSpectrogram() : mSpectrogramImage(juce::Image::RGB, 512, 512, true)
+ArcSpectrogram::ArcSpectrogram() : mSpectrogramImage(juce::Image::RGB, 512, 512, true),
+juce::Thread("spectrogram thread")
 {
   setFramesPerSecond(10);
 }
@@ -46,44 +47,45 @@ void ArcSpectrogram::paint(juce::Graphics& g)
   // Draw borders
   g.setColour(juce::Colours::white);
   g.drawRect(getLocalBounds(), 2);
+
 }
 
 void ArcSpectrogram::resized()
 {
 }
 
-void ArcSpectrogram::drawSpectrogramImage(std::vector<std::vector<float>>& fftData)
+void ArcSpectrogram::run()
 {
-  if (fftData.empty()) return;
+  if (mFftData == nullptr) return;
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
-  int height = juce::jmax(2.0f, bowWidth / (float)fftData[0].size());
+  int height = juce::jmax(2.0f, bowWidth / (float)mFftData->at(0).size());
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mSpectrogramImage = juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
   juce::Graphics g(mSpectrogramImage);
 
-  for (auto i = 0; i < fftData.size(); ++i)
+  for (auto i = 0; i < mFftData->size(); ++i)
   {
     for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius)
     {
       float arcLen = M_PI * curRadius * 2;
-      int pixPerEntry = arcLen / fftData.size();
+      int pixPerEntry = arcLen / mFftData->size();
       float radPerc = 1.0f - ((curRadius - startRadius) / (float)bowWidth);
       auto skewedProportionY = 1.0f - std::exp(std::log(radPerc) * 0.2f);
       //auto skewedProportionY = 1.0f - radPerc;
-      auto specRow = (size_t)juce::jmap(skewedProportionY, 0.0f, (float)(fftData[i].size() / 2.0f) / 3.5f);
-      
+      auto specRow = (size_t)juce::jmap(skewedProportionY, 0.0f, (float)(mFftData->at(i).size() / 2.0f) / 3.5f);
+
       auto rainbowColour = Utils::getRainbowColour(radPerc);
       g.setColour(rainbowColour);
 
-      auto level = juce::jmap(fftData[i][specRow], 0.0f, juce::jmax(mFftRange.getEnd(), 1e-5f), 0.0f, 1.0f);
+      auto level = juce::jmap(mFftData->at(i)[specRow], 0.0f, juce::jmax(mFftRange.getEnd(), 1e-5f), 0.0f, 1.0f);
       g.setOpacity(level);
-      
-      float xPerc = (float)i / fftData.size();
-      float angleRad =  (M_PI * xPerc) - (M_PI / 2.0f);
+
+      float xPerc = (float)i / mFftData->size();
+      float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
       int width = pixPerEntry + 6;
-      
+
       juce::Point<float> p = startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
       juce::AffineTransform rotation = juce::AffineTransform();
       rotation = rotation.rotated(angleRad, p.x, p.y);
@@ -92,25 +94,25 @@ void ArcSpectrogram::drawSpectrogramImage(std::vector<std::vector<float>>& fftDa
       rect = rect.transformedBy(rotation);
       juce::Path rectPath;
       rectPath.addRectangle(rect);
-      
+
       g.fillPath(rectPath, rotation);
     }
   }
 }
 
-void ArcSpectrogram::updateFftRanges(std::vector<std::vector<float>>& fftData)
+void ArcSpectrogram::updateFftRanges()
 {
+  if (mFftData == nullptr) return;
   mFftFrameRanges.clear();
-  if (fftData.empty()) return;
   float totalMin = std::numeric_limits<float>::max();
   float totalMax = std::numeric_limits<float>::min();
-  for (auto i = 0; i < fftData.size(); ++i)
+  for (auto i = 0; i < mFftData->size(); ++i)
   {
     float curMin = std::numeric_limits<float>::max();
     float curMax = std::numeric_limits<float>::min();
-    for (auto j = 0; j < fftData[i].size(); ++j)
+    for (auto j = 0; j < mFftData->at(i).size(); ++j)
     {
-      auto val = fftData[i][j];
+      auto val = mFftData->at(i)[j];
       if (val < curMin)
       {
         if (val < totalMin)
@@ -134,11 +136,11 @@ void ArcSpectrogram::updateFftRanges(std::vector<std::vector<float>>& fftData)
   mFftRange.setEnd(totalMax);
 }
 
-void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>& fftData)
+void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>* fftData)
 {
-  updateFftRanges(fftData);
-  drawSpectrogramImage(fftData);
-  repaint();
+  mFftData = fftData;
+  updateFftRanges();
+  startThread(); // Update spectrogram image
 }
 
 void ArcSpectrogram::updatePositions(std::vector<float> positionRatios)

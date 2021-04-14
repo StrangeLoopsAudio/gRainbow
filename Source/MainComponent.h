@@ -48,8 +48,6 @@ private:
 
   /* UI Components */
   juce::TextButton mBtnOpenFile;
-  juce::TextButton mBtnPlay;
-  juce::TextButton mBtnStop;
   juce::Slider mSliderPosition;
   juce::Label mLabelPosition;
   ArcSpectrogram mArcSpec;

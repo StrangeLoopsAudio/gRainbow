@@ -61,21 +61,6 @@ void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, std::vector<
 {
   mFileBuffer = buffer;
   mFftData = fftData;
-  /*if (mFftData == nullptr) return;
-  for (int i = 0; i < fftData->size(); ++i)
-  {
-    float curMax = 0.0f;
-    int maxIndex = 0;
-    std::vector<float> curCol = fftData->at(i);
-    for (int j = 0; j < curCol.size(); ++j)
-    {
-      if (curCol[j] > curMax)
-      {
-        curMax = curCol[j];
-        maxIndex = j;
-      }
-    }
-  }*/
 }
 
 std::vector<int> GranularSynth::playNote(int midiNote, int k)
@@ -84,28 +69,34 @@ std::vector<int> GranularSynth::playNote(int midiNote, int k)
   if (mFftData == nullptr) return foundPositions;
   // look for times when frequency has high energy
   float noteFreq = juce::MidiMessage::getMidiNoteInHertz(midiNote);
-  float variance = (noteFreq - juce::MidiMessage::getMidiNoteInHertz(midiNote - 1)) / 2.0f;
-  juce::Range<float> freqRange = juce::Range<float>(noteFreq - variance, noteFreq + variance);
-  for (int i = 0; i < mFftData->size(); ++i)
+  bool foundK = false;
+  int numSearches = 1;
+  while (!foundK)
   {
-    int maxVal = 0;
-    int maxIndex = 0;
-    std::vector<float> curCol = mFftData->at(i);
-    for (int j = 0; j < curCol.size() / 4; ++j)
+    float variance = (noteFreq - juce::MidiMessage::getMidiNoteInHertz(midiNote - numSearches)) / 2.0f;
+    juce::Range<float> freqRange = juce::Range<float>(noteFreq - variance, noteFreq + variance);
+    for (int i = 0; i < mFftData->size(); ++i)
     {
-      if (curCol[j] > maxVal)
+      int maxVal = 0;
+      int maxIndex = 0;
+      std::vector<float> curCol = mFftData->at(i);
+      for (int j = 0; j < curCol.size() / 4; ++j)
       {
-        maxVal = curCol[j];
-        maxIndex = j;
+        if (curCol[j] > maxVal)
+        {
+          maxVal = curCol[j];
+          maxIndex = j;
+        }
+      }
+      float maxFreq = (maxIndex * mSampleRate) / (curCol.size() / 2.0f);
+      if (freqRange.contains(maxFreq))
+      {
+        foundPositions.push_back(i);
       }
     }
-    float maxFreq = (maxIndex * mSampleRate) / (curCol.size() / 2.0f);
-    if (freqRange.contains(maxFreq))
-    {
-      DBG("Looking for freq: " << noteFreq << ", found freq: " << maxFreq << " at time index: " << i);
-      foundPositions.push_back(i);
-    }
+    if (foundPositions.size() >= k) foundK = true;
   }
+
   if (foundPositions.size() > k)
   {
     std::sort(foundPositions.begin(), foundPositions.end());

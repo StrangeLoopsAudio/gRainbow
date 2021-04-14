@@ -14,14 +14,6 @@ MainComponent::MainComponent():
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
 
-  mBtnPlay.setButtonText("Play");
-  mBtnPlay.onClick = [this] { mSynth.setIsPlaying(true); };
-  addAndMakeVisible(mBtnPlay);
-
-  mBtnStop.setButtonText("Stop");
-  mBtnStop.onClick = [this] { mSynth.setIsPlaying(false); };
-  addAndMakeVisible(mBtnStop);
-
   mSliderPosition.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderPosition.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderPosition.setRange(0.0, 1.0, 0.01);
@@ -87,7 +79,7 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
     {
       if (md.getMessage().isNoteOn())
       {
-        std::vector<int> positions = mSynth.playNote(md.getMessage().getNoteNumber(), 1);
+        std::vector<int> positions = mSynth.playNote(md.getMessage().getNoteNumber(), 2);
         std::vector<float> positionRatios;
         for (int pos : positions)
         {
@@ -121,14 +113,11 @@ void MainComponent::resized()
   auto r = getLocalBounds();
   
   mBtnOpenFile.setBounds(r.removeFromTop(40));
-  auto playbackRect = r.removeFromTop(40);
-  mBtnPlay.setBounds(playbackRect.removeFromLeft(playbackRect.getWidth() / 2.0f));
-  mBtnStop.setBounds(playbackRect);
-  auto testSliderRect = r.removeFromTop(60).withWidth(80);
+/*  auto testSliderRect = r.removeFromTop(60).withWidth(80);
   mSliderPosition.setBounds(testSliderRect.removeFromTop(40));
-  mLabelPosition.setBounds(testSliderRect);
-  mArcSpec.setBounds(r.removeFromTop(300).withWidth(600));
-  mKeyboard.setBounds(r);
+  mLabelPosition.setBounds(testSliderRect); */
+  mKeyboard.setBounds(r.removeFromBottom(150));
+  mArcSpec.setBounds(r.withWidth(r.getWidth() / 2).withCentre(r.getPosition() + juce::Point<int>(r.getWidth() / 2, r.getHeight() / 2)));
 }
 
 void MainComponent::openNewFile()
@@ -185,7 +174,7 @@ void MainComponent::updateFft(double sampleRate)
     curSample += mFftFrame.size();
     if (curSample > mFileBuffer.getNumSamples()) hasData = false;
   }
-  mArcSpec.updateSpectrogram(mFftData);
+  mArcSpec.updateSpectrogram(&mFftData);
   mSynth.setSampleRate(sampleRate);
   mSynth.setFileBuffer(&mFileBuffer, &mFftData);
 }
