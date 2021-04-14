@@ -38,6 +38,11 @@ private:
   static constexpr auto KEYBOARD_HEIGHT = 100;
   static constexpr auto LOGO_HEIGHT = 150;
 
+  /* Parameter defaults */
+  static constexpr auto PARAM_DIVERSITY_DEFAULT = 0.1f;
+  static constexpr auto PARAM_DURATION_DEFAULT = 0.2f;
+  static constexpr auto PARAM_RATE_DEFAULT = 0.3f;
+
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
   juce::MidiMessageCollector mMidiCollector;
@@ -53,13 +58,16 @@ private:
   /* UI Components */
   juce::ImageComponent mLogo;
   juce::TextButton mBtnOpenFile;
+  ArcSpectrogram mArcSpec;
+  juce::MidiKeyboardState mKeyboardState;
+  juce::MidiKeyboardComponent mKeyboard;
+  /* Parameters */
   juce::Slider mSliderDiversity;
   juce::Label mLabelDiversity;
   juce::Slider mSliderDuration;
   juce::Label mLabelDuration;
-  ArcSpectrogram mArcSpec;
-  juce::MidiKeyboardState mKeyboardState;
-  juce::MidiKeyboardComponent mKeyboard;
+  juce::Slider mSliderRate;
+  juce::Label mLabelRate;
   
   void openNewFile();
 

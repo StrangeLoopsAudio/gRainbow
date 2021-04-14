@@ -25,6 +25,7 @@ public:
   void setIsPlaying(bool isPlaying) { mShouldPlayTest = isPlaying; }
   void setSampleRate(double sr) { mSampleRate = sr; }
   void setDuration(float duration) { mDuration = duration; }
+  void setRate(float rate) { mRate = rate; }
   void setDiversity(float diversity) { mDiversity = diversity; }
 
   void process(juce::AudioBuffer<float>* blockBuffer);
@@ -53,6 +54,7 @@ private:
   double mSampleRate;
 
   /* Grain parameters */
-  int mDuration; // Grain duration normalized from 0-1
+  int mDuration; // Grain duration normalized to 0-1
   float mDiversity; // Extracts number of positions to find for freq match
+  float mRate; // Grain rate normalized to 0-1
 };
