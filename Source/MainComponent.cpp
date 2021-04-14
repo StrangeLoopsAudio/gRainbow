@@ -4,25 +4,41 @@
 MainComponent::MainComponent():
   mKeyboard(mKeyboardState, juce::MidiKeyboardComponent::horizontalKeyboard),
   mSynth(mKeyboardState),
-  mForwardFFT(mFftOrder)
+  mForwardFFT(FFT_ORDER)
 {
   mFormatManager.registerBasicFormats();
 
   setLookAndFeel(&mRainbowLookAndFeel);
 
+  juce::Image logo = juce::PNGImageFormat::loadFrom(
+    juce::File("C:/Users/brady/Documents/GitHub/gRainbow/gRainbow-circles.png")
+  );
+  mLogo.setImage(logo, juce::RectanglePlacement::centred);
+  addAndMakeVisible(mLogo);
+
   mBtnOpenFile.setButtonText("Open File");
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
 
-  mSliderPosition.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderPosition.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderPosition.setRange(0.0, 1.0, 0.01);
-  //mSliderPosition.onValueChange = [this] { mArcSpec.changePosition(mSliderPosition.getValue()); };
-  addAndMakeVisible(mSliderPosition);
+  mSliderDiversity.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderDiversity.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderDiversity.setRange(0.0, 1.0, 0.01);
+  mSliderDiversity.onValueChange = [this] { mSynth.setDiversity(mSliderDiversity.getValue()); };
+  addAndMakeVisible(mSliderDiversity);
 
-  mLabelPosition.setText("Position", juce::dontSendNotification);
-  mLabelPosition.setJustificationType(juce::Justification::centred);
-  addAndMakeVisible(mLabelPosition);
+  mLabelDiversity.setText("Diversity", juce::dontSendNotification);
+  mLabelDiversity.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelDiversity);
+
+  mSliderDuration.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderDuration.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderDuration.setRange(0.0, 1.0, 0.01);
+  mSliderDuration.onValueChange = [this] { mSynth.setDuration(mSliderDuration.getValue()); };
+  addAndMakeVisible(mSliderDuration);
+
+  mLabelDuration.setText("Duration", juce::dontSendNotification);
+  mLabelDuration.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelDuration);
 
   addAndMakeVisible(mArcSpec);
 
@@ -112,12 +128,27 @@ void MainComponent::resized()
 {
   auto r = getLocalBounds();
   
-  mBtnOpenFile.setBounds(r.removeFromTop(40));
-/*  auto testSliderRect = r.removeFromTop(60).withWidth(80);
-  mSliderPosition.setBounds(testSliderRect.removeFromTop(40));
-  mLabelPosition.setBounds(testSliderRect); */
-  mKeyboard.setBounds(r.removeFromBottom(150));
-  mArcSpec.setBounds(r.withWidth(r.getWidth() / 2).withCentre(r.getPosition() + juce::Point<int>(r.getWidth() / 2, r.getHeight() / 2)));
+  auto titleSection = r.removeFromTop(LOGO_HEIGHT);
+  mLogo.setBounds(titleSection.withSizeKeepingCentre(LOGO_HEIGHT * 2, titleSection.getHeight()));
+  mBtnOpenFile.setBounds(titleSection.removeFromLeft(titleSection.getWidth() / 4));
+  mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT));
+  mArcSpec.setBounds(r.withWidth(r.getWidth() / 2)
+    .withCentre(r.getPosition() + juce::Point<int>(r.getWidth() / 2, r.getHeight() / 2)));
+  // Left Panel
+  auto leftPanel = r.removeFromLeft(r.getWidth() / 4);
+  // Row 1
+  auto leftRow1 = leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT);
+  // Diversity
+  auto knob = leftRow1.removeFromLeft(leftRow1.getWidth() / 2);
+  mSliderDiversity.setBounds(knob.withSize(KNOB_HEIGHT * 2, KNOB_HEIGHT)
+    .withCentre(knob.getPosition().translated(knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
+  mLabelDiversity.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
+  knob = leftRow1;
+  mSliderDuration.setBounds(knob.withSize(KNOB_HEIGHT * 2, KNOB_HEIGHT)
+    .withCentre(knob.getPosition().translated(knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
+  mLabelDuration.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
+  //auto rightPanel = r.removeFromRight(r.getWidth() / 4);
+  
 }
 
 void MainComponent::openNewFile()

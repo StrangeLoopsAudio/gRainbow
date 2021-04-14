@@ -30,7 +30,13 @@ public:
   void timerCallback() override;
 
 private:
-  void openNewFile();
+  
+  static constexpr auto FFT_ORDER = 10;
+  static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
+  static constexpr auto KNOB_HEIGHT = 50;
+  static constexpr auto LABEL_HEIGHT = 20;
+  static constexpr auto KEYBOARD_HEIGHT = 100;
+  static constexpr auto LOGO_HEIGHT = 150;
 
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
@@ -39,20 +45,23 @@ private:
   GranularSynth mSynth;
 
   /* Global fft */
-  static constexpr auto mFftOrder = 10;
-  static constexpr auto mFftSize = 1 << mFftOrder;
   juce::dsp::FFT mForwardFFT;
-  std::array<float, mFftSize * 2> mFftFrame;
+  std::array<float, FFT_SIZE * 2> mFftFrame;
   std::vector<std::vector<float>> mFftData;
   void updateFft(double sampleRate);
 
   /* UI Components */
+  juce::ImageComponent mLogo;
   juce::TextButton mBtnOpenFile;
-  juce::Slider mSliderPosition;
-  juce::Label mLabelPosition;
+  juce::Slider mSliderDiversity;
+  juce::Label mLabelDiversity;
+  juce::Slider mSliderDuration;
+  juce::Label mLabelDuration;
   ArcSpectrogram mArcSpec;
   juce::MidiKeyboardState mKeyboardState;
   juce::MidiKeyboardComponent mKeyboard;
+  
+  void openNewFile();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

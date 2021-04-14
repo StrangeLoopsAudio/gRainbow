@@ -24,7 +24,8 @@ public:
   void setFileBuffer(juce::AudioBuffer<float>* buffer, std::vector<std::vector<float>>* fftData);
   void setIsPlaying(bool isPlaying) { mShouldPlayTest = isPlaying; }
   void setSampleRate(double sr) { mSampleRate = sr; }
-  void setDuration(int duration) { mGrainDuration = duration; }
+  void setDuration(float duration) { mDuration = duration; }
+  void setDiversity(float diversity) { mDiversity = diversity; }
 
   void process(juce::AudioBuffer<float>* blockBuffer);
   std::vector<int> playNote(int midiNote, int k); // Returns vector of fft time positions where freq energy is high
@@ -52,5 +53,6 @@ private:
   double mSampleRate;
 
   /* Grain parameters */
-  int mGrainDuration; // Grain duration in samples
+  int mDuration; // Grain duration normalized from 0-1
+  float mDiversity; // Extracts number of positions to find for freq match
 };

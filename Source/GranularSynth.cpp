@@ -95,6 +95,7 @@ std::vector<int> GranularSynth::playNote(int midiNote, int k)
       }
     }
     if (foundPositions.size() >= k) foundK = true;
+    numSearches++;
   }
 
   if (foundPositions.size() > k)

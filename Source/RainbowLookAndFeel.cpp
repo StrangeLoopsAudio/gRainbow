@@ -20,7 +20,7 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int w
   float endRadians = (1.5 * M_PI) + (sliderPosProportional * M_PI);
   juce::Path rainbowPath = juce::Path();
   g.setColour(juce::Colours::white);
-  int curStripeStart = height / 4;
+  int curStripeStart = height / 2.5;
   int stripeInc = (height - curStripeStart) / 7;
   for (int i = 0; i < 7; i++)
   {
@@ -35,11 +35,13 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int w
   // Draw boundaries
   rainbowPath.clear();
   rainbowPath.addCentredArc(width / 2.f, height,
-    height / 4, height / 4,
+    height / 2.5, height / 2.5,
     0, 1.5 * M_PI, 2.5 * M_PI, true);
   rainbowPath.addCentredArc(width / 2.f, height,
      curStripeStart, curStripeStart,
      0, 1.5 * M_PI, 2.5 * M_PI, true);
   g.setColour(juce::Colours::white);
   g.strokePath(rainbowPath, juce::PathStrokeType(2));
+  g.drawLine(1, height, (width / 2) - (height / 2.5) - 1, height, 2);
+  g.drawLine((width / 2) + (height / 2.5) + 1, height, width - 1, height, 2);
 }
