@@ -48,8 +48,8 @@ void GranularSynth::run()
       for (GrainNote &note : mActiveNotes)
       {
         auto durSamples = (mDuration * MAX_DURATION) * mSampleRate;
-        mGrains.add(Grain(mGaussianEnv, durSamples, note.positionRatios[note.curPos++] * mFileBuffer->getNumSamples(), mTotalSamps));
-        note.curPos = note.curPos % note.positionRatios.size();
+        mGrains.add(Grain(mGaussianEnv, durSamples, note.positions[note.curPos++].posRatio * mFileBuffer->getNumSamples(), mTotalSamps));
+        note.curPos = note.curPos % note.positions.size();
       }
     }
     wait(20);
@@ -68,16 +68,23 @@ void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer)
   }
 }
 
-void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, std::vector<std::vector<float>>* fftData)
+void GranularSynth::setFileBuffer(
+  juce::AudioBuffer<float>* buffer, 
+  std::vector<std::vector<float>>* fftData, 
+  Utils::FftRanges * fftRanges,
+  double sr
+)
 {
   mFileBuffer = buffer;
   mFftData = fftData;
+  mFftRanges = fftRanges;
+  mSampleRate = sr;
 }
 
-std::vector<float> GranularSynth::playNote(int midiNote)
+std::vector<GranularSynth::GrainPosition> GranularSynth::playNote(int midiNote)
 {
   std::vector<GrainPosition> grainPositions;
-  if (mFftData == nullptr) return std::vector<float>();
+  if (mFftData == nullptr || mFftRanges == nullptr) return grainPositions;
   int k = (mDiversity * MAX_DIVERSITY) + 1;
   // look for times when frequency has high energy
   float noteFreq = juce::MidiMessage::getMidiNoteInHertz(midiNote);
@@ -103,7 +110,11 @@ std::vector<float> GranularSynth::playNote(int midiNote)
       float maxFreq = (maxIndex * mSampleRate) / (curCol.size() / 2.0f);
       if (freqRange.contains(maxFreq))
       {
-        grainPositions.push_back(GrainPosition((float)i / mFftData->size(), maxVal));
+        float quality = maxVal / mFftRanges->globalRange.getEnd();
+        if (quality > 0.25)
+        {
+          grainPositions.push_back(GrainPosition((float)i / mFftData->size(), maxVal, quality));
+        }
       }
     }
     if (grainPositions.size() >= k) foundK = true;
@@ -111,7 +122,7 @@ std::vector<float> GranularSynth::playNote(int midiNote)
     if (numSearches > 5) break;
   }
 
-  if (grainPositions.empty()) return std::vector<float>();
+  if (grainPositions.empty()) return grainPositions;
 
   if (grainPositions.size() > k)
   {
@@ -120,11 +131,10 @@ std::vector<float> GranularSynth::playNote(int midiNote)
     grainPositions = std::vector<GrainPosition>(grainPositions.begin() + grainPositions.size() - k, grainPositions.end());
   }
 
-  std::vector<float> positions = getPositionFloats(grainPositions);
 
-  mActiveNotes.add(GrainNote(midiNote, positions));
+  mActiveNotes.add(GrainNote(midiNote, grainPositions));
   
-  return positions;
+  return grainPositions;
 }
 
 void GranularSynth::stopNote(int midiNote)
@@ -133,16 +143,6 @@ void GranularSynth::stopNote(int midiNote)
     {
       return note.midiNote == midiNote;
     });
-}
-
-std::vector<float> GranularSynth::getPositionFloats(std::vector<GrainPosition> gPositions)
-{
-  std::vector<float> positions;
-  for (GrainPosition gPos : gPositions)
-  {
-    positions.push_back(gPos.posRatio);
-  }
-  return positions;
 }
 
 void GranularSynth::generateGaussianEnvelope()

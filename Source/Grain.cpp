@@ -34,5 +34,6 @@ float Grain::getGain(int time)
 {
   float perc = (time - trigTs) / (float)duration;
   perc = juce::jlimit(0.0f, 1.0f, perc);
-  return mEnv[perc * (float)(mEnv.size() - 1)];
+  int i = perc * (mEnv.size() - 1);
+  return mEnv[i];
 }

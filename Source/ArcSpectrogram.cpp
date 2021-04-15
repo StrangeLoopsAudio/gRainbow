@@ -37,10 +37,11 @@ void ArcSpectrogram::paint(juce::Graphics& g)
   // Draw position marker
   juce::Point<int> centerPoint = juce::Point<int>(getWidth() / 2, getHeight());
   g.setColour(juce::Colours::white);
-  for (float posRatio : mPositionRatios)
+  for (GranularSynth::GrainPosition gPos : mPositions)
   {
-    auto startPoint = centerPoint.getPointOnCircumference(getHeight() / 4.0f, (1.5 * M_PI) + (posRatio * M_PI));
-    auto endPoint = centerPoint.getPointOnCircumference(getHeight(), (1.5 * M_PI) + (posRatio * M_PI));
+    auto startPoint = centerPoint.getPointOnCircumference(getHeight() / 4.0f, (1.5 * M_PI) + (gPos.posRatio * M_PI));
+    auto endPoint = centerPoint.getPointOnCircumference(getHeight(), (1.5 * M_PI) + (gPos.posRatio * M_PI));
+    g.setColour(juce::Colours::red.interpolatedWith(juce::Colours::green, gPos.quality));
     g.drawLine(juce::Line<float>(startPoint, endPoint), 2.0f);
   }
 
@@ -56,7 +57,7 @@ void ArcSpectrogram::resized()
 
 void ArcSpectrogram::run()
 {
-  if (mFftData == nullptr) return;
+  if (mFftData == nullptr || mFftRanges == nullptr) return;
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
@@ -79,7 +80,7 @@ void ArcSpectrogram::run()
       auto rainbowColour = Utils::getRainbowColour(radPerc);
       g.setColour(rainbowColour);
 
-      auto level = juce::jmap(mFftData->at(i)[specRow], 0.0f, juce::jmax(mFftRange.getEnd(), 1e-5f), 0.0f, 1.0f);
+      auto level = juce::jmap(mFftData->at(i)[specRow], 0.0f, juce::jmax(mFftRanges->globalRange.getEnd(), 1e-5f), 0.0f, 1.0f);
       g.setOpacity(level);
 
       float xPerc = (float)i / mFftData->size();
@@ -100,50 +101,14 @@ void ArcSpectrogram::run()
   }
 }
 
-void ArcSpectrogram::updateFftRanges()
-{
-  if (mFftData == nullptr) return;
-  mFftFrameRanges.clear();
-  float totalMin = std::numeric_limits<float>::max();
-  float totalMax = std::numeric_limits<float>::min();
-  for (auto i = 0; i < mFftData->size(); ++i)
-  {
-    float curMin = std::numeric_limits<float>::max();
-    float curMax = std::numeric_limits<float>::min();
-    for (auto j = 0; j < mFftData->at(i).size(); ++j)
-    {
-      auto val = mFftData->at(i)[j];
-      if (val < curMin)
-      {
-        if (val < totalMin)
-        {
-          totalMin = val;
-        }
-        curMin = val;
-      }
-      if (val > curMax)
-      {
-        if (val > totalMax)
-        {
-          totalMax = val;
-        }
-        curMax = val;
-      }
-    }
-    mFftFrameRanges.push_back(juce::Range<float>(curMin, curMax));
-  }
-  mFftRange.setStart(totalMin);
-  mFftRange.setEnd(totalMax);
-}
-
-void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>* fftData)
+void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>* fftData, Utils::FftRanges* fftRanges)
 {
   mFftData = fftData;
-  updateFftRanges();
+  mFftRanges = fftRanges;
   startThread(); // Update spectrogram image
 }
 
-void ArcSpectrogram::updatePositions(std::vector<float> positionRatios)
+void ArcSpectrogram::updatePositions(std::vector<GranularSynth::GrainPosition> gPositions)
 {
-  mPositionRatios = positionRatios;
+  mPositions = gPositions;
 }

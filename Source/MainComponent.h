@@ -4,6 +4,7 @@
 #include "GranularSynth.h"
 #include "ArcSpectrogram.h"
 #include "RainbowLookAndFeel.h"
+#include "Utils.h"
 
 //==============================================================================
 /*
@@ -53,7 +54,9 @@ private:
   juce::dsp::FFT mForwardFFT;
   std::array<float, FFT_SIZE * 2> mFftFrame;
   std::vector<std::vector<float>> mFftData;
+  Utils::FftRanges mFftRanges;
   void updateFft(double sampleRate);
+  void updateFftRanges();
 
   /* UI Components */
   juce::ImageComponent mLogo;

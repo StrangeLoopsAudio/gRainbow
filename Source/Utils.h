@@ -34,4 +34,10 @@ public:
     }
     return juce::Colour(r * 255.0f, g * 255.0f, b * 255.0f);
   }
+
+  typedef struct FftRanges
+  {
+    std::vector<juce::Range<float>> frameRanges;
+    juce::Range<float> globalRange;
+  } FftRanges;
 };

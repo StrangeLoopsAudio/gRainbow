@@ -116,7 +116,7 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
     {
       if (md.getMessage().isNoteOn())
       {
-        std::vector<float> positionRatios = mSynth.playNote(md.getMessage().getNoteNumber());
+        std::vector<GranularSynth::GrainPosition> positionRatios = mSynth.playNote(md.getMessage().getNoteNumber());
         mArcSpec.updatePositions(positionRatios);
       }
       else if (md.getMessage().isNoteOff())
@@ -233,7 +233,43 @@ void MainComponent::updateFft(double sampleRate)
     curSample += mFftFrame.size();
     if (curSample > mFileBuffer.getNumSamples()) hasData = false;
   }
-  mArcSpec.updateSpectrogram(&mFftData);
-  mSynth.setSampleRate(sampleRate);
-  mSynth.setFileBuffer(&mFileBuffer, &mFftData);
+  updateFftRanges();
+  mArcSpec.updateSpectrogram(&mFftData, &mFftRanges);
+  mSynth.setFileBuffer(&mFileBuffer, &mFftData, &mFftRanges, sampleRate);
+}
+
+void MainComponent::updateFftRanges()
+{
+  if (mFftData.empty()) return;
+  mFftRanges.frameRanges.clear();
+  float totalMin = std::numeric_limits<float>::max();
+  float totalMax = std::numeric_limits<float>::min();
+  for (auto i = 0; i < mFftData.size(); ++i)
+  {
+    float curMin = std::numeric_limits<float>::max();
+    float curMax = std::numeric_limits<float>::min();
+    for (auto j = 0; j < mFftData[i].size(); ++j)
+    {
+      auto val = mFftData[i][j];
+      if (val < curMin)
+      {
+        if (val < totalMin)
+        {
+          totalMin = val;
+        }
+        curMin = val;
+      }
+      if (val > curMax)
+      {
+        if (val > totalMax)
+        {
+          totalMax = val;
+        }
+        curMax = val;
+      }
+    }
+    mFftRanges.frameRanges.push_back(juce::Range<float>(curMin, curMax));
+  }
+  mFftRanges.globalRange.setStart(totalMin);
+  mFftRanges.globalRange.setEnd(totalMax);
 }
