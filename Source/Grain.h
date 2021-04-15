@@ -14,8 +14,8 @@
 class Grain
 {
 public:
-  Grain(): duration(0), startPos(0), trigTs(0) {}
-  Grain(int duration, int startPos, int trigTs) : duration(duration), startPos(startPos), trigTs(trigTs) {}
+  Grain() : mEnv(std::array<float, 512>()), duration(0), startPos(0), trigTs(0) {}
+  Grain(std::array<float, 512> &env, int duration, int startPos, int trigTs) : mEnv(env), duration(duration), startPos(startPos), trigTs(trigTs) {}
   ~Grain() {}
 
   void process(
@@ -30,5 +30,5 @@ public:
   const int trigTs;   // Timestamp when grain was triggered in samples
 
 private:
-
+  std::array<float, 512> &mEnv;
 };

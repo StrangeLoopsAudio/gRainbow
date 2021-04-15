@@ -198,7 +198,7 @@ void MainComponent::openNewFile()
       auto duration = (float)reader->lengthInSamples / reader->sampleRate;
       mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
       reader->read(&mFileBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
-      setAudioChannels(reader->numChannels, reader->numChannels);
+      setAudioChannels(2, 2);
       
       updateFft(reader->sampleRate);
     }

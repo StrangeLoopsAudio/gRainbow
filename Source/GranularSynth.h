@@ -24,7 +24,7 @@ public:
   void setFileBuffer(juce::AudioBuffer<float>* buffer, std::vector<std::vector<float>>* fftData);
   void setSampleRate(double sr) { mSampleRate = sr; }
   void setDuration(float duration) { mDuration = duration; }
-  void setRate(float rate) { mRate = rate; }
+  void setRate(float rate) { mRate = 1.0f - rate; }
   void setDiversity(float diversity) { mDiversity = diversity; }
 
   void process(juce::AudioBuffer<float>* blockBuffer);
@@ -35,10 +35,21 @@ public:
   void run() override;
 
 private:
-
   static constexpr auto MAX_DURATION = 0.4;
   static constexpr auto MAX_DIVERSITY = 5;
-  static constexpr auto MAX_RATE = 1000;
+  static constexpr auto MAX_RATE = 500;
+
+  typedef struct GrainPosition
+  {
+    float posRatio;
+    float gain;
+    GrainPosition(float posRatio, float gain)
+      : posRatio(posRatio), gain(gain) {}
+    bool operator<(const GrainPosition& other) const
+    {
+      return gain < other.gain;
+    }
+  } GrainPosition;
 
   typedef struct GrainNote
   {
@@ -53,6 +64,7 @@ private:
   juce::MidiKeyboardState& mMidiState;
   std::vector<std::vector<float>>* mFftData = nullptr;
   std::vector<GrainNote> mActiveGrains;
+  std::array<float, 512> mGaussianEnv;
 
   /* Grain control */
   juce::Array<Grain> mGrains;
@@ -64,4 +76,9 @@ private:
   float mDuration = 0.1; // Grain duration normalized to 0-1
   float mDiversity = 0.0; // Extracts number of positions to find for freq match
   float mRate = 0.1; // Grain rate normalized to 0-1
+  float mNextGrainTs; // Timestamp when next grain should be generated
+
+  // Generate gaussian envelope to be used for each grain
+  void generateGaussianEnvelope();
+  std::vector<float> getPositionFloats(std::vector<GrainPosition> gPositions);
 };

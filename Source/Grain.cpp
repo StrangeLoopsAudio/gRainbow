@@ -14,18 +14,16 @@ void Grain::process(
   juce::AudioBuffer<float>& fileBuffer,
   juce::AudioBuffer<float>& blockBuffer,
   int time)
-{
-  float** channelBlocks = blockBuffer.getArrayOfWritePointers();
- 
+{ 
   for (int ch = 0; ch < blockBuffer.getNumChannels(); ++ch)
   {
     float gain = getGain(time);
 
-    float* channelBlock = channelBlocks[ch];
+    float* channelBlock = blockBuffer.getWritePointer(ch);
 
     int filePos = startPos + (time - trigTs);
 
-    const float* fileBuf = fileBuffer.getReadPointer(ch);
+    const float* fileBuf = fileBuffer.getReadPointer(0);
     float sample = fileBuf[filePos % fileBuffer.getNumSamples()];
     sample *= gain;
     channelBlock[time % blockBuffer.getNumSamples()] += sample;
@@ -34,5 +32,7 @@ void Grain::process(
 
 float Grain::getGain(int time)
 {
-  return 1.0f;
+  float perc = (time - trigTs) / (float)duration;
+  perc = juce::jlimit(0.0f, 1.0f, perc);
+  return mEnv[perc * (float)(mEnv.size() - 1)];
 }
