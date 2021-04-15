@@ -48,6 +48,7 @@ private:
   juce::AudioFormatManager mFormatManager;
   juce::MidiMessageCollector mMidiCollector;
   juce::AudioBuffer<float> mFileBuffer;
+  std::unique_ptr<RubberBand::RubberBandStretcher> mTimeStretcher; // Timestretching boi
   GranularSynth mSynth;
 
   /* Global fft */

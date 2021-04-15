@@ -13,6 +13,7 @@
 void Grain::process(
   juce::AudioBuffer<float>& fileBuffer,
   juce::AudioBuffer<float>& blockBuffer,
+  RubberBand::RubberBandStretcher* timeStretcher,
   int time)
 { 
   for (int ch = 0; ch < blockBuffer.getNumChannels(); ++ch)

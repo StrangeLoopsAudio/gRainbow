@@ -10,6 +10,7 @@
 
 #pragma once
 #include <JuceHeader.h>
+#include <RubberBandStretcher.h>
 
 class Grain
 {
@@ -21,6 +22,7 @@ public:
   void process(
     juce::AudioBuffer<float>& fileBuffer,
     juce::AudioBuffer<float>& blockBuffer,
+    RubberBand::RubberBandStretcher *timeStretcher,
     int time);
 
   float getGain(int time);
