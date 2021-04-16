@@ -32,7 +32,7 @@ public:
 
 private:
   
-  static constexpr auto FFT_ORDER = 11;
+  static constexpr auto FFT_ORDER = 12;
   static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
   static constexpr auto KNOB_HEIGHT = 50;
   static constexpr auto LABEL_HEIGHT = 20;

@@ -96,7 +96,7 @@ std::vector<GranularSynth::GrainPosition> GranularSynth::playNote(int midiNote)
   int numSearches = 1;
   while (!foundK)
   {
-    float variance = (noteFreq - juce::MidiMessage::getMidiNoteInHertz(midiNote - numSearches)) / 3.0f;
+    float variance = (noteFreq - juce::MidiMessage::getMidiNoteInHertz(midiNote - numSearches)) / 2.0f;
     juce::Range<float> freqRange = juce::Range<float>(noteFreq - variance, noteFreq + variance);
     for (int i = 0; i < mFftData->size(); ++i)
     {
@@ -120,8 +120,10 @@ std::vector<GranularSynth::GrainPosition> GranularSynth::playNote(int midiNote)
           // TODO: fix half semitone discrepancy
           //float freqOffset = noteFreq - maxFreq;
           int semiOffset = numSearches - 1;
+          float freqDiff = juce::jmap(maxFreq, freqRange.getStart(), freqRange.getEnd(), -0.5f, 0.5f);
+          freqDiff *= -1.0f;
           if (maxFreq > noteFreq) semiOffset *= -1;
-          float pbRate = std::pow(TIMESTRETCH_RATIO, semiOffset);
+          float pbRate = std::pow(TIMESTRETCH_RATIO, semiOffset + freqDiff);
           grainPositions.push_back(GrainPosition((float)i / mFftData->size(), maxVal, quality, pbRate));
         }
       }
