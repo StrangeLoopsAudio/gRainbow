@@ -22,9 +22,10 @@ public:
   {
     float posRatio;
     float gain;
-    float quality;
-    GrainPosition(float posRatio, float gain, float quality)
-      : posRatio(posRatio), gain(gain), quality(quality) {}
+    float quality; // 0-1 for gain quality
+    float pbRate; // timestretching ratio based on frequency offset from target
+    GrainPosition(float posRatio, float gain, float quality, float pbRate)
+      : posRatio(posRatio), gain(gain), quality(quality), pbRate(pbRate) {}
     bool operator<(const GrainPosition& other) const
     {
       return gain < other.gain;
@@ -39,7 +40,7 @@ public:
     Utils::FftRanges *fftRanges, 
     double sr);
   void setDuration(float duration) { mDuration = duration; }
-  void setRate(float rate) { mRate = 1.0f - rate; }
+  void setRate(float rate) { mRate = rate; }
   void setDiversity(float diversity) { mDiversity = diversity; }
 
   void process(juce::AudioBuffer<float>* blockBuffer);
@@ -52,9 +53,13 @@ public:
 
 
 private:
-  static constexpr auto MAX_DURATION = 0.4;
-  static constexpr auto MAX_DIVERSITY = 5;
-  static constexpr auto MAX_RATE = 500;
+  static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
+  static constexpr auto MAX_DURATION = 0.6f;
+  static constexpr auto MIN_DURATION = 0.05f;
+  static constexpr auto MIN_DIVERSITY = 1.f;
+  static constexpr auto MAX_DIVERSITY = 5.f;
+  static constexpr auto MIN_RATE = 1.f; // Grains per second
+  static constexpr auto MAX_RATE = 20.f;
 
   typedef struct GrainNote
   {

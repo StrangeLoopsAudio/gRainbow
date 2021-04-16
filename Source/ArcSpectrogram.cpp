@@ -25,6 +25,7 @@ juce::Thread("spectrogram thread")
 
 ArcSpectrogram::~ArcSpectrogram()
 {
+  stopThread(4000);
 }
 
 void ArcSpectrogram::paint(juce::Graphics& g)
@@ -42,7 +43,8 @@ void ArcSpectrogram::paint(juce::Graphics& g)
     auto startPoint = centerPoint.getPointOnCircumference(getHeight() / 4.0f, (1.5 * M_PI) + (gPos.posRatio * M_PI));
     auto endPoint = centerPoint.getPointOnCircumference(getHeight(), (1.5 * M_PI) + (gPos.posRatio * M_PI));
     g.setColour(juce::Colours::red.interpolatedWith(juce::Colours::green, gPos.quality));
-    g.drawLine(juce::Line<float>(startPoint, endPoint), 2.0f);
+    float thickness = std::abs(1.0f - gPos.pbRate) * 10.0f;
+    g.drawLine(juce::Line<float>(startPoint, endPoint), thickness + 1.0f);
   }
 
   // Draw borders
@@ -68,6 +70,7 @@ void ArcSpectrogram::run()
 
   for (auto i = 0; i < mFftData->size(); ++i)
   {
+    if (threadShouldExit()) return;
     for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius)
     {
       float arcLen = M_PI * curRadius * 2;

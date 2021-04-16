@@ -43,12 +43,16 @@ void GranularSynth::run()
 
     if (mFileBuffer != nullptr && mTotalSamps >= mNextGrainTs)
     {
-      mNextGrainTs = mTotalSamps + (mRate * MAX_RATE);
+      float gInterval = (1.0f / juce::jmap(mRate, MIN_RATE, MAX_RATE)) * mSampleRate;
+      mNextGrainTs = mTotalSamps + gInterval;
       /* Add one grain per active note */
       for (GrainNote &note : mActiveNotes)
       {
-        auto durSamples = (mDuration * MAX_DURATION) * mSampleRate;
-        mGrains.add(Grain(mGaussianEnv, durSamples, note.positions[note.curPos++].posRatio * mFileBuffer->getNumSamples(), mTotalSamps));
+        GrainPosition gPos = note.positions[note.curPos];
+        float duration = juce::jmap(mDuration, MIN_DURATION, MAX_DURATION);
+        auto durSamples = duration * mSampleRate * (1.0f / gPos.pbRate);
+        mGrains.add(Grain(mGaussianEnv, durSamples, gPos.pbRate, gPos.posRatio * mFileBuffer->getNumSamples(), mTotalSamps));
+        note.curPos++;
         note.curPos = note.curPos % note.positions.size();
       }
     }
@@ -85,14 +89,14 @@ std::vector<GranularSynth::GrainPosition> GranularSynth::playNote(int midiNote)
 {
   std::vector<GrainPosition> grainPositions;
   if (mFftData == nullptr || mFftRanges == nullptr) return grainPositions;
-  int k = (mDiversity * MAX_DIVERSITY) + 1;
+  int k = juce::jmap(mDiversity, MIN_DIVERSITY, MAX_DIVERSITY);
   // look for times when frequency has high energy
   float noteFreq = juce::MidiMessage::getMidiNoteInHertz(midiNote);
   bool foundK = false;
   int numSearches = 1;
   while (!foundK)
   {
-    float variance = (noteFreq - juce::MidiMessage::getMidiNoteInHertz(midiNote - numSearches)) / 2.0f;
+    float variance = (noteFreq - juce::MidiMessage::getMidiNoteInHertz(midiNote - numSearches)) / 3.0f;
     juce::Range<float> freqRange = juce::Range<float>(noteFreq - variance, noteFreq + variance);
     for (int i = 0; i < mFftData->size(); ++i)
     {
@@ -113,7 +117,12 @@ std::vector<GranularSynth::GrainPosition> GranularSynth::playNote(int midiNote)
         float quality = maxVal / mFftRanges->globalRange.getEnd();
         if (quality > 0.25)
         {
-          grainPositions.push_back(GrainPosition((float)i / mFftData->size(), maxVal, quality));
+          // TODO: fix half semitone discrepancy
+          //float freqOffset = noteFreq - maxFreq;
+          int semiOffset = numSearches - 1;
+          if (maxFreq > noteFreq) semiOffset *= -1;
+          float pbRate = std::pow(TIMESTRETCH_RATIO, semiOffset);
+          grainPositions.push_back(GrainPosition((float)i / mFftData->size(), maxVal, quality, pbRate));
         }
       }
     }
@@ -130,7 +139,6 @@ std::vector<GranularSynth::GrainPosition> GranularSynth::playNote(int midiNote)
     std::sort(grainPositions.begin(), grainPositions.end());
     grainPositions = std::vector<GrainPosition>(grainPositions.begin() + grainPositions.size() - k, grainPositions.end());
   }
-
 
   mActiveNotes.add(GrainNote(midiNote, grainPositions));
   
@@ -149,6 +157,6 @@ void GranularSynth::generateGaussianEnvelope()
 {
   for (int i = 0; i < mGaussianEnv.size(); i++)
   {
-    mGaussianEnv[i] = std::exp(-0.5f * std::pow((i - ((511) / 2.0)) / (0.4 * ((511) / 2.0)), 2.0));
+    mGaussianEnv[i] = std::exp(-1.0f * std::pow((i - ((511) / 2.0)) / (0.4 * ((511) / 2.0)), 2.0));
   }
 }

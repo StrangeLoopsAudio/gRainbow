@@ -32,7 +32,7 @@ public:
 
 private:
   
-  static constexpr auto FFT_ORDER = 10;
+  static constexpr auto FFT_ORDER = 11;
   static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
   static constexpr auto KNOB_HEIGHT = 50;
   static constexpr auto LABEL_HEIGHT = 20;
@@ -48,7 +48,7 @@ private:
   juce::AudioFormatManager mFormatManager;
   juce::MidiMessageCollector mMidiCollector;
   juce::AudioBuffer<float> mFileBuffer;
-  std::unique_ptr<RubberBand::RubberBandStretcher> mTimeStretcher; // Timestretching boi
+  //std::unique_ptr<RubberBand::RubberBandStretcher> mTimeStretcher; // Timestretching boi
   GranularSynth mSynth;
 
   /* Global fft */

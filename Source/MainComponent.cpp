@@ -100,9 +100,9 @@ void MainComponent::timerCallback()
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
   mMidiCollector.reset(sampleRate);
-  mTimeStretcher = std::make_unique<RubberBand::RubberBandStretcher>
-    (sampleRate, 1, RubberBand::RubberBandStretcher::DefaultOptions, 1.0, 1.0);
-  mTimeStretcher->reset();
+  //mTimeStretcher = std::make_unique<RubberBand::RubberBandStretcher>
+  //  (sampleRate, 1, RubberBand::RubberBandStretcher::DefaultOptions, 1.0, 1.0);
+  //mTimeStretcher->reset();
 }
 
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
