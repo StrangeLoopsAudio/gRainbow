@@ -73,7 +73,7 @@ void ArcSpectrogram::run()
     if (threadShouldExit()) return;
     for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius)
     {
-      float arcLen = M_PI * curRadius * 2;
+      float arcLen = 2 * M_PI * curRadius;
       int pixPerEntry = arcLen / mFftData->size();
       float radPerc = 1.0f - ((curRadius - startRadius) / (float)bowWidth);
       auto skewedProportionY = 1.0f - std::exp(std::log(radPerc) * 0.2f);

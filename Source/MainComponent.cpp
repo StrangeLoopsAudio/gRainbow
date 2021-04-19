@@ -60,9 +60,9 @@ MainComponent::MainComponent():
   mLabelRate.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRate);
 
-
   addAndMakeVisible(mArcSpec);
 
+  mKeyboard.setAvailableRange(43, 79);
   addAndMakeVisible(mKeyboard);
 
   setSize(1200, 600);
@@ -154,7 +154,7 @@ void MainComponent::resized()
   auto titleSection = r.removeFromTop(LOGO_HEIGHT);
   mLogo.setBounds(titleSection.withSizeKeepingCentre(LOGO_HEIGHT * 2, titleSection.getHeight()));
   mBtnOpenFile.setBounds(titleSection.removeFromLeft(titleSection.getWidth() / 4));
-  mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT));
+  mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT).withSizeKeepingCentre(mKeyboard.getTotalKeyboardWidth(), KEYBOARD_HEIGHT));
   mArcSpec.setBounds(r.withWidth(r.getHeight() * 2)
     .withCentre(r.getPosition() + juce::Point<int>(r.getWidth() / 2, r.getHeight() / 2)));
   // Left Panel
@@ -201,11 +201,11 @@ void MainComponent::openNewFile()
       auto duration = (float)reader->lengthInSamples / reader->sampleRate;
       mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
       reader->read(&mFileBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
-      setAudioChannels(2, 2);
       
       updateFft(reader->sampleRate);
     }
   }
+  setAudioChannels(2, 2);
 }
 
 void MainComponent::updateFft(double sampleRate)
