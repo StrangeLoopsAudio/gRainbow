@@ -19,30 +19,24 @@ class GranularSynth : juce::Thread {
  public:
   typedef struct GrainPosition {
     float posRatio;
-    float gain;
-    float quality;  // 0-1 for gain quality
     float pbRate;  // timestretching ratio based on frequency offset from target
-    GrainPosition(float posRatio, float gain, float quality, float pbRate)
-        : posRatio(posRatio), gain(gain), quality(quality), pbRate(pbRate) {}
-    bool operator<(const GrainPosition& other) const {
-      return gain < other.gain;
-    }
+    GrainPosition(float posRatio, float pbRate)
+        : posRatio(posRatio), pbRate(pbRate) {}
   } GrainPosition;
 
   GranularSynth(juce::MidiKeyboardState& midiState);
   ~GranularSynth();
 
   void setFileBuffer(juce::AudioBuffer<float>* buffer,
-                     std::vector<std::vector<float>>* fftData,
-                     Utils::FftRanges* fftRanges, double sr);
+                     std::vector<Utils::HpsPitch>* hpsPitches,
+                     Utils::HpsRanges* fftRanges, double sr);
   void setDuration(float duration) { mDuration = duration; }
   void setRate(float rate) { mRate = rate; }
   void setDiversity(float diversity) { mDiversity = diversity; }
 
   void process(juce::AudioBuffer<float>* blockBuffer);
   std::vector<GrainPosition> playNote(
-      int midiNote);  // Returns vector of fft time positions where freq energy
-                      // is high
+      int midiNote);  // Returns vector of fft time positions using HPS to estimate pitch
   void stopNote(int midiNote);
 
   //==============================================================================
@@ -67,8 +61,8 @@ class GranularSynth : juce::Thread {
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
   juce::MidiKeyboardState& mMidiState;
-  std::vector<std::vector<float>>* mFftData = nullptr;
-  Utils::FftRanges* mFftRanges = nullptr;
+  std::vector<Utils::HpsPitch>* mHpsPitches = nullptr;
+  Utils::HpsRanges* mFftRanges = nullptr;
   std::vector<GrainNote> mActiveGrains;
   std::array<float, 512> mGaussianEnv;
 

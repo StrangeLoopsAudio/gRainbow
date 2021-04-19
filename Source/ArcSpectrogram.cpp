@@ -41,8 +41,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
         getHeight() / 4.0f, (1.5 * M_PI) + (gPos.posRatio * M_PI));
     auto endPoint = centerPoint.getPointOnCircumference(
         getHeight(), (1.5 * M_PI) + (gPos.posRatio * M_PI));
-    g.setColour(juce::Colours::red.interpolatedWith(juce::Colours::green,
-                                                    gPos.quality));
+    g.setColour(juce::Colours::white);
     float thickness = std::abs(1.0f - gPos.pbRate) * 10.0f;
     g.drawLine(juce::Line<float>(startPoint, endPoint), thickness + 1.0f);
   }
@@ -55,37 +54,37 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 void ArcSpectrogram::resized() {}
 
 void ArcSpectrogram::run() {
-  if (mFftData == nullptr || mFftRanges == nullptr) return;
+  if (mHpsData == nullptr || mHpsRanges == nullptr) return;
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
-  int height = juce::jmax(2.0f, bowWidth / (float)mFftData->at(0).size());
+  int height = juce::jmax(2.0f, bowWidth / (float)mHpsData->at(0).size());
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mSpectrogramImage =
       juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
   juce::Graphics g(mSpectrogramImage);
 
-  for (auto i = 0; i < mFftData->size(); ++i) {
+  for (auto i = 0; i < mHpsData->size(); ++i) {
     if (threadShouldExit()) return;
     for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius) {
       float arcLen = 2 * M_PI * curRadius;
-      int pixPerEntry = arcLen / mFftData->size();
+      int pixPerEntry = arcLen / mHpsData->size();
       float radPerc = 1.0f - ((curRadius - startRadius) / (float)bowWidth);
       auto skewedProportionY = 1.0f - std::exp(std::log(radPerc) * 0.2f);
       // auto skewedProportionY = 1.0f - radPerc;
       auto specRow =
           (size_t)juce::jmap(skewedProportionY, 0.0f,
-                             (float)(mFftData->at(i).size() / 2.0f) / 3.5f);
+                             (float)(mHpsData->at(i).size() / 2.0f) / 3.5f);
 
       auto rainbowColour = Utils::getRainbowColour(radPerc);
       g.setColour(rainbowColour);
 
       auto level = juce::jmap(
-          mFftData->at(i)[specRow], 0.0f,
-          juce::jmax(mFftRanges->globalRange.getEnd(), 1e-5f), 0.0f, 1.0f);
+          mHpsData->at(i)[specRow], 0.0f,
+          juce::jmax(mHpsRanges->globalMax, 1e-5f), 0.0f, 1.0f);
       g.setOpacity(level);
 
-      float xPerc = (float)i / mFftData->size();
+      float xPerc = (float)i / mHpsData->size();
       float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
       int width = pixPerEntry + 6;
 
@@ -105,9 +104,9 @@ void ArcSpectrogram::run() {
 }
 
 void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>* fftData,
-                                       Utils::FftRanges* fftRanges) {
-  mFftData = fftData;
-  mFftRanges = fftRanges;
+                                       Utils::HpsRanges* fftRanges) {
+  mHpsData = fftData;
+  mHpsRanges = fftRanges;
   startThread();  // Update spectrogram image
 }
 

@@ -32,8 +32,14 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   void timerCallback() override;
 
  private:
-  static constexpr auto FFT_ORDER = 12;
+  /* Algorithm Constants */
+  static constexpr auto FFT_ORDER = 11;
   static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
+  static constexpr auto MIN_MIDINOTE = 43;
+  static constexpr auto MAX_MIDINOTE = 91;
+  static constexpr auto NUM_HPS_HARMONICS = 3;
+
+  /* UI Layout */
   static constexpr auto KNOB_HEIGHT = 50;
   static constexpr auto LABEL_HEIGHT = 20;
   static constexpr auto KEYBOARD_HEIGHT = 100;
@@ -54,9 +60,12 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   juce::dsp::FFT mForwardFFT;
   std::array<float, FFT_SIZE * 2> mFftFrame;
   std::vector<std::vector<float>> mFftData;
-  Utils::FftRanges mFftRanges;
+  std::vector<std::vector<float>> mHpsData;
+  std::vector<Utils::HpsPitch> mHpsPitches;
+  Utils::HpsRanges mHpsRanges;
   void updateFft(double sampleRate);
-  void updateFftRanges();
+  void updateHpsData(double sampleRate);
+  void updateEstimatedPitches();
 
   /* UI Components */
   juce::ImageComponent mLogo;

@@ -27,8 +27,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void paint(juce::Graphics &) override;
   void resized() override;
 
-  void updateSpectrogram(std::vector<std::vector<float>> *fftData,
-                         Utils::FftRanges *fftRanges);
+  void updateSpectrogram(std::vector<std::vector<float>> *hpsData,
+                         Utils::HpsRanges *hpsRanges);
   void updatePositions(std::vector<GranularSynth::GrainPosition> gPositions);
 
   //============================================================================
@@ -36,8 +36,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
 
  private:
   std::vector<GranularSynth::GrainPosition> mPositions;
-  std::vector<std::vector<float>> *mFftData = nullptr;
-  Utils::FftRanges *mFftRanges = nullptr;
+  std::vector<std::vector<float>> *mHpsData = nullptr;
+  Utils::HpsRanges *mHpsRanges = nullptr;
 
   juce::Image mSpectrogramImage;
 

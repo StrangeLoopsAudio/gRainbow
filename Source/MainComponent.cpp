@@ -67,7 +67,7 @@ MainComponent::MainComponent()
 
   addAndMakeVisible(mArcSpec);
 
-  mKeyboard.setAvailableRange(43, 79);
+  mKeyboard.setAvailableRange(MIN_MIDINOTE, MAX_MIDINOTE);
   addAndMakeVisible(mKeyboard);
 
   setSize(1200, 600);
@@ -226,6 +226,7 @@ void MainComponent::updateFft(double sampleRate) {
   bool hasData = mFileBuffer.getNumSamples() > mFftFrame.size();
 
   mFftData.clear();
+  mHpsData.clear();
 
   while (hasData) {
     const float* startSample = &pBuffer[curSample];
@@ -241,40 +242,76 @@ void MainComponent::updateFft(double sampleRate) {
 
     // Add fft data to our master array
     mFftData.push_back(std::vector<float>(mFftFrame.begin(), mFftFrame.end()));
+    mHpsData.push_back(std::vector<float>(mFftFrame.begin(), mFftFrame.end()));
 
     curSample += mFftFrame.size();
     if (curSample > mFileBuffer.getNumSamples()) hasData = false;
   }
-  updateFftRanges();
-  mArcSpec.updateSpectrogram(&mFftData, &mFftRanges);
-  mSynth.setFileBuffer(&mFileBuffer, &mFftData, &mFftRanges, sampleRate);
+  updateHpsData(sampleRate);
+  updateEstimatedPitches();
+  mArcSpec.updateSpectrogram(&mHpsData, &mHpsRanges);
+  mSynth.setFileBuffer(&mFileBuffer, &mHpsPitches, &mHpsRanges, sampleRate);
 }
 
-void MainComponent::updateFftRanges() {
-  if (mFftData.empty()) return;
-  mFftRanges.frameRanges.clear();
-  float totalMin = std::numeric_limits<float>::max();
+/* Performs HPS on the FFT data for pitch tracking purposes */
+void MainComponent::updateHpsData(double sampleRate) {
+  mHpsRanges.frameMax.clear();
   float totalMax = std::numeric_limits<float>::min();
-  for (auto i = 0; i < mFftData.size(); ++i) {
-    float curMin = std::numeric_limits<float>::max();
-    float curMax = std::numeric_limits<float>::min();
-    for (auto j = 0; j < mFftData[i].size(); ++j) {
-      auto val = mFftData[i][j];
-      if (val < curMin) {
-        if (val < totalMin) {
-          totalMin = val;
-        }
-        curMin = val;
+
+  int minIndex = juce::roundToInt(
+      (juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) * FFT_SIZE) /
+      sampleRate);
+  int maxIndex = juce::roundToInt(
+      (juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) * FFT_SIZE) /
+      sampleRate);
+  minIndex = juce::jlimit(0, FFT_SIZE, minIndex);
+  maxIndex = juce::jlimit(0, FFT_SIZE, maxIndex);
+  int maxHIndex = FFT_SIZE / NUM_HPS_HARMONICS;
+  if (maxIndex < maxHIndex) maxHIndex = maxIndex;
+  for (int frame = 0; frame < mHpsData.size(); ++frame) {
+    int peakIndex = minIndex;
+    // Perform harmonic doubling
+    for (int i = minIndex; i < maxHIndex; ++i) {
+      for (int j = 1; j <= NUM_HPS_HARMONICS; ++j) {
+        mHpsData[frame][i] *= mHpsData[frame][i * j];
       }
-      if (val > curMax) {
-        if (val > totalMax) {
-          totalMax = val;
-        }
-        curMax = val;
+      if (mHpsData[frame][i] > mHpsData[frame][peakIndex]) {
+        peakIndex = i;
       }
     }
-    mFftRanges.frameRanges.push_back(juce::Range<float>(curMin, curMax));
+    // Correct octave errors
+    /* int peakIndex2 = minIndex;
+    int maxsearch = peakIndex * 3 / 4;
+    for (int i = minIndex + 1; i < maxsearch; i++) {
+      if (mHpsData[frame][i] > mHpsData[frame][peakIndex2]) {
+        peakIndex2 = i;
+      }
+    }
+    if (std::abs(peakIndex2 * 2 - peakIndex) < 4) {
+      if (mHpsData[frame][peakIndex2] / mHpsData[frame][peakIndex] > 0.2) {
+        peakIndex = peakIndex2;
+      }
+    } */
+
+    float maxVal = mHpsData[frame][peakIndex];
+    float peakFreq = (peakIndex * sampleRate) / FFT_SIZE;
+    mHpsPitches.push_back(Utils::HpsPitch(peakFreq, maxVal));
+
+    mHpsRanges.frameMax.push_back(maxVal);
+    if (maxVal > totalMax) {
+      totalMax = maxVal;
+    }
   }
-  mFftRanges.globalRange.setStart(totalMin);
-  mFftRanges.globalRange.setEnd(totalMax);
+  mHpsRanges.globalMax = totalMax;
+
+}
+
+void MainComponent::updateEstimatedPitches() {
+  for (int i = 0; i < mHpsPitches.size(); i++) {
+    if (mHpsPitches[i].freq < juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) ||
+        mHpsPitches[i].freq >
+            juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE))
+      mHpsPitches[i].freq = 0;
+    DBG("time: " << i << ", pitch: " << mHpsPitches[i].freq);
+  }
 }

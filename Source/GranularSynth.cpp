@@ -64,15 +64,15 @@ void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer) {
 }
 
 void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer,
-                                  std::vector<std::vector<float>>* fftData,
-                                  Utils::FftRanges* fftRanges, double sr) {
+                                  std::vector<Utils::HpsPitch>* hpsPitches,
+                                  Utils::HpsRanges* fftRanges, double sr) {
   mFileBuffer = buffer;
-  mFftData = fftData;
+  mHpsPitches = hpsPitches;
   mFftRanges = fftRanges;
   mSampleRate = sr;
 }
 
-std::vector<GranularSynth::GrainPosition> GranularSynth::playNote(
+/* std::vector<GranularSynth::GrainPosition> GranularSynth::playNote(
     int midiNote) {
   std::vector<GrainPosition> grainPositions;
   if (mFftData == nullptr || mFftRanges == nullptr) return grainPositions;
@@ -129,7 +129,50 @@ std::vector<GranularSynth::GrainPosition> GranularSynth::playNote(
   }
 
   mActiveNotes.add(GrainNote(midiNote, grainPositions));
+} */
 
+std::vector<GranularSynth::GrainPosition> GranularSynth::playNote(
+  int midiNote) {
+  std::vector<GrainPosition> grainPositions;
+  if (mHpsPitches == nullptr) return grainPositions;
+  int k = juce::jmap(mDiversity, MIN_DIVERSITY, MAX_DIVERSITY);
+  // look for times when frequency has high energy
+  float noteFreq = juce::MidiMessage::getMidiNoteInHertz(midiNote);
+  bool foundK = false;
+  int numSearches = 1;
+  while (!foundK) {
+    float variance = (noteFreq - juce::MidiMessage::getMidiNoteInHertz(
+                                     midiNote - numSearches)) /
+                     2.0f;
+    juce::Range<float> freqRange =
+        juce::Range<float>(noteFreq - variance, noteFreq + variance);
+    for (int i = 0; i < mHpsPitches->size(); ++i) {
+      float pitch = mHpsPitches->at(i).freq;
+      if (freqRange.contains(pitch)) {
+        int semiOffset = numSearches - 1;
+        float freqDiff = juce::jmap(pitch, freqRange.getStart(),
+                                    freqRange.getEnd(), -0.5f, 0.5f);
+        freqDiff *= -1.0f;
+        if (pitch > noteFreq) semiOffset *= -1;
+        float pbRate = std::pow(TIMESTRETCH_RATIO, semiOffset + freqDiff);
+        grainPositions.push_back(
+            GrainPosition((float)i / mHpsPitches->size(), pbRate));
+      }
+    }
+    if (grainPositions.size() >= k) foundK = true;
+    numSearches++;
+    if (numSearches > 5) break;
+  }
+
+  if (grainPositions.empty()) return grainPositions;
+
+  if (grainPositions.size() > k) {
+    grainPositions = std::vector<GrainPosition>(
+        grainPositions.begin(),
+        grainPositions.begin() + k);
+  }
+
+  mActiveNotes.add(GrainNote(midiNote, grainPositions));
   return grainPositions;
 }
 
