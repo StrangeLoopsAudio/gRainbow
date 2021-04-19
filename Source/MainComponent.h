@@ -1,8 +1,9 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "GranularSynth.h"
+
 #include "ArcSpectrogram.h"
+#include "GranularSynth.h"
 #include "RainbowLookAndFeel.h"
 #include "Utils.h"
 
@@ -11,16 +12,16 @@
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent : public juce::AudioAppComponent, juce::Timer
-{
-public:
+class MainComponent : public juce::AudioAppComponent, juce::Timer {
+ public:
   //==============================================================================
   MainComponent();
   ~MainComponent() override;
 
   //==============================================================================
   void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
-  void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override;
+  void getNextAudioBlock(
+      const juce::AudioSourceChannelInfo& bufferToFill) override;
   void releaseResources() override;
 
   //==============================================================================
@@ -30,8 +31,7 @@ public:
   //==============================================================================
   void timerCallback() override;
 
-private:
-  
+ private:
   static constexpr auto FFT_ORDER = 12;
   static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
   static constexpr auto KNOB_HEIGHT = 50;
@@ -48,7 +48,6 @@ private:
   juce::AudioFormatManager mFormatManager;
   juce::MidiMessageCollector mMidiCollector;
   juce::AudioBuffer<float> mFileBuffer;
-  //std::unique_ptr<RubberBand::RubberBandStretcher> mTimeStretcher; // Timestretching boi
   GranularSynth mSynth;
 
   /* Global fft */
@@ -72,7 +71,7 @@ private:
   juce::Label mLabelDuration;
   juce::Slider mSliderRate;
   juce::Label mLabelRate;
-  
+
   void openNewFile();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
