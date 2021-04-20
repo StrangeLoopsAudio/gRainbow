@@ -62,8 +62,10 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   std::vector<std::vector<float>> mFftData;
   std::vector<std::vector<float>> mHpsData;
   std::vector<Utils::HpsPitch> mHpsPitches;
-  Utils::HpsRanges mHpsRanges;
+  Utils::SpecRanges mHpsRanges;
+  Utils::SpecRanges mFftRanges;
   void updateFft(double sampleRate);
+  void updateFftRanges();
   void updateHpsData(double sampleRate);
   void updateEstimatedPitches();
 

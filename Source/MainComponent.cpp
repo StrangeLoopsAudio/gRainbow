@@ -247,10 +247,32 @@ void MainComponent::updateFft(double sampleRate) {
     curSample += mFftFrame.size();
     if (curSample > mFileBuffer.getNumSamples()) hasData = false;
   }
+  updateFftRanges();
   updateHpsData(sampleRate);
-  updateEstimatedPitches();
-  mArcSpec.updateSpectrogram(&mHpsData, &mHpsRanges);
+  mArcSpec.updateSpectrogram(&mFftData, &mFftRanges);
   mSynth.setFileBuffer(&mFileBuffer, &mHpsPitches, &mHpsRanges, sampleRate);
+}
+
+void MainComponent::updateFftRanges() {
+  mFftRanges.frameMax.clear();
+  float totalMax = std::numeric_limits<float>::min();
+
+  for (int frame = 0; frame < mFftData.size(); ++frame) {
+    int peakIndex = 0;
+    // Perform harmonic doubling
+    for (int i = 0; i < mFftData[frame].size(); ++i) {
+      if (mFftData[frame][i] > mFftData[frame][peakIndex]) {
+        peakIndex = i;
+      }
+    }
+
+    float maxVal = mFftData[frame][peakIndex];
+    mFftRanges.frameMax.push_back(maxVal);
+    if (maxVal > totalMax) {
+      totalMax = maxVal;
+    }
+  }
+  mFftRanges.globalMax = totalMax;
 }
 
 /* Performs HPS on the FFT data for pitch tracking purposes */
@@ -280,7 +302,7 @@ void MainComponent::updateHpsData(double sampleRate) {
       }
     }
     // Correct octave errors
-    /* int peakIndex2 = minIndex;
+    int peakIndex2 = minIndex;
     int maxsearch = peakIndex * 3 / 4;
     for (int i = minIndex + 1; i < maxsearch; i++) {
       if (mHpsData[frame][i] > mHpsData[frame][peakIndex2]) {
@@ -291,7 +313,7 @@ void MainComponent::updateHpsData(double sampleRate) {
       if (mHpsData[frame][peakIndex2] / mHpsData[frame][peakIndex] > 0.2) {
         peakIndex = peakIndex2;
       }
-    } */
+    }
 
     float maxVal = mHpsData[frame][peakIndex];
     float peakFreq = (peakIndex * sampleRate) / FFT_SIZE;
@@ -303,15 +325,15 @@ void MainComponent::updateHpsData(double sampleRate) {
     }
   }
   mHpsRanges.globalMax = totalMax;
-
+  updateEstimatedPitches();
 }
 
 void MainComponent::updateEstimatedPitches() {
   for (int i = 0; i < mHpsPitches.size(); i++) {
     if (mHpsPitches[i].freq < juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) ||
-        mHpsPitches[i].freq >
-            juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE))
+        mHpsPitches[i].freq > juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) ||
+        mHpsPitches[i].amplitude < mHpsRanges.globalMax / 10.0f) {
       mHpsPitches[i].freq = 0;
-    DBG("time: " << i << ", pitch: " << mHpsPitches[i].freq);
+    }
   }
 }

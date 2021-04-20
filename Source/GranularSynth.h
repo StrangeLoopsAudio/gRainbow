@@ -29,7 +29,7 @@ class GranularSynth : juce::Thread {
 
   void setFileBuffer(juce::AudioBuffer<float>* buffer,
                      std::vector<Utils::HpsPitch>* hpsPitches,
-                     Utils::HpsRanges* fftRanges, double sr);
+                     Utils::SpecRanges* fftRanges, double sr);
   void setDuration(float duration) { mDuration = duration; }
   void setRate(float rate) { mRate = rate; }
   void setDiversity(float diversity) { mDiversity = diversity; }
@@ -48,8 +48,8 @@ class GranularSynth : juce::Thread {
   static constexpr auto MIN_DURATION = 0.05f;
   static constexpr auto MIN_DIVERSITY = 1.f;
   static constexpr auto MAX_DIVERSITY = 5.f;
-  static constexpr auto MIN_RATE = 1.f;  // Grains per second
-  static constexpr auto MAX_RATE = 20.f;
+  static constexpr auto MIN_RATE = 10.f;  // Grains per second
+  static constexpr auto MAX_RATE = 40.f;
 
   typedef struct GrainNote {
     int midiNote;
@@ -62,7 +62,7 @@ class GranularSynth : juce::Thread {
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
   juce::MidiKeyboardState& mMidiState;
   std::vector<Utils::HpsPitch>* mHpsPitches = nullptr;
-  Utils::HpsRanges* mFftRanges = nullptr;
+  Utils::SpecRanges* mFftRanges = nullptr;
   std::vector<GrainNote> mActiveGrains;
   std::array<float, 512> mGaussianEnv;
 

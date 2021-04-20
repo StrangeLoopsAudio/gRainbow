@@ -104,7 +104,7 @@ void ArcSpectrogram::run() {
 }
 
 void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>* fftData,
-                                       Utils::HpsRanges* fftRanges) {
+                                       Utils::SpecRanges* fftRanges) {
   mHpsData = fftData;
   mHpsRanges = fftRanges;
   startThread();  // Update spectrogram image
