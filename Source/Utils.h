@@ -63,14 +63,9 @@ class Utils {
     return juce::Colour(r * 255.0f, g * 255.0f, b * 255.0f);
   }
 
-  typedef struct SpecRanges {
-    std::vector<float> frameMax;
-    float globalMax;
-  } FftRanges;
-
   typedef struct HpsPitch {
     float freq;
-    float amplitude;
-    HpsPitch(float freq, float amplitude) : freq(freq), amplitude(amplitude) {}
+    float gain;
+    HpsPitch(float freq, float amplitude) : freq(freq), gain(amplitude) {}
   } HpsPitch;
 };

@@ -20,6 +20,39 @@ void TransientDetector::loadBuffer(juce::AudioBuffer<float>& fileBuffer) {
   for (int i = 0; i < PARAM_M; ++i) {
     iterateFunctions();
   }
+
+  // Normalize P
+  float totalMax = std::numeric_limits<float>::min();
+  for (int frame = 0; frame < mP.size(); ++frame) {
+    int peakIndex = 0;
+    // Perform harmonic doubling
+    for (int i = 0; i < mP[frame].size(); ++i) {
+      if (mP[frame][i] > mP[frame][peakIndex]) {
+        peakIndex = i;
+      }
+    }
+
+    float maxVal = mP[frame][peakIndex];
+    if (maxVal > totalMax) {
+      totalMax = maxVal;
+    }
+  }
+  for (int i = 0; i < mP.size(); ++i) {
+    for (int j = 0; j < mP[i].size(); ++j) {
+      mP[i][j] /= totalMax;
+    }
+  }
+
+  // Extract transient booleans
+  for (int i = 0; i < mTransientMarkers.size(); ++i) {
+    for (int j = 0; j < mTransientMarkers[i].size(); ++j) {
+      if (mP[i][j] > 0.5f) {
+        mTransientMarkers[i][j] = 1.0f;
+      }
+    }
+  }
+
+  DBG("all done here-----------------------");
   retrieveTransients();
 }
 
@@ -35,6 +68,7 @@ void TransientDetector::updateFft(juce::AudioBuffer<float>& fileBuffer) {
   mLambda.clear();
   mSigmaGamma.clear();
   mP.clear();
+  mTransientMarkers.clear();
 
   while (hasData) {
     const float* startSample = &pBuffer[curSample];
@@ -58,6 +92,7 @@ void TransientDetector::updateFft(juce::AudioBuffer<float>& fileBuffer) {
     mF.push_back(std::vector<float>(mFftFrame.size(), 0.0f));
     mLambda.push_back(std::vector<float>(mFftFrame.size(), 0.0f));
     mP.push_back(std::vector<float>(mFftFrame.size(), 0.0f));
+    mTransientMarkers.push_back(std::vector<float>(mFftFrame.size(), 0.0f));
 
     curSample += mFftFrame.size();
     if (curSample > fileBuffer.getNumSamples()) hasData = false;
@@ -88,7 +123,7 @@ void TransientDetector::iterateFunctions() {
   }
   // Update Sigma Gamma
   for (int i = 0; i < mSigmaGamma.size(); ++i) {
-    float sum = 0.0f;
+    int sum = 0;
     for (int j = 0; j < FFT_SIZE; ++j) {
       sum += GAMMA(i, j);
     }
@@ -109,12 +144,13 @@ void TransientDetector::iterateFunctions() {
 }
 
 void TransientDetector::retrieveTransients() {
-  // TODO:
+  
 }
 
 float TransientDetector::F(int frame, int bin) {
   float sum = 0.0f;
   for (int i = bin - PARAM_V; i <= bin + PARAM_V; ++i) {
+    if (i < 1 || i > mX.size() - 2) continue;
     float tOnset = mX[i][bin] - mX[i - 1][bin];
     float tOffset = mX[i][bin] - mX[i + 1][bin];
     sum += (std::signbit(tOnset) ? tOnset : 0) +
@@ -126,6 +162,7 @@ float TransientDetector::F(int frame, int bin) {
 float TransientDetector::LAMBDA(int frame, int bin) {
   float fSum = 0.0f;
   for (int i = frame - PARAM_TAU; i <= frame + PARAM_TAU; ++i) {
+    if (i < 0 || i > mF.size() - 1) continue;
     fSum += mF[i][bin];
   }
   return fSum / (2 * PARAM_TAU + 1);
@@ -136,8 +173,9 @@ int TransientDetector::GAMMA(int frame, int bin) {
 }
 
 float TransientDetector::P(int frame, int bin) {
-  return (mSigmaGamma[frame] >= PARAM_THRESH) ? (PARAM_DELTA * mX[frame][bin])
-                                             : mP[frame][bin];
+  return mP[frame][bin] + (mSigmaGamma[frame] >= PARAM_THRESH)
+             ? (PARAM_DELTA * mX[frame][bin])
+             : 0.0f;
 }
 
 float TransientDetector::XMod(int frame, int bin) {

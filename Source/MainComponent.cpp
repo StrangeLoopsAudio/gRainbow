@@ -21,7 +21,7 @@ MainComponent::MainComponent()
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
 
-  /* Knobs */
+  /* -------------- Knobs --------------*/
 
   /* Diversity */
   mSliderDiversity.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
@@ -103,6 +103,7 @@ void MainComponent::timerCallback() {
 //==============================================================================
 void MainComponent::prepareToPlay(int samplesPerBlockExpected,
                                   double sampleRate) {
+  mSampleRate = sampleRate;
   mMidiCollector.reset(sampleRate);
   // mTimeStretcher = std::make_unique<RubberBand::RubberBandStretcher>
   //  (sampleRate, 1,
@@ -207,19 +208,33 @@ void MainComponent::openNewFile() {
     std::unique_ptr<juce::AudioFormatReader> reader(
         mFormatManager.createReaderFor(file));
 
+    
+
     if (reader.get() != nullptr) {
       auto duration = (float)reader->lengthInSamples / reader->sampleRate;
       mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
-      reader->read(&mFileBuffer, 0, (int)reader->lengthInSamples, 0, true,
-                   true);
 
-      updateFft(reader->sampleRate);
+      juce::AudioBuffer<float> tempBuffer = juce::AudioBuffer<float>(reader->numChannels, (int)reader->lengthInSamples);
+      reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true,
+                   true);
+      juce::ScopedPointer<juce::LagrangeInterpolator> resampler =
+          new juce::LagrangeInterpolator();
+      double ratio = reader->sampleRate / mSampleRate;
+      const float** inputs = tempBuffer.getArrayOfReadPointers();
+      float** outputs = mFileBuffer.getArrayOfWritePointers();
+      for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
+        resampler->reset();
+        resampler->process(ratio, inputs[c], outputs[c],
+                           mFileBuffer.getNumSamples());
+      }
+
+      updateFft();    
     }
   }
   setAudioChannels(2, 2);
 }
 
-void MainComponent::updateFft(double sampleRate) {
+void MainComponent::updateFft() {
   const float* pBuffer = mFileBuffer.getReadPointer(0);
   int curSample = 0;
 
@@ -237,7 +252,6 @@ void MainComponent::updateFft(double sampleRate) {
     mFftFrame.fill(0.0f);
     memcpy(mFftFrame.data(), startSample, numSamples);
 
-    // then render our FFT data..
     mForwardFFT.performFrequencyOnlyForwardTransform(mFftFrame.data());
 
     // Add fft data to our master array
@@ -247,14 +261,14 @@ void MainComponent::updateFft(double sampleRate) {
     curSample += mFftFrame.size();
     if (curSample > mFileBuffer.getNumSamples()) hasData = false;
   }
-  updateFftRanges();
-  updateHpsData(sampleRate);
-  mArcSpec.updateSpectrogram(&mFftData, &mFftRanges);
-  mSynth.setFileBuffer(&mFileBuffer, &mHpsPitches, &mHpsRanges, sampleRate);
+  normalizeFft();
+  //mTransientDetector.loadBuffer(mFileBuffer); 
+  updateHpsData();
+  mArcSpec.updateSpectrogram(&mFftData);
+  mSynth.setFileBuffer(&mFileBuffer, &mHpsPitches, mSampleRate);
 }
 
-void MainComponent::updateFftRanges() {
-  mFftRanges.frameMax.clear();
+void MainComponent::normalizeFft() {
   float totalMax = std::numeric_limits<float>::min();
 
   for (int frame = 0; frame < mFftData.size(); ++frame) {
@@ -267,25 +281,28 @@ void MainComponent::updateFftRanges() {
     }
 
     float maxVal = mFftData[frame][peakIndex];
-    mFftRanges.frameMax.push_back(maxVal);
     if (maxVal > totalMax) {
       totalMax = maxVal;
     }
   }
-  mFftRanges.globalMax = totalMax;
+  // Normalize fft data
+  for (int i = 0; i < mFftData.size(); ++i) {
+    for (int j = 0; j < mFftData[i].size(); ++j) {
+      mFftData[i][j] /= totalMax;
+    }
+  }
 }
 
 /* Performs HPS on the FFT data for pitch tracking purposes */
-void MainComponent::updateHpsData(double sampleRate) {
-  mHpsRanges.frameMax.clear();
+void MainComponent::updateHpsData() {
   float totalMax = std::numeric_limits<float>::min();
 
   int minIndex = juce::roundToInt(
       (juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) * FFT_SIZE) /
-      sampleRate);
+      mSampleRate);
   int maxIndex = juce::roundToInt(
       (juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) * FFT_SIZE) /
-      sampleRate);
+      mSampleRate);
   minIndex = juce::jlimit(0, FFT_SIZE, minIndex);
   maxIndex = juce::jlimit(0, FFT_SIZE, maxIndex);
   int maxHIndex = FFT_SIZE / NUM_HPS_HARMONICS;
@@ -316,23 +333,36 @@ void MainComponent::updateHpsData(double sampleRate) {
     }
 
     float maxVal = mHpsData[frame][peakIndex];
-    float peakFreq = (peakIndex * sampleRate) / FFT_SIZE;
-    mHpsPitches.push_back(Utils::HpsPitch(peakFreq, maxVal));
+    float peakFreq = (peakIndex * mSampleRate) / FFT_SIZE;
+    auto newPitch = Utils::HpsPitch(peakFreq, maxVal);
+    if (newPitch.freq <
+            juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) ||
+        newPitch.freq >
+            juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) ||
+        newPitch.gain < 1.0f / 10.0f) {
+      newPitch.freq = 0;
+    }
+    mHpsPitches.push_back(newPitch);
 
-    mHpsRanges.frameMax.push_back(maxVal);
     if (maxVal > totalMax) {
       totalMax = maxVal;
     }
   }
-  mHpsRanges.globalMax = totalMax;
-  updateEstimatedPitches();
-}
+  // Normalize hps data
+  for (int i = 0; i < mHpsData.size(); ++i) {
+    for (int j = 0; j < mHpsData[i].size(); ++j) {
+      mHpsData[i][j] /= totalMax;
+    }
+  }
 
-void MainComponent::updateEstimatedPitches() {
+  // Normlize pitch amplitudes and discard low values
   for (int i = 0; i < mHpsPitches.size(); i++) {
-    if (mHpsPitches[i].freq < juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) ||
-        mHpsPitches[i].freq > juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) ||
-        mHpsPitches[i].amplitude < mHpsRanges.globalMax / 10.0f) {
+    mHpsPitches[i].gain /= totalMax;
+    if (mHpsPitches[i].freq <
+            juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) ||
+        mHpsPitches[i].freq >
+            juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) ||
+        mHpsPitches[i].gain < 0.1) {
       mHpsPitches[i].freq = 0;
     }
   }

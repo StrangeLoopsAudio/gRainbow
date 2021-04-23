@@ -6,6 +6,7 @@
 #include "GranularSynth.h"
 #include "RainbowLookAndFeel.h"
 #include "Utils.h"
+#include "TransientDetector.h"
 
 //==============================================================================
 /*
@@ -53,21 +54,20 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
   juce::MidiMessageCollector mMidiCollector;
+  double mSampleRate;
   juce::AudioBuffer<float> mFileBuffer;
   GranularSynth mSynth;
 
   /* Global fft */
   juce::dsp::FFT mForwardFFT;
+  TransientDetector mTransientDetector;
   std::array<float, FFT_SIZE * 2> mFftFrame;
   std::vector<std::vector<float>> mFftData;
   std::vector<std::vector<float>> mHpsData;
   std::vector<Utils::HpsPitch> mHpsPitches;
-  Utils::SpecRanges mHpsRanges;
-  Utils::SpecRanges mFftRanges;
-  void updateFft(double sampleRate);
-  void updateFftRanges();
-  void updateHpsData(double sampleRate);
-  void updateEstimatedPitches();
+  void updateFft();
+  void normalizeFft();
+  void updateHpsData();
 
   /* UI Components */
   juce::ImageComponent mLogo;

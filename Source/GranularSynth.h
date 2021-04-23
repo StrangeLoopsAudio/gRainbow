@@ -20,8 +20,12 @@ class GranularSynth : juce::Thread {
   typedef struct GrainPosition {
     float posRatio;
     float pbRate;  // timestretching ratio based on frequency offset from target
-    GrainPosition(float posRatio, float pbRate)
-        : posRatio(posRatio), pbRate(pbRate) {}
+    float gain; // Gain of spectrogram at that position
+    GrainPosition(float posRatio, float pbRate, float gain)
+        : posRatio(posRatio), pbRate(pbRate), gain(gain) {}
+    bool operator<(const GrainPosition& other) const {
+      return gain < other.gain;
+    }
   } GrainPosition;
 
   GranularSynth(juce::MidiKeyboardState& midiState);
@@ -29,7 +33,7 @@ class GranularSynth : juce::Thread {
 
   void setFileBuffer(juce::AudioBuffer<float>* buffer,
                      std::vector<Utils::HpsPitch>* hpsPitches,
-                     Utils::SpecRanges* fftRanges, double sr);
+                     double sr);
   void setDuration(float duration) { mDuration = duration; }
   void setRate(float rate) { mRate = rate; }
   void setDiversity(float diversity) { mDiversity = diversity; }
@@ -62,7 +66,6 @@ class GranularSynth : juce::Thread {
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
   juce::MidiKeyboardState& mMidiState;
   std::vector<Utils::HpsPitch>* mHpsPitches = nullptr;
-  Utils::SpecRanges* mFftRanges = nullptr;
   std::vector<GrainNote> mActiveGrains;
   std::array<float, 512> mGaussianEnv;
 

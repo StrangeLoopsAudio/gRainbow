@@ -54,37 +54,34 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 void ArcSpectrogram::resized() {}
 
 void ArcSpectrogram::run() {
-  if (mHpsData == nullptr || mHpsRanges == nullptr) return;
+  if (mSpecData == nullptr) return;
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
-  int height = juce::jmax(2.0f, bowWidth / (float)mHpsData->at(0).size());
+  int height = juce::jmax(2.0f, bowWidth / (float)mSpecData->at(0).size());
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mSpectrogramImage =
       juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
   juce::Graphics g(mSpectrogramImage);
 
-  for (auto i = 0; i < mHpsData->size(); ++i) {
+  for (auto i = 0; i < mSpecData->size(); ++i) {
     if (threadShouldExit()) return;
     for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius) {
       float arcLen = 2 * M_PI * curRadius;
-      int pixPerEntry = arcLen / mHpsData->size();
+      int pixPerEntry = arcLen / mSpecData->size();
       float radPerc = 1.0f - ((curRadius - startRadius) / (float)bowWidth);
       auto skewedProportionY = 1.0f - std::exp(std::log(radPerc) * 0.2f);
       // auto skewedProportionY = 1.0f - radPerc;
       auto specRow =
           (size_t)juce::jmap(skewedProportionY, 0.0f,
-                             (float)(mHpsData->at(i).size() / 2.0f) / 3.5f);
+                             (float)(mSpecData->at(i).size() / 2.0f) / 3.5f);
 
       auto rainbowColour = Utils::getRainbowColour(radPerc);
       g.setColour(rainbowColour);
 
-      auto level = juce::jmap(
-          mHpsData->at(i)[specRow], 0.0f,
-          juce::jmax(mHpsRanges->globalMax, 1e-5f), 0.0f, 1.0f);
-      g.setOpacity(level);
+      g.setOpacity(juce::jlimit(0.0f, 1.0f, mSpecData->at(i)[specRow]));
 
-      float xPerc = (float)i / mHpsData->size();
+      float xPerc = (float)i / mSpecData->size();
       float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
       int width = pixPerEntry + 6;
 
@@ -103,10 +100,8 @@ void ArcSpectrogram::run() {
   }
 }
 
-void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>* fftData,
-                                       Utils::SpecRanges* fftRanges) {
-  mHpsData = fftData;
-  mHpsRanges = fftRanges;
+void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>* fftData) {
+  mSpecData = fftData;
   startThread();  // Update spectrogram image
 }
 
