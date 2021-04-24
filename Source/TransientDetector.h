@@ -35,9 +35,9 @@ class TransientDetector {
  private:
   static constexpr auto FFT_ORDER = 9;
   static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
-  static constexpr auto PARAM_THRESHOLD = 2.0f;
+  static constexpr auto PARAM_THRESHOLD = 2.5f;
   static constexpr auto PARAM_SPREAD = 3;
-  static constexpr auto PARAM_ATTACK_LOCK = 4;
+  static constexpr auto PARAM_ATTACK_LOCK = 10;
 
   juce::dsp::FFT mForwardFFT;
   std::array<float, FFT_SIZE * 2> mFftFrame;

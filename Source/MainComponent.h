@@ -7,6 +7,7 @@
 #include "RainbowLookAndFeel.h"
 #include "Utils.h"
 #include "TransientDetector.h"
+#include "PitchDetector.h"
 
 //==============================================================================
 /*
@@ -34,11 +35,8 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
 
  private:
   /* Algorithm Constants */
-  static constexpr auto FFT_ORDER = 11;
+  static constexpr auto FFT_ORDER = 10;
   static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
-  static constexpr auto MIN_MIDINOTE = 43;
-  static constexpr auto MAX_MIDINOTE = 91;
-  static constexpr auto NUM_HPS_HARMONICS = 3;
 
   /* UI Layout */
   static constexpr auto KNOB_HEIGHT = 50;
@@ -61,13 +59,12 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   /* Global fft */
   juce::dsp::FFT mForwardFFT;
   TransientDetector mTransientDetector;
+  PitchDetector mPitchDetector;
   std::array<float, FFT_SIZE * 2> mFftFrame;
   std::vector<std::vector<float>> mFftData;
   std::vector<std::vector<float>> mHpsData;
-  std::vector<Utils::HpsPitch> mHpsPitches;
   void updateFft();
   void normalizeFft();
-  void updateHpsData();
 
   /* UI Components */
   juce::ImageComponent mLogo;

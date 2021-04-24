@@ -14,6 +14,7 @@
 
 #include "Grain.h"
 #include "Utils.h"
+#include "PitchDetector.h"
 
 class GranularSynth : juce::Thread {
  public:
@@ -24,7 +25,8 @@ class GranularSynth : juce::Thread {
     GrainPosition(float posRatio, float pbRate, float gain)
         : posRatio(posRatio), pbRate(pbRate), gain(gain) {}
     bool operator<(const GrainPosition& other) const {
-      return gain < other.gain;
+      bool isFurther = (std::abs(1.0f - pbRate) > std::abs(1.0f - other.pbRate));
+      return isFurther;
     }
   } GrainPosition;
 
@@ -32,7 +34,7 @@ class GranularSynth : juce::Thread {
   ~GranularSynth();
 
   void setFileBuffer(juce::AudioBuffer<float>* buffer,
-                     std::vector<Utils::HpsPitch>* hpsPitches,
+                     std::vector<PitchDetector::Pitch>* pitches,
                      double sr);
   void setDuration(float duration) { mDuration = duration; }
   void setRate(float rate) { mRate = rate; }
@@ -65,7 +67,7 @@ class GranularSynth : juce::Thread {
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
   juce::MidiKeyboardState& mMidiState;
-  std::vector<Utils::HpsPitch>* mHpsPitches = nullptr;
+  std::vector<PitchDetector::Pitch>* mPitches = nullptr;
   std::vector<GrainNote> mActiveGrains;
   std::array<float, 512> mGaussianEnv;
 

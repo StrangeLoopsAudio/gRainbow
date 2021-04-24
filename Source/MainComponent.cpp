@@ -67,7 +67,8 @@ MainComponent::MainComponent()
 
   addAndMakeVisible(mArcSpec);
 
-  mKeyboard.setAvailableRange(MIN_MIDINOTE, MAX_MIDINOTE);
+  mKeyboard.setAvailableRange(PitchDetector::MIN_MIDINOTE,
+                              PitchDetector::MAX_MIDINOTE);
   addAndMakeVisible(mKeyboard);
 
   setSize(1200, 600);
@@ -263,9 +264,9 @@ void MainComponent::updateFft() {
   }
   normalizeFft();
   mTransientDetector.loadBuffer(mFileBuffer);
-  updateHpsData();
+  mPitchDetector.loadBuffer(mFileBuffer, mSampleRate);
   mArcSpec.updateSpectrogram(&mFftData, &mTransientDetector.getTransients());
-  mSynth.setFileBuffer(&mFileBuffer, &mHpsPitches, mSampleRate);
+  mSynth.setFileBuffer(&mFileBuffer, &mPitchDetector.getPitches(), mSampleRate);
 }
 
 void MainComponent::normalizeFft() {
@@ -289,81 +290,6 @@ void MainComponent::normalizeFft() {
   for (int i = 0; i < mFftData.size(); ++i) {
     for (int j = 0; j < mFftData[i].size(); ++j) {
       mFftData[i][j] /= totalMax;
-    }
-  }
-}
-
-/* Performs HPS on the FFT data for pitch tracking purposes */
-void MainComponent::updateHpsData() {
-  float totalMax = std::numeric_limits<float>::min();
-
-  int minIndex = juce::roundToInt(
-      (juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) * FFT_SIZE) /
-      mSampleRate);
-  int maxIndex = juce::roundToInt(
-      (juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) * FFT_SIZE) /
-      mSampleRate);
-  minIndex = juce::jlimit(0, FFT_SIZE, minIndex);
-  maxIndex = juce::jlimit(0, FFT_SIZE, maxIndex);
-  int maxHIndex = FFT_SIZE / NUM_HPS_HARMONICS;
-  if (maxIndex < maxHIndex) maxHIndex = maxIndex;
-  for (int frame = 0; frame < mHpsData.size(); ++frame) {
-    int peakIndex = minIndex;
-    // Perform harmonic doubling
-    for (int i = minIndex; i < maxHIndex; ++i) {
-      for (int j = 1; j <= NUM_HPS_HARMONICS; ++j) {
-        mHpsData[frame][i] *= mHpsData[frame][i * j];
-      }
-      if (mHpsData[frame][i] > mHpsData[frame][peakIndex]) {
-        peakIndex = i;
-      }
-    }
-    // Correct octave errors
-    int peakIndex2 = minIndex;
-    int maxsearch = peakIndex * 3 / 4;
-    for (int i = minIndex + 1; i < maxsearch; i++) {
-      if (mHpsData[frame][i] > mHpsData[frame][peakIndex2]) {
-        peakIndex2 = i;
-      }
-    }
-    if (std::abs(peakIndex2 * 2 - peakIndex) < 4) {
-      if (mHpsData[frame][peakIndex2] / mHpsData[frame][peakIndex] > 0.2) {
-        peakIndex = peakIndex2;
-      }
-    }
-
-    float maxVal = mHpsData[frame][peakIndex];
-    float peakFreq = (peakIndex * mSampleRate) / FFT_SIZE;
-    auto newPitch = Utils::HpsPitch(peakFreq, maxVal);
-    if (newPitch.freq <
-            juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) ||
-        newPitch.freq >
-            juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) ||
-        newPitch.gain < 1.0f / 10.0f) {
-      newPitch.freq = 0;
-    }
-    mHpsPitches.push_back(newPitch);
-
-    if (maxVal > totalMax) {
-      totalMax = maxVal;
-    }
-  }
-  // Normalize hps data
-  for (int i = 0; i < mHpsData.size(); ++i) {
-    for (int j = 0; j < mHpsData[i].size(); ++j) {
-      mHpsData[i][j] /= totalMax;
-    }
-  }
-
-  // Normlize pitch amplitudes and discard low values
-  for (int i = 0; i < mHpsPitches.size(); i++) {
-    mHpsPitches[i].gain /= totalMax;
-    if (mHpsPitches[i].freq <
-            juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) ||
-        mHpsPitches[i].freq >
-            juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) ||
-        mHpsPitches[i].gain < 0.1) {
-      mHpsPitches[i].freq = 0;
     }
   }
 }
