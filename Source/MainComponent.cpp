@@ -262,9 +262,9 @@ void MainComponent::updateFft() {
     if (curSample > mFileBuffer.getNumSamples()) hasData = false;
   }
   normalizeFft();
-  //mTransientDetector.loadBuffer(mFileBuffer); 
+  mTransientDetector.loadBuffer(mFileBuffer);
   updateHpsData();
-  mArcSpec.updateSpectrogram(&mFftData);
+  mArcSpec.updateSpectrogram(&mFftData, &mTransientDetector.getTransients());
   mSynth.setFileBuffer(&mFileBuffer, &mHpsPitches, mSampleRate);
 }
 

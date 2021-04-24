@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 
 #include "GranularSynth.h"
+#include "TransientDetector.h"
 #include "Utils.h"
 
 //==============================================================================
@@ -27,7 +28,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void paint(juce::Graphics &) override;
   void resized() override;
 
-  void updateSpectrogram(std::vector<std::vector<float>> *hpsData);
+  void updateSpectrogram(std::vector<std::vector<float>> *specData,
+                         std::vector<TransientDetector::Transient> *transients);
   void updatePositions(std::vector<GranularSynth::GrainPosition> gPositions);
 
   //============================================================================
@@ -36,6 +38,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
  private:
   std::vector<GranularSynth::GrainPosition> mPositions;
   std::vector<std::vector<float>> *mSpecData = nullptr;
+  std::vector<TransientDetector::Transient> *mTransients = nullptr;
 
   juce::Image mSpectrogramImage;
 

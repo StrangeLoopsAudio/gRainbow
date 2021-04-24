@@ -25,37 +25,29 @@ class TransientDetector {
   typedef struct Transient {
     float posRatio;
     float confidence;
+    Transient(float posRatio, float confidence)
+        : posRatio(posRatio), confidence(confidence) {}
   } Transient;
 
   void loadBuffer(juce::AudioBuffer<float>& fileBuffer);
-  std::vector<std::vector<float>>& getTransients() { return mP; }
+  std::vector<Transient>& getTransients() { return mTransients; }
 
  private:
   static constexpr auto FFT_ORDER = 9;
   static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
-  static constexpr auto PARAM_V = 3;    // Vertical neighbor smoothing
-  static constexpr auto PARAM_B = 2;    // Transient sensitivity
-  static constexpr auto PARAM_TAU = 3;  // Transient frame spread
-  static constexpr auto PARAM_DELTA = 0.1f;  // Percentage to chip away each iteration
-  static constexpr auto PARAM_THRESH = FFT_SIZE / 6.0f;  // Threshold value
-  static constexpr auto PARAM_M = 10;  // Number of iterations
+  static constexpr auto PARAM_THRESHOLD = 2.0f;
+  static constexpr auto PARAM_SPREAD = 3;
+  static constexpr auto PARAM_ATTACK_LOCK = 4;
 
   juce::dsp::FFT mForwardFFT;
   std::array<float, FFT_SIZE * 2> mFftFrame;
-  std::vector<std::vector<float>> mX; // FFT data normalized from 0.0-1.0
-  std::vector<std::vector<float>> mF; // Transient edges
-  std::vector<std::vector<float>> mLambda; // Threshold values
-  std::vector<float>              mSigmaGamma; // Thresh hit array
-  std::vector<std::vector<float>> mP; // Transient spectrum
-  std::vector<std::vector<float>> mTransientMarkers;  // Transient spectrum booleans
-  std::vector<Transient> mTransients; 
+  std::vector<std::vector<float>> mFftData; // FFT data normalized from 0.0-1.0
+  std::array<float, PARAM_SPREAD> mEnergyBuffer; // Spectral energy rolling buffer
+  std::vector<Transient> mTransients;
+  int mAttackFrames = PARAM_ATTACK_LOCK;
 
   void updateFft(juce::AudioBuffer<float>& fileBuffer);
-  void iterateFunctions();
   void retrieveTransients();
-  float F(int frame, int bin);
-  float LAMBDA(int frame, int bin);
-  int GAMMA(int frame, int bin);
-  float P(int frame, int bin);
-  float XMod(int frame, int bin);
+  // Using current energy buffer and attack frame counter, determines if current frame is a transient frame
+  bool isTransient(); 
 };

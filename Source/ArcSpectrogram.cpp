@@ -33,7 +33,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   // Draw fft
   g.drawImageAt(mSpectrogramImage, 0, 0);
 
-  // Draw position marker
+  // Draw position markers
   juce::Point<int> centerPoint = juce::Point<int>(getWidth() / 2, getHeight());
   g.setColour(juce::Colours::white);
   for (GranularSynth::GrainPosition gPos : mPositions) {
@@ -44,6 +44,20 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     g.setColour(juce::Colours::white);
     float thickness = std::abs(1.0f - gPos.pbRate) * 10.0f;
     g.drawLine(juce::Line<float>(startPoint, endPoint), thickness + 1.0f);
+  }
+
+  // Draw transient markers
+  if (mTransients != nullptr) {
+    g.setColour(juce::Colours::white);
+    for (int i = 0; i < mTransients->size(); ++i) {
+      TransientDetector::Transient transient = mTransients->at(i);
+      auto startPoint = centerPoint.getPointOnCircumference(
+          getHeight() / 4.0f, (1.5 * M_PI) + (transient.posRatio * M_PI));
+      auto endPoint = centerPoint.getPointOnCircumference(
+          getHeight(), (1.5 * M_PI) + (transient.posRatio * M_PI));
+      g.setColour(juce::Colours::blue);
+      g.drawLine(juce::Line<float>(startPoint, endPoint), 1.0f);
+    }
   }
 
   // Draw borders
@@ -100,8 +114,11 @@ void ArcSpectrogram::run() {
   }
 }
 
-void ArcSpectrogram::updateSpectrogram(std::vector<std::vector<float>>* fftData) {
-  mSpecData = fftData;
+void ArcSpectrogram::updateSpectrogram(
+    std::vector<std::vector<float>>* specData,
+    std::vector<TransientDetector::Transient>* transients) {
+  mSpecData = specData;
+  mTransients = transients;
   startThread();  // Update spectrogram image
 }
 
