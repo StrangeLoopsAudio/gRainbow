@@ -8,6 +8,7 @@
 #include "Utils.h"
 #include "TransientDetector.h"
 #include "PitchDetector.h"
+#include "Fft.h"
 
 //==============================================================================
 /*
@@ -35,8 +36,8 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
 
  private:
   /* Algorithm Constants */
-  static constexpr auto FFT_ORDER = 10;
-  static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
+  static constexpr auto FFT_SIZE = 1024;
+  static constexpr auto HOP_SIZE = 512;
 
   /* UI Layout */
   static constexpr auto KNOB_HEIGHT = 50;
@@ -57,14 +58,9 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   GranularSynth mSynth;
 
   /* Global fft */
-  juce::dsp::FFT mForwardFFT;
+  Fft mFft;
   TransientDetector mTransientDetector;
   PitchDetector mPitchDetector;
-  std::array<float, FFT_SIZE * 2> mFftFrame;
-  std::vector<std::vector<float>> mFftData;
-  std::vector<std::vector<float>> mHpsData;
-  void updateFft();
-  void normalizeFft();
 
   /* UI Components */
   juce::ImageComponent mLogo;

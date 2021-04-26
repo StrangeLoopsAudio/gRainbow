@@ -13,6 +13,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Fft.h"
 
 class PitchDetector {
  public:
@@ -30,21 +31,18 @@ class PitchDetector {
         : freq(freq), posRatio(posRatio), gain(gain) {}
   } Pitch;
 
-  void loadBuffer(juce::AudioBuffer<float>& fileBuffer, double sampleRate);
+  void processBuffer(juce::AudioBuffer<float>& fileBuffer, double sampleRate);
   std::vector<Pitch>& getPitches() { return mPitches; }
 
  private:
-  static constexpr auto FFT_ORDER = 10;
-  static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
+  static constexpr auto FFT_SIZE = 1024;
+  static constexpr auto HOP_SIZE = 512;
   static constexpr auto NUM_HPS_HARMONICS = 2;
   static constexpr auto DETECTION_THRESHOLD = 0.1f;
   static constexpr auto DETECTION_SPREAD = 0.02f;
 
-  juce::dsp::FFT mForwardFFT;
-  std::array<float, FFT_SIZE * 2> mFftFrame;
-  std::vector<std::vector<float>> mFftData;  // FFT data normalized from 0.0-1.0
+  Fft mFft;
   std::vector<Pitch> mPitches;
 
-  void updateFft(juce::AudioBuffer<float>& fileBuffer);
   void updateHps(double sampleRate);
 };

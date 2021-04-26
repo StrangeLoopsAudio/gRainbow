@@ -5,7 +5,7 @@ MainComponent::MainComponent()
     : mKeyboard(mKeyboardState,
                 juce::MidiKeyboardComponent::horizontalKeyboard),
       mSynth(mKeyboardState),
-      mForwardFFT(FFT_ORDER) {
+      mFft(FFT_SIZE, HOP_SIZE) {
   mFormatManager.registerBasicFormats();
 
   setLookAndFeel(&mRainbowLookAndFeel);
@@ -229,67 +229,13 @@ void MainComponent::openNewFile() {
                            mFileBuffer.getNumSamples());
       }
 
-      updateFft();    
+      mTransientDetector.processBuffer(mFileBuffer);
+      mPitchDetector.processBuffer(mFileBuffer, mSampleRate);
+      mArcSpec.processBuffer(mFileBuffer,
+                                 &mTransientDetector.getTransients());
+      mSynth.setFileBuffer(&mFileBuffer, &mPitchDetector.getPitches(),
+                           mSampleRate);
     }
   }
   setAudioChannels(2, 2);
-}
-
-void MainComponent::updateFft() {
-  const float* pBuffer = mFileBuffer.getReadPointer(0);
-  int curSample = 0;
-
-  bool hasData = mFileBuffer.getNumSamples() > mFftFrame.size();
-
-  mFftData.clear();
-  mHpsData.clear();
-
-  while (hasData) {
-    const float* startSample = &pBuffer[curSample];
-    int numSamples = mFftFrame.size();
-    if (curSample + mFftFrame.size() > mFileBuffer.getNumSamples()) {
-      numSamples = (mFileBuffer.getNumSamples() - curSample);
-    }
-    mFftFrame.fill(0.0f);
-    memcpy(mFftFrame.data(), startSample, numSamples);
-
-    mForwardFFT.performFrequencyOnlyForwardTransform(mFftFrame.data());
-
-    // Add fft data to our master array
-    mFftData.push_back(std::vector<float>(mFftFrame.begin(), mFftFrame.end()));
-    mHpsData.push_back(std::vector<float>(mFftFrame.begin(), mFftFrame.end()));
-
-    curSample += mFftFrame.size();
-    if (curSample > mFileBuffer.getNumSamples()) hasData = false;
-  }
-  normalizeFft();
-  mTransientDetector.loadBuffer(mFileBuffer);
-  mPitchDetector.loadBuffer(mFileBuffer, mSampleRate);
-  mArcSpec.updateSpectrogram(&mFftData, &mTransientDetector.getTransients());
-  mSynth.setFileBuffer(&mFileBuffer, &mPitchDetector.getPitches(), mSampleRate);
-}
-
-void MainComponent::normalizeFft() {
-  float totalMax = std::numeric_limits<float>::min();
-
-  for (int frame = 0; frame < mFftData.size(); ++frame) {
-    int peakIndex = 0;
-    // Perform harmonic doubling
-    for (int i = 0; i < mFftData[frame].size(); ++i) {
-      if (mFftData[frame][i] > mFftData[frame][peakIndex]) {
-        peakIndex = i;
-      }
-    }
-
-    float maxVal = mFftData[frame][peakIndex];
-    if (maxVal > totalMax) {
-      totalMax = maxVal;
-    }
-  }
-  // Normalize fft data
-  for (int i = 0; i < mFftData.size(); ++i) {
-    for (int j = 0; j < mFftData[i].size(); ++j) {
-      mFftData[i][j] /= totalMax;
-    }
-  }
 }

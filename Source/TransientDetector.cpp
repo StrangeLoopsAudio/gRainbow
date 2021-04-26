@@ -15,7 +15,7 @@
 
 TransientDetector::TransientDetector() : mForwardFFT(FFT_ORDER) {}
 
-void TransientDetector::loadBuffer(juce::AudioBuffer<float>& fileBuffer) {
+void TransientDetector::processBuffer(juce::AudioBuffer<float>& fileBuffer) {
   updateFft(fileBuffer);
   retrieveTransients();
   DBG("all done here-----------------------");

@@ -29,7 +29,7 @@ class TransientDetector {
         : posRatio(posRatio), confidence(confidence) {}
   } Transient;
 
-  void loadBuffer(juce::AudioBuffer<float>& fileBuffer);
+  void processBuffer(juce::AudioBuffer<float>& fileBuffer);
   std::vector<Transient>& getTransients() { return mTransients; }
 
  private:
