@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 
 #include "ArcSpectrogram.h"
+#include "PositionVisualizer.h"
 #include "GranularSynth.h"
 #include "RainbowLookAndFeel.h"
 #include "Utils.h"
@@ -40,10 +41,14 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   static constexpr auto HOP_SIZE = 512;
 
   /* UI Layout */
+  static constexpr auto PANEL_WIDTH = 300;
+  static constexpr auto ROW_PADDING_HEIGHT = 10;
   static constexpr auto KNOB_HEIGHT = 50;
   static constexpr auto LABEL_HEIGHT = 20;
+  static constexpr auto SPEC_WIDTH = 20;
+  static constexpr auto SPEC_HEIGHT = 20;
   static constexpr auto KEYBOARD_HEIGHT = 100;
-  static constexpr auto LOGO_HEIGHT = 150;
+  //static constexpr auto LOGO_HEIGHT = 150;
 
   /* Parameter defaults */
   static constexpr auto PARAM_DIVERSITY_DEFAULT = 0.1f;
@@ -66,6 +71,7 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   juce::ImageComponent mLogo;
   juce::TextButton mBtnOpenFile;
   ArcSpectrogram mArcSpec;
+  PositionVisualizer mPositionVis;
   juce::MidiKeyboardState mKeyboardState;
   juce::MidiKeyboardComponent mKeyboard;
   /* Parameters */

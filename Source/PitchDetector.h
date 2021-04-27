@@ -38,7 +38,7 @@ class PitchDetector {
   static constexpr auto FFT_SIZE = 1024;
   static constexpr auto HOP_SIZE = 512;
   static constexpr auto NUM_HPS_HARMONICS = 2;
-  static constexpr auto DETECTION_THRESHOLD = 0.1f;
+  static constexpr auto DETECTION_THRESHOLD = 0.05f;
   static constexpr auto DETECTION_SPREAD = 0.02f;
 
   Fft mFft;

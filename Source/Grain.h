@@ -14,12 +14,11 @@
 class Grain {
  public:
   Grain()
-      : mEnv(std::array<float, 512>()),
-        duration(0),
+      : duration(0),
         pbRate(1.0),
         startPos(0),
         trigTs(0) {}
-  Grain(std::array<float, 512>& env, int duration, float pbRate, int startPos,
+  Grain(std::array<float, 512>* env, int duration, float pbRate, int startPos,
         int trigTs)
       : mEnv(env),
         duration(duration),
@@ -39,5 +38,5 @@ class Grain {
   const float pbRate;  // Playback rate (1.0 being regular speed)
 
  private:
-  std::array<float, 512>& mEnv;
+  std::array<float, 512>* mEnv = nullptr;
 };

@@ -43,7 +43,7 @@ void GranularSynth::run() {
         GrainPosition gPos = note.positions[note.curPos];
         float duration = juce::jmap(mDuration, MIN_DURATION, MAX_DURATION);
         auto durSamples = duration * mSampleRate * (1.0f / gPos.pbRate);
-        mGrains.add(Grain(mGaussianEnv, durSamples, gPos.pbRate,
+        mGrains.add(Grain(&mGaussianEnv, durSamples, gPos.pbRate,
                           gPos.posRatio * mFileBuffer->getNumSamples(),
                           mTotalSamps));
         note.curPos++;

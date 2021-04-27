@@ -14,8 +14,8 @@ MainComponent::MainComponent()
       "C:/Users/brady/Documents/GitHub/gRainbow/gRainbow-circles.png"));
 
   /* Title section */
-  mLogo.setImage(logo, juce::RectanglePlacement::centred);
-  addAndMakeVisible(mLogo);
+  //mLogo.setImage(logo, juce::RectanglePlacement::centred);
+  //addAndMakeVisible(mLogo);
 
   mBtnOpenFile.setButtonText("Open File");
   mBtnOpenFile.onClick = [this] { openNewFile(); };
@@ -66,6 +66,8 @@ MainComponent::MainComponent()
   addAndMakeVisible(mLabelRate);
 
   addAndMakeVisible(mArcSpec);
+
+  addAndMakeVisible(mPositionVis);
 
   mKeyboard.setAvailableRange(PitchDetector::MIN_MIDINOTE,
                               PitchDetector::MAX_MIDINOTE);
@@ -125,9 +127,10 @@ void MainComponent::getNextAudioBlock(
   if (!incomingMidi.isEmpty()) {
     for (juce::MidiMessageMetadata md : incomingMidi) {
       if (md.getMessage().isNoteOn()) {
-        std::vector<GranularSynth::GrainPosition> positionRatios =
+        std::vector<GranularSynth::GrainPosition> gPositions =
             mSynth.playNote(md.getMessage().getNoteNumber());
-        mArcSpec.updatePositions(positionRatios);
+        mArcSpec.updatePositions(gPositions);
+        mPositionVis.setPositions(gPositions);
       } else if (md.getMessage().isNoteOff()) {
         mSynth.stopNote(md.getMessage().getNoteNumber());
       }
@@ -154,23 +157,21 @@ void MainComponent::paint(juce::Graphics& g) {
 void MainComponent::resized() {
   auto r = getLocalBounds();
 
-  auto titleSection = r.removeFromTop(LOGO_HEIGHT);
-  mLogo.setBounds(titleSection.withSizeKeepingCentre(LOGO_HEIGHT * 2,
-                                                     titleSection.getHeight()));
-  mBtnOpenFile.setBounds(
-      titleSection.removeFromLeft(titleSection.getWidth() / 4));
+  //auto titleSection = r.removeFromTop(LOGO_HEIGHT);
+  //mLogo.setBounds(titleSection.withSizeKeepingCentre(LOGO_HEIGHT * 2,
+  //                                                   titleSection.getHeight()));
   mKeyboard.setBounds(
       r.removeFromBottom(KEYBOARD_HEIGHT)
           .withSizeKeepingCentre(mKeyboard.getTotalKeyboardWidth(),
                                  KEYBOARD_HEIGHT));
-  mArcSpec.setBounds(
-      r.withWidth(r.getHeight() * 2)
-          .withCentre(r.getPosition() +
-                      juce::Point<int>(r.getWidth() / 2, r.getHeight() / 2)));
+
   // Left Panel
-  auto leftPanel = r.removeFromLeft((r.getWidth() - mArcSpec.getWidth()) / 2);
+  auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
+  mBtnOpenFile.setBounds(leftPanel.removeFromTop(KNOB_HEIGHT));
+  leftPanel.removeFromTop(ROW_PADDING_HEIGHT);
   // Row 1
-  auto row = leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT);
+  auto row =
+      leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT + ROW_PADDING_HEIGHT);
   // Diversity
   auto knob = row.removeFromLeft(row.getWidth() / 2);
   mSliderDiversity.setBounds(
@@ -186,7 +187,7 @@ void MainComponent::resized() {
               knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
   mLabelDuration.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
   // Row 2
-  row = leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT);
+  row = leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT + ROW_PADDING_HEIGHT);
   // Rate
   knob = row.removeFromLeft(row.getWidth() / 2);
   mSliderRate.setBounds(
@@ -194,7 +195,10 @@ void MainComponent::resized() {
           .withCentre(knob.getPosition().translated(
               knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
   mLabelRate.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
-  // auto rightPanel = r.removeFromRight(r.getWidth() / 4);
+  auto rightPanel = r.removeFromRight(PANEL_WIDTH);
+  mPositionVis.setBounds(rightPanel);
+
+  mArcSpec.setBounds(r.removeFromBottom(r.getWidth() / 2.0f));
 }
 
 void MainComponent::openNewFile() {

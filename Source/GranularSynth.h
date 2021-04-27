@@ -11,7 +11,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-
 #include "Grain.h"
 #include "Utils.h"
 #include "PitchDetector.h"
@@ -22,6 +21,9 @@ class GranularSynth : juce::Thread {
     float posRatio;
     float pbRate;  // timestretching ratio based on frequency offset from target
     float gain; // Gain of spectrogram at that position
+    GrainPosition()
+        : posRatio(0.0f),
+          pbRate(1.0f), gain(0.0f) {}
     GrainPosition(float posRatio, float pbRate, float gain)
         : posRatio(posRatio), pbRate(pbRate), gain(gain) {}
     bool operator<(const GrainPosition& other) const {
