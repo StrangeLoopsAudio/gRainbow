@@ -21,11 +21,6 @@ PositionVisualizer::PositionVisualizer() {
 
 PositionVisualizer::~PositionVisualizer() { }
 
-void PositionVisualizer::setPositions(
-    std::vector<GranularSynth::GrainPosition> gPositions) {
-  mGPositions = gPositions;
-}
-
 void PositionVisualizer::paint(juce::Graphics& g) {
 
   g.fillAll(getLookAndFeel().findColour(

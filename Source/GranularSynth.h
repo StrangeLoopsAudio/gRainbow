@@ -11,65 +11,46 @@
 #pragma once
 
 #include <JuceHeader.h>
+
 #include "Grain.h"
-#include "Utils.h"
+#include "GrainPositionFinder.h"
 #include "PitchDetector.h"
+#include "Utils.h"
 
 class GranularSynth : juce::Thread {
  public:
-  typedef struct GrainPosition {
-    float posRatio;
-    float pbRate;  // timestretching ratio based on frequency offset from target
-    float gain; // Gain of spectrogram at that position
-    GrainPosition()
-        : posRatio(0.0f),
-          pbRate(1.0f), gain(0.0f) {}
-    GrainPosition(float posRatio, float pbRate, float gain)
-        : posRatio(posRatio), pbRate(pbRate), gain(gain) {}
-    bool operator<(const GrainPosition& other) const {
-      bool isFurther = (std::abs(1.0f - pbRate) > std::abs(1.0f - other.pbRate));
-      return isFurther;
-    }
-  } GrainPosition;
-
   GranularSynth(juce::MidiKeyboardState& midiState);
   ~GranularSynth();
 
-  void setFileBuffer(juce::AudioBuffer<float>* buffer,
-                     std::vector<PitchDetector::Pitch>* pitches,
-                     double sr);
+  void setFileBuffer(juce::AudioBuffer<float>* buffer, double sr);
   void setDuration(float duration) { mDuration = duration; }
   void setRate(float rate) { mRate = rate; }
   void setDiversity(float diversity) { mDiversity = diversity; }
 
   void process(juce::AudioBuffer<float>* blockBuffer);
-  std::vector<GrainPosition> playNote(
-      int midiNote);  // Returns vector of fft time positions using HPS to estimate pitch
+  void setPositions(int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions);
   void stopNote(int midiNote);
 
   //==============================================================================
   void run() override;
 
  private:
-  static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
   static constexpr auto MAX_DURATION = 0.6f;
   static constexpr auto MIN_DURATION = 0.05f;
-  static constexpr auto MIN_DIVERSITY = 1.f;
-  static constexpr auto MAX_DIVERSITY = 5.f;
   static constexpr auto MIN_RATE = 10.f;  // Grains per second
   static constexpr auto MAX_RATE = 40.f;
 
   typedef struct GrainNote {
     int midiNote;
     int curPos = 0;
-    std::vector<GrainPosition> positions;
-    GrainNote(int midiNote, std::vector<GrainPosition> positions)
+    std::vector<GrainPositionFinder::GrainPosition> positions;
+    GrainNote(int midiNote,
+              std::vector<GrainPositionFinder::GrainPosition> positions)
         : midiNote(midiNote), positions(positions) {}
   } GrainNote;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
   juce::MidiKeyboardState& mMidiState;
-  std::vector<PitchDetector::Pitch>* mPitches = nullptr;
   std::vector<GrainNote> mActiveGrains;
   std::array<float, 512> mGaussianEnv;
 

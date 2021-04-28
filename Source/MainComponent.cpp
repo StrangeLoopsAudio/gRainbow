@@ -68,6 +68,9 @@ MainComponent::MainComponent()
   addAndMakeVisible(mArcSpec);
 
   addAndMakeVisible(mPositionVis);
+  mPositionVis.onPositionUpdated = [this](int midiNote, GrainPositionFinder::GrainPosition gPos) {
+        mGrainFinder.updatePosition(midiNote, gPos);
+  };
 
   mKeyboard.setAvailableRange(PitchDetector::MIN_MIDINOTE,
                               PitchDetector::MAX_MIDINOTE);
@@ -108,10 +111,6 @@ void MainComponent::prepareToPlay(int samplesPerBlockExpected,
                                   double sampleRate) {
   mSampleRate = sampleRate;
   mMidiCollector.reset(sampleRate);
-  // mTimeStretcher = std::make_unique<RubberBand::RubberBandStretcher>
-  //  (sampleRate, 1,
-  //  RubberBand::RubberBandStretcher::DefaultOptions, 1.0, 1.0);
-  // mTimeStretcher->reset();
 }
 
 void MainComponent::getNextAudioBlock(
@@ -127,10 +126,12 @@ void MainComponent::getNextAudioBlock(
   if (!incomingMidi.isEmpty()) {
     for (juce::MidiMessageMetadata md : incomingMidi) {
       if (md.getMessage().isNoteOn()) {
-        std::vector<GranularSynth::GrainPosition> gPositions =
-            mSynth.playNote(md.getMessage().getNoteNumber());
+        int k = juce::jmap((float)mSliderDiversity.getValue(), MIN_DIVERSITY, MAX_DIVERSITY);
+        std::vector<GrainPositionFinder::GrainPosition> gPositions =
+            mGrainFinder.findPositions(k, md.getMessage().getNoteNumber());
+        mSynth.setPositions(md.getMessage().getNoteNumber(), gPositions);
         mArcSpec.updatePositions(gPositions);
-        mPositionVis.setPositions(gPositions);
+        mPositionVis.setPositions(md.getMessage().getNoteNumber(), gPositions);
       } else if (md.getMessage().isNoteOff()) {
         mSynth.stopNote(md.getMessage().getNoteNumber());
       }
@@ -237,8 +238,8 @@ void MainComponent::openNewFile() {
       mPitchDetector.processBuffer(mFileBuffer, mSampleRate);
       mArcSpec.processBuffer(mFileBuffer,
                                  &mTransientDetector.getTransients());
-      mSynth.setFileBuffer(&mFileBuffer, &mPitchDetector.getPitches(),
-                           mSampleRate);
+      mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
+      mGrainFinder.setPitches(&mPitchDetector.getPitches());
     }
   }
   setAudioChannels(2, 2);

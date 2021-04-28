@@ -10,6 +10,7 @@
 #include "TransientDetector.h"
 #include "PitchDetector.h"
 #include "Fft.h"
+#include "GrainPositionFinder.h"
 
 //==============================================================================
 /*
@@ -52,6 +53,8 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
 
   /* Parameter defaults */
   static constexpr auto PARAM_DIVERSITY_DEFAULT = 0.1f;
+  static constexpr auto MIN_DIVERSITY = 1.f;
+  static constexpr auto MAX_DIVERSITY = 5.f;
   static constexpr auto PARAM_DURATION_DEFAULT = 0.2f;
   static constexpr auto PARAM_RATE_DEFAULT = 0.3f;
 
@@ -66,6 +69,7 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   Fft mFft;
   TransientDetector mTransientDetector;
   PitchDetector mPitchDetector;
+  GrainPositionFinder mGrainFinder;
 
   /* UI Components */
   juce::ImageComponent mLogo;

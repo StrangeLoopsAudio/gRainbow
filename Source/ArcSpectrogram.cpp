@@ -37,7 +37,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   // Draw position markers
   juce::Point<int> centerPoint = juce::Point<int>(getWidth() / 2, getHeight());
   g.setColour(juce::Colours::white);
-  for (GranularSynth::GrainPosition gPos : mPositions) {
+  for (GrainPositionFinder::GrainPosition gPos : mPositions) {
     auto startPoint = centerPoint.getPointOnCircumference(
         getHeight() / 4.0f, (1.5 * M_PI) + (gPos.posRatio * M_PI));
     auto endPoint = centerPoint.getPointOnCircumference(
@@ -124,6 +124,6 @@ void ArcSpectrogram::processBuffer(
 }
 
 void ArcSpectrogram::updatePositions(
-    std::vector<GranularSynth::GrainPosition> gPositions) {
+    std::vector<GrainPositionFinder::GrainPosition> gPositions) {
   mPositions = gPositions;
 }

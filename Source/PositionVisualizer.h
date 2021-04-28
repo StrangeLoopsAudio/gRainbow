@@ -12,6 +12,9 @@
 
 #include <JuceHeader.h>
 
+#include <functional>
+
+#include "GrainPositionFinder.h"
 #include "GranularSynth.h"
 
 //==============================================================================
@@ -22,7 +25,15 @@ class PositionVisualizer : public juce::AnimatedAppComponent {
   PositionVisualizer();
   ~PositionVisualizer() override;
 
-  void setPositions(std::vector<GranularSynth::GrainPosition> gPositions);
+  std::function<void(int, GrainPositionFinder::GrainPosition)>
+      onPositionUpdated = nullptr;
+
+  void setPositions(
+      int midiNote,
+      std::vector<GrainPositionFinder::GrainPosition> gPositions) {
+    mCurNote = midiNote;
+    mGPositions = gPositions;
+  }
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -31,7 +42,8 @@ class PositionVisualizer : public juce::AnimatedAppComponent {
  private:
   static constexpr auto ITEM_HEIGHT = 40;
 
-  std::vector<GranularSynth::GrainPosition> mGPositions;
+  int mCurNote = 0;
+  std::vector<GrainPositionFinder::GrainPosition> mGPositions;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PositionVisualizer)
 };

@@ -31,7 +31,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
 
   void processBuffer(juce::AudioBuffer<float> &fileBuffer,
                          std::vector<TransientDetector::Transient> *transients);
-  void updatePositions(std::vector<GranularSynth::GrainPosition> gPositions);
+  void updatePositions(
+      std::vector<GrainPositionFinder::GrainPosition> gPositions);
 
   //============================================================================
   void run() override;
@@ -42,7 +43,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
 
   Fft mFft;
 
-  std::vector<GranularSynth::GrainPosition> mPositions;
+  std::vector<GrainPositionFinder::GrainPosition> mPositions;
   std::vector<TransientDetector::Transient> *mTransients = nullptr;
 
   juce::Image mSpectrogramImage;
