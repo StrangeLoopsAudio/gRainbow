@@ -92,7 +92,7 @@ MainComponent::MainComponent()
     setAudioChannels(2, 2);
   }
 
-  startTimer(400);  // Keyboard focus timer
+  startTimer(50);  // Keyboard focus timer
 }
 
 MainComponent::~MainComponent() {
@@ -102,8 +102,16 @@ MainComponent::~MainComponent() {
 }
 
 void MainComponent::timerCallback() {
-  mKeyboard.grabKeyboardFocus();
-  stopTimer();
+  if (mNoteToDisplay != 0) {
+    int k = juce::jmap((float)mSliderDiversity.getValue(), MIN_DIVERSITY,
+                       MAX_DIVERSITY);
+    std::vector<GrainPositionFinder::GrainPosition> gPositions =
+        mGrainFinder.findPositions(k, mNoteToDisplay);
+    mSynth.setPositions(mNoteToDisplay, gPositions);
+    mArcSpec.updatePositions(gPositions);
+    mPositionVis.setPositions(mNoteToDisplay, gPositions);
+    mNoteToDisplay = 0;
+  }
 }
 
 //==============================================================================
@@ -126,12 +134,7 @@ void MainComponent::getNextAudioBlock(
   if (!incomingMidi.isEmpty()) {
     for (juce::MidiMessageMetadata md : incomingMidi) {
       if (md.getMessage().isNoteOn()) {
-        int k = juce::jmap((float)mSliderDiversity.getValue(), MIN_DIVERSITY, MAX_DIVERSITY);
-        std::vector<GrainPositionFinder::GrainPosition> gPositions =
-            mGrainFinder.findPositions(k, md.getMessage().getNoteNumber());
-        mSynth.setPositions(md.getMessage().getNoteNumber(), gPositions);
-        mArcSpec.updatePositions(gPositions);
-        mPositionVis.setPositions(md.getMessage().getNoteNumber(), gPositions);
+        mNoteToDisplay = md.getMessage().getNoteNumber();
       } else if (md.getMessage().isNoteOff()) {
         mSynth.stopNote(md.getMessage().getNoteNumber());
       }

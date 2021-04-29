@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+
 #include "PitchDetector.h"
 
 class GrainPositionFinder {
@@ -31,14 +32,15 @@ class GrainPositionFinder {
     }
   } GrainPosition;
 
-  GrainPositionFinder() { }
-  ~GrainPositionFinder() { }
+  GrainPositionFinder() {}
+  ~GrainPositionFinder() {}
 
   void setPitches(std::vector<PitchDetector::Pitch>* pitches) {
+    mGPositions.clear();
     mPitches = pitches;
   }
-  std::vector<GrainPositionFinder::GrainPosition> findPositions(
-      int k, int midiNote);
+  std::vector<GrainPositionFinder::GrainPosition> findPositions(int k,
+                                                                int midiNote);
 
   void updatePosition(int midiNote, GrainPositionFinder::GrainPosition gPos);
 
@@ -48,6 +50,5 @@ class GrainPositionFinder {
   std::vector<PitchDetector::Pitch>* mPitches = nullptr;
   juce::HashMap<int, std::vector<GrainPosition>> mGPositions;
 
-  void pushPositions(
-      int midiNote, std::vector<GrainPosition> gPositions);
+  void pushPositions(int midiNote, std::vector<GrainPosition> gPositions);
 };

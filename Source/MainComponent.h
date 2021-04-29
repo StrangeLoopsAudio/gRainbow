@@ -62,6 +62,7 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   juce::AudioFormatManager mFormatManager;
   juce::MidiMessageCollector mMidiCollector;
   double mSampleRate;
+  int mNoteToDisplay = 0;
   juce::AudioBuffer<float> mFileBuffer;
   GranularSynth mSynth;
 
