@@ -28,7 +28,8 @@ class GranularSynth : juce::Thread {
   void setDiversity(float diversity) { mDiversity = diversity; }
 
   void process(juce::AudioBuffer<float>* blockBuffer);
-  void setPositions(int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions);
+  void setPositions(int midiNote,
+                    std::vector<GrainPositionFinder::GrainPosition> gPositions);
   void stopNote(int midiNote);
 
   //==============================================================================
@@ -44,9 +45,9 @@ class GranularSynth : juce::Thread {
     int midiNote;
     int curPos = 0;
     std::vector<GrainPositionFinder::GrainPosition> positions;
-    GrainNote(int midiNote,
+    GrainNote(int midiNote, int startPos,
               std::vector<GrainPositionFinder::GrainPosition> positions)
-        : midiNote(midiNote), positions(positions) {}
+        : midiNote(midiNote), curPos(startPos), positions(positions) {}
   } GrainNote;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
@@ -69,4 +70,7 @@ class GranularSynth : juce::Thread {
 
   // Generate gaussian envelope to be used for each grain
   void generateGaussianEnvelope();
+  int getNextPosition(GrainNote& gNote);
+  int getStartPosition(
+      std::vector<GrainPositionFinder::GrainPosition>& gPositions);
 };

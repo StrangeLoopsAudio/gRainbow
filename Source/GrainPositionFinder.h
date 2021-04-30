@@ -20,7 +20,7 @@ class GrainPositionFinder {
     float posRatio;
     float pbRate;  // timestretching ratio based on frequency offset from target
     float gain;    // Gain of spectrogram at that position
-    bool isEnabled = false;
+    bool isEnabled = true;
     bool solo = false;
     GrainPosition() : posRatio(0.0f), pbRate(1.0f), gain(0.0f) {}
     GrainPosition(float posRatio, float pbRate, float gain)

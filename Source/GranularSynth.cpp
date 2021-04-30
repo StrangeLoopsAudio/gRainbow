@@ -39,15 +39,17 @@ void GranularSynth::run() {
           (1.0f / juce::jmap(mRate, MIN_RATE, MAX_RATE)) * mSampleRate;
       mNextGrainTs = mTotalSamps + gInterval;
       /* Add one grain per active note */
-      for (GrainNote& note : mActiveNotes) {
-        GrainPositionFinder::GrainPosition gPos = note.positions[note.curPos];
-        float duration = juce::jmap(mDuration, MIN_DURATION, MAX_DURATION);
-        auto durSamples = duration * mSampleRate * (1.0f / gPos.pbRate);
-        mGrains.add(Grain(&mGaussianEnv, durSamples, gPos.pbRate,
-                          gPos.posRatio * mFileBuffer->getNumSamples(),
-                          mTotalSamps));
-        note.curPos++;
-        note.curPos = note.curPos % note.positions.size();
+      for (GrainNote& gNote : mActiveNotes) {
+        if (gNote.curPos != -1) {
+          GrainPositionFinder::GrainPosition gPos =
+              gNote.positions[gNote.curPos];
+          float duration = juce::jmap(mDuration, MIN_DURATION, MAX_DURATION);
+          auto durSamples = duration * mSampleRate * (1.0f / gPos.pbRate);
+          mGrains.add(Grain(&mGaussianEnv, durSamples, gPos.pbRate,
+                            gPos.posRatio * mFileBuffer->getNumSamples(),
+                            mTotalSamps));
+          gNote.curPos = getNextPosition(gNote);
+        }
       }
     }
     wait(20);
@@ -63,14 +65,15 @@ void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer) {
   }
 }
 
-void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer,
-                                  double sr) {
+void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, double sr) {
   mFileBuffer = buffer;
   mSampleRate = sr;
 }
 
-void GranularSynth::setPositions(int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions) {
-  mActiveNotes.add(GrainNote(midiNote, gPositions));
+void GranularSynth::setPositions(
+    int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions) {
+  int startPos = getStartPosition(gPositions);
+  mActiveNotes.add(GrainNote(midiNote, startPos, gPositions));
 }
 
 void GranularSynth::stopNote(int midiNote) {
@@ -83,4 +86,25 @@ void GranularSynth::generateGaussianEnvelope() {
     mGaussianEnv[i] = std::exp(
         -1.0f * std::pow((i - ((511) / 2.0)) / (0.4 * ((511) / 2.0)), 2.0));
   }
+}
+
+int GranularSynth::getNextPosition(GrainNote& gNote) {
+  int firstEnabled = -1;
+  for (int i = 0; i < gNote.positions.size(); ++i) {
+    int index = (gNote.curPos + 1 + i) % gNote.positions.size();
+    if (gNote.positions[index].solo) return index;
+    if (gNote.positions[index].isEnabled && firstEnabled == -1) {
+      firstEnabled = index;
+    }
+  }
+  return firstEnabled;
+}
+
+int GranularSynth::getStartPosition(std::vector<GrainPositionFinder::GrainPosition>& gPositions) {
+  int firstEnabled = -1;
+  for (int i = 0; i < gPositions.size(); ++i) {
+    if (gPositions[i].solo) return i;
+    if (gPositions[i].isEnabled && firstEnabled == -1) firstEnabled = i;
+  }
+  return firstEnabled;
 }
