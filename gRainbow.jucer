@@ -16,13 +16,10 @@
               file="Source/TransientDetector.h"/>
       </GROUP>
       <GROUP id="{32B46666-89F3-1953-7D07-B92E6B19F9CC}" name="Components">
-        <FILE id="c1zyfP" name="PositionItem.cpp" compile="1" resource="0"
-              file="Source/PositionItem.cpp"/>
-        <FILE id="aJYlgQ" name="PositionItem.h" compile="0" resource="0" file="Source/PositionItem.h"/>
-        <FILE id="kNrnTg" name="PositionVisualizer.cpp" compile="1" resource="0"
-              file="Source/PositionVisualizer.cpp"/>
-        <FILE id="waTjL3" name="PositionVisualizer.h" compile="0" resource="0"
-              file="Source/PositionVisualizer.h"/>
+        <FILE id="c1zyfP" name="PositionMarker.cpp" compile="1" resource="0"
+              file="Source/PositionMarker.cpp"/>
+        <FILE id="aJYlgQ" name="PositionMarker.h" compile="0" resource="0"
+              file="Source/PositionMarker.h"/>
         <FILE id="xqANdX" name="RainbowLookAndFeel.cpp" compile="1" resource="0"
               file="Source/RainbowLookAndFeel.cpp"/>
         <FILE id="ev5uXx" name="RainbowLookAndFeel.h" compile="0" resource="0"

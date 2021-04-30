@@ -3,7 +3,6 @@
 #include <JuceHeader.h>
 
 #include "ArcSpectrogram.h"
-#include "PositionVisualizer.h"
 #include "GranularSynth.h"
 #include "RainbowLookAndFeel.h"
 #include "Utils.h"
@@ -70,13 +69,12 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   Fft mFft;
   TransientDetector mTransientDetector;
   PitchDetector mPitchDetector;
-  GrainPositionFinder mGrainFinder;
+  GrainPositionFinder mPositionFinder;
 
   /* UI Components */
   juce::ImageComponent mLogo;
   juce::TextButton mBtnOpenFile;
   ArcSpectrogram mArcSpec;
-  PositionVisualizer mPositionVis;
   juce::MidiKeyboardState mKeyboardState;
   juce::MidiKeyboardComponent mKeyboard;
   /* Parameters */

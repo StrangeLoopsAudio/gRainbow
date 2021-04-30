@@ -37,14 +37,14 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   // Draw position markers
   juce::Point<int> centerPoint = juce::Point<int>(getWidth() / 2, getHeight());
   g.setColour(juce::Colours::white);
-  for (GrainPositionFinder::GrainPosition gPos : mPositions) {
+  for (GrainPositionFinder::GrainPosition gPos : mGPositions) {
     auto startPoint = centerPoint.getPointOnCircumference(
         getHeight() / 4.0f, (1.5 * M_PI) + (gPos.posRatio * M_PI));
     auto endPoint = centerPoint.getPointOnCircumference(
-        getHeight(), (1.5 * M_PI) + (gPos.posRatio * M_PI));
-    g.setColour(juce::Colours::white);
-    float thickness = std::abs(1.0f - gPos.pbRate) * 10.0f;
-    g.drawLine(juce::Line<float>(startPoint, endPoint), thickness + 1.0f);
+        getHeight() - 17, (1.5 * M_PI) + (gPos.posRatio * M_PI));
+    g.setColour(juce::Colours::goldenrod);
+    //float thickness = std::abs(1.0f - gPos.pbRate) * 10.0f;
+    g.drawLine(juce::Line<float>(startPoint, endPoint), 2.0f);
   }
 
   // Draw transient markers
@@ -62,11 +62,24 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   }
 
   // Draw borders
-  g.setColour(juce::Colours::white);
-  g.drawRect(getLocalBounds(), 2);
+  //g.setColour(juce::Colours::white);
+  //g.drawRect(getLocalBounds(), 2);
 }
 
-void ArcSpectrogram::resized() {}
+void ArcSpectrogram::resized() {
+  auto r = getLocalBounds();
+  // Position markers around rainbow
+  juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
+  for (int i = 0; i < mPositionMarkers.size(); ++i) {
+    float angleRad = (M_PI * mGPositions[i].posRatio) - (M_PI / 2.0f);
+    juce::Point<float> p =
+        startPoint.getPointOnCircumference(getHeight() - 10, getHeight() - 10, angleRad);
+    mPositionMarkers[i]->setSize(10, 15);
+    mPositionMarkers[i]->setCentrePosition(0, 0);
+    mPositionMarkers[i]->setTransform(
+        juce::AffineTransform::rotation(angleRad).translated(p));
+  }
+}
 
 void ArcSpectrogram::run() {
   std::vector<std::vector<float>> spec = mFft.getSpectrum();
@@ -123,7 +136,28 @@ void ArcSpectrogram::processBuffer(
   startThread();  // Update spectrogram image
 }
 
-void ArcSpectrogram::updatePositions(
+void ArcSpectrogram::updatePositions(int midiNote,
     std::vector<GrainPositionFinder::GrainPosition> gPositions) {
-  mPositions = gPositions;
+  mGPositions = gPositions;
+  mCurNote = midiNote;
+  mGPositions = gPositions;
+  mPositionMarkers.clear();
+  for (int i = 0; i < gPositions.size(); ++i) {
+    auto newItem = new PositionMarker(gPositions[i]);
+    newItem->addListener(this);
+    mPositionMarkers.add(newItem);
+    addAndMakeVisible(newItem);
+  }
+  resized();
+}
+
+void ArcSpectrogram::buttonClicked(juce::Button* btn) {
+  if (onPositionUpdated == nullptr) return;
+  for (int i = 0; i < mPositionMarkers.size(); ++i) {
+    if (btn == mPositionMarkers[i]) {
+      auto gPos = mGPositions[i];
+      gPos.isEnabled = btn->getToggleState();
+      onPositionUpdated(mCurNote, gPos);
+    }
+  }
 }

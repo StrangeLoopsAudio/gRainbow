@@ -14,7 +14,7 @@ std::vector<GrainPositionFinder::GrainPosition>
 GrainPositionFinder::findPositions(int k, int midiNote) {
   std::vector<GrainPosition> grainPositions;
   if (mPitches == nullptr) return grainPositions;
-  if (mGPositions[midiNote].size() > 0) return mGPositions[midiNote];
+  if (mGPositions[midiNote].size() >= k) return mGPositions[midiNote];
   // look for times when frequency has high energy
   float noteFreq = juce::MidiMessage::getMidiNoteInHertz(midiNote);
   bool foundK = false;
@@ -76,6 +76,9 @@ void GrainPositionFinder::pushPositions(
     int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions) {
   if (mGPositions[midiNote].size() == 0) {
     mGPositions.set(midiNote, gPositions);
+  } else {
+    mGPositions.getReference(midiNote).insert(
+        mGPositions.getReference(midiNote).end(), gPositions.begin(), gPositions.end());
   }
 }
 

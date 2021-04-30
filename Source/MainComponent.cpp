@@ -14,8 +14,8 @@ MainComponent::MainComponent()
       "C:/Users/brady/Documents/GitHub/gRainbow/gRainbow-circles.png"));
 
   /* Title section */
-  //mLogo.setImage(logo, juce::RectanglePlacement::centred);
-  //addAndMakeVisible(mLogo);
+  // mLogo.setImage(logo, juce::RectanglePlacement::centred);
+  // addAndMakeVisible(mLogo);
 
   mBtnOpenFile.setButtonText("Open File");
   mBtnOpenFile.onClick = [this] { openNewFile(); };
@@ -66,10 +66,9 @@ MainComponent::MainComponent()
   addAndMakeVisible(mLabelRate);
 
   addAndMakeVisible(mArcSpec);
-
-  addAndMakeVisible(mPositionVis);
-  mPositionVis.onPositionUpdated = [this](int midiNote, GrainPositionFinder::GrainPosition gPos) {
-        mGrainFinder.updatePosition(midiNote, gPos);
+  mArcSpec.onPositionUpdated = [this](int midiNote,
+                                      GrainPositionFinder::GrainPosition gPos) {
+    mPositionFinder.updatePosition(midiNote, gPos);
   };
 
   mKeyboard.setAvailableRange(PitchDetector::MIN_MIDINOTE,
@@ -106,10 +105,9 @@ void MainComponent::timerCallback() {
     int k = juce::jmap((float)mSliderDiversity.getValue(), MIN_DIVERSITY,
                        MAX_DIVERSITY);
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
-        mGrainFinder.findPositions(k, mNoteToDisplay);
+        mPositionFinder.findPositions(k, mNoteToDisplay);
     mSynth.setPositions(mNoteToDisplay, gPositions);
-    mArcSpec.updatePositions(gPositions);
-    mPositionVis.setPositions(mNoteToDisplay, gPositions);
+    mArcSpec.updatePositions(mNoteToDisplay, gPositions);
     mNoteToDisplay = 0;
   }
 }
@@ -161,8 +159,8 @@ void MainComponent::paint(juce::Graphics& g) {
 void MainComponent::resized() {
   auto r = getLocalBounds();
 
-  //auto titleSection = r.removeFromTop(LOGO_HEIGHT);
-  //mLogo.setBounds(titleSection.withSizeKeepingCentre(LOGO_HEIGHT * 2,
+  // auto titleSection = r.removeFromTop(LOGO_HEIGHT);
+  // mLogo.setBounds(titleSection.withSizeKeepingCentre(LOGO_HEIGHT * 2,
   //                                                   titleSection.getHeight()));
   mKeyboard.setBounds(
       r.removeFromBottom(KEYBOARD_HEIGHT)
@@ -191,7 +189,8 @@ void MainComponent::resized() {
               knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
   mLabelDuration.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
   // Row 2
-  row = leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT + ROW_PADDING_HEIGHT);
+  row =
+      leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT + ROW_PADDING_HEIGHT);
   // Rate
   knob = row.removeFromLeft(row.getWidth() / 2);
   mSliderRate.setBounds(
@@ -200,7 +199,6 @@ void MainComponent::resized() {
               knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
   mLabelRate.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
-  mPositionVis.setBounds(rightPanel);
 
   mArcSpec.setBounds(r.removeFromBottom(r.getWidth() / 2.0f));
 }
@@ -217,15 +215,13 @@ void MainComponent::openNewFile() {
     std::unique_ptr<juce::AudioFormatReader> reader(
         mFormatManager.createReaderFor(file));
 
-    
-
     if (reader.get() != nullptr) {
       auto duration = (float)reader->lengthInSamples / reader->sampleRate;
       mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
 
-      juce::AudioBuffer<float> tempBuffer = juce::AudioBuffer<float>(reader->numChannels, (int)reader->lengthInSamples);
-      reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true,
-                   true);
+      juce::AudioBuffer<float> tempBuffer = juce::AudioBuffer<float>(
+          reader->numChannels, (int)reader->lengthInSamples);
+      reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
       juce::ScopedPointer<juce::LagrangeInterpolator> resampler =
           new juce::LagrangeInterpolator();
       double ratio = reader->sampleRate / mSampleRate;
@@ -239,10 +235,9 @@ void MainComponent::openNewFile() {
 
       mTransientDetector.processBuffer(mFileBuffer);
       mPitchDetector.processBuffer(mFileBuffer, mSampleRate);
-      mArcSpec.processBuffer(mFileBuffer,
-                                 &mTransientDetector.getTransients());
+      mArcSpec.processBuffer(mFileBuffer, &mTransientDetector.getTransients());
       mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
-      mGrainFinder.setPitches(&mPitchDetector.getPitches());
+      mPositionFinder.setPitches(&mPitchDetector.getPitches());
     }
   }
   setAudioChannels(2, 2);
