@@ -46,8 +46,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   void buttonClicked(juce::Button *btn) override;
 
  private:
-  static constexpr auto FFT_SIZE = 2048;
-  static constexpr auto HOP_SIZE = 1024;
+  static constexpr auto FFT_SIZE = 4096;
+  static constexpr auto HOP_SIZE = 2048;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
   Fft mFft;
