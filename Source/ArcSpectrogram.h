@@ -35,8 +35,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   void paint(juce::Graphics &) override;
   void resized() override;
 
-  void processBuffer(juce::AudioBuffer<float> &fileBuffer,
-                         std::vector<TransientDetector::Transient> *transients);
+  void processBuffer(juce::AudioBuffer<float>* fileBuffer);
+  void setTransients(std::vector<TransientDetector::Transient> *transients);
   void updatePositions(int midiNote,
       std::vector<GrainPositionFinder::GrainPosition> gPositions);
 
@@ -49,6 +49,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto FFT_SIZE = 2048;
   static constexpr auto HOP_SIZE = 1024;
 
+  juce::AudioBuffer<float>* mFileBuffer = nullptr;
   Fft mFft;
 
   std::vector<GrainPositionFinder::GrainPosition> mGPositions;

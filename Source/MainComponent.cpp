@@ -71,6 +71,11 @@ MainComponent::MainComponent()
     mPositionFinder.updatePosition(midiNote, gPos);
   };
 
+  mTransientDetector.onTransientsUpdated =
+      [this](std::vector<TransientDetector::Transient>& transients) {
+        mArcSpec.setTransients(&transients);
+      };
+
   mKeyboard.setAvailableRange(PitchDetector::MIN_MIDINOTE,
                               PitchDetector::MAX_MIDINOTE);
   addAndMakeVisible(mKeyboard);
@@ -233,9 +238,9 @@ void MainComponent::openNewFile() {
                            mFileBuffer.getNumSamples());
       }
 
-      mTransientDetector.processBuffer(mFileBuffer);
+      mTransientDetector.processBuffer(&mFileBuffer);
       mPitchDetector.processBuffer(mFileBuffer, mSampleRate);
-      mArcSpec.processBuffer(mFileBuffer, &mTransientDetector.getTransients());
+      mArcSpec.processBuffer(&mFileBuffer);
       mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
       mPositionFinder.setPitches(&mPitchDetector.getPitches());
     }

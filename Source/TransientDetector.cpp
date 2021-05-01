@@ -11,30 +11,42 @@
 #define _USE_MATH_DEFINES
 
 #include "TransientDetector.h"
+
 #include <limits.h>
 
-TransientDetector::TransientDetector() : mForwardFFT(FFT_ORDER) {}
+TransientDetector::TransientDetector()
+    : mForwardFFT(FFT_ORDER), juce::Thread("transient thread") {}
 
-void TransientDetector::processBuffer(juce::AudioBuffer<float>& fileBuffer) {
-  updateFft(fileBuffer);
-  retrieveTransients();
-  DBG("all done here-----------------------");
+void TransientDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer) {
+  stopThread(2000);
+  mFileBuffer = fileBuffer;
+  startThread();
 }
 
-void TransientDetector::updateFft(juce::AudioBuffer<float>& fileBuffer) {
-  const float* pBuffer = fileBuffer.getReadPointer(0);
+void TransientDetector::run() {
+  updateFft();
+  retrieveTransients();
+  if (onTransientsUpdated != nullptr && !threadShouldExit()) {
+    onTransientsUpdated(mTransients);
+  }
+}
+
+void TransientDetector::updateFft() {
+  if (mFileBuffer == nullptr) return;
+  const float* pBuffer = mFileBuffer->getReadPointer(0);
   int curSample = 0;
 
-  bool hasData = fileBuffer.getNumSamples() > mFftFrame.size();
+  bool hasData = mFileBuffer->getNumSamples() > mFftFrame.size();
   float curMax = std::numeric_limits<float>::min();
 
   mFftData.clear();
 
   while (hasData) {
+    if (threadShouldExit()) return;
     const float* startSample = &pBuffer[curSample];
     int numSamples = mFftFrame.size();
-    if (curSample + mFftFrame.size() > fileBuffer.getNumSamples()) {
-      numSamples = (fileBuffer.getNumSamples() - curSample);
+    if (curSample + mFftFrame.size() > mFileBuffer->getNumSamples()) {
+      numSamples = (mFileBuffer->getNumSamples() - curSample);
     }
     mFftFrame.fill(0.0f);
     memcpy(mFftFrame.data(), startSample, numSamples);
@@ -51,7 +63,7 @@ void TransientDetector::updateFft(juce::AudioBuffer<float>& fileBuffer) {
     mFftData.push_back(newFrame);
 
     curSample += mFftFrame.size();
-    if (curSample > fileBuffer.getNumSamples()) hasData = false;
+    if (curSample > mFileBuffer->getNumSamples()) hasData = false;
   }
 
   /* Normalize fft values according to max value */
@@ -67,9 +79,11 @@ void TransientDetector::retrieveTransients() {
   mTransients.clear();
   mEnergyBuffer.fill(0.0f);
   for (int frame = 0; frame < mFftData.size(); ++frame) {
+    if (threadShouldExit()) return;
     // Shift energy frames
     for (int i = PARAM_SPREAD - 1; i >= 0; --i) {
-      if (i == 0) mEnergyBuffer[i] = 0;
+      if (i == 0)
+        mEnergyBuffer[i] = 0;
       else {
         mEnergyBuffer[i] = mEnergyBuffer[i - 1];
       }

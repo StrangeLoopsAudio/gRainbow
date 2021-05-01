@@ -17,7 +17,7 @@
 
 #include <JuceHeader.h>
 
-class TransientDetector {
+class TransientDetector : juce::Thread {
  public:
   TransientDetector();
   ~TransientDetector() {}
@@ -29,8 +29,11 @@ class TransientDetector {
         : posRatio(posRatio), confidence(confidence) {}
   } Transient;
 
-  void processBuffer(juce::AudioBuffer<float>& fileBuffer);
-  std::vector<Transient>& getTransients() { return mTransients; }
+  std::function<void(std::vector<Transient>&)> onTransientsUpdated = nullptr;
+
+  void processBuffer(juce::AudioBuffer<float>* fileBuffer);
+
+  void run() override;
 
  private:
   static constexpr auto FFT_ORDER = 9;
@@ -40,14 +43,17 @@ class TransientDetector {
   static constexpr auto PARAM_ATTACK_LOCK = 10;
 
   juce::dsp::FFT mForwardFFT;
+  juce::AudioBuffer<float>* mFileBuffer = nullptr;
   std::array<float, FFT_SIZE * 2> mFftFrame;
-  std::vector<std::vector<float>> mFftData; // FFT data normalized from 0.0-1.0
-  std::array<float, PARAM_SPREAD> mEnergyBuffer; // Spectral energy rolling buffer
+  std::vector<std::vector<float>> mFftData;  // FFT data normalized from 0.0-1.0
+  std::array<float, PARAM_SPREAD>
+      mEnergyBuffer;  // Spectral energy rolling buffer
   std::vector<Transient> mTransients;
   int mAttackFrames = PARAM_ATTACK_LOCK;
 
-  void updateFft(juce::AudioBuffer<float>& fileBuffer);
+  void updateFft();
   void retrieveTransients();
-  // Using current energy buffer and attack frame counter, determines if current frame is a transient frame
-  bool isTransient(); 
+  // Using current energy buffer and attack frame counter, determines if current
+  // frame is a transient frame
+  bool isTransient();
 };

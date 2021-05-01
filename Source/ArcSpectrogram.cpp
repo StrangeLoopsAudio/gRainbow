@@ -54,7 +54,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     for (int i = 0; i < mTransients->size(); ++i) {
       TransientDetector::Transient transient = mTransients->at(i);
       auto startPoint = centerPoint.getPointOnCircumference(
-          getHeight() / 4.0f, (1.5 * M_PI) + (transient.posRatio * M_PI));
+          getHeight() - 21, (1.5 * M_PI) + (transient.posRatio * M_PI));
       auto endPoint = centerPoint.getPointOnCircumference(
           getHeight() - 17, (1.5 * M_PI) + (transient.posRatio * M_PI));
       g.drawLine(juce::Line<float>(startPoint, endPoint), 1.0f);
@@ -78,8 +78,10 @@ void ArcSpectrogram::resized() {
 }
 
 void ArcSpectrogram::run() {
+  if (mFileBuffer == nullptr) return;
+  mFft.processBuffer(*mFileBuffer);
   std::vector<std::vector<float>> spec = mFft.getSpectrum();
-  if (mFft.getSpectrum().size() == 0) return;
+  if (spec.size() == 0 || threadShouldExit()) return;
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
@@ -125,11 +127,15 @@ void ArcSpectrogram::run() {
 }
 
 void ArcSpectrogram::processBuffer(
-    juce::AudioBuffer<float>& fileBuffer,
-    std::vector<TransientDetector::Transient>* transients) {
-  mFft.processBuffer(fileBuffer);
-  mTransients = transients;
+    juce::AudioBuffer<float>* fileBuffer) {
+  stopThread(4000);
+  mFileBuffer = fileBuffer;
   startThread();  // Update spectrogram image
+}
+
+void ArcSpectrogram::setTransients(
+    std::vector<TransientDetector::Transient>* transients) {
+  mTransients = transients;
 }
 
 void ArcSpectrogram::updatePositions(int midiNote,
