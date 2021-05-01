@@ -16,7 +16,7 @@
 //==============================================================================
 /*
  */
-class PositionMarker : public juce::TextButton {
+class PositionMarker : public juce::Button {
  public:
   PositionMarker(GrainPositionFinder::GrainPosition gPos);
   ~PositionMarker() override;

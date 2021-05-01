@@ -49,21 +49,17 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
   // Draw transient markers
   if (mTransients != nullptr) {
-    g.setColour(juce::Colours::white);
+    g.setOpacity(0.7);
+    g.setColour(juce::Colours::blue);
     for (int i = 0; i < mTransients->size(); ++i) {
       TransientDetector::Transient transient = mTransients->at(i);
       auto startPoint = centerPoint.getPointOnCircumference(
           getHeight() / 4.0f, (1.5 * M_PI) + (transient.posRatio * M_PI));
       auto endPoint = centerPoint.getPointOnCircumference(
-          getHeight(), (1.5 * M_PI) + (transient.posRatio * M_PI));
-      g.setColour(juce::Colours::blue);
+          getHeight() - 17, (1.5 * M_PI) + (transient.posRatio * M_PI));
       g.drawLine(juce::Line<float>(startPoint, endPoint), 1.0f);
     }
   }
-
-  // Draw borders
-  //g.setColour(juce::Colours::white);
-  //g.drawRect(getLocalBounds(), 2);
 }
 
 void ArcSpectrogram::resized() {

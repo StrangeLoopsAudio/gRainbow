@@ -55,6 +55,9 @@ void PositionMarker::clicked() {
 
 //==============================================================================
 PositionMarker::PositionMarker(GrainPositionFinder::GrainPosition gPos)
-    : mGPos(gPos) {}
+    : mGPos(gPos), juce::Button(juce::String()) {
+  setToggleState(gPos.isEnabled, juce::dontSendNotification);
+  setClickingTogglesState(true);
+}
 
 PositionMarker::~PositionMarker() {}
