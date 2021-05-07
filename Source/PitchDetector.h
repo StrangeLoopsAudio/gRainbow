@@ -40,9 +40,13 @@ class PitchDetector {
   static constexpr auto NUM_HPS_HARMONICS = 2;
   static constexpr auto DETECTION_THRESHOLD = 0.05f;
   static constexpr auto DETECTION_SPREAD = 0.02f;
+  static constexpr auto MIN_FREQ = 100;
+  static constexpr auto MAX_FREQ = 5000;
 
   Fft mFft;
   std::vector<Pitch> mPitches;
 
+  // Removes frequencies outside of MIDI range
+  void filterFrequencies(double sampleRate); 
   void updateHps(double sampleRate);
 };

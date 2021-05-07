@@ -4,8 +4,7 @@
 MainComponent::MainComponent()
     : mKeyboard(mKeyboardState,
                 juce::MidiKeyboardComponent::horizontalKeyboard),
-      mSynth(mKeyboardState),
-      mFft(FFT_SIZE, HOP_SIZE) {
+      mSynth(mKeyboardState) {
   mFormatManager.registerBasicFormats();
 
   setLookAndFeel(&mRainbowLookAndFeel);
@@ -240,7 +239,7 @@ void MainComponent::openNewFile() {
 
       mTransientDetector.processBuffer(&mFileBuffer);
       mPitchDetector.processBuffer(mFileBuffer, mSampleRate);
-      mArcSpec.processBuffer(&mFileBuffer);
+      mArcSpec.processBuffer(&mFileBuffer, mSampleRate);
       mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
       mPositionFinder.setPitches(&mPitchDetector.getPitches());
     }

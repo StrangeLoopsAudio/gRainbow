@@ -86,6 +86,8 @@ void ArcSpectrogram::run() {
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
   int height = juce::jmax(2.0f, bowWidth / (float)spec[0].size());
+  int minBinIdx = (MIN_FREQ * FFT_SIZE) / mSampleRate;
+  int maxBinIdx = (MAX_FREQ * FFT_SIZE) / mSampleRate;
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mSpectrogramImage =
       juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
@@ -96,13 +98,10 @@ void ArcSpectrogram::run() {
     for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius) {
       float arcLen = 2 * M_PI * curRadius;
       int pixPerEntry = arcLen / spec.size();
-      float radPerc = 1.0f - ((curRadius - startRadius) / (float)bowWidth);
-      auto skewedProportionY = 1.0f - std::exp(std::log(radPerc) * 0.2f);
-      // auto skewedProportionY = 1.0f - radPerc;
-      auto specRow = (size_t)juce::jmap(skewedProportionY, 0.0f,
-                                        (float)(spec[i].size() / 2.0f) / 3.5f);
+      float radPerc = (curRadius - startRadius) / (float)bowWidth;
+      auto specRow = minBinIdx + ((maxBinIdx - minBinIdx) * radPerc);
 
-      auto rainbowColour = Utils::getRainbowColour(radPerc);
+      auto rainbowColour = Utils::getRainbowColour(1.0f - radPerc);
       g.setColour(rainbowColour);
 
       g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[i][specRow]));
@@ -127,9 +126,10 @@ void ArcSpectrogram::run() {
 }
 
 void ArcSpectrogram::processBuffer(
-    juce::AudioBuffer<float>* fileBuffer) {
+    juce::AudioBuffer<float>* fileBuffer, double sampleRate) {
   stopThread(4000);
   mFileBuffer = fileBuffer;
+  mSampleRate = sampleRate;
   startThread();  // Update spectrogram image
 }
 

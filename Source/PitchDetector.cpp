@@ -19,7 +19,22 @@ PitchDetector::PitchDetector() : mFft(FFT_SIZE, HOP_SIZE) {}
 void PitchDetector::processBuffer(juce::AudioBuffer<float>& fileBuffer,
                                double sampleRate) {
   mFft.processBuffer(fileBuffer);
+  filterFrequencies(sampleRate);
   updateHps(sampleRate);
+}
+
+void PitchDetector::filterFrequencies(double sampleRate) {
+  /*std::vector<std::vector<float>> spec = mFft.getSpectrum();
+
+  juce::Range<float> validRange = juce::Range<float>(
+      (MIN_FREQ * FFT_SIZE) / sampleRate, (MAX_FREQ * FFT_SIZE) / sampleRate);
+
+  // Remove frequencies lower than 100 Hz and higher than 5000 Hz
+  for (int frame = 0; frame < spec.size(); ++frame) {
+    if (frame < validRange.getStart() || frame > validRange.getEnd()) {
+      spec[frame].
+    }
+  } */
 }
 
 /* Performs HPS on the FFT data for pitch tracking purposes */

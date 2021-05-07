@@ -65,8 +65,6 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   juce::AudioBuffer<float> mFileBuffer;
   GranularSynth mSynth;
 
-  /* Global fft */
-  Fft mFft;
   TransientDetector mTransientDetector;
   PitchDetector mPitchDetector;
   GrainPositionFinder mPositionFinder;
