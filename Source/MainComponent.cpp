@@ -238,10 +238,10 @@ void MainComponent::openNewFile() {
       }
 
       mTransientDetector.processBuffer(&mFileBuffer);
-      mPitchDetector.processBuffer(mFileBuffer, mSampleRate);
+      mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
       mArcSpec.processBuffer(&mFileBuffer, mSampleRate);
       mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
-      mPositionFinder.setPitches(&mPitchDetector.getPitches());
+      //mPositionFinder.setPitches(&mPitchDetector.getPitches());
     }
   }
   setAudioChannels(2, 2);

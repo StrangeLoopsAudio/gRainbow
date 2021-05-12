@@ -14,119 +14,99 @@
 
 #include <limits.h>
 
-PitchDetector::PitchDetector() : mFft(FFT_SIZE, HOP_SIZE) {}
+PitchDetector::PitchDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch detector thread") {}
 
-void PitchDetector::processBuffer(juce::AudioBuffer<float>& fileBuffer,
+PitchDetector::~PitchDetector() { stopThread(2000); }
+
+void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer,
                                double sampleRate) {
-  mFft.processBuffer(fileBuffer);
-  filterFrequencies(sampleRate);
-  updateHps(sampleRate);
+  stopThread(2000);
+  mFileBuffer = fileBuffer;
+  mSampleRate = sampleRate;
+  startThread();
 }
 
-void PitchDetector::filterFrequencies(double sampleRate) {
-  /*std::vector<std::vector<float>> spec = mFft.getSpectrum();
-
-  juce::Range<float> validRange = juce::Range<float>(
-      (MIN_FREQ * FFT_SIZE) / sampleRate, (MAX_FREQ * FFT_SIZE) / sampleRate);
-
-  // Remove frequencies lower than 100 Hz and higher than 5000 Hz
-  for (int frame = 0; frame < spec.size(); ++frame) {
-    if (frame < validRange.getStart() || frame > validRange.getEnd()) {
-      spec[frame].
-    }
-  } */
+void PitchDetector::run() {
+  if (mFileBuffer == nullptr) return;
+  mFft.processBuffer(*mFileBuffer);
+  if (threadShouldExit()) return;
+  findPeaks();
+  if (threadShouldExit()) return;
+  computeHPCP();
 }
 
-/* Performs HPS on the FFT data for pitch tracking purposes */
-void PitchDetector::updateHps(double sampleRate) {
-  float totalMax = std::numeric_limits<float>::min();
-  std::vector<Pitch> tempPitches;
+void PitchDetector::findPeaks() {
+  float lastGain = 0.0f;
+  bool isIncreasing = true;
+
+  mPeaks.clear();
+
+  float threshold = std::powf(10.0f, DB_THRESH / 20.0f);
   std::vector<std::vector<float>> spec = mFft.getSpectrum();
-
-  int minIndex = juce::roundToInt(
-      (juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) * FFT_SIZE) /
-      sampleRate);
-  int maxIndex = juce::roundToInt(
-      (juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) * FFT_SIZE) /
-      sampleRate);
-  minIndex = juce::jlimit(0, FFT_SIZE, minIndex);
-  maxIndex = juce::jlimit(0, FFT_SIZE, maxIndex);
-  int maxHIndex = FFT_SIZE / NUM_HPS_HARMONICS;
-  if (maxIndex < maxHIndex) maxHIndex = maxIndex;
   for (int frame = 0; frame < spec.size(); ++frame) {
-    int peakIndex = minIndex;
-    // Perform harmonic doubling
-    for (int i = minIndex; i < maxHIndex; ++i) {
-      for (int j = 1; j <= NUM_HPS_HARMONICS; ++j) {
-        spec[frame][i] *= spec[frame][i * j];
-      }
-      if (spec[frame][i] > spec[frame][peakIndex]) {
-        peakIndex = i;
-      }
-    }
-    // Correct octave errors
-    int peakIndex2 = minIndex;
-    int maxsearch = peakIndex * 3 / 4;
-    for (int i = minIndex + 1; i < maxsearch; i++) {
-      if (spec[frame][i] > spec[frame][peakIndex2]) {
-        peakIndex2 = i;
-      }
-    }
-    if (std::abs(peakIndex2 * 2 - peakIndex) < 4) {
-      if (spec[frame][peakIndex2] / spec[frame][peakIndex] > 0.2) {
-        peakIndex = peakIndex2;
-      }
-    }
-
-    float maxVal = spec[frame][peakIndex];
-    if (maxVal > totalMax) {
-      totalMax = maxVal;
-    }
-    float peakFreq = (peakIndex * sampleRate) / FFT_SIZE;
-    auto newPitch = Pitch(peakFreq, (float)frame / spec.size(), maxVal);
-    tempPitches.push_back(newPitch);  // Add temporary pitch
-  }
-  // Normalize post-hps data
-  for (int i = 0; i < spec.size(); ++i) {
-    for (int j = 0; j < spec[i].size(); ++j) {
-      spec[i][j] /= totalMax;
-    }
-  }
-
-  // Normalize temporary pitch amplitudes and add valid pitches
-  mPitches.clear();
-  for (int i = 0; i < tempPitches.size(); i++) {
-    // Make sure within freq range
-    if (tempPitches[i].freq >=
-            juce::MidiMessage::getMidiNoteInHertz(MIN_MIDINOTE) &&
-        tempPitches[i].freq <=
-            juce::MidiMessage::getMidiNoteInHertz(MAX_MIDINOTE) &&
-        tempPitches[i].gain > totalMax * DETECTION_THRESHOLD) {
-      tempPitches[i].gain /= totalMax;
-      // Check if already detected at same pos with greater gain
-      int foundIndex = -1;
-      for (int j = 0; j < mPitches.size(); ++j) {
-        if (tempPitches[i].freq == mPitches[j].freq &&
-            std::abs(tempPitches[i].posRatio - mPitches[j].posRatio) <
-                DETECTION_SPREAD) {
-          foundIndex = j;
+    mPeaks.push_back(std::vector<Peak>());
+    lastGain = 0.0f;
+    isIncreasing = true;
+    for (int i = 0; i < spec[frame].size(); ++i) {
+      float curGain = spec[frame][i];
+      if (isIncreasing && 
+        curGain < lastGain) {
+        Peak peak = interpolatePeak(frame, i);
+        if (peak.gain > threshold && peak.freq > MIN_FREQ && peak.freq < MAX_FREQ) {
+          mPeaks.back().push_back(peak);
         }
       }
-      // If already added, make sure the higher gain is chosen
-      if (foundIndex != -1) {
-        if (mPitches[foundIndex].gain < tempPitches[i].gain) {
-          mPitches[foundIndex] = tempPitches[i];
+      isIncreasing = curGain > lastGain;
+      lastGain = curGain;
+    }
+    if (threadShouldExit()) return;
+  }
+}
+
+void PitchDetector::computeHPCP() {
+  mHPCP.clear(); // clear HPCP data
+  for (int frame = 0; frame < mPeaks.size(); ++frame) {
+    mHPCP.push_back(std::vector<float>(NUM_PITCH_CLASSES, 0.0f));
+    // Create sum for each pitch class
+    float curMax = std::numeric_limits<float>::min();
+    for (int pc = 1; pc <= NUM_PITCH_CLASSES; ++pc) {
+      float centerFreq = REF_FREQ * 2.0f * (pc / mHPCP.size());
+      for (int i = 0; i < mPeaks[frame].size(); ++i) {
+        float d = std::fmod(12.0f * std::log2(mPeaks[frame][i].freq / centerFreq), 12.0f);
+        if (d <= (0.5f * HPCP_WINDOW_LEN)) {
+          float w = std::pow(std::cos((M_PI * d) / HPCP_WINDOW_LEN), 2.0f);
+          mHPCP.back()[pc - 1] += (w * std::pow(mPeaks[frame][i].gain, 2));
+          if (mHPCP.back()[pc - 1] > curMax) curMax = mHPCP.back()[pc - 1];
         }
-      } else {
-        mPitches.push_back(tempPitches[i]);
       }
     }
-  }
 
-  // REMOVE WHEN FINISHED TESTING
-  for (int i = 0; i < mPitches.size(); ++i) {
-    DBG("freq: " << mPitches[i].freq << ", gain: " << mPitches[i].gain
-                 << ", pos: " << mPitches[i].posRatio);
+    // Normalize frame
+    for (int pc = 0; pc < NUM_PITCH_CLASSES; ++pc) {
+      mHPCP[frame][pc] /= curMax;
+      if (mHPCP[frame][pc] == 1.0f) {
+         // TODO: remove
+        DBG("perc: " << (float)frame / mPeaks.size() << ", pc: " << pc);
+      }
+    }
+    
+    if (threadShouldExit()) return;
   }
-  DBG("found " << mPitches.size() << " pitches");
+}
+
+PitchDetector::Peak PitchDetector::interpolatePeak(int frame, int bin) {
+  // Use quadratic interpolation to find peak freq and amplitude
+  std::vector<std::vector<float>> spec = mFft.getSpectrum();
+  if (bin == 0 || bin == spec[frame].size() - 1) {
+    return Peak((bin * mSampleRate) / FFT_SIZE, spec[frame][bin]);
+  } 
+  float a = 20 * std::log10(spec[frame][bin - 1]);
+  float b = 20 * std::log10(spec[frame][bin]);
+  float c = 20 * std::log10(spec[frame][bin + 1]);
+
+  float p = 0.5f * (a - c) / (a - (2.0f * b) + c);
+  float interpBin = bin + p;
+  float freq = (interpBin * mSampleRate) / FFT_SIZE;
+  float gainDB = b - (0.25 * (a - c) * p);
+  return Peak(freq, std::pow(10, gainDB / 20.0f));
 }

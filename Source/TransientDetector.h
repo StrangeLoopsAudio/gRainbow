@@ -16,11 +16,12 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Fft.h"
 
 class TransientDetector : juce::Thread {
  public:
   TransientDetector();
-  ~TransientDetector() {}
+  ~TransientDetector();
 
   typedef struct Transient {
     float posRatio;
@@ -36,16 +37,14 @@ class TransientDetector : juce::Thread {
   void run() override;
 
  private:
-  static constexpr auto FFT_ORDER = 9;
-  static constexpr auto FFT_SIZE = 1 << FFT_ORDER;
+  static constexpr auto FFT_SIZE = 1024;
+  static constexpr auto HOP_SIZE = 512;
   static constexpr auto PARAM_THRESHOLD = 2.5f;
   static constexpr auto PARAM_SPREAD = 3;
   static constexpr auto PARAM_ATTACK_LOCK = 10;
 
-  juce::dsp::FFT mForwardFFT;
+  Fft mFft;
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
-  std::array<float, FFT_SIZE * 2> mFftFrame;
-  std::vector<std::vector<float>> mFftData;  // FFT data normalized from 0.0-1.0
   std::array<float, PARAM_SPREAD>
       mEnergyBuffer;  // Spectral energy rolling buffer
   std::vector<Transient> mTransients;
