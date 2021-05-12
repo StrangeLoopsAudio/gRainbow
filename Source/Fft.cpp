@@ -43,15 +43,19 @@ void Fft::processBuffer(juce::AudioBuffer<float>& fileBuffer) {
                                                               mFftFrame.size());
     if (frameMax > curMax) curMax = frameMax;
     mFftData.push_back(newFrame);
+    /* Normalize fft values according to max frame value */
+    for (int i = 0; i < mFftData.back().size(); ++i) {
+      mFftData.back()[i] /= curMax;
+    }
 
     curSample += mHopSize;
     if (curSample > fileBuffer.getNumSamples()) hasData = false;
   }
 
   /* Normalize fft values according to max value */
-  for (int i = 0; i < mFftData.size(); ++i) {
+ /* for (int i = 0; i < mFftData.size(); ++i) {
     for (int j = 0; j < mFftData[i].size(); ++j) {
       mFftData[i][j] /= curMax;
     }
-  }
+  } */
 }

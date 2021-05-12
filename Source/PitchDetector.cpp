@@ -30,21 +30,22 @@ void PitchDetector::run() {
   if (mFileBuffer == nullptr) return;
   mFft.processBuffer(*mFileBuffer);
   if (threadShouldExit()) return;
-  findPeaks();
-  if (threadShouldExit()) return;
   computeHPCP();
 }
 
-void PitchDetector::findPeaks() {
+void PitchDetector::computeHPCP() {
   float lastGain = 0.0f;
   bool isIncreasing = true;
 
   mPeaks.clear();
+  mHPCP.clear();
 
+  // Find local peaks to compute HPCP with
   float threshold = std::powf(10.0f, DB_THRESH / 20.0f);
   std::vector<std::vector<float>> spec = mFft.getSpectrum();
   for (int frame = 0; frame < spec.size(); ++frame) {
     mPeaks.push_back(std::vector<Peak>());
+    mHPCP.push_back(std::vector<float>(NUM_PITCH_CLASSES, 0.0f));
     lastGain = 0.0f;
     isIncreasing = true;
     for (int i = 0; i < spec[frame].size(); ++i) {
@@ -59,20 +60,16 @@ void PitchDetector::findPeaks() {
       isIncreasing = curGain > lastGain;
       lastGain = curGain;
     }
-    if (threadShouldExit()) return;
-  }
-}
 
-void PitchDetector::computeHPCP() {
-  mHPCP.clear(); // clear HPCP data
-  for (int frame = 0; frame < mPeaks.size(); ++frame) {
-    mHPCP.push_back(std::vector<float>(NUM_PITCH_CLASSES, 0.0f));
+    if (threadShouldExit()) return;
+
     // Create sum for each pitch class
     float curMax = std::numeric_limits<float>::min();
     for (int pc = 1; pc <= NUM_PITCH_CLASSES; ++pc) {
       float centerFreq = REF_FREQ * 2.0f * (pc / mHPCP.size());
       for (int i = 0; i < mPeaks[frame].size(); ++i) {
-        float d = std::fmod(12.0f * std::log2(mPeaks[frame][i].freq / centerFreq), 12.0f);
+        float d = std::fmod(
+            12.0f * std::log2(mPeaks[frame][i].freq / centerFreq), 12.0f);
         if (d <= (0.5f * HPCP_WINDOW_LEN)) {
           float w = std::pow(std::cos((M_PI * d) / HPCP_WINDOW_LEN), 2.0f);
           mHPCP.back()[pc - 1] += (w * std::pow(mPeaks[frame][i].gain, 2));
@@ -81,15 +78,15 @@ void PitchDetector::computeHPCP() {
       }
     }
 
-    // Normalize frame
+    // Normalize HPCP frame
     for (int pc = 0; pc < NUM_PITCH_CLASSES; ++pc) {
       mHPCP[frame][pc] /= curMax;
       if (mHPCP[frame][pc] == 1.0f) {
-         // TODO: remove
-        DBG("perc: " << (float)frame / mPeaks.size() << ", pc: " << pc);
+        // TODO: remove
+        DBG("perc: " << (float)frame / spec.size() << ", pc: " << pc);
       }
     }
-    
+
     if (threadShouldExit()) return;
   }
 }

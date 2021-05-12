@@ -47,7 +47,7 @@ class PitchDetector : juce::Thread {
  private:
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 512;
-  static constexpr auto DB_THRESH = -60;
+  static constexpr auto DB_THRESH = -100;
   static constexpr auto REF_FREQ = 440;
   static constexpr auto NUM_PITCH_CLASSES = 12;
   static constexpr auto HPCP_WINDOW_LEN = 1.34f;
@@ -70,7 +70,6 @@ class PitchDetector : juce::Thread {
   std::vector<std::vector<float>> mHPCP;  // harmonic pitch class profile
   std::vector<Pitch> mPitches;
 
-  void findPeaks();
   void computeHPCP();
   Peak interpolatePeak(int frame, int bin);
 };
