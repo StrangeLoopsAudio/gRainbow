@@ -75,6 +75,11 @@ MainComponent::MainComponent()
         mArcSpec.setTransients(&transients);
       };
 
+  mPitchDetector.onPitchesUpdated =
+      [this](std::vector<std::vector<float>>& hpcpBuffer) {
+        mArcSpec.loadBuffer(&hpcpBuffer);
+      };
+
   mKeyboard.setAvailableRange(PitchDetector::MIN_MIDINOTE,
                               PitchDetector::MAX_MIDINOTE);
   addAndMakeVisible(mKeyboard);

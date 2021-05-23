@@ -36,7 +36,7 @@ void TransientDetector::run() {
 
 void TransientDetector::retrieveTransients() {
   // Perform transient detection on each frame
-  auto spec = mFft.getSpectrum();
+  std::vector<std::vector<float>>& spec = mFft.getSpectrum();
   mTransients.clear();
   mEnergyBuffer.fill(0.0f);
   for (int frame = 0; frame < spec.size(); ++frame) {

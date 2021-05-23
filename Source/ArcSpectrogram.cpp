@@ -78,49 +78,92 @@ void ArcSpectrogram::resized() {
 }
 
 void ArcSpectrogram::run() {
-  if (mFileBuffer == nullptr) return;
-  mFft.processBuffer(*mFileBuffer);
-  std::vector<std::vector<float>> spec = mFft.getSpectrum();
-  if (spec.size() == 0 || threadShouldExit()) return;
-  int startRadius = getHeight() / 4.0f;
-  int endRadius = getHeight();
-  int bowWidth = endRadius - startRadius;
-  int height = juce::jmax(2.0f, bowWidth / (float)spec[0].size());
-  int minBinIdx = (MIN_FREQ * FFT_SIZE) / mSampleRate;
-  int maxBinIdx = (MAX_FREQ * FFT_SIZE) / mSampleRate;
-  juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
-  mSpectrogramImage =
-      juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
-  juce::Graphics g(mSpectrogramImage);
+  if (mFileBuffer != nullptr) {
+    mFft.processBuffer(*mFileBuffer);
+    auto spec = mFft.getSpectrum();
+    if (spec.size() == 0 || threadShouldExit()) return;
+    int startRadius = getHeight() / 4.0f;
+    int endRadius = getHeight();
+    int bowWidth = endRadius - startRadius;
+    int height = juce::jmax(2.0f, bowWidth / (float)spec[0].size());
+    int minBinIdx = (MIN_FREQ * FFT_SIZE) / mSampleRate;
+    int maxBinIdx = (MAX_FREQ * FFT_SIZE) / mSampleRate;
+    juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
+    mSpectrogramImage =
+        juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
+    juce::Graphics g(mSpectrogramImage);
 
-  for (auto i = 0; i < spec.size(); ++i) {
-    if (threadShouldExit()) return;
-    for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius) {
-      float arcLen = 2 * M_PI * curRadius;
-      int pixPerEntry = arcLen / spec.size();
-      float radPerc = (curRadius - startRadius) / (float)bowWidth;
-      auto specRow = minBinIdx + ((maxBinIdx - minBinIdx) * radPerc);
+    for (auto i = 0; i < spec.size(); ++i) {
+      if (threadShouldExit()) return;
+      for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius) {
+        float arcLen = 2 * M_PI * curRadius;
+        int pixPerEntry = arcLen / spec.size();
+        float radPerc = (curRadius - startRadius) / (float)bowWidth;
+        auto specRow = minBinIdx + ((maxBinIdx - minBinIdx) * radPerc);
 
-      auto rainbowColour = Utils::getRainbowColour(1.0f - radPerc);
-      g.setColour(rainbowColour);
+        auto rainbowColour = Utils::getRainbowColour(1.0f - radPerc);
+        g.setColour(rainbowColour);
 
-      g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[i][specRow]));
+        g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[i][specRow]));
 
-      float xPerc = (float)i / spec.size();
-      float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
-      int width = pixPerEntry + 6;
+        float xPerc = (float)i / spec.size();
+        float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
+        int width = pixPerEntry + 6;
 
-      juce::Point<float> p =
-          startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
-      juce::AffineTransform rotation = juce::AffineTransform();
-      rotation = rotation.rotated(angleRad, p.x, p.y);
-      juce::Rectangle<float> rect = juce::Rectangle<float>(width, height);
-      rect = rect.withCentre(p);
-      rect = rect.transformedBy(rotation);
-      juce::Path rectPath;
-      rectPath.addRectangle(rect);
+        juce::Point<float> p =
+            startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
+        juce::AffineTransform rotation = juce::AffineTransform();
+        rotation = rotation.rotated(angleRad, p.x, p.y);
+        juce::Rectangle<float> rect = juce::Rectangle<float>(width, height);
+        rect = rect.withCentre(p);
+        rect = rect.transformedBy(rotation);
+        juce::Path rectPath;
+        rectPath.addRectangle(rect);
 
-      g.fillPath(rectPath, rotation);
+        g.fillPath(rectPath, rotation);
+      }
+    }
+  } else if (mLoadedBuffer != nullptr) {
+    std::vector<std::vector<float>>& spec = *mLoadedBuffer;
+    if (spec.size() == 0 || threadShouldExit()) return;
+    int startRadius = getHeight() / 4.0f;
+    int endRadius = getHeight();
+    int bowWidth = endRadius - startRadius;
+    int height = juce::jmax(2.0f, bowWidth / (float)spec[0].size());
+    juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
+    mSpectrogramImage =
+        juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
+    juce::Graphics g(mSpectrogramImage);
+
+    for (auto i = 0; i < spec.size(); ++i) {
+      if (threadShouldExit()) return;
+      for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius) {
+        float arcLen = 2 * M_PI * curRadius;
+        int pixPerEntry = arcLen / spec.size();
+        float radPerc = (curRadius - startRadius) / (float)bowWidth;
+        auto specRow = radPerc * spec[i].size();
+
+        auto rainbowColour = Utils::getRainbowColour(1.0f - radPerc);
+        g.setColour(rainbowColour);
+
+        g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[i][specRow]));
+
+        float xPerc = (float)i / spec.size();
+        float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
+        int width = pixPerEntry + 6;
+
+        juce::Point<float> p =
+            startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
+        juce::AffineTransform rotation = juce::AffineTransform();
+        rotation = rotation.rotated(angleRad, p.x, p.y);
+        juce::Rectangle<float> rect = juce::Rectangle<float>(width, height);
+        rect = rect.withCentre(p);
+        rect = rect.transformedBy(rotation);
+        juce::Path rectPath;
+        rectPath.addRectangle(rect);
+
+        g.fillPath(rectPath, rotation);
+      }
     }
   }
 }
@@ -131,6 +174,12 @@ void ArcSpectrogram::processBuffer(
   mFileBuffer = fileBuffer;
   mSampleRate = sampleRate;
   startThread();  // Update spectrogram image
+}
+
+void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer) {
+  stopThread(4000);
+  mLoadedBuffer = buffer;
+  startThread();
 }
 
 void ArcSpectrogram::setTransients(

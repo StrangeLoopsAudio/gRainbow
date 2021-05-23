@@ -39,6 +39,9 @@ class PitchDetector : juce::Thread {
         : freq(freq), posRatio(posRatio), gain(gain) {}
   } Pitch;
 
+  std::function<void(std::vector<std::vector<float>>&)> onPitchesUpdated =
+      nullptr;
+
   void processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate);
   std::vector<Pitch>& getPitches() { return mPitches; }
 

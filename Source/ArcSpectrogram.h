@@ -36,6 +36,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   void resized() override;
 
   void processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate);
+  void loadBuffer(std::vector<std::vector<float>> *buffer);
   void setTransients(std::vector<TransientDetector::Transient> *transients);
   void updatePositions(int midiNote,
       std::vector<GrainPositionFinder::GrainPosition> gPositions);
@@ -52,6 +53,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto MAX_FREQ = 5000;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
+  std::vector<std::vector<float>> *mLoadedBuffer = nullptr;
   Fft mFft;
 
   std::vector<GrainPositionFinder::GrainPosition> mGPositions;
