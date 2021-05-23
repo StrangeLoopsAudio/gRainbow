@@ -237,9 +237,9 @@ void MainComponent::openNewFile() {
                            mFileBuffer.getNumSamples());
       }
 
-      mTransientDetector.processBuffer(&mFileBuffer);
+      //mTransientDetector.processBuffer(&mFileBuffer);
       mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
-      mArcSpec.processBuffer(&mFileBuffer, mSampleRate);
+      //mArcSpec.processBuffer(&mFileBuffer, mSampleRate);
       mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
       //mPositionFinder.setPitches(&mPitchDetector.getPitches());
     }

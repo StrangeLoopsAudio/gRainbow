@@ -21,7 +21,7 @@ class Fft {
         mHopSize(hopSize),
         mForwardFFT(std::log2(windowSize)),
         mWindowEnvelope(windowSize,
-                        juce::dsp::WindowingFunction<float>::WindowingMethod::hamming) {}
+                        juce::dsp::WindowingFunction<float>::WindowingMethod::blackmanHarris) {}
   ~Fft() {}
 
   void processBuffer(juce::AudioBuffer<float>& fileBuffer);

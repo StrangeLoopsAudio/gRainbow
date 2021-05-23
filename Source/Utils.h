@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <chrono>
 
 class Utils {
  public:
@@ -62,4 +63,24 @@ class Utils {
     }
     return juce::Colour(r * 255.0f, g * 255.0f, b * 255.0f);
   }
+
+  template <class TimeT = std::chrono::milliseconds,
+            class ClockT = std::chrono::steady_clock>
+  class Timer {
+    using timep_t = typename ClockT::time_point;
+    timep_t _start = ClockT::now(), _end = {};
+
+   public:
+    void tick() {
+      _end = timep_t{};
+      _start = ClockT::now();
+    }
+
+    void tock() { _end = ClockT::now(); }
+
+    template <class TT = TimeT>
+    TT duration() const {
+      return std::chrono::duration_cast<TT>(_end - _start);
+    }
+  };
 };

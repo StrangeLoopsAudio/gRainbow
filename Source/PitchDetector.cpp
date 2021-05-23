@@ -13,6 +13,7 @@
 #include "PitchDetector.h"
 
 #include <limits.h>
+#include "Utils.h"
 
 PitchDetector::PitchDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch detector thread") {}
 
@@ -37,6 +38,8 @@ void PitchDetector::computeHPCP() {
   float lastGain = 0.0f;
   bool isIncreasing = true;
 
+  Utils::Timer<> clock;
+
   mPeaks.clear();
   mHPCP.clear();
 
@@ -48,11 +51,15 @@ void PitchDetector::computeHPCP() {
     mHPCP.push_back(std::vector<float>(NUM_PITCH_CLASSES, 0.0f));
     lastGain = 0.0f;
     isIncreasing = true;
+
     for (int i = 0; i < spec[frame].size(); ++i) {
       float curGain = spec[frame][i];
       if (isIncreasing && 
         curGain < lastGain) {
+//clock.tick();
         Peak peak = interpolatePeak(frame, i);
+//clock.tock();
+//DBG("done over " << clock.duration().count() << " ms\n");
         if (peak.gain > threshold && peak.freq > MIN_FREQ && peak.freq < MAX_FREQ) {
           mPeaks.back().push_back(peak);
         }
@@ -60,6 +67,8 @@ void PitchDetector::computeHPCP() {
       isIncreasing = curGain > lastGain;
       lastGain = curGain;
     }
+
+
 
     if (threadShouldExit()) return;
 
@@ -81,10 +90,6 @@ void PitchDetector::computeHPCP() {
     // Normalize HPCP frame
     for (int pc = 0; pc < NUM_PITCH_CLASSES; ++pc) {
       mHPCP[frame][pc] /= curMax;
-      if (mHPCP[frame][pc] == 1.0f) {
-        // TODO: remove
-        DBG("perc: " << (float)frame / spec.size() << ", pc: " << pc);
-      }
     }
 
     if (threadShouldExit()) return;
@@ -93,7 +98,7 @@ void PitchDetector::computeHPCP() {
 
 PitchDetector::Peak PitchDetector::interpolatePeak(int frame, int bin) {
   // Use quadratic interpolation to find peak freq and amplitude
-  std::vector<std::vector<float>> spec = mFft.getSpectrum();
+  std::vector<std::vector<float>>& spec = mFft.getSpectrum();
   if (bin == 0 || bin == spec[frame].size() - 1) {
     return Peak((bin * mSampleRate) / FFT_SIZE, spec[frame][bin]);
   } 
