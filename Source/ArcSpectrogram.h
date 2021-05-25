@@ -51,6 +51,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto HOP_SIZE = 2048;
   static constexpr auto MIN_FREQ = 100;
   static constexpr auto MAX_FREQ = 5000;
+  static constexpr auto NUM_COLS = 600;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
   std::vector<std::vector<float>> *mLoadedBuffer = nullptr;

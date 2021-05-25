@@ -93,8 +93,9 @@ void ArcSpectrogram::run() {
         juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
     juce::Graphics g(mSpectrogramImage);
 
-    for (auto i = 0; i < spec.size(); ++i) {
+    for (auto i = 0; i < NUM_COLS; ++i) {
       if (threadShouldExit()) return;
+      auto specCol = (float)i / NUM_COLS;
       for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius) {
         float arcLen = 2 * M_PI * curRadius;
         int pixPerEntry = arcLen / spec.size();
@@ -104,9 +105,9 @@ void ArcSpectrogram::run() {
         auto rainbowColour = Utils::getRainbowColour(1.0f - radPerc);
         g.setColour(rainbowColour);
 
-        g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[i][specRow]));
+        g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[specCol][specRow]));
 
-        float xPerc = (float)i / spec.size();
+        float xPerc = (float)specCol / spec.size();
         float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
         int width = pixPerEntry + 6;
 
@@ -129,26 +130,27 @@ void ArcSpectrogram::run() {
     int startRadius = getHeight() / 4.0f;
     int endRadius = getHeight();
     int bowWidth = endRadius - startRadius;
-    int height = juce::jmax(2.0f, bowWidth / (float)spec[0].size());
+    int height = 6;
     juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
     mSpectrogramImage =
         juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
     juce::Graphics g(mSpectrogramImage);
 
-    for (auto i = 0; i < spec.size(); ++i) {
+    for (auto i = 0; i < NUM_COLS; ++i) {
       if (threadShouldExit()) return;
-      for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius) {
+      auto specCol = (i / (float)NUM_COLS) * spec.size();
+      for (auto curRadius = startRadius; curRadius < endRadius; curRadius += height) {
         float arcLen = 2 * M_PI * curRadius;
         int pixPerEntry = arcLen / spec.size();
         float radPerc = (curRadius - startRadius) / (float)bowWidth;
-        auto specRow = radPerc * spec[i].size();
+        auto specRow = radPerc * spec[specCol].size();
 
-        auto rainbowColour = Utils::getRainbowColour(1.0f - radPerc);
+        auto rainbowColour = Utils::getRainbow12Colour(1.0f - radPerc);
         g.setColour(rainbowColour);
 
-        g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[i][specRow]));
+        g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[specCol][specRow]));
 
-        float xPerc = (float)i / spec.size();
+        float xPerc = (float)specCol / spec.size();
         float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
         int width = pixPerEntry + 6;
 
