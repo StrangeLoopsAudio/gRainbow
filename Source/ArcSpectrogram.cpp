@@ -130,7 +130,7 @@ void ArcSpectrogram::run() {
     int startRadius = getHeight() / 4.0f;
     int endRadius = getHeight();
     int bowWidth = endRadius - startRadius;
-    int height = 6;
+    int height = 5;
     juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
     mSpectrogramImage =
         juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
@@ -152,13 +152,13 @@ void ArcSpectrogram::run() {
 
         float xPerc = (float)specCol / spec.size();
         float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
-        int width = pixPerEntry + 6;
+        int width = pixPerEntry + 2;
 
         juce::Point<float> p =
             startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
         juce::AffineTransform rotation = juce::AffineTransform();
         rotation = rotation.rotated(angleRad, p.x, p.y);
-        juce::Rectangle<float> rect = juce::Rectangle<float>(width, height);
+        juce::Rectangle<float> rect = juce::Rectangle<float>(width, height + 12);
         rect = rect.withCentre(p);
         rect = rect.transformedBy(rotation);
         juce::Path rectPath;

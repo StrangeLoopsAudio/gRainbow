@@ -15,7 +15,9 @@
 #include <limits.h>
 
 PitchDetector::PitchDetector()
-    : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch detector thread") {}
+    : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch detector thread") {
+  initHarmonicWeights();
+}
 
 PitchDetector::~PitchDetector() { stopThread(2000); }
 
@@ -32,8 +34,22 @@ void PitchDetector::run() {
   mFft.processBuffer(*mFileBuffer);
   if (threadShouldExit()) return;
   computeHPCP();
+  estimatePitches();
   if (onPitchesUpdated != nullptr && !threadShouldExit()) {
-    onPitchesUpdated(mHPCP);
+    //onPitchesUpdated(mHPCP);
+    onPitchesUpdated(mPitchesTest);
+  }
+}
+
+void PitchDetector::estimatePitches() {
+  mPitchesTest.clear();
+  for (int frame = 0; frame < mHPCP.size(); ++frame) {
+    mPitchesTest.push_back(std::vector<float>(NUM_PITCH_CLASSES, 0.0f));
+    for (int i = 0; i < NUM_PITCH_CLASSES; ++i) {
+      if (mHPCP[frame][i] == 1.0f) {
+        mPitchesTest[frame][i] = 1.0f;
+      }
+    }
   }
 }
 
@@ -72,14 +88,20 @@ void PitchDetector::computeHPCP() {
     float curMax = 0.0;
     for (int i = 0; i < mPeaks[frame].size(); ++i) {
       for (int pc = 0; pc < NUM_PITCH_CLASSES; ++pc) {
-      float centerFreq =
-          REF_FREQ * std::pow(2.0f, (pc + 1) / (float)NUM_PITCH_CLASSES);
-        float d = std::fmod(
-            12.0f * std::log2(mPeaks[frame][i].freq / centerFreq), 12.0f);
-        if (std::abs(d) <= (0.5f * HPCP_WINDOW_LEN)) {
-          float w = std::pow(std::cos((M_PI * d) / HPCP_WINDOW_LEN), 2.0f);
-          mHPCP[frame][pc] += (w * std::pow(mPeaks[frame][i].gain, 2));
-          if (mHPCP[frame][pc] > curMax) curMax = mHPCP[frame][pc];
+        float centerFreq =
+            REF_FREQ * std::pow(2.0f, (pc + 1) / (float)NUM_PITCH_CLASSES);
+        // Add contribution from each harmonic
+        for (int w = 0; w < NUM_HARMONIC_WEIGHTS; ++w) {
+          float freq = mPeaks[frame][i].freq *
+                       pow(2., -mHarmonicWeights[w].semitone / 12.0);
+          float harmonicWeight = mHarmonicWeights[w].gain;
+          float d = std::fmod(12.0f * std::log2(freq / centerFreq), 12.0f);
+          if (std::abs(d) <= (0.5f * HPCP_WINDOW_LEN)) {
+            float w = std::pow(std::cos((M_PI * d) / HPCP_WINDOW_LEN), 2.0f);
+            mHPCP[frame][pc] += (w * std::pow(mPeaks[frame][i].gain, 2) *
+                                 harmonicWeight * harmonicWeight);
+            if (mHPCP[frame][pc] > curMax) curMax = mHPCP[frame][pc];
+          }
         }
       }
     }
@@ -110,4 +132,40 @@ PitchDetector::Peak PitchDetector::interpolatePeak(int frame, int bin) {
   float freq = (interpBin * mSampleRate) / FFT_SIZE;
   float gainDB = b - (0.25 * (a - c) * p);
   return Peak(freq, juce::jlimit(0.0, 1.0, std::pow(10, gainDB / 20.0f)));
+}
+
+// From essentia:
+// Builds a weighting table of harmonic contribution. Higher harmonics
+// contribute less and the fundamental frequency has a full harmonic
+// strength of 1.0.
+void PitchDetector::initHarmonicWeights() {
+  mHarmonicWeights.clear();
+
+  // Populate _harmonicPeaks with the semitonal positions of each of the
+  // harmonics.
+  for (int i = 0; i <= NUM_HARMONIC_WEIGHTS; i++) {
+    float semitone = 12.0 * log2(i + 1.0);
+    float octweight = std::max(1.0, (semitone / 12.0) * 0.5);
+
+    // Get the semitone within the range (0-HARMONIC_PRECISION, 12.0-HARMONIC_PRECISION]
+    while (semitone >= 12.0 - HARMONIC_PRECISION) {
+      semitone -= 12.0;
+    }
+
+    // Check to see if the semitone has already been added to weights
+    std::vector<HarmonicWeight>::iterator it;
+    for (it = mHarmonicWeights.begin(); it != mHarmonicWeights.end(); it++) {
+      if ((*it).semitone > semitone - HARMONIC_PRECISION &&
+          (*it).semitone < semitone + HARMONIC_PRECISION)
+        break;
+    }
+
+    if (it == mHarmonicWeights.end()) {
+      // no harmonic peak found for this frequency; add it
+      mHarmonicWeights.push_back(HarmonicWeight(semitone, (1.0 / octweight)));
+    } else {
+      // else, add the weight
+      (*it).gain += (1.0 / octweight);
+    }
+  }
 }

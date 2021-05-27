@@ -50,11 +50,12 @@ class PitchDetector : juce::Thread {
  private:
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 512;
-  static constexpr auto DB_THRESH = -100;
+  static constexpr auto DB_THRESH = -80;
   static constexpr auto REF_FREQ = 440;
   static constexpr auto NUM_PITCH_CLASSES = 12;
   static constexpr auto HPCP_WINDOW_LEN = 1.34f;
-  static constexpr auto NUM_HPS_HARMONICS = 2;
+  static constexpr auto NUM_HARMONIC_WEIGHTS = 2;
+  static constexpr auto HARMONIC_PRECISION = 0.00001;
   static constexpr auto DETECTION_THRESHOLD = 0.05f;
   static constexpr auto DETECTION_SPREAD = 0.02f;
   static constexpr auto MIN_FREQ = 100;
@@ -66,13 +67,24 @@ class PitchDetector : juce::Thread {
     Peak(float freq, float gain) : freq(freq), gain(gain) {}
   } Peak;
 
+  typedef struct HarmonicWeight {
+    float semitone;
+    float gain;
+    HarmonicWeight(int semitone, float harmonicStrength)
+        : semitone(semitone), gain(harmonicStrength) {}
+  } HarmonicWeight;
+
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
   Fft mFft;
   double mSampleRate;
   std::vector<std::vector<Peak>> mPeaks;
   std::vector<std::vector<float>> mHPCP;  // harmonic pitch class profile
+  std::vector<std::vector<float>> mPitchesTest;
+  std::vector<HarmonicWeight> mHarmonicWeights;
   std::vector<Pitch> mPitches;
 
   void computeHPCP();
+  void estimatePitches();
   Peak interpolatePeak(int frame, int bin);
+  void initHarmonicWeights();
 };
