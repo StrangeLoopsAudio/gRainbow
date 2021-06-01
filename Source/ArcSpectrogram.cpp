@@ -79,9 +79,13 @@ void ArcSpectrogram::resized() {
 
 void ArcSpectrogram::run() {
   if (mFileBuffer != nullptr) {
+
+    // Get frequency spectrum via an FFT
     mFft.processBuffer(*mFileBuffer);
     auto spec = mFft.getSpectrum();
     if (spec.size() == 0 || threadShouldExit()) return;
+
+    // Initialize rainbow parameters
     int startRadius = getHeight() / 4.0f;
     int endRadius = getHeight();
     int bowWidth = endRadius - startRadius;
@@ -89,28 +93,34 @@ void ArcSpectrogram::run() {
     int minBinIdx = (MIN_FREQ * FFT_SIZE) / mSampleRate;
     int maxBinIdx = (MAX_FREQ * FFT_SIZE) / mSampleRate;
     juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
+
     mSpectrogramImage =
         juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
     juce::Graphics g(mSpectrogramImage);
 
+    // Draw each column of frequencies
     for (auto i = 0; i < NUM_COLS; ++i) {
       if (threadShouldExit()) return;
       auto specCol = (float)i / NUM_COLS;
+      // Draw each row of frequencies
       for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius) {
         float arcLen = 2 * M_PI * curRadius;
         int pixPerEntry = arcLen / spec.size();
         float radPerc = (curRadius - startRadius) / (float)bowWidth;
         auto specRow = minBinIdx + ((maxBinIdx - minBinIdx) * radPerc);
 
+        // Choose rainbow color depending on radius
         auto rainbowColour = Utils::getRainbowColour(1.0f - radPerc);
         g.setColour(rainbowColour);
 
+        // Set brightness according to the frequency's amplitude at this frame
         g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[specCol][specRow]));
 
         float xPerc = (float)specCol / spec.size();
         float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
         int width = pixPerEntry + 6;
 
+        // Create and rotate a rectangle to represent the "pixel"
         juce::Point<float> p =
             startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
         juce::AffineTransform rotation = juce::AffineTransform();
@@ -121,6 +131,7 @@ void ArcSpectrogram::run() {
         juce::Path rectPath;
         rectPath.addRectangle(rect);
 
+        // Finally, draw the rectangle
         g.fillPath(rectPath, rotation);
       }
     }
