@@ -19,7 +19,7 @@
 
 class GranularSynth : juce::Thread {
  public:
-  GranularSynth(juce::MidiKeyboardState& midiState);
+  GranularSynth();
   ~GranularSynth();
 
   void setFileBuffer(juce::AudioBuffer<float>* buffer, double sr);
@@ -51,7 +51,6 @@ class GranularSynth : juce::Thread {
   } GrainNote;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
-  juce::MidiKeyboardState& mMidiState;
   std::vector<GrainNote> mActiveGrains;
   std::array<float, 512> mGaussianEnv;
 

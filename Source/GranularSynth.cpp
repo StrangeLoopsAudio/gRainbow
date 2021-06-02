@@ -10,8 +10,8 @@
 
 #include "GranularSynth.h"
 
-GranularSynth::GranularSynth(juce::MidiKeyboardState& midiState)
-    : mMidiState(midiState), juce::Thread("granular thread") {
+GranularSynth::GranularSynth()
+    : juce::Thread("granular thread") {
   generateGaussianEnvelope();
   mTotalSamps = 0;
   startThread();

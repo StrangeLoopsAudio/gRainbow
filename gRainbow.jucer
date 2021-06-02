@@ -16,6 +16,10 @@
               file="Source/TransientDetector.h"/>
       </GROUP>
       <GROUP id="{32B46666-89F3-1953-7D07-B92E6B19F9CC}" name="Components">
+        <FILE id="hxCpOe" name="RainbowKeyboard.cpp" compile="1" resource="0"
+              file="Source/RainbowKeyboard.cpp"/>
+        <FILE id="fxVnvT" name="RainbowKeyboard.h" compile="0" resource="0"
+              file="Source/RainbowKeyboard.h"/>
         <FILE id="c1zyfP" name="PositionMarker.cpp" compile="1" resource="0"
               file="Source/PositionMarker.cpp"/>
         <FILE id="aJYlgQ" name="PositionMarker.h" compile="0" resource="0"

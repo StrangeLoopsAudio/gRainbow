@@ -40,7 +40,7 @@ class GrainPositionFinder {
     mPitches = pitches;
   }
   std::vector<GrainPositionFinder::GrainPosition> findPositions(int k,
-                                                                int midiNote);
+                                                                int pitchClass);
 
   void updatePosition(int midiNote, GrainPositionFinder::GrainPosition gPos);
 

@@ -48,6 +48,8 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   static constexpr auto SPEC_WIDTH = 20;
   static constexpr auto SPEC_HEIGHT = 20;
   static constexpr auto KEYBOARD_HEIGHT = 100;
+  static constexpr auto MIN_NOTE_NUM = 45;
+  static constexpr auto MAX_NOTE_NUM = 56;
   //static constexpr auto LOGO_HEIGHT = 150;
 
   /* Parameter defaults */

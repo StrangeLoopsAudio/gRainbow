@@ -3,8 +3,7 @@
 //==============================================================================
 MainComponent::MainComponent()
     : mKeyboard(mKeyboardState,
-                juce::MidiKeyboardComponent::horizontalKeyboard),
-      mSynth(mKeyboardState) {
+                juce::MidiKeyboardComponent::horizontalKeyboard) {
   mFormatManager.registerBasicFormats();
 
   setLookAndFeel(&mRainbowLookAndFeel);
@@ -80,8 +79,7 @@ MainComponent::MainComponent()
         mArcSpec.loadBuffer(&hpcpBuffer);
       };
 
-  mKeyboard.setAvailableRange(PitchDetector::MIN_MIDINOTE,
-                              PitchDetector::MAX_MIDINOTE);
+  mKeyboard.setAvailableRange(MIN_NOTE_NUM, MAX_NOTE_NUM);
   addAndMakeVisible(mKeyboard);
 
   setSize(1200, 600);
