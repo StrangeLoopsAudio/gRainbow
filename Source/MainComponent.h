@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 
 #include "ArcSpectrogram.h"
+#include "RainbowKeyboard.h"
 #include "GranularSynth.h"
 #include "RainbowLookAndFeel.h"
 #include "Utils.h"
@@ -75,8 +76,9 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   juce::ImageComponent mLogo;
   juce::TextButton mBtnOpenFile;
   ArcSpectrogram mArcSpec;
+  RainbowKeyboard mKeyboard;
   juce::MidiKeyboardState mKeyboardState;
-  juce::MidiKeyboardComponent mKeyboard;
+  //juce::MidiKeyboardComponent mKeyboard;
   /* Parameters */
   juce::Slider mSliderDiversity;
   juce::Label mLabelDiversity;

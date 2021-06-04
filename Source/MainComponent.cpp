@@ -2,8 +2,7 @@
 
 //==============================================================================
 MainComponent::MainComponent()
-    : mKeyboard(mKeyboardState,
-                juce::MidiKeyboardComponent::horizontalKeyboard) {
+    : mKeyboard(mKeyboardState) {
   mFormatManager.registerBasicFormats();
 
   setLookAndFeel(&mRainbowLookAndFeel);
@@ -79,7 +78,6 @@ MainComponent::MainComponent()
         mArcSpec.loadBuffer(&hpcpBuffer);
       };
 
-  mKeyboard.setAvailableRange(MIN_NOTE_NUM, MAX_NOTE_NUM);
   addAndMakeVisible(mKeyboard);
 
   setSize(1200, 600);
@@ -169,10 +167,8 @@ void MainComponent::resized() {
   // auto titleSection = r.removeFromTop(LOGO_HEIGHT);
   // mLogo.setBounds(titleSection.withSizeKeepingCentre(LOGO_HEIGHT * 2,
   //                                                   titleSection.getHeight()));
-  mKeyboard.setBounds(
-      r.removeFromBottom(KEYBOARD_HEIGHT)
-          .withSizeKeepingCentre(mKeyboard.getTotalKeyboardWidth(),
-                                 KEYBOARD_HEIGHT));
+  mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT)
+                          .withSizeKeepingCentre(PANEL_WIDTH, KEYBOARD_HEIGHT));
 
   // Left Panel
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
