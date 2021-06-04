@@ -106,14 +106,14 @@ MainComponent::~MainComponent() {
 }
 
 void MainComponent::timerCallback() {
-  if (mNoteToDisplay != 0) {
+  if (mCurPitchClass != 0) {
     int k = juce::jmap((float)mSliderDiversity.getValue(), MIN_DIVERSITY,
                        MAX_DIVERSITY);
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
-        mPositionFinder.findPositions(k, mNoteToDisplay);
-    mSynth.setPositions(mNoteToDisplay, gPositions);
-    mArcSpec.updatePositions(mNoteToDisplay, gPositions);
-    mNoteToDisplay = 0;
+        mPositionFinder.findPositions(k, mCurPitchClass);
+    mSynth.setPositions(mCurPitchClass, gPositions);
+    mArcSpec.updatePositions(mCurPitchClass, gPositions);
+    mCurPitchClass = Utils::PitchClass::NONE;
   }
 }
 
@@ -137,7 +137,7 @@ void MainComponent::getNextAudioBlock(
   if (!incomingMidi.isEmpty()) {
     for (juce::MidiMessageMetadata md : incomingMidi) {
       if (md.getMessage().isNoteOn()) {
-        mNoteToDisplay = md.getMessage().getNoteNumber();
+        mCurPitchClass = (Utils::PitchClass)md.getMessage().getNoteNumber();
       } else if (md.getMessage().isNoteOff()) {
         mSynth.stopNote(md.getMessage().getNoteNumber());
       }

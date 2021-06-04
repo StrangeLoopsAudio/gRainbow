@@ -138,6 +138,22 @@ class Utils {
     return juce::Colour(r * 255.0f, g * 255.0f, b * 255.0f);
   }
 
+  static enum PitchClass {
+    NONE = -1,
+    C,
+    Cs,
+    D,
+    Ds,
+    E,
+    F,
+    Fs,
+    G,
+    Gs,
+    A,
+    As,
+    B
+  };
+
   template <class TimeT = std::chrono::milliseconds,
             class ClockT = std::chrono::steady_clock>
   class Timer {
@@ -157,4 +173,5 @@ class Utils {
       return std::chrono::duration_cast<TT>(_end - _start);
     }
   };
+
 };
