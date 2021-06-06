@@ -141,7 +141,6 @@ void ArcSpectrogram::run() {
     int startRadius = getHeight() / 4.0f;
     int endRadius = getHeight();
     int bowWidth = endRadius - startRadius;
-    int height = 5;
     juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
     mSpectrogramImage =
         juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
@@ -150,26 +149,25 @@ void ArcSpectrogram::run() {
     for (auto i = 0; i < NUM_COLS; ++i) {
       if (threadShouldExit()) return;
       auto specCol = (i / (float)NUM_COLS) * spec.size();
-      for (auto curRadius = startRadius; curRadius < endRadius; curRadius += height) {
+      for (auto curRadius = startRadius; curRadius < endRadius; curRadius += 1) {
         float arcLen = 2 * M_PI * curRadius;
         int pixPerEntry = arcLen / spec.size();
         float radPerc = (curRadius - startRadius) / (float)bowWidth;
         auto specRow = radPerc * spec[specCol].size();
 
-        auto rainbowColour = Utils::getRainbow12Colour(1.0f - radPerc);
+        auto rainbowColour = juce::Colour::fromHSV(1 - radPerc, 1.0, 1.0, 1.0);
         g.setColour(rainbowColour);
 
         g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[specCol][specRow]));
 
         float xPerc = (float)specCol / spec.size();
         float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
-        int width = pixPerEntry + 2;
 
         juce::Point<float> p =
             startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
         juce::AffineTransform rotation = juce::AffineTransform();
         rotation = rotation.rotated(angleRad, p.x, p.y);
-        juce::Rectangle<float> rect = juce::Rectangle<float>(width, height + 12);
+        juce::Rectangle<float> rect = juce::Rectangle<float>(1, 1);
         rect = rect.withCentre(p);
         rect = rect.transformedBy(rotation);
         juce::Path rectPath;

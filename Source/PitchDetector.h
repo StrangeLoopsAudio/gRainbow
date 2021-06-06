@@ -56,7 +56,7 @@ class PitchDetector : juce::Thread {
   static constexpr auto DB_THRESH = -80;
   static constexpr auto REF_FREQ = 440;
   static constexpr auto MAX_PEAKS = 60;
-  static constexpr auto NUM_PITCH_CLASSES = 12;
+  static constexpr auto NUM_PITCH_CLASSES = 120;
   static constexpr auto HPCP_WINDOW_LEN = 1.34f;
   static constexpr auto NUM_HARMONIC_WEIGHTS = 3;
   static constexpr auto HARMONIC_PRECISION = 0.00001;
@@ -86,6 +86,7 @@ class PitchDetector : juce::Thread {
   std::vector<Pitch> mPitches;
 
   void computeHPCP();
+  void detectPitches();
   void estimatePitches();
   Peak interpolatePeak(int frame, int bin);
   void interpolatePeak(const float leftVal, const float middleVal,

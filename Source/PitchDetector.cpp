@@ -34,11 +34,15 @@ void PitchDetector::run() {
   mFft.processBuffer(*mFileBuffer);
   if (threadShouldExit()) return;
   computeHPCP();
-  // estimatePitches();
+  //estimatePitches();
   if (onPitchesUpdated != nullptr && !threadShouldExit()) {
-    // onPitchesUpdated(mHPCP);
     onPitchesUpdated(mHPCP);
+    //onPitchesUpdated(mPitchesTest);
   }
+}
+
+void detectPitches() {
+
 }
 
 void PitchDetector::estimatePitches() {
