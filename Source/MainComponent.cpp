@@ -113,7 +113,7 @@ void MainComponent::timerCallback() {
         mPositionFinder.findPositions(k, mCurPitchClass);
     mSynth.setPositions(mCurPitchClass, gPositions);
     mArcSpec.updatePositions(mCurPitchClass, gPositions);
-    mCurPitchClass = Utils::PitchClass::NONE;
+    mCurPitchClass = PitchDetector::PitchClass::NONE;
   }
 }
 
@@ -137,9 +137,11 @@ void MainComponent::getNextAudioBlock(
   if (!incomingMidi.isEmpty()) {
     for (juce::MidiMessageMetadata md : incomingMidi) {
       if (md.getMessage().isNoteOn()) {
-        mCurPitchClass = (Utils::PitchClass)md.getMessage().getNoteNumber();
+        mCurPitchClass =
+            (PitchDetector::PitchClass)md.getMessage().getNoteNumber();
       } else if (md.getMessage().isNoteOff()) {
-        mSynth.stopNote(md.getMessage().getNoteNumber());
+        mSynth.stopNote(
+            (PitchDetector::PitchClass)md.getMessage().getNoteNumber());
       }
     }
   }

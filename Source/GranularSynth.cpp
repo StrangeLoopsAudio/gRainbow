@@ -71,14 +71,15 @@ void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, double sr) {
 }
 
 void GranularSynth::setPositions(
-    int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions) {
+    PitchDetector::PitchClass pitchClass,
+    std::vector<GrainPositionFinder::GrainPosition> gPositions) {
   int startPos = getStartPosition(gPositions);
-  mActiveNotes.add(GrainNote(midiNote, startPos, gPositions));
+  mActiveNotes.add(GrainNote(pitchClass, startPos, gPositions));
 }
 
-void GranularSynth::stopNote(int midiNote) {
+void GranularSynth::stopNote(PitchDetector::PitchClass pitchClass) {
   mActiveNotes.removeIf(
-      [midiNote](GrainNote& note) { return note.midiNote == midiNote; });
+      [pitchClass](GrainNote& note) { return note.pitchClass == pitchClass; });
 }
 
 void GranularSynth::generateGaussianEnvelope() {

@@ -28,9 +28,9 @@ class GranularSynth : juce::Thread {
   void setDiversity(float diversity) { mDiversity = diversity; }
 
   void process(juce::AudioBuffer<float>* blockBuffer);
-  void setPositions(int midiNote,
+  void setPositions(PitchDetector::PitchClass pitchClass,
                     std::vector<GrainPositionFinder::GrainPosition> gPositions);
-  void stopNote(int midiNote);
+  void stopNote(PitchDetector::PitchClass pitchClass);
 
   //==============================================================================
   void run() override;
@@ -42,12 +42,12 @@ class GranularSynth : juce::Thread {
   static constexpr auto MAX_RATE = 40.f;
 
   typedef struct GrainNote {
-    int midiNote;
+    PitchDetector::PitchClass pitchClass;
     int curPos = 0;
     std::vector<GrainPositionFinder::GrainPosition> positions;
-    GrainNote(int midiNote, int startPos,
+    GrainNote(PitchDetector::PitchClass pitchClass, int startPos,
               std::vector<GrainPositionFinder::GrainPosition> positions)
-        : midiNote(midiNote), curPos(startPos), positions(positions) {}
+        : pitchClass(pitchClass), curPos(startPos), positions(positions) {}
   } GrainNote;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
