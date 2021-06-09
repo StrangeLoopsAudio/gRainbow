@@ -34,15 +34,14 @@ void PitchDetector::run() {
   mFft.processBuffer(*mFileBuffer);
   if (threadShouldExit()) return;
   computeHPCP();
-  //estimatePitches();
+  if (threadShouldExit()) return;
+  segmentPitches();
+  if (threadShouldExit()) return;
+  // estimatePitches();
   if (onPitchesUpdated != nullptr && !threadShouldExit()) {
     onPitchesUpdated(mHPCP);
-    //onPitchesUpdated(mPitchesTest);
+    // onPitchesUpdated(mPitchesTest);
   }
-}
-
-void detectPitches() {
-
 }
 
 void PitchDetector::estimatePitches() {
@@ -58,27 +57,24 @@ void PitchDetector::estimatePitches() {
 }
 
 void PitchDetector::computeHPCP() {
-  float lastGain = 0.0f;
-  bool isIncreasing = true;
-
   mHPCP.clear();
 
-  
-  float threshold = std::powf(10.0f, DB_THRESH / 20.0f);
   std::vector<std::vector<float>>& spec = mFft.getSpectrum();
   for (int frame = 0; frame < spec.size(); ++frame) {
     mHPCP.push_back(std::vector<float>(NUM_PITCH_CLASSES, 0.0f));
-    
+
+    std::vector<float>& specFrame = mFft.getSpectrum()[frame];
+
     // Find local peaks to compute HPCP with
-    std::vector<Peak> &peaks = getPeaks(frame);
+    std::vector<Peak>& peaks = getPeaks(MAX_SPEC_PEAKS, specFrame);
 
     if (threadShouldExit()) return;
 
     float curMax = 0.0;
     for (int i = 0; i < peaks.size(); ++i) {
-      float peakFreq = (peaks[i].binPos * mSampleRate) / 2;
+      float peakFreq = ((peaks[i].binNum / (specFrame.size() - 1)) * mSampleRate) / 2;
       if (peakFreq < MIN_FREQ || peakFreq > MAX_FREQ) continue;
-      
+
       // Create sum for each pitch class
       for (int pc = 0; pc < NUM_PITCH_CLASSES; ++pc) {
         float centerFreq =
@@ -109,6 +105,112 @@ void PitchDetector::computeHPCP() {
 
     if (threadShouldExit()) return;
   }
+}
+
+void PitchDetector::segmentPitches() {
+  if (mHPCP.empty()) return;
+
+  mPitches.clear();
+
+  // Initialize parameters
+  int maxIdleFrames = mSampleRate * (MAX_IDLE_TIME_MS / 1000.0);
+  int minNoteFrames = mSampleRate * (MIN_NOTE_TIME_MS / 1000.0);
+
+  // Initialize the first segments using the first valid peaks
+  std::vector<PitchDetector::Peak> firstPeaks;
+  for (int frame = 0; frame < mHPCP.size(); ++frame) {
+    std::vector<PitchDetector::Peak> peaks =
+        getPeaks(NUM_ACTIVE_SEGMENTS, mHPCP[frame]);
+    if (!peaks.empty()) {
+      auto peak = peaks.begin();
+      // Keep pushing peaks until starting segments are full
+      while (firstPeaks.size() < NUM_ACTIVE_SEGMENTS && peak != peaks.end()) {
+        firstPeaks.push_back(*peak);
+      }
+    }
+  }
+
+  // Get a better audio clip bro
+  if (firstPeaks.size() != NUM_ACTIVE_SEGMENTS) return;
+
+  for (int i = 0; i < NUM_ACTIVE_SEGMENTS; ++i) {
+    mSegments[i].binNum = firstPeaks[i].binNum;
+    mSegments[i].salience = firstPeaks[i].gain;
+  }
+
+  // Calculate note trajectories through the clip
+  for (int frame = 0; frame < mHPCP.size(); ++frame) {
+    // Get the new pitch candidates
+    std::vector<PitchDetector::Peak> peaks =
+        getPeaks(NUM_ACTIVE_SEGMENTS, mHPCP[frame]);
+
+    // Look for continuation candidates in peaks
+    for (int i = 0; i < mSegments.size(); ++i) {
+      PitchSegment& curSegment = mSegments[i];
+      int closestIdx = -1;
+      for (int j = 0; j < peaks.size(); ++j) {
+        float devBins = std::abs(curSegment.binNum - peaks[j].binNum);
+        if (devBins <= NUM_DEVIATION_BINS) {
+          // Replace candidate if:
+          if (closestIdx == -1) {  // It is the first one
+            closestIdx = j;
+          } else if (devBins <
+                         std::abs(curSegment.binNum -
+                                  peaks[closestIdx]
+                                      .binNum) ||  // It is closer to the target
+                     (peaks[closestIdx].binNum == peaks[j].binNum &&
+                      (peaks[closestIdx].gain <
+                       peaks[j].gain))) {  // It's tied for distance
+                                           // but has a higher gain
+            closestIdx = j;
+          }
+        }
+      }
+
+      if (closestIdx == -1) {
+        // Mark segment as waiting for continuance
+        if (curSegment.idleFrame == -1) curSegment.idleFrame = frame;
+      } else {
+        // Continue segment
+        curSegment.idleFrame = -1;
+        curSegment.binNum = peaks[closestIdx].binNum;
+        curSegment.salience =
+            peaks[closestIdx].gain;  // TODO: salience function
+        peaks[closestIdx].binNum =
+            INVALID_BIN;  // Mark peak so it isn't reused for multiple segments
+      }
+
+      // Check for segment expiration
+      if (curSegment.idleFrame != -1 &&
+          (frame - curSegment.idleFrame) > maxIdleFrames) {
+        
+        if (frame - curSegment.startFrame > minNoteFrames) {
+          // Push to completed segments
+          PitchClass pc = getPitchClass(curSegment.binNum);
+          mPitches.push_back(Pitch(pc, (float)frame / mHPCP.size(),
+                                   frame - curSegment.startFrame,
+                                   curSegment.salience));
+          DBG("new seg: " << pc << ", done at frame: " << frame);
+        }
+        // Replace segment with new peak
+        for (int j = 0; j < peaks.size(); ++j) {
+          if (peaks[j].binNum != INVALID_BIN) {
+            curSegment.startFrame = frame;
+            curSegment.idleFrame = -1;
+            curSegment.binNum = peaks[j].binNum;
+            curSegment.salience = peaks[j].gain;
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+PitchDetector::PitchClass PitchDetector::getPitchClass(float binNum) {
+  int binsPerClass = NUM_PITCH_CLASSES / 12;
+  int pc = binNum / binsPerClass;
+  return (PitchClass)pc;
 }
 
 PitchDetector::Peak PitchDetector::interpolatePeak(int frame, int bin) {
@@ -165,9 +267,9 @@ void PitchDetector::initHarmonicWeights() {
   }
 }
 
-std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int frame) {
-  std::vector<float>& specFrame = mFft.getSpectrum()[frame];
-  int size = specFrame.size();
+std::vector<PitchDetector::Peak> PitchDetector::getPeaks(
+    int numPeaks, std::vector<float>& frame) {
+  int size = frame.size();
   const float scale = 1.0 / (float)(size - 1);
 
   std::vector<Peak> peaks;
@@ -178,61 +280,59 @@ std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int frame) {
   int i = 0;
 
   // first check the boundaries:
-  if (i + 1 < size && specFrame[i] > specFrame[i + 1]) {
-    if (specFrame[i] > MAGNITUDE_THRESHOLD) {
-      peaks.push_back(Peak(i * scale, specFrame[i]));
+  if (i + 1 < size && frame[i] > frame[i + 1]) {
+    if (frame[i] > MAGNITUDE_THRESHOLD) {
+      peaks.push_back(Peak(i, frame[i]));
     }
   }
 
   while (true) {
     // going down
-    while (i + 1 < size - 1 && specFrame[i] >= specFrame[i + 1]) {
+    while (i + 1 < size - 1 && frame[i] >= frame[i + 1]) {
       i++;
     }
 
     // now we're climbing
-    while (i + 1 < size - 1 && specFrame[i] < specFrame[i + 1]) {
+    while (i + 1 < size - 1 && frame[i] < frame[i + 1]) {
       i++;
     }
 
     // not anymore, go through the plateau
     int j = i;
-    while (j + 1 < size - 1 && (specFrame[j] == specFrame[j + 1])) {
+    while (j + 1 < size - 1 && (frame[j] == frame[j + 1])) {
       j++;
     }
 
     // end of plateau, do we go up or down?
-    if (j + 1 < size - 1 && specFrame[j + 1] < specFrame[j] &&
-        specFrame[j] > MAGNITUDE_THRESHOLD) {  // going down again
+    if (j + 1 < size - 1 && frame[j + 1] < frame[j] &&
+        frame[j] > MAGNITUDE_THRESHOLD) {  // going down again
       float resultBin = 0.0;
       float resultVal = 0.0;
 
       if (j != i) {  // plateau peak between i and j
         resultBin = (i + j) * 0.5;
-        resultVal = specFrame[i];
+        resultVal = frame[i];
       } else {  // interpolate peak at i-1, i and i+1
-        interpolatePeak(specFrame[j - 1], specFrame[j], specFrame[j + 1], j,
-                        resultVal, resultBin);
+        interpolatePeak(frame[j - 1], frame[j], frame[j + 1], j, resultVal,
+                        resultBin);
       }
 
-      float resultPos = resultBin * scale;
+      if (resultBin > size - 1) break;
 
-      if (resultPos > 1.0) break;
-
-      peaks.push_back(Peak(resultPos, resultVal));
+      peaks.push_back(Peak(resultBin, resultVal));
     }
 
     // nothing found, start loop again
     i = j;
 
     if (i + 1 >= size - 1) {  // check the one just before the last position
-      if (i == size - 2 && specFrame[i - 1] < specFrame[i] &&
-          specFrame[i + 1] < specFrame[i] && specFrame[i] > MAGNITUDE_THRESHOLD) {
+      if (i == size - 2 && frame[i - 1] < frame[i] && frame[i + 1] < frame[i] &&
+          frame[i] > MAGNITUDE_THRESHOLD) {
         float resultBin = 0.0;
         float resultVal = 0.0;
-        interpolatePeak(specFrame[i - 1], specFrame[i], specFrame[i + 1], j,
-                        resultVal, resultBin);
-        peaks.push_back(Peak(resultBin * scale, resultVal));
+        interpolatePeak(frame[i - 1], frame[i], frame[i + 1], j, resultVal,
+                        resultBin);
+        peaks.push_back(Peak(resultBin, resultVal));
       }
       break;
     }
@@ -240,15 +340,14 @@ std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int frame) {
 
   // check upper boundary here, so peaks are already sorted by position
   float pos = 1.0 / scale;
-  if (size - 2 < pos && pos <= size - 1 &&
-      specFrame[size - 1] > specFrame[size - 2]) {
-    if (specFrame[size - 1] > MAGNITUDE_THRESHOLD) {
-      peaks.push_back(Peak((size - 1) * scale, specFrame[size - 1]));
+  if (size - 2 < pos && pos <= size - 1 && frame[size - 1] > frame[size - 2]) {
+    if (frame[size - 1] > MAGNITUDE_THRESHOLD) {
+      peaks.push_back(Peak((size - 1), frame[size - 1]));
     }
   }
 
   // we only want this many peaks
-  size_t nWantedPeaks = std::min((size_t)MAX_PEAKS, peaks.size());
+  int nWantedPeaks = juce::jmin(numPeaks, (int)peaks.size());
   std::sort(peaks.begin(), peaks.end(),
             [](Peak self, Peak other) { return self.gain > other.gain; });
   return std::vector<Peak>(peaks.begin(), peaks.begin() + nWantedPeaks);
