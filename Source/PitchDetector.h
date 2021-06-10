@@ -44,7 +44,7 @@ class PitchDetector : juce::Thread {
   typedef struct Pitch {
     PitchClass pitchClass;
     float posRatio; // position in track from 0-1
-    float duration; // note duration in samples
+    float duration; // note duration in HPCP frames
     float gain; // pitch salience
     Pitch(PitchClass pitchClass, float posRatio, float duration, float gain)
         : pitchClass(pitchClass), posRatio(posRatio), duration(duration), gain(gain) {}
@@ -72,11 +72,12 @@ class PitchDetector : juce::Thread {
   static constexpr auto MAX_FREQ = 3500;
   static constexpr auto HARMONIC_PRECISION = 0.00001;
   static constexpr auto MAGNITUDE_THRESHOLD = 0.00001;
+  static constexpr auto PITCH_CLASS_OFFSET = 3; // Offset from reference freq A to lowest class C
   // Pitch segmenting
-  static constexpr auto NUM_ACTIVE_SEGMENTS = 3;
-  static constexpr auto MAX_DEVIATION_CENTS = 90;
+  static constexpr auto NUM_ACTIVE_SEGMENTS = 1;
+  static constexpr auto MAX_DEVIATION_CENTS = 50;
   static constexpr auto INVALID_BIN = -1;
-  static constexpr int  NUM_DEVIATION_BINS =
+  static constexpr int  MAX_DEVIATION_BINS =
       (NUM_PITCH_CLASSES / 12.0) * (MAX_DEVIATION_CENTS / 100.0);
   static constexpr auto MAX_IDLE_TIME_MS = 62.5;
   static constexpr auto MIN_NOTE_TIME_MS = 125;

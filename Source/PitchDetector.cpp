@@ -37,21 +37,33 @@ void PitchDetector::run() {
   if (threadShouldExit()) return;
   segmentPitches();
   if (threadShouldExit()) return;
-  // estimatePitches();
+  estimatePitches();
   if (onPitchesUpdated != nullptr && !threadShouldExit()) {
-    onPitchesUpdated(mHPCP);
-    // onPitchesUpdated(mPitchesTest);
+    //onPitchesUpdated(mHPCP);
+    onPitchesUpdated(mPitchesTest);
   }
 }
 
 void PitchDetector::estimatePitches() {
   mPitchesTest.clear();
-  for (int frame = 0; frame < mHPCP.size(); ++frame) {
+  /*for (int frame = 0; frame < mHPCP.size(); ++frame) {
     mPitchesTest.push_back(std::vector<float>(NUM_PITCH_CLASSES, 0.0f));
     for (int i = 0; i < NUM_PITCH_CLASSES; ++i) {
       if (mHPCP[frame][i] == 1.0f) {
         mPitchesTest[frame][i] = 1.0f;
       }
+    }
+  } */
+  for (int frame = 0; frame < mHPCP.size(); ++frame) {
+    mPitchesTest.push_back(std::vector<float>(mHPCP[frame].size(), 0.0f));
+  }
+  for (int i = 0; i < mPitches.size(); ++i) {
+    auto pitch = mPitches[i];
+    int frame = pitch.posRatio * (mHPCP.size() - 1);
+    int bin = (int)(pitch.pitchClass * (NUM_PITCH_CLASSES / 12.0)) + 6;
+    DBG("frame: " << frame << ", bin: " << bin << ", pc: " << pitch.pitchClass);
+    for (int j = 0; j < pitch.duration; ++j) {
+      mPitchesTest[frame + j][bin] = 1.0f;
     }
   }
 }
@@ -113,11 +125,13 @@ void PitchDetector::segmentPitches() {
   mPitches.clear();
 
   // Initialize parameters
-  int maxIdleFrames = mSampleRate * (MAX_IDLE_TIME_MS / 1000.0);
-  int minNoteFrames = mSampleRate * (MIN_NOTE_TIME_MS / 1000.0);
+  int maxIdleFrames = mSampleRate * (MAX_IDLE_TIME_MS / 1000.0) / HOP_SIZE;
+  int minNoteFrames = mSampleRate * (MIN_NOTE_TIME_MS / 1000.0) / HOP_SIZE;
+  DBG("max dev: " << MAX_DEVIATION_BINS << ", max idle: " << maxIdleFrames << ", minNote: " << minNoteFrames << ", totalFrames: " << mHPCP.size());
 
   // Initialize the first segments using the first valid peaks
   std::vector<PitchDetector::Peak> firstPeaks;
+  int startFrame = 0;
   for (int frame = 0; frame < mHPCP.size(); ++frame) {
     std::vector<PitchDetector::Peak> peaks =
         getPeaks(NUM_ACTIVE_SEGMENTS, mHPCP[frame]);
@@ -126,6 +140,7 @@ void PitchDetector::segmentPitches() {
       // Keep pushing peaks until starting segments are full
       while (firstPeaks.size() < NUM_ACTIVE_SEGMENTS && peak != peaks.end()) {
         firstPeaks.push_back(*peak);
+        startFrame++;
       }
     }
   }
@@ -139,7 +154,7 @@ void PitchDetector::segmentPitches() {
   }
 
   // Calculate note trajectories through the clip
-  for (int frame = 0; frame < mHPCP.size(); ++frame) {
+  for (int frame = startFrame; frame < mHPCP.size(); ++frame) {
     // Get the new pitch candidates
     std::vector<PitchDetector::Peak> peaks =
         getPeaks(NUM_ACTIVE_SEGMENTS, mHPCP[frame]);
@@ -150,7 +165,7 @@ void PitchDetector::segmentPitches() {
       int closestIdx = -1;
       for (int j = 0; j < peaks.size(); ++j) {
         float devBins = std::abs(curSegment.binNum - peaks[j].binNum);
-        if (devBins <= NUM_DEVIATION_BINS) {
+        if (devBins <= MAX_DEVIATION_BINS) {
           // Replace candidate if:
           if (closestIdx == -1) {  // It is the first one
             closestIdx = j;
@@ -187,10 +202,12 @@ void PitchDetector::segmentPitches() {
         if (frame - curSegment.startFrame > minNoteFrames) {
           // Push to completed segments
           PitchClass pc = getPitchClass(curSegment.binNum);
-          mPitches.push_back(Pitch(pc, (float)frame / mHPCP.size(),
+          mPitches.push_back(
+              Pitch(pc, (float)curSegment.startFrame / mHPCP.size(),
                                    frame - curSegment.startFrame,
                                    curSegment.salience));
-          DBG("new seg: " << pc << ", done at frame: " << frame);
+          DBG("new note: " << pc << ", from frame: " << curSegment.startFrame
+                           << ", duration: " << frame - curSegment.startFrame);
         }
         // Replace segment with new peak
         for (int j = 0; j < peaks.size(); ++j) {
@@ -209,8 +226,8 @@ void PitchDetector::segmentPitches() {
 
 PitchDetector::PitchClass PitchDetector::getPitchClass(float binNum) {
   int binsPerClass = NUM_PITCH_CLASSES / 12;
-  int pc = binNum / binsPerClass;
-  return (PitchClass)pc;
+  int pc = (binNum / binsPerClass) + PITCH_CLASS_OFFSET;
+  return (PitchClass)(pc % 12);
 }
 
 PitchDetector::Peak PitchDetector::interpolatePeak(int frame, int bin) {
