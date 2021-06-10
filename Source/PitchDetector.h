@@ -66,7 +66,7 @@ class PitchDetector : juce::Thread {
   static constexpr auto REF_FREQ = 440;
   static constexpr auto MAX_SPEC_PEAKS = 60;
   static constexpr auto NUM_PITCH_CLASSES = 120;
-  static constexpr auto HPCP_WINDOW_LEN = 1.34f;
+  static constexpr auto HPCP_WINDOW_LEN = 0.6f;
   static constexpr auto NUM_HARMONIC_WEIGHTS = 3;
   static constexpr auto MIN_FREQ = 80;
   static constexpr auto MAX_FREQ = 3500;
@@ -74,19 +74,20 @@ class PitchDetector : juce::Thread {
   static constexpr auto MAGNITUDE_THRESHOLD = 0.00001;
   static constexpr auto PITCH_CLASS_OFFSET = 3; // Offset from reference freq A to lowest class C
   // Pitch segmenting
-  static constexpr auto NUM_ACTIVE_SEGMENTS = 1;
-  static constexpr auto MAX_DEVIATION_CENTS = 50;
+  static constexpr auto NUM_ACTIVE_SEGMENTS = 5;
+  static constexpr auto MAX_DEVIATION_CENTS = 25;
   static constexpr auto INVALID_BIN = -1;
   static constexpr int  MAX_DEVIATION_BINS =
       (NUM_PITCH_CLASSES / 12.0) * (MAX_DEVIATION_CENTS / 100.0);
   static constexpr auto MAX_IDLE_TIME_MS = 62.5;
   static constexpr auto MIN_NOTE_TIME_MS = 125;
+  static constexpr auto LOOKAHEAD_TIME_MS = 25;
 
   typedef struct PitchSegment {
     float binNum; // Bin number in HPCP
     int startFrame; // Start frame of segment
     int idleFrame; // Start frame of when segment began being idle (or -1 when active)
-    float salience; // Confidence level from 0-1
+    float salience; // Confidence level accumulator from gains
     PitchSegment() : binNum(0), startFrame(0), idleFrame(-1), salience(0.0) {}
   } PitchSegment;
 
@@ -118,7 +119,10 @@ class PitchDetector : juce::Thread {
   void computeHPCP();
   void segmentPitches();
   void estimatePitches();
-  PitchClass getPitchClass(float binNum); // Finds the closest pitch class
+  bool hasBetterCandidateAhead(
+      int startFrame, float target,
+      float deviation);                    // True if a closer target is ahead
+  PitchClass getPitchClass(float binNum);  // Finds the closest pitch class
   Peak interpolatePeak(int frame, int bin);
   void interpolatePeak(const float leftVal, const float middleVal,
                        const float rightVal, int currentBin, float& resultVal,

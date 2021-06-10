@@ -61,9 +61,8 @@ void PitchDetector::estimatePitches() {
     auto pitch = mPitches[i];
     int frame = pitch.posRatio * (mHPCP.size() - 1);
     int bin = (int)(pitch.pitchClass * (NUM_PITCH_CLASSES / 12.0)) + 6;
-    DBG("frame: " << frame << ", bin: " << bin << ", pc: " << pitch.pitchClass);
     for (int j = 0; j < pitch.duration; ++j) {
-      mPitchesTest[frame + j][bin] = 1.0f;
+      mPitchesTest[frame + j][bin] = pitch.gain;
     }
   }
 }
@@ -127,7 +126,7 @@ void PitchDetector::segmentPitches() {
   // Initialize parameters
   int maxIdleFrames = mSampleRate * (MAX_IDLE_TIME_MS / 1000.0) / HOP_SIZE;
   int minNoteFrames = mSampleRate * (MIN_NOTE_TIME_MS / 1000.0) / HOP_SIZE;
-  DBG("max dev: " << MAX_DEVIATION_BINS << ", max idle: " << maxIdleFrames << ", minNote: " << minNoteFrames << ", totalFrames: " << mHPCP.size());
+  float maxConfidence = 0;
 
   // Initialize the first segments using the first valid peaks
   std::vector<PitchDetector::Peak> firstPeaks;
@@ -188,9 +187,12 @@ void PitchDetector::segmentPitches() {
       } else {
         // Continue segment
         curSegment.idleFrame = -1;
-        curSegment.binNum = peaks[closestIdx].binNum;
-        curSegment.salience =
-            peaks[closestIdx].gain;  // TODO: salience function
+        if (!hasBetterCandidateAhead(frame + 1, curSegment.binNum,
+                std::abs(curSegment.binNum - peaks[closestIdx].binNum))) {
+          curSegment.binNum = peaks[closestIdx].binNum;
+        }
+        curSegment.salience +=
+            peaks[closestIdx].gain;
         peaks[closestIdx].binNum =
             INVALID_BIN;  // Mark peak so it isn't reused for multiple segments
       }
@@ -202,12 +204,12 @@ void PitchDetector::segmentPitches() {
         if (frame - curSegment.startFrame > minNoteFrames) {
           // Push to completed segments
           PitchClass pc = getPitchClass(curSegment.binNum);
+          float confidence =
+              curSegment.salience / (frame - curSegment.startFrame);
+          if (confidence > maxConfidence) maxConfidence = confidence;
           mPitches.push_back(
               Pitch(pc, (float)curSegment.startFrame / mHPCP.size(),
-                                   frame - curSegment.startFrame,
-                                   curSegment.salience));
-          DBG("new note: " << pc << ", from frame: " << curSegment.startFrame
-                           << ", duration: " << frame - curSegment.startFrame);
+                                   frame - curSegment.startFrame, confidence));
         }
         // Replace segment with new peak
         for (int j = 0; j < peaks.size(); ++j) {
@@ -220,6 +222,25 @@ void PitchDetector::segmentPitches() {
           }
         }
       }
+    }
+  }
+
+  // Normalize pitch saliences
+  for (int i = 0; i < mPitches.size(); ++i) {
+    mPitches[i].gain /= maxConfidence;
+  }
+}
+
+bool PitchDetector::hasBetterCandidateAhead(int startFrame, float target, float deviation) {
+  int numLookaheadFrames =
+      mSampleRate * (LOOKAHEAD_TIME_MS / 1000.0) / HOP_SIZE;
+  for (int i = startFrame; i < startFrame + numLookaheadFrames; ++i) {
+    if (i > mHPCP.size() - 1) return false;
+    std::vector<PitchDetector::Peak> peaks =
+        getPeaks(NUM_ACTIVE_SEGMENTS, mHPCP[i]);
+    for (int j = 0; j < peaks.size(); ++j) {
+      float peakDev = std::abs(target - peaks[j].binNum);
+      if (peakDev < deviation) return true;
     }
   }
 }
