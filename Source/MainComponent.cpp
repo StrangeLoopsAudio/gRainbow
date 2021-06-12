@@ -2,7 +2,10 @@
 
 //==============================================================================
 MainComponent::MainComponent()
-    : mKeyboard(mKeyboardState) {
+    : mKeyboard(mKeyboardState),
+      mFft(FFT_SIZE, HOP_SIZE),
+      juce::Thread("main fft thread")
+{
   mFormatManager.registerBasicFormats();
 
   setLookAndFeel(&mRainbowLookAndFeel);
@@ -74,8 +77,9 @@ MainComponent::MainComponent()
       };
 
   mPitchDetector.onPitchesUpdated =
-      [this](std::vector<std::vector<float>>& hpcpBuffer) {
-        mArcSpec.loadBuffer(&hpcpBuffer);
+      [this](std::vector<std::vector<float>>& hpcpBuffer, std::vector<std::vector<float>>& notesBuffer) {
+        mArcSpec.loadBuffer(&hpcpBuffer, ArcSpectrogram::SpecType::HPCP);
+        mArcSpec.loadBuffer(&notesBuffer, ArcSpectrogram::SpecType::NOTES);
       };
 
   addAndMakeVisible(mKeyboard);
@@ -101,6 +105,7 @@ MainComponent::MainComponent()
 
 MainComponent::~MainComponent() {
   setLookAndFeel(nullptr);
+  stopThread(4000);
   // This shuts down the audio device and clears the audio source.
   shutdownAudio();
 }
@@ -117,10 +122,16 @@ void MainComponent::timerCallback() {
   }
 }
 
+void MainComponent::run() { 
+  mFft.processBuffer(mFileBuffer);
+  mArcSpec.loadBuffer(&mFft.getSpectrum(), ArcSpectrogram::SpecType::SPECTROGRAM);
+}
+
 //==============================================================================
 void MainComponent::prepareToPlay(int samplesPerBlockExpected,
                                   double sampleRate) {
   mSampleRate = sampleRate;
+  mArcSpec.setSampleRate(sampleRate);
   mMidiCollector.reset(sampleRate);
 }
 
@@ -237,7 +248,8 @@ void MainComponent::openNewFile() {
         resampler->process(ratio, inputs[c], outputs[c],
                            mFileBuffer.getNumSamples());
       }
-
+      stopThread(4000);
+      startThread(); // process fft and pass to arc spec
       //mTransientDetector.processBuffer(&mFileBuffer);
       mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
       //mArcSpec.processBuffer(&mFileBuffer, mSampleRate);

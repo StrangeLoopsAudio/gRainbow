@@ -50,7 +50,9 @@ class PitchDetector : juce::Thread {
         : pitchClass(pitchClass), posRatio(posRatio), duration(duration), gain(gain) {}
   } Pitch;
 
-  std::function<void(std::vector<std::vector<float>>&)> onPitchesUpdated =
+  std::function<void(std::vector<std::vector<float>>& hpcp,
+                     std::vector<std::vector<float>>& segmentedPitches)>
+      onPitchesUpdated =
       nullptr;
 
   void processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate);
@@ -116,14 +118,14 @@ class PitchDetector : juce::Thread {
   std::vector<HarmonicWeight> mHarmonicWeights;
   std::vector<std::vector<float>> mHPCP;  // harmonic pitch class profile
   std::vector<Pitch> mPitches;
-  std::vector<std::vector<float>> mPitchesTest;
+  std::vector<std::vector<float>> mSegmentedPitches;
   // Pitch segment fields
   std::array<PitchSegment, NUM_ACTIVE_SEGMENTS> mSegments;
 
   void computeHPCP();
   
   void segmentPitches();
-  void estimatePitches();
+  void getSegmentedPitchBuffer();
   bool hasBetterCandidateAhead(
       int startFrame, float target,
       float deviation);                    // True if a closer target is ahead

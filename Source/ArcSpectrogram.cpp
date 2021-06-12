@@ -15,15 +15,31 @@
 #include <JuceHeader.h>
 #include <limits.h>
 #include <math.h>
-
 #include "Utils.h"
 
 //==============================================================================
-ArcSpectrogram::ArcSpectrogram()
-    : mSpectrogramImage(juce::Image::RGB, 512, 512, true),
-      juce::Thread("spectrogram thread"),
-      mFft(FFT_SIZE, HOP_SIZE) {
+ArcSpectrogram::ArcSpectrogram():
+      juce::Thread("spectrogram thread") {
   setFramesPerSecond(10);
+  mBuffers.fill(nullptr);
+
+  for (int i = 0; i < SpecType::NUM_TYPES; ++i) {
+    mImages[i] = juce::Image(juce::Image::RGB, 512, 512, true);
+  }
+  mImages[SpecType::LOGO] =
+      juce::PNGImageFormat::loadFrom(juce::File(LOGO_PATH));
+
+  mSpecType.addItem("Spectrogram", (int)SpecType::SPECTROGRAM);
+  mSpecType.addItem("Harmonic Profile", (int)SpecType::HPCP);
+  mSpecType.addItem("Detected Pitches", (int)SpecType::NOTES);
+  mSpecType.setSelectedId(0, juce::dontSendNotification);
+  mSpecType.onChange = [this](void) { 
+    if (mSpecType.getSelectedId() != SpecType::LOGO) {
+      mSpecType.setVisible(true);
+    }
+    repaint();
+  };
+  addChildComponent(mSpecType);
 }
 
 ArcSpectrogram::~ArcSpectrogram() { stopThread(4000); }
@@ -31,8 +47,11 @@ ArcSpectrogram::~ArcSpectrogram() { stopThread(4000); }
 void ArcSpectrogram::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
-  // Draw fft
-  g.drawImageAt(mSpectrogramImage, 0, 0);
+  // Draw selected type
+  SpecType specType = (SpecType)(mSpecType.getSelectedId());
+  g.drawImage(mImages[specType], getLocalBounds().toFloat(),
+      juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
+      false);
 
   // Draw position markers
   juce::Point<int> centerPoint = juce::Point<int>(getWidth() / 2, getHeight());
@@ -64,6 +83,10 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
 void ArcSpectrogram::resized() {
   auto r = getLocalBounds();
+  // Spec type combobox
+  mSpecType.setBounds(
+      r.removeFromRight(SPEC_TYPE_WIDTH).removeFromTop(SPEC_TYPE_HEIGHT));
+
   // Position markers around rainbow
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   for (int i = 0; i < mPositionMarkers.size(); ++i) {
@@ -78,118 +101,66 @@ void ArcSpectrogram::resized() {
 }
 
 void ArcSpectrogram::run() {
-  if (mFileBuffer != nullptr) {
+    std::vector<std::vector<float>>& spec = *mBuffers[mProcessType - 1];
+  if (spec.size() == 0 || threadShouldExit()) return;
 
-    // Get frequency spectrum via an FFT
-    mFft.processBuffer(*mFileBuffer);
-    auto spec = mFft.getSpectrum();
-    if (spec.size() == 0 || threadShouldExit()) return;
+  // Initialize rainbow parameters
+  int startRadius = getHeight() / 4.0f;
+  int endRadius = getHeight();
+  int bowWidth = endRadius - startRadius;
+  int maxRow =
+      (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 6 : spec[0].size(); 
+  juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
+  mImages[mProcessType] =
+      juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
+  juce::Graphics g(mImages[mProcessType]);
 
-    // Initialize rainbow parameters
-    int startRadius = getHeight() / 4.0f;
-    int endRadius = getHeight();
-    int bowWidth = endRadius - startRadius;
-    int height = juce::jmax(2.0f, bowWidth / (float)spec[0].size());
-    int minBinIdx = (MIN_FREQ * FFT_SIZE) / mSampleRate;
-    int maxBinIdx = (MAX_FREQ * FFT_SIZE) / mSampleRate;
-    juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
+  // Draw each column of frequencies
+  for (auto i = 0; i < NUM_COLS; ++i) {
+    if (threadShouldExit()) return;
+    auto specCol = ((float)i / NUM_COLS) * spec.size();
+    // Draw each row of frequencies
+    for (auto curRadius = startRadius; curRadius < endRadius; curRadius += 1) {
+      float radPerc = (curRadius - startRadius) / (float)bowWidth;
+      auto specRow = radPerc * maxRow;
 
-    mSpectrogramImage =
-        juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
-    juce::Graphics g(mSpectrogramImage);
+      // Choose rainbow color depending on radius
+      auto rainbowColour = juce::Colour::fromHSV(1 - radPerc, 1.0, 1.0, 1.0);
+      g.setColour(rainbowColour);
 
-    // Draw each column of frequencies
-    for (auto i = 0; i < NUM_COLS; ++i) {
-      if (threadShouldExit()) return;
-      auto specCol = (float)i / NUM_COLS;
-      // Draw each row of frequencies
-      for (auto curRadius = startRadius; curRadius < endRadius; ++curRadius) {
-        float arcLen = 2 * M_PI * curRadius;
-        int pixPerEntry = arcLen / spec.size();
-        float radPerc = (curRadius - startRadius) / (float)bowWidth;
-        auto specRow = minBinIdx + ((maxBinIdx - minBinIdx) * radPerc);
+      // Set brightness according to the frequency's amplitude at this frame
+      g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[specCol][specRow]));
 
-        // Choose rainbow color depending on radius
-        auto rainbowColour = Utils::getRainbowColour(1.0f - radPerc);
-        g.setColour(rainbowColour);
+      float xPerc = (float)specCol / spec.size();
+      float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
 
-        // Set brightness according to the frequency's amplitude at this frame
-        g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[specCol][specRow]));
+      // Create and rotate a rectangle to represent the "pixel"
+      juce::Point<float> p =
+          startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
+      juce::AffineTransform rotation = juce::AffineTransform();
+      rotation = rotation.rotated(angleRad, p.x, p.y);
+      juce::Rectangle<float> rect = juce::Rectangle<float>(1, 1);
+      rect = rect.withCentre(p);
+      rect = rect.transformedBy(rotation);
+      juce::Path rectPath;
+      rectPath.addRectangle(rect);
 
-        float xPerc = (float)specCol / spec.size();
-        float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
-        int width = pixPerEntry + 6;
-
-        // Create and rotate a rectangle to represent the "pixel"
-        juce::Point<float> p =
-            startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
-        juce::AffineTransform rotation = juce::AffineTransform();
-        rotation = rotation.rotated(angleRad, p.x, p.y);
-        juce::Rectangle<float> rect = juce::Rectangle<float>(width, height);
-        rect = rect.withCentre(p);
-        rect = rect.transformedBy(rotation);
-        juce::Path rectPath;
-        rectPath.addRectangle(rect);
-
-        // Finally, draw the rectangle
-        g.fillPath(rectPath, rotation);
-      }
-    }
-  } else if (mLoadedBuffer != nullptr) {
-    std::vector<std::vector<float>>& spec = *mLoadedBuffer;
-    if (spec.size() == 0 || threadShouldExit()) return;
-    int startRadius = getHeight() / 4.0f;
-    int endRadius = getHeight();
-    int bowWidth = endRadius - startRadius;
-    juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
-    mSpectrogramImage =
-        juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
-    juce::Graphics g(mSpectrogramImage);
-
-    for (auto i = 0; i < NUM_COLS; ++i) {
-      if (threadShouldExit()) return;
-      auto specCol = (i / (float)NUM_COLS) * spec.size();
-      for (auto curRadius = startRadius; curRadius < endRadius; curRadius += 1) {
-        float arcLen = 2 * M_PI * curRadius;
-        int pixPerEntry = arcLen / spec.size();
-        float radPerc = (curRadius - startRadius) / (float)bowWidth;
-        auto specRow = radPerc * spec[specCol].size();
-
-        auto rainbowColour = juce::Colour::fromHSV(1 - radPerc, 1.0, 1.0, 1.0);
-        g.setColour(rainbowColour);
-
-        g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[specCol][specRow]));
-
-        float xPerc = (float)specCol / spec.size();
-        float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
-
-        juce::Point<float> p =
-            startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
-        juce::AffineTransform rotation = juce::AffineTransform();
-        rotation = rotation.rotated(angleRad, p.x, p.y);
-        juce::Rectangle<float> rect = juce::Rectangle<float>(1, 1);
-        rect = rect.withCentre(p);
-        rect = rect.transformedBy(rotation);
-        juce::Path rectPath;
-        rectPath.addRectangle(rect);
-
-        g.fillPath(rectPath, rotation);
-      }
+      // Finally, draw the rectangle
+      g.fillPath(rectPath, rotation);
     }
   }
 }
 
-void ArcSpectrogram::processBuffer(
-    juce::AudioBuffer<float>* fileBuffer, double sampleRate) {
-  stopThread(4000);
-  mFileBuffer = fileBuffer;
-  mSampleRate = sampleRate;
-  startThread();  // Update spectrogram image
-}
-
-void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer) {
-  stopThread(4000);
-  mLoadedBuffer = buffer;
+void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer, SpecType type) {
+  if (buffer == nullptr) return;
+  waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
+  mBuffers[type - 1] = buffer;
+  mProcessType = type;
+  
+  const juce::MessageManagerLock lock;
+  if (mSpecType.getSelectedId() == 0) {
+    mSpecType.setSelectedId(mProcessType, juce::sendNotification);
+  }
   startThread();
 }
 

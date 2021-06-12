@@ -19,7 +19,7 @@ PitchDetector::PitchDetector()
   initHarmonicWeights();
 }
 
-PitchDetector::~PitchDetector() { stopThread(2000); }
+PitchDetector::~PitchDetector() { stopThread(4000); }
 
 void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer,
                                   double sampleRate) {
@@ -37,32 +37,23 @@ void PitchDetector::run() {
   if (threadShouldExit()) return;
   segmentPitches();
   if (threadShouldExit()) return;
-  estimatePitches();
+  getSegmentedPitchBuffer();
   if (onPitchesUpdated != nullptr && !threadShouldExit()) {
-    //onPitchesUpdated(mHPCP);
-    onPitchesUpdated(mPitchesTest);
+    onPitchesUpdated(mHPCP, mSegmentedPitches);
   }
 }
 
-void PitchDetector::estimatePitches() {
-  mPitchesTest.clear();
-  /*for (int frame = 0; frame < mHPCP.size(); ++frame) {
-    mPitchesTest.push_back(std::vector<float>(NUM_PITCH_CLASSES, 0.0f));
-    for (int i = 0; i < NUM_PITCH_CLASSES; ++i) {
-      if (mHPCP[frame][i] == 1.0f) {
-        mPitchesTest[frame][i] = 1.0f;
-      }
-    }
-  } */
+void PitchDetector::getSegmentedPitchBuffer() {
+  mSegmentedPitches.clear();
   for (int frame = 0; frame < mHPCP.size(); ++frame) {
-    mPitchesTest.push_back(std::vector<float>(mHPCP[frame].size(), 0.0f));
+    mSegmentedPitches.push_back(std::vector<float>(mHPCP[frame].size(), 0.0f));
   }
   for (int i = 0; i < mPitches.size(); ++i) {
     auto pitch = mPitches[i];
     int frame = pitch.posRatio * (mHPCP.size() - 1);
     int bin = (int)(pitch.pitchClass * (NUM_PITCH_CLASSES / 12.0)) + 6;
     for (int j = 0; j < pitch.duration; ++j) {
-      mPitchesTest[frame + j][bin] = pitch.gain;
+      mSegmentedPitches[frame + j][bin] = pitch.gain;
     }
   }
 }

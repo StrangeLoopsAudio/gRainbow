@@ -17,7 +17,7 @@
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent : public juce::AudioAppComponent, juce::Timer {
+class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread {
  public:
   //==============================================================================
   MainComponent();
@@ -33,13 +33,15 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   void paint(juce::Graphics& g) override;
   void resized() override;
 
+  void run() override;
+
   //==============================================================================
   void timerCallback() override;
 
  private:
   /* Algorithm Constants */
-  static constexpr auto FFT_SIZE = 1024;
-  static constexpr auto HOP_SIZE = 512;
+  static constexpr auto FFT_SIZE = 4096;
+  static constexpr auto HOP_SIZE = 2048;
 
   /* UI Layout */
   static constexpr auto PANEL_WIDTH = 300;
@@ -65,12 +67,14 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   juce::MidiMessageCollector mMidiCollector;
   double mSampleRate;
   PitchDetector::PitchClass mCurPitchClass = PitchDetector::PitchClass::NONE;
+  Fft mFft;
   juce::AudioBuffer<float> mFileBuffer;
-  GranularSynth mSynth;
 
+  /* DSP Modules */
   TransientDetector mTransientDetector;
   PitchDetector mPitchDetector;
   GrainPositionFinder mPositionFinder;
+  GranularSynth mSynth;
 
   /* UI Components */
   juce::ImageComponent mLogo;
@@ -78,7 +82,6 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer {
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::MidiKeyboardState mKeyboardState;
-  //juce::MidiKeyboardComponent mKeyboard;
   /* Parameters */
   juce::Slider mSliderDiversity;
   juce::Label mLabelDiversity;
