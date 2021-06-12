@@ -11,7 +11,7 @@
 #define _USE_MATH_DEFINES
 
 #include "PitchDetector.h"
-
+#include "Utils.h"
 #include <limits.h>
 
 PitchDetector::PitchDetector()
@@ -88,8 +88,9 @@ void PitchDetector::computeHPCP() {
 
       // Create sum for each pitch class
       for (int pc = 0; pc < NUM_PITCH_CLASSES; ++pc) {
+        int pcIdx = (pc + PITCH_CLASS_OFFSET_BINS) % NUM_PITCH_CLASSES;
         float centerFreq =
-            REF_FREQ * std::pow(2.0f, (pc + 1) / (float)NUM_PITCH_CLASSES);
+            REF_FREQ * std::pow(2.0f, pc / (float)NUM_PITCH_CLASSES);
 
         // Add contribution from each harmonic
         for (int hIdx = 0; hIdx < mHarmonicWeights.size(); ++hIdx) {
@@ -99,9 +100,9 @@ void PitchDetector::computeHPCP() {
           float d = std::fmod(12.0f * std::log2(freq / centerFreq), 12.0f);
           if (std::abs(d) <= (0.5f * HPCP_WINDOW_LEN)) {
             float w = std::pow(std::cos((M_PI * d) / HPCP_WINDOW_LEN), 2.0f);
-            mHPCP[frame][pc] += (w * std::pow(peaks[i].gain, 2) *
+            mHPCP[frame][pcIdx] += (w * std::pow(peaks[i].gain, 2) *
                                  harmonicWeight * harmonicWeight);
-            if (mHPCP[frame][pc] > curMax) curMax = mHPCP[frame][pc];
+            if (mHPCP[frame][pcIdx] > curMax) curMax = mHPCP[frame][pcIdx];
           }
         }
       }
@@ -247,8 +248,8 @@ bool PitchDetector::hasBetterCandidateAhead(int startFrame, float target, float 
 
 PitchDetector::PitchClass PitchDetector::getPitchClass(float binNum) {
   int binsPerClass = NUM_PITCH_CLASSES / 12;
-  int pc = (binNum / binsPerClass) + PITCH_CLASS_OFFSET;
-  return (PitchClass)(pc % 12);
+  int pc = (int)(binNum / binsPerClass) % 12;
+  return (PitchClass)pc;
 }
 
 PitchDetector::Peak PitchDetector::interpolatePeak(int frame, int bin) {
@@ -389,6 +390,110 @@ std::vector<PitchDetector::Peak> PitchDetector::getPeaks(
   std::sort(peaks.begin(), peaks.end(),
             [](Peak self, Peak other) { return self.gain > other.gain; });
   return std::vector<Peak>(peaks.begin(), peaks.begin() + nWantedPeaks);
+}
+
+std::vector<PitchDetector::Peak> PitchDetector::getWhitenedPeaks(
+    int numPeaks, std::vector<float>& frame) {
+  std::vector<Peak> peaks = getWhitenedPeaks(numPeaks, frame);
+  const int nPeaks = peaks.size();
+
+  // If there are no magnitudes to whiten, do nothing
+  if (nPeaks == 0) {
+    return peaks;
+  }
+
+  // Convert input linear magnitudes to dB scale
+  for (int i = 0; i < nPeaks; ++i) {
+    peaks[i].gain = float(2.0) * Utils::lin2db(peaks[i].gain);
+  }
+
+  // get max peak
+  float maxAmp = peaks.front().gain;
+  float spectralRange = mSampleRate / 2.0f;
+
+  // compute envelope
+  std::vector<float> xPointsNoiseBPF;
+  std::vector<float> yPointsNoiseBPF;
+
+  float incr = BPF_RESOLUTION;
+  int specSize = frame.size();
+  // reserve some meaningful space, i.e. size of sepctrum
+  xPointsNoiseBPF.reserve(specSize);
+  yPointsNoiseBPF.reserve(specSize);
+  for (float freq = 0.0; freq <= MAX_FREQ && freq <= spectralRange;
+       freq += incr) {  //# magic numbers in the body of this for loop
+    float bf = freq - std::max(50.0, freq * 0.34);  // 0.66
+    float ef = freq + std::max(50.0, freq * 0.58);  // 1.58
+    int b = int(bf / spectralRange * (specSize - 1.0) + 0.5);
+    int e = int(ef / spectralRange * (specSize - 1.0) + 0.5);
+    b = std::max(b, 0);
+    b = std::min(specSize - 1, b);
+    e = std::max(e, b + 1);
+    e = std::min(specSize, e);
+    float c = b / 2.0 + e / 2.0;
+    float halfwindowlength = e - c;
+
+    float n = 0.0;
+    float wavg = 0.0;
+
+    for (int i = b; i < e; ++i) {
+      float weight = 1.0 - abs(float(i) - c) / halfwindowlength;
+      weight *= weight;
+      weight *= weight;
+      float spectrumEnergyVal = frame[i] * frame[i];
+      weight *= spectrumEnergyVal;
+      wavg += spectrumEnergyVal * weight;
+      n += weight;
+    }
+    if (n != 0.0) wavg /= n;
+
+    // Add points to the BPFs
+    xPointsNoiseBPF.push_back(freq);
+    yPointsNoiseBPF.push_back(wavg);
+  }
+
+  yPointsNoiseBPF[yPointsNoiseBPF.size() - 1] =
+      yPointsNoiseBPF[yPointsNoiseBPF.size() - 2];
+
+  for (int i = 0; i < int(yPointsNoiseBPF.size()); ++i) {
+    // don't optimise the sqrt as 0.5 outside lin2db as it fails for the case
+    // 0, due to previously converted magnitudes to db
+    yPointsNoiseBPF[i] = float(2.0) * Utils::lin2db(sqrt(yPointsNoiseBPF[i]));
+  }
+
+  Utils::BPF noiseBPF = Utils::BPF(xPointsNoiseBPF, yPointsNoiseBPF);
+
+  // compute envelope and peak difference to it
+  std::vector<Peak> whitePeaks = peaks;
+  for (int i = 0; i < nPeaks; ++i) {  //# lots of magic values below
+    float freq =
+        ((peaks[i].binNum / (frame.size() - 1)) * mSampleRate) / 2;
+    float amp = peaks[i].gain;
+
+    if (freq > MAX_FREQ - incr) {
+      // Keep current gain
+      continue;  // This used to be a break-statement, but a break-statement
+                 // would only work if the "frequencies" and "magnitudesdB"
+                 // vectors were ordered by frequency
+    }
+
+    float ampEnv = noiseBPF(freq);
+    if (amp < maxAmp - 40.0) whitePeaks[i].gain = (maxAmp - 40.0 - amp) / 2.0;
+    if (amp > ampEnv)
+      whitePeaks[i].gain = 0.0;
+    else if (amp > ampEnv - 30.0)
+      whitePeaks[i].gain = amp - ampEnv;
+    else
+      whitePeaks[i].gain = -200.0;
+    whitePeaks[i].gain -= 20.0 * freq / 4000.0;
+  }
+
+  // Convert the whitened magnitudes back to linear scale
+  for (int i = 0; i < nPeaks; ++i) {
+    // dividing by 2 due to converting to db => sqrt(lin2db(A)) lin2db(A/2)
+    whitePeaks[i].gain = Utils::db2lin(whitePeaks[i].gain / 2.0);
+  }
+  return whitePeaks;
 }
 
 /**

@@ -62,20 +62,24 @@ class PitchDetector : juce::Thread {
   // FFT
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 512;
+  //Spectral Whitening
+  static constexpr auto BPF_RESOLUTION = 100.0;
   // HPCP
   static constexpr auto REF_FREQ = 440;
   static constexpr auto MAX_SPEC_PEAKS = 60;
   static constexpr auto NUM_PITCH_CLASSES = 120;
-  static constexpr auto HPCP_WINDOW_LEN = 0.6f;
+  static constexpr auto HPCP_WINDOW_LEN = 1.0f;
   static constexpr auto NUM_HARMONIC_WEIGHTS = 3;
-  static constexpr auto MIN_FREQ = 80;
-  static constexpr auto MAX_FREQ = 3500;
+  static constexpr auto MIN_FREQ = 40;
+  static constexpr auto MAX_FREQ = 5000;
   static constexpr auto HARMONIC_PRECISION = 0.00001;
   static constexpr auto MAGNITUDE_THRESHOLD = 0.00001;
-  static constexpr auto PITCH_CLASS_OFFSET = 3; // Offset from reference freq A to lowest class C
+  static constexpr auto PITCH_CLASS_OFFSET = 9; // Offset from reference freq A to lowest class C
+  static constexpr auto PITCH_CLASS_OFFSET_BINS =
+      (NUM_PITCH_CLASSES / 12) * PITCH_CLASS_OFFSET;
   // Pitch segmenting
-  static constexpr auto NUM_ACTIVE_SEGMENTS = 5;
-  static constexpr auto MAX_DEVIATION_CENTS = 25;
+  static constexpr auto NUM_ACTIVE_SEGMENTS = 1;
+  static constexpr auto MAX_DEVIATION_CENTS = 15;
   static constexpr auto INVALID_BIN = -1;
   static constexpr int  MAX_DEVIATION_BINS =
       (NUM_PITCH_CLASSES / 12.0) * (MAX_DEVIATION_CENTS / 100.0);
@@ -117,6 +121,7 @@ class PitchDetector : juce::Thread {
   std::array<PitchSegment, NUM_ACTIVE_SEGMENTS> mSegments;
 
   void computeHPCP();
+  
   void segmentPitches();
   void estimatePitches();
   bool hasBetterCandidateAhead(
@@ -128,5 +133,7 @@ class PitchDetector : juce::Thread {
                        const float rightVal, int currentBin, float& resultVal,
                        float& resultBin) const;
   std::vector<Peak> getPeaks(int numPeaks, std::vector<float>& frame);
+  std::vector<Peak> getWhitenedPeaks(int numPeaks,
+                                          std::vector<float>& frame);
   void initHarmonicWeights();
 };
