@@ -23,7 +23,6 @@ class GranularSynth : juce::Thread {
   ~GranularSynth();
 
   void setFileBuffer(juce::AudioBuffer<float>* buffer, double sr);
-  void setDuration(float duration) { mDuration = duration; }
   void setRate(float rate) { mRate = rate; }
   void setDiversity(float diversity) { mDiversity = diversity; }
 
@@ -36,8 +35,6 @@ class GranularSynth : juce::Thread {
   void run() override;
 
  private:
-  static constexpr auto MAX_DURATION = 0.6f;
-  static constexpr auto MIN_DURATION = 0.05f;
   static constexpr auto MIN_RATE = 10.f;  // Grains per second
   static constexpr auto MAX_RATE = 40.f;
 
@@ -61,7 +58,6 @@ class GranularSynth : juce::Thread {
   double mSampleRate;
 
   /* Grain parameters */
-  float mDuration = 0.1;  // Grain duration normalized to 0-1
   float mDiversity =
       0.0;             // Extracts number of positions to find for freq match
   float mRate = 0.1;   // Grain rate normalized to 0-1

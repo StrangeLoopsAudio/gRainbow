@@ -37,20 +37,6 @@ MainComponent::MainComponent()
   mLabelDiversity.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelDiversity);
 
-  /* Duration */
-  mSliderDuration.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderDuration.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderDuration.setRange(0.0, 1.0, 0.01);
-  mSliderDuration.onValueChange = [this] {
-    mSynth.setDuration(mSliderDuration.getValue());
-  };
-  mSliderDuration.setValue(PARAM_DIVERSITY_DEFAULT, juce::sendNotification);
-  addAndMakeVisible(mSliderDuration);
-
-  mLabelDuration.setText("Duration", juce::dontSendNotification);
-  mLabelDuration.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelDuration);
-
   /* Rate */
   mSliderRate.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderRate.setSliderStyle(juce::Slider::SliderStyle::Rotary);
@@ -197,18 +183,8 @@ void MainComponent::resized() {
           .withCentre(knob.getPosition().translated(
               knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
   mLabelDiversity.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
-  // Duration
-  knob = row;
-  mSliderDuration.setBounds(
-      knob.withSize(KNOB_HEIGHT * 2, KNOB_HEIGHT)
-          .withCentre(knob.getPosition().translated(
-              knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
-  mLabelDuration.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
-  // Row 2
-  row =
-      leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT + ROW_PADDING_HEIGHT);
   // Rate
-  knob = row.removeFromLeft(row.getWidth() / 2);
+  knob = row;
   mSliderRate.setBounds(
       knob.withSize(KNOB_HEIGHT * 2, KNOB_HEIGHT)
           .withCentre(knob.getPosition().translated(

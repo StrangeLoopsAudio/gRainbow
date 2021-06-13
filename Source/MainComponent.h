@@ -85,8 +85,6 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   /* Parameters */
   juce::Slider mSliderDiversity;
   juce::Label mLabelDiversity;
-  juce::Slider mSliderDuration;
-  juce::Label mLabelDuration;
   juce::Slider mSliderRate;
   juce::Label mLabelRate;
 

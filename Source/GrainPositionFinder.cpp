@@ -30,8 +30,7 @@ GrainPositionFinder::findPositions(int numPosToFind, PitchDetector::PitchClass p
         mPitches->getReference((PitchDetector::PitchClass)(noteMin % 12));
     float pbRate = std::pow(TIMESTRETCH_RATIO, numSearches);
     for (int i = 0; i < pitchVec.size(); ++i) {
-      grainPositions.push_back(
-          GrainPosition(pitchVec[i].posRatio, pbRate, pitchVec[i].gain));
+      grainPositions.push_back(GrainPosition(pitchVec[i], pbRate));
       if (grainPositions.size() >= numPosToFind) {
         foundAll = true;
         break;
@@ -43,8 +42,7 @@ GrainPositionFinder::findPositions(int numPosToFind, PitchDetector::PitchClass p
           mPitches->getReference((PitchDetector::PitchClass)(noteMax % 12));
       float pbRate = std::pow(TIMESTRETCH_RATIO, -numSearches);
       for (int i = 0; i < pitchVec.size(); ++i) {
-        grainPositions.push_back(
-            GrainPosition(pitchVec[i].posRatio, pbRate, pitchVec[i].gain));
+        grainPositions.push_back(GrainPosition(pitchVec[i], pbRate));
         if (grainPositions.size() >= numPosToFind) {
           foundAll = true;
           break;
@@ -76,7 +74,7 @@ void GrainPositionFinder::updatePosition(int midiNote,
   GrainPositionFinder::GrainPosition gPos) {
   auto notePositions = mGPositions[midiNote];
   for (int i = 0; i < notePositions.size(); ++i) {
-    if (notePositions[i].posRatio == gPos.posRatio) {
+    if (notePositions[i].pitch.posRatio == gPos.pitch.posRatio) {
       notePositions[i] = gPos;
     }
   }

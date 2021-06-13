@@ -100,7 +100,7 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
 void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
   auto pos = e.getEventRelativeTo(this).position;
   auto newNote = xyToNote(pos);
-  if (newNote != mMouseOverNote) {
+  if (newNote != mMouseOverNote && newNote >= 0) {
     // Hovering over new note, send note off for old note if necessary
     if (mIsNotePressed) {
       mState.noteOff(MIDI_CHANNEL, mPressedNote, mNoteVelocity);

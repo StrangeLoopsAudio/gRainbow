@@ -43,11 +43,12 @@ void GranularSynth::run() {
         if (gNote.curPos != -1) {
           GrainPositionFinder::GrainPosition gPos =
               gNote.positions[gNote.curPos];
-          float duration = juce::jmap(mDuration, MIN_DURATION, MAX_DURATION);
-          auto durSamples = duration * mSampleRate * (1.0f / gPos.pbRate);
-          mGrains.add(Grain(&mGaussianEnv, durSamples, gPos.pbRate,
-                            gPos.posRatio * mFileBuffer->getNumSamples(),
-                            mTotalSamps));
+          auto durSamples =
+              gPos.pitch.duration * mFileBuffer->getNumSamples() * (1.0f / gPos.pbRate);
+          auto grain = Grain(&mGaussianEnv, durSamples, gPos.pbRate,
+                             gPos.pitch.posRatio * mFileBuffer->getNumSamples(),
+                             mTotalSamps);
+          mGrains.add(grain);
           gNote.curPos = getNextPosition(gNote);
         }
       }

@@ -52,9 +52,10 @@ void PitchDetector::getSegmentedPitchBuffer() {
     std::vector<Pitch>& pitchVec = mPitches.getReference((PitchClass)i);
     for (int j = 0; j < pitchVec.size(); ++j) {
       auto pitch = pitchVec[j];
+      auto duration = pitch.duration * mHPCP.size();
       int frame = pitch.posRatio * (mHPCP.size() - 1);
       int bin = (int)(pitch.pitchClass * (NUM_HPCP_BINS / 12.0)) + 6;
-      for (int j = 0; j < pitch.duration; ++j) {
+      for (int j = 0; j < duration; ++j) {
         mSegmentedPitches[frame + j][bin] = pitch.gain;
       }
     }
@@ -204,7 +205,7 @@ void PitchDetector::segmentPitches() {
           if (confidence > maxConfidence) maxConfidence = confidence;
           mPitches.getReference(pc).push_back(
               Pitch(pc, (float)curSegment.startFrame / mHPCP.size(),
-                                   frame - curSegment.startFrame, confidence));
+                                   (float)(frame - curSegment.startFrame) / mHPCP.size(), confidence));
         }
         // Replace segment with new peak
         for (int j = 0; j < peaks.size(); ++j) {

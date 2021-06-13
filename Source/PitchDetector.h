@@ -44,8 +44,13 @@ class PitchDetector : juce::Thread {
   typedef struct Pitch {
     PitchClass pitchClass;
     float posRatio; // position in track from 0-1
-    float duration; // note duration in HPCP frames
+    float duration; // note duration from 0-1
     float gain; // pitch salience
+    Pitch()
+        : pitchClass(PitchClass::NONE),
+          posRatio(0.0),
+          duration(0.0),
+          gain(0.0) {}
     Pitch(PitchClass pitchClass, float posRatio, float duration, float gain)
         : pitchClass(pitchClass), posRatio(posRatio), duration(duration), gain(gain) {}
   } Pitch;

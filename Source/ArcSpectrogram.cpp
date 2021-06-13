@@ -58,9 +58,9 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   g.setColour(juce::Colours::white);
   for (GrainPositionFinder::GrainPosition gPos : mGPositions) {
     auto startPoint = centerPoint.getPointOnCircumference(
-        getHeight() / 4.0f, (1.5 * M_PI) + (gPos.posRatio * M_PI));
+        getHeight() / 4.0f, (1.5 * M_PI) + (gPos.pitch.posRatio * M_PI));
     auto endPoint = centerPoint.getPointOnCircumference(
-        getHeight() - 17, (1.5 * M_PI) + (gPos.posRatio * M_PI));
+        getHeight() - 17, (1.5 * M_PI) + (gPos.pitch.posRatio * M_PI));
     g.setColour(juce::Colours::goldenrod);
     //float thickness = std::abs(1.0f - gPos.pbRate) * 10.0f;
     g.drawLine(juce::Line<float>(startPoint, endPoint), 2.0f);
@@ -90,7 +90,7 @@ void ArcSpectrogram::resized() {
   // Position markers around rainbow
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   for (int i = 0; i < mPositionMarkers.size(); ++i) {
-    float angleRad = (M_PI * mGPositions[i].posRatio) - (M_PI / 2.0f);
+    float angleRad = (M_PI * mGPositions[i].pitch.posRatio) - (M_PI / 2.0f);
     juce::Point<float> p =
         startPoint.getPointOnCircumference(getHeight() - 10, getHeight() - 10, angleRad);
     mPositionMarkers[i]->setSize(10, 15);
