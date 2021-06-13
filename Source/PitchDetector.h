@@ -39,7 +39,7 @@ class PitchDetector : juce::Thread {
   PitchDetector();
   ~PitchDetector();
 
-  static enum PitchClass { NONE = -1, C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B };
+  static enum PitchClass { NONE = -1, C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, NUM_PITCH_CLASSES };
 
   typedef struct Pitch {
     PitchClass pitchClass;
@@ -56,7 +56,9 @@ class PitchDetector : juce::Thread {
       nullptr;
 
   void processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate);
-  std::vector<Pitch>& getPitches() { return mPitches; }
+  juce::HashMap<PitchClass, std::vector<Pitch>>& getPitches() {
+    return mPitches;
+  }
 
   void run() override;
 
@@ -69,7 +71,7 @@ class PitchDetector : juce::Thread {
   // HPCP
   static constexpr auto REF_FREQ = 440;
   static constexpr auto MAX_SPEC_PEAKS = 60;
-  static constexpr auto NUM_PITCH_CLASSES = 120;
+  static constexpr auto NUM_HPCP_BINS = 120;
   static constexpr auto HPCP_WINDOW_LEN = 1.0f;
   static constexpr auto NUM_HARMONIC_WEIGHTS = 3;
   static constexpr auto MIN_FREQ = 40;
@@ -78,13 +80,14 @@ class PitchDetector : juce::Thread {
   static constexpr auto MAGNITUDE_THRESHOLD = 0.00001;
   static constexpr auto PITCH_CLASS_OFFSET = 9; // Offset from reference freq A to lowest class C
   static constexpr auto PITCH_CLASS_OFFSET_BINS =
-      (NUM_PITCH_CLASSES / 12) * PITCH_CLASS_OFFSET;
+      (NUM_HPCP_BINS / PitchClass::NUM_PITCH_CLASSES) * PITCH_CLASS_OFFSET;
   // Pitch segmenting
   static constexpr auto NUM_ACTIVE_SEGMENTS = 1;
   static constexpr auto MAX_DEVIATION_CENTS = 15;
   static constexpr auto INVALID_BIN = -1;
   static constexpr int  MAX_DEVIATION_BINS =
-      (NUM_PITCH_CLASSES / 12.0) * (MAX_DEVIATION_CENTS / 100.0);
+      (NUM_HPCP_BINS / PitchClass::NUM_PITCH_CLASSES) *
+      (MAX_DEVIATION_CENTS / 100.0);
   static constexpr auto MAX_IDLE_TIME_MS = 62.5;
   static constexpr auto MIN_NOTE_TIME_MS = 125;
   static constexpr auto LOOKAHEAD_TIME_MS = 25;
@@ -117,10 +120,13 @@ class PitchDetector : juce::Thread {
   // HPCP fields
   std::vector<HarmonicWeight> mHarmonicWeights;
   std::vector<std::vector<float>> mHPCP;  // harmonic pitch class profile
-  std::vector<Pitch> mPitches;
+  
+  // Pitch segments in buffer form
   std::vector<std::vector<float>> mSegmentedPitches;
-  // Pitch segment fields
   std::array<PitchSegment, NUM_ACTIVE_SEGMENTS> mSegments;
+
+  // Hashmap of detected pitches
+  juce::HashMap<PitchClass, std::vector<Pitch>> mPitches;
 
   void computeHPCP();
   

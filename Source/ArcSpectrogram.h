@@ -44,6 +44,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   void resized() override;
 
   void setSampleRate(double sampleRate) { mSampleRate = sampleRate; }
+  void resetBuffers();
   void loadBuffer(std::vector<std::vector<float>> *buffer, SpecType type);
   void setTransients(std::vector<TransientDetector::Transient> *transients);
   void updatePositions(int midiNote,

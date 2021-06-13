@@ -109,7 +109,7 @@ void ArcSpectrogram::run() {
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
   int maxRow =
-      (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 6 : spec[0].size(); 
+      (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size(); 
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mImages[mProcessType] =
       juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
@@ -148,6 +148,13 @@ void ArcSpectrogram::run() {
       // Finally, draw the rectangle
       g.fillPath(rectPath, rotation);
     }
+  }
+}
+
+void ArcSpectrogram::resetBuffers() {
+  // Reset all images except logo
+  for (int i = 1; i < mImages.size(); ++i) {
+    mImages[i].clear(mImages[i].getBounds());
   }
 }
 

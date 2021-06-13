@@ -48,12 +48,15 @@ void PitchDetector::getSegmentedPitchBuffer() {
   for (int frame = 0; frame < mHPCP.size(); ++frame) {
     mSegmentedPitches.push_back(std::vector<float>(mHPCP[frame].size(), 0.0f));
   }
-  for (int i = 0; i < mPitches.size(); ++i) {
-    auto pitch = mPitches[i];
-    int frame = pitch.posRatio * (mHPCP.size() - 1);
-    int bin = (int)(pitch.pitchClass * (NUM_PITCH_CLASSES / 12.0)) + 6;
-    for (int j = 0; j < pitch.duration; ++j) {
-      mSegmentedPitches[frame + j][bin] = pitch.gain;
+  for (int i = 0; i < PitchClass::NUM_PITCH_CLASSES; ++i) {
+    std::vector<Pitch>& pitchVec = mPitches.getReference((PitchClass)i);
+    for (int j = 0; j < pitchVec.size(); ++j) {
+      auto pitch = pitchVec[j];
+      int frame = pitch.posRatio * (mHPCP.size() - 1);
+      int bin = (int)(pitch.pitchClass * (NUM_HPCP_BINS / 12.0)) + 6;
+      for (int j = 0; j < pitch.duration; ++j) {
+        mSegmentedPitches[frame + j][bin] = pitch.gain;
+      }
     }
   }
 }
@@ -63,7 +66,7 @@ void PitchDetector::computeHPCP() {
 
   std::vector<std::vector<float>>& spec = mFft.getSpectrum();
   for (int frame = 0; frame < spec.size(); ++frame) {
-    mHPCP.push_back(std::vector<float>(NUM_PITCH_CLASSES, 0.0f));
+    mHPCP.push_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
 
     std::vector<float>& specFrame = mFft.getSpectrum()[frame];
 
@@ -78,10 +81,10 @@ void PitchDetector::computeHPCP() {
       if (peakFreq < MIN_FREQ || peakFreq > MAX_FREQ) continue;
 
       // Create sum for each pitch class
-      for (int pc = 0; pc < NUM_PITCH_CLASSES; ++pc) {
-        int pcIdx = (pc + PITCH_CLASS_OFFSET_BINS) % NUM_PITCH_CLASSES;
+      for (int pc = 0; pc < NUM_HPCP_BINS; ++pc) {
+        int pcIdx = (pc + PITCH_CLASS_OFFSET_BINS) % NUM_HPCP_BINS;
         float centerFreq =
-            REF_FREQ * std::pow(2.0f, pc / (float)NUM_PITCH_CLASSES);
+            REF_FREQ * std::pow(2.0f, pc / (float)NUM_HPCP_BINS);
 
         // Add contribution from each harmonic
         for (int hIdx = 0; hIdx < mHarmonicWeights.size(); ++hIdx) {
@@ -101,7 +104,7 @@ void PitchDetector::computeHPCP() {
 
     // Normalize HPCP frame
     if (curMax > 0.0f) {
-      for (int pc = 0; pc < NUM_PITCH_CLASSES; ++pc) {
+      for (int pc = 0; pc < NUM_HPCP_BINS; ++pc) {
         mHPCP[frame][pc] /= curMax;
       }
     }
@@ -199,7 +202,7 @@ void PitchDetector::segmentPitches() {
           float confidence =
               curSegment.salience / (frame - curSegment.startFrame);
           if (confidence > maxConfidence) maxConfidence = confidence;
-          mPitches.push_back(
+          mPitches.getReference(pc).push_back(
               Pitch(pc, (float)curSegment.startFrame / mHPCP.size(),
                                    frame - curSegment.startFrame, confidence));
         }
@@ -218,8 +221,14 @@ void PitchDetector::segmentPitches() {
   }
 
   // Normalize pitch saliences
-  for (int i = 0; i < mPitches.size(); ++i) {
-    mPitches[i].gain /= maxConfidence;
+  for (int i = 0; i < PitchClass::NUM_PITCH_CLASSES; ++i) {
+    std::vector<Pitch>& pitchVec = mPitches.getReference((PitchClass)i);
+    for (int j = 0; j < pitchVec.size(); ++j) {
+      pitchVec[j].gain /= maxConfidence;
+    }
+    // Sort pitches from high to low salience
+    std::sort(pitchVec.begin(), pitchVec.end(),
+              [](Pitch self, Pitch other) { return self.gain > other.gain; });
   }
 }
 
@@ -238,7 +247,7 @@ bool PitchDetector::hasBetterCandidateAhead(int startFrame, float target, float 
 }
 
 PitchDetector::PitchClass PitchDetector::getPitchClass(float binNum) {
-  int binsPerClass = NUM_PITCH_CLASSES / 12;
+  int binsPerClass = NUM_HPCP_BINS / 12;
   int pc = (int)(binNum / binsPerClass) % 12;
   return (PitchClass)pc;
 }

@@ -111,7 +111,7 @@ MainComponent::~MainComponent() {
 }
 
 void MainComponent::timerCallback() {
-  if (mCurPitchClass != 0) {
+  if (mCurPitchClass != PitchDetector::PitchClass::NONE) {
     int k = juce::jmap((float)mSliderDiversity.getValue(), MIN_DIVERSITY,
                        MAX_DIVERSITY);
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
@@ -248,13 +248,13 @@ void MainComponent::openNewFile() {
         resampler->process(ratio, inputs[c], outputs[c],
                            mFileBuffer.getNumSamples());
       }
+      mArcSpec.resetBuffers();
       stopThread(4000);
       startThread(); // process fft and pass to arc spec
       //mTransientDetector.processBuffer(&mFileBuffer);
       mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
-      //mArcSpec.processBuffer(&mFileBuffer, mSampleRate);
       mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
-      //mPositionFinder.setPitches(&mPitchDetector.getPitches());
+      mPositionFinder.setPitches(&mPitchDetector.getPitches());
     }
   }
   setAudioChannels(2, 2);

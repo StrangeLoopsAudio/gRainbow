@@ -11,75 +11,64 @@
 #include "GrainPositionFinder.h"
 
 std::vector<GrainPositionFinder::GrainPosition>
-GrainPositionFinder::findPositions(int k, int pitchClass) {
+GrainPositionFinder::findPositions(int numPosToFind, PitchDetector::PitchClass pitchClass) {
   std::vector<GrainPosition> grainPositions;
   if (mPitches == nullptr) return grainPositions;
-  if (mGPositions[pitchClass].size() >= k) return mGPositions[pitchClass];
-  // look for times when frequency has high energy
-  /*float noteFreq = juce::MidiMessage::getMidiNoteInHertz(midiNote);
-  bool foundK = false;
-  int numSearches = 0;
-  while (!foundK) {
-    int noteMin = midiNote - numSearches;
-    int noteMax = midiNote + numSearches;
-    float varianceMin = (juce::MidiMessage::getMidiNoteInHertz(noteMin) -
-                         juce::MidiMessage::getMidiNoteInHertz(noteMin - 1)) /
-                        2.0f;
-    float varianceMax = (juce::MidiMessage::getMidiNoteInHertz(noteMax) -
-                         juce::MidiMessage::getMidiNoteInHertz(noteMax - 1)) /
-                        2.0f;
-    juce::Range<float> freqRangeMin = juce::Range<float>(
-        juce::MidiMessage::getMidiNoteInHertz(noteMin) - varianceMin,
-        juce::MidiMessage::getMidiNoteInHertz(noteMin) + varianceMin);
-    juce::Range<float> freqRangeMax = juce::Range<float>(
-        juce::MidiMessage::getMidiNoteInHertz(noteMax) - varianceMax,
-        juce::MidiMessage::getMidiNoteInHertz(noteMax) + varianceMax);
-    for (int i = 0; i < mPitches->size(); ++i) {
-      float pitch = mPitches->at(i).freq;
-      if (freqRangeMin.contains(pitch) || freqRangeMax.contains(pitch)) {
-        int semiOffset = numSearches;
-        float freqDiff;
-        if (pitch > noteFreq) {
-          semiOffset *= -1;
-          freqDiff = juce::jmap(pitch, freqRangeMax.getStart(),
-                                freqRangeMax.getEnd(), -0.5f, 0.5f);
-        } else {
-          freqDiff = juce::jmap(pitch, freqRangeMin.getStart(),
-                                freqRangeMin.getEnd(), -0.5f, 0.5f);
-        }
-        freqDiff *= -1.0f;
 
-        float pbRate = std::pow(TIMESTRETCH_RATIO, semiOffset + freqDiff);
-        grainPositions.push_back(GrainPosition(mPitches->at(i).posRatio, pbRate,
-                                               mPitches->at(i).gain));
+  // TODO: only return numPosToFind positions below
+  if (mGPositions[pitchClass].size() >= numPosToFind) return mGPositions[pitchClass];
+
+  // Look for detected pitches with correct pitch and good gain
+  bool foundAll = false;
+  int numSearches = 0;
+  
+  while (!foundAll) {
+    int noteMin = pitchClass - numSearches;
+    int noteMax = pitchClass + numSearches;
+    // Check low note
+    std::vector<PitchDetector::Pitch> &pitchVec =
+        mPitches->getReference((PitchDetector::PitchClass)(noteMin % 12));
+    float pbRate = std::pow(TIMESTRETCH_RATIO, numSearches);
+    for (int i = 0; i < pitchVec.size(); ++i) {
+      grainPositions.push_back(
+          GrainPosition(pitchVec[i].posRatio, pbRate, pitchVec[i].gain));
+      if (grainPositions.size() >= numPosToFind) {
+        foundAll = true;
+        break;
       }
     }
-    if (grainPositions.size() >= k) foundK = true;
+    // Check high note if we haven't filled up the list yet
+    if (!foundAll && numSearches > 0) {
+      std::vector<PitchDetector::Pitch> &pitchVec =
+          mPitches->getReference((PitchDetector::PitchClass)(noteMax % 12));
+      float pbRate = std::pow(TIMESTRETCH_RATIO, -numSearches);
+      for (int i = 0; i < pitchVec.size(); ++i) {
+        grainPositions.push_back(
+            GrainPosition(pitchVec[i].posRatio, pbRate, pitchVec[i].gain));
+        if (grainPositions.size() >= numPosToFind) {
+          foundAll = true;
+          break;
+        }
+      }
+    }
     numSearches++;
-    if (numSearches > 5) break;
+    if (numSearches > 11) break;
   }
 
-  if (grainPositions.empty()) return grainPositions;
+  pushPositions(pitchClass, grainPositions);
 
-  if (grainPositions.size() > k) {
-    std::sort(grainPositions.begin(), grainPositions.end());
-    grainPositions = std::vector<GrainPosition>(
-        grainPositions.begin() + grainPositions.size() - k,
-        grainPositions.end());
-  }
-
-  pushPositions(midiNote, grainPositions);
-  */
   return grainPositions;
 }
 
 void GrainPositionFinder::pushPositions(
-    int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions) {
-  if (mGPositions[midiNote].size() == 0) {
-    mGPositions.set(midiNote, gPositions);
+    PitchDetector::PitchClass pitchClass,
+    std::vector<GrainPositionFinder::GrainPosition> gPositions) {
+  if (mGPositions[pitchClass].size() == 0) {
+    mGPositions.set(pitchClass, gPositions);
   } else {
-    mGPositions.getReference(midiNote).insert(
-        mGPositions.getReference(midiNote).end(), gPositions.begin(), gPositions.end());
+    mGPositions.getReference(pitchClass)
+        .insert(mGPositions.getReference(pitchClass).end(), gPositions.begin(),
+                gPositions.end());
   }
 }
 

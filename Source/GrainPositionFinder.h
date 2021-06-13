@@ -35,20 +35,23 @@ class GrainPositionFinder {
   GrainPositionFinder() {}
   ~GrainPositionFinder() {}
 
-  void setPitches(std::vector<PitchDetector::Pitch>* pitches) {
+  void setPitches(juce::HashMap<PitchDetector::PitchClass,
+                                std::vector<PitchDetector::Pitch>>* pitches) {
     mGPositions.clear();
     mPitches = pitches;
   }
-  std::vector<GrainPositionFinder::GrainPosition> findPositions(int k,
-                                                                int pitchClass);
+  std::vector<GrainPositionFinder::GrainPosition> findPositions(
+      int numPosToFind, PitchDetector::PitchClass pitchClass);
 
   void updatePosition(int midiNote, GrainPositionFinder::GrainPosition gPos);
 
  private:
   static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
 
-  std::vector<PitchDetector::Pitch>* mPitches = nullptr;
+  juce::HashMap<PitchDetector::PitchClass, std::vector<PitchDetector::Pitch>>*
+      mPitches = nullptr;
   juce::HashMap<int, std::vector<GrainPosition>> mGPositions;
 
-  void pushPositions(int midiNote, std::vector<GrainPosition> gPositions);
+  void pushPositions(PitchDetector::PitchClass pitchClass,
+                     std::vector<GrainPosition> gPositions);
 };
