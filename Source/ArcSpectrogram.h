@@ -17,6 +17,7 @@
 #include "TransientDetector.h"
 #include "PositionMarker.h"
 #include "Utils.h"
+#include <random>
 
 //==============================================================================
 /*
@@ -47,8 +48,9 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   void resetBuffers();
   void loadBuffer(std::vector<std::vector<float>> *buffer, SpecType type);
   void setTransients(std::vector<TransientDetector::Transient> *transients);
-  void updatePositions(int midiNote,
+  void setNoteOn(int midiNote,
       std::vector<GrainPositionFinder::GrainPosition> gPositions);
+  void setNoteOff() { mIsPlayingNote = false; }
 
   //============================================================================
   void run() override;
@@ -64,6 +66,10 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto SPEC_TYPE_HEIGHT = 50;
   static constexpr auto SPEC_TYPE_WIDTH = 130;
   static constexpr auto NUM_COLS = 600;
+  static constexpr auto PIXEL_VIBRATION_SIZE = 2;
+  static constexpr auto MAX_PIXEL_VIBRATION = 15;
+  static constexpr auto MAX_VIBRATION_OFFSET =
+      MAX_PIXEL_VIBRATION * MAX_PIXEL_VIBRATION;
   // TODO: make this relative
   static constexpr auto LOGO_PATH = "C:/Users/brady/Documents/GitHub/gRainbow/gRainbow-circles.png";
 
@@ -72,8 +78,13 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   std::vector<TransientDetector::Transient> *mTransients = nullptr;
 
   int mCurNote = 0;
+  bool mIsPlayingNote = false;
   double mSampleRate;
-  SpecType mProcessType = (SpecType)0;
+  SpecType mProcessType = SpecType::LOGO;
+
+  std::random_device mRandomDevice{};
+  std::mt19937 mGenRandom{mRandomDevice()};
+  std::normal_distribution<> mNormalRand{0.0f, 0.4f};
 
   std::array<juce::Image, SpecType::NUM_TYPES> mImages;
   juce::ComboBox mSpecType;

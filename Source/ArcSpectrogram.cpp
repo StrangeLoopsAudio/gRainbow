@@ -49,21 +49,55 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
   // Draw selected type
   SpecType specType = (SpecType)(mSpecType.getSelectedId());
-  g.drawImage(mImages[specType], getLocalBounds().toFloat(),
-      juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
-      false);
-
-  // Draw position markers
   juce::Point<int> centerPoint = juce::Point<int>(getWidth() / 2, getHeight());
-  g.setColour(juce::Colours::white);
-  for (GrainPositionFinder::GrainPosition gPos : mGPositions) {
-    auto startPoint = centerPoint.getPointOnCircumference(
-        getHeight() / 4.0f, (1.5 * M_PI) + (gPos.pitch.posRatio * M_PI));
-    auto endPoint = centerPoint.getPointOnCircumference(
-        getHeight() - 17, (1.5 * M_PI) + (gPos.pitch.posRatio * M_PI));
-    g.setColour(juce::Colours::goldenrod);
-    //float thickness = std::abs(1.0f - gPos.pbRate) * 10.0f;
-    g.drawLine(juce::Line<float>(startPoint, endPoint), 2.0f);
+  int startRadius = getHeight() / 4.0f;
+  int endRadius = getHeight();
+  int bowWidth = endRadius - startRadius;
+  juce::Image& curImage = mImages[specType];
+
+  if (mIsPlayingNote) {
+    juce::Image vibratingImage = juce::Image(curImage);
+    vibratingImage.duplicateIfShared();
+
+    for (GrainPositionFinder::GrainPosition gPos : mGPositions) {
+      auto sweepPos = gPos.pitch.posRatio +
+                    ((gPos.pitch.duration / 2) * (mNormalRand(mGenRandom) + 1));
+
+      for (int i = 0; i < bowWidth; ++i) {
+        auto ogPoint = centerPoint.getPointOnCircumference(
+            (getHeight() / 4.0f) + i, (1.5 * M_PI) + (sweepPos * M_PI));
+        auto ogPixel = curImage.getPixelAt(ogPoint.getX(), ogPoint.getY());
+        if (ogPixel.getBrightness() > 0.1) {
+          auto xOffset = mNormalRand(mGenRandom) * MAX_PIXEL_VIBRATION;
+          auto yOffset = mNormalRand(mGenRandom) * MAX_PIXEL_VIBRATION;
+          auto newPoint = juce::Point<float>(ogPoint.getX() + xOffset,
+                                             ogPoint.getY() + yOffset);
+          //vibratingImage.setPixelAt(ogPoint.getX(), ogPoint.getY(),
+          //                          juce::Colours::black);
+          //auto distance = 1.0 - (std::abs(xOffset * yOffset) / MAX_VIBRATION_OFFSET);
+          auto distance = ogPixel.getBrightness();
+          vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY(),
+                                    ogPixel.withBrightness(distance));
+          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY(), ogPixel.withBrightness(distance));
+          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY(), ogPixel.withBrightness(distance));
+          vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY() + 1, ogPixel.withBrightness(distance));
+          vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY() - 1, ogPixel.withBrightness(distance));
+          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY() + 1, ogPixel.withBrightness(distance));
+          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY() - 1, ogPixel.withBrightness(distance));
+          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY() + 1, ogPixel.withBrightness(distance));
+          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY() - 1, ogPixel.withBrightness(distance));
+        }
+      }
+    }
+    g.drawImage(
+        vibratingImage, getLocalBounds().toFloat(),
+        juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
+        false);
+  } else {
+    g.drawImage(
+        mImages[specType], getLocalBounds().toFloat(),
+        juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
+        false);
   }
 
   // Draw transient markers
@@ -176,8 +210,9 @@ void ArcSpectrogram::setTransients(
   mTransients = transients;
 }
 
-void ArcSpectrogram::updatePositions(int midiNote,
+void ArcSpectrogram::setNoteOn(int midiNote,
     std::vector<GrainPositionFinder::GrainPosition> gPositions) {
+  mIsPlayingNote = true;
   mGPositions = gPositions;
   mCurNote = midiNote;
   mGPositions = gPositions;

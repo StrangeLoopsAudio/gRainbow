@@ -21,12 +21,6 @@ GranularSynth::~GranularSynth() { stopThread(4000); }
 
 void GranularSynth::run() {
   while (!threadShouldExit()) {
-    /* Delete expired grains */
-    for (int i = mGrains.size() - 1; i >= 0; --i) {
-      if (mTotalSamps > (mGrains[i].trigTs + mGrains[i].duration)) {
-        mGrains.remove(i);
-      }
-    }
 
     // Reset timestamps if no grains active to keep numbers low
     if (mGrains.isEmpty()) {
@@ -63,6 +57,12 @@ void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer) {
       mGrains[g].process(*mFileBuffer, *blockBuffer, mTotalSamps);
     }
     mTotalSamps++;
+  }
+  /* Delete expired grains */
+  for (int i = mGrains.size() - 1; i >= 0; --i) {
+    if (mTotalSamps > (mGrains[i].trigTs + mGrains[i].duration)) {
+      mGrains.remove(i);
+    }
   }
 }
 

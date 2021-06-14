@@ -103,7 +103,7 @@ void MainComponent::timerCallback() {
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
         mPositionFinder.findPositions(k, mCurPitchClass);
     mSynth.setPositions(mCurPitchClass, gPositions);
-    mArcSpec.updatePositions(mCurPitchClass, gPositions);
+    mArcSpec.setNoteOn(mCurPitchClass, gPositions);
     mCurPitchClass = PitchDetector::PitchClass::NONE;
   }
 }
@@ -139,6 +139,7 @@ void MainComponent::getNextAudioBlock(
       } else if (md.getMessage().isNoteOff()) {
         mSynth.stopNote(
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber());
+        mArcSpec.setNoteOff();
       }
     }
   }
