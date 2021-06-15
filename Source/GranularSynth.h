@@ -37,35 +37,31 @@ class GranularSynth : juce::Thread {
  private:
   static constexpr auto MIN_RATE = 10.f;  // Grains per second
   static constexpr auto MAX_RATE = 40.f;
+  static constexpr auto MAX_DURATION_MS = 2000.0; // Max note duration
+  static constexpr auto MAX_GRAINS = 100; // Max grains active at once
 
   typedef struct GrainNote {
     PitchDetector::PitchClass pitchClass;
-    int curPos = 0;
     std::vector<GrainPositionFinder::GrainPosition> positions;
-    GrainNote(PitchDetector::PitchClass pitchClass, int startPos,
+    GrainNote(PitchDetector::PitchClass pitchClass,
               std::vector<GrainPositionFinder::GrainPosition> positions)
-        : pitchClass(pitchClass), curPos(startPos), positions(positions) {}
+        : pitchClass(pitchClass), positions(positions) {}
   } GrainNote;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
-  std::vector<GrainNote> mActiveGrains;
   std::array<float, 512> mGaussianEnv;
 
   /* Grain control */
   juce::Array<Grain> mGrains;
   long mTotalSamps;
-  juce::Array<GrainNote> mActiveNotes;
+  juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
   double mSampleRate;
 
   /* Grain parameters */
   float mDiversity =
       0.0;             // Extracts number of positions to find for freq match
   float mRate = 0.1;   // Grain rate normalized to 0-1
-  float mNextGrainTs;  // Timestamp when next grain should be generated
 
   // Generate gaussian envelope to be used for each grain
   void generateGaussianEnvelope();
-  int getNextPosition(GrainNote& gNote);
-  int getStartPosition(
-      std::vector<GrainPositionFinder::GrainPosition>& gPositions);
 };

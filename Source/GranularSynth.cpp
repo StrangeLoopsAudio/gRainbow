@@ -22,48 +22,62 @@ GranularSynth::~GranularSynth() { stopThread(4000); }
 void GranularSynth::run() {
   while (!threadShouldExit()) {
 
-    // Reset timestamps if no grains active to keep numbers low
-    if (mGrains.isEmpty()) {
-      mTotalSamps = 0;
-      mNextGrainTs = 0;
-    }
-
-    if (mFileBuffer != nullptr && mTotalSamps >= mNextGrainTs) {
-      float gInterval =
-          (1.0f / juce::jmap(mRate, MIN_RATE, MAX_RATE)) * mSampleRate;
-      mNextGrainTs = mTotalSamps + gInterval;
-      /* Add one grain per active note */
+    float maxDurSamples = mSampleRate * (MAX_DURATION_MS / 1000.0);
+    
+    if (mFileBuffer != nullptr) {
+      // Add one grain per active note
       for (GrainNote& gNote : mActiveNotes) {
-        if (gNote.curPos != -1) {
-          GrainPositionFinder::GrainPosition gPos =
-              gNote.positions[gNote.curPos];
+        if (mGrains.size() > MAX_GRAINS) continue;
+        int numPositions = gNote.positions.size();
+        int posToPlay = -1;
+        juce::Random random;
+        int newPos = juce::roundToInt(random.nextFloat() * (numPositions - 1));
+        for (int i = 0; i < numPositions; ++i) {
+          if (gNote.positions[(newPos + i) % numPositions].isEnabled)
+            posToPlay = newPos;
+        }
+        if (posToPlay != -1) {
+          GrainPositionFinder::GrainPosition gPos = gNote.positions[posToPlay];          
           auto durSamples =
               gPos.pitch.duration * mFileBuffer->getNumSamples() * (1.0f / gPos.pbRate);
+          durSamples = juce::jmin(durSamples, maxDurSamples);
           auto grain = Grain(&mGaussianEnv, durSamples, gPos.pbRate,
                              gPos.pitch.posRatio * mFileBuffer->getNumSamples(),
                              mTotalSamps);
           mGrains.add(grain);
-          gNote.curPos = getNextPosition(gNote);
         }
       }
     }
-    wait(20);
+    auto waitPeriod = 1.0f / juce::jmap(mRate, MIN_RATE, MAX_RATE);
+    wait(waitPeriod * 1000);
   }
 }
 
 void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer) {
+  // Add contributions from each grain
+  juce::Array<Grain> grains = mGrains; // Copy to avoid threading issues
   for (int i = 0; i < blockBuffer->getNumSamples(); ++i) {
-    for (int g = 0; g < mGrains.size(); ++g) {
-      mGrains[g].process(*mFileBuffer, *blockBuffer, mTotalSamps);
+    for (int g = 0; g < grains.size(); ++g) {
+      grains[g].process(*mFileBuffer, *blockBuffer, mTotalSamps);
     }
     mTotalSamps++;
   }
-  /* Delete expired grains */
-  for (int i = mGrains.size() - 1; i >= 0; --i) {
-    if (mTotalSamps > (mGrains[i].trigTs + mGrains[i].duration)) {
-      mGrains.remove(i);
+
+  // Reset timestamps if no grains active to keep numbers low
+  if (mGrains.isEmpty()) {
+    mTotalSamps = 0;
+  }
+
+  // Normalize the block before sending onward
+  for (int i = 0; i < blockBuffer->getNumSamples(); ++i) {
+    for (int ch = 0; ch < blockBuffer->getNumChannels(); ++ch) {
+      float* channelBlock = blockBuffer->getWritePointer(ch);
+      channelBlock[i] /= mGrains.size();
     }
   }
+
+  // Delete expired grains
+  mGrains.removeIf([this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
 }
 
 void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, double sr) {
@@ -74,8 +88,7 @@ void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, double sr) {
 void GranularSynth::setPositions(
     PitchDetector::PitchClass pitchClass,
     std::vector<GrainPositionFinder::GrainPosition> gPositions) {
-  int startPos = getStartPosition(gPositions);
-  mActiveNotes.add(GrainNote(pitchClass, startPos, gPositions));
+  mActiveNotes.add(GrainNote(pitchClass, gPositions));
 }
 
 void GranularSynth::stopNote(PitchDetector::PitchClass pitchClass) {
@@ -88,25 +101,4 @@ void GranularSynth::generateGaussianEnvelope() {
     mGaussianEnv[i] = std::exp(
         -1.0f * std::pow((i - ((511) / 2.0)) / (0.4 * ((511) / 2.0)), 2.0));
   }
-}
-
-int GranularSynth::getNextPosition(GrainNote& gNote) {
-  int firstEnabled = -1;
-  for (int i = 0; i < gNote.positions.size(); ++i) {
-    int index = (gNote.curPos + 1 + i) % gNote.positions.size();
-    if (gNote.positions[index].solo) return index;
-    if (gNote.positions[index].isEnabled && firstEnabled == -1) {
-      firstEnabled = index;
-    }
-  }
-  return firstEnabled;
-}
-
-int GranularSynth::getStartPosition(std::vector<GrainPositionFinder::GrainPosition>& gPositions) {
-  int firstEnabled = -1;
-  for (int i = 0; i < gPositions.size(); ++i) {
-    if (gPositions[i].solo) return i;
-    if (gPositions[i].isEnabled && firstEnabled == -1) firstEnabled = i;
-  }
-  return firstEnabled;
 }

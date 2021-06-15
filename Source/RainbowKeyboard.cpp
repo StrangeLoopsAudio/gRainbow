@@ -60,7 +60,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, int pitchClass) {
   bool isOver = pitchClass == mMouseOverNote;
   bool isDown = isOver && mIsNotePressed;
   float normPc = (pitchClass + 0.5) / NUM_KEYS;
-  auto keyColor = Utils::getRainbow12Colour(normPc);
+  auto keyColor = Utils::getRainbow12Colour(1.0f - normPc);
   if (isOver) keyColor = keyColor.darker();
   if (isDown) keyColor = keyColor.darker();
 
