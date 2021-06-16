@@ -59,8 +59,8 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   static constexpr auto PARAM_DIVERSITY_DEFAULT = 0.1f;
   static constexpr auto MIN_DIVERSITY = 1.f;
   static constexpr auto MAX_DIVERSITY = 5.f;
-  static constexpr auto PARAM_DURATION_DEFAULT = 0.2f;
-  static constexpr auto PARAM_RATE_DEFAULT = 0.3f;
+  static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
+  static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
 
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
@@ -87,6 +87,8 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   juce::Label mLabelDiversity;
   juce::Slider mSliderRate;
   juce::Label mLabelRate;
+  juce::Slider mSliderDuration;
+  juce::Label mLabelDuration;
 
   void openNewFile();
 

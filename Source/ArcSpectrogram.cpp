@@ -127,7 +127,7 @@ void ArcSpectrogram::resized() {
     float angleRad = (M_PI * mGPositions[i].pitch.posRatio) - (M_PI / 2.0f);
     juce::Point<float> p =
         startPoint.getPointOnCircumference(getHeight() - 10, getHeight() - 10, angleRad);
-    mPositionMarkers[i]->setSize(10, 15);
+    mPositionMarkers[i]->setSize(POSITION_MARKER_WIDTH, POSITION_MARKER_HEIGHT);
     mPositionMarkers[i]->setCentrePosition(0, 0);
     mPositionMarkers[i]->setTransform(
         juce::AffineTransform::rotation(angleRad).translated(p));
@@ -140,7 +140,7 @@ void ArcSpectrogram::run() {
 
   // Initialize rainbow parameters
   int startRadius = getHeight() / 4.0f;
-  int endRadius = getHeight();
+  int endRadius = getHeight() - POSITION_MARKER_HEIGHT;
   int bowWidth = endRadius - startRadius;
   int maxRow =
       (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size(); 

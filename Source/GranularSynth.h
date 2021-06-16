@@ -25,6 +25,7 @@ class GranularSynth : juce::Thread {
   void setFileBuffer(juce::AudioBuffer<float>* buffer, double sr);
   void setRate(float rate) { mRate = rate; }
   void setDiversity(float diversity) { mDiversity = diversity; }
+  void setDuration(float duration) { mDuration = duration; }
 
   void process(juce::AudioBuffer<float>* blockBuffer);
   void setPositions(PitchDetector::PitchClass pitchClass,
@@ -36,8 +37,9 @@ class GranularSynth : juce::Thread {
 
  private:
   static constexpr auto MIN_RATE = 10.f;  // Grains per second
-  static constexpr auto MAX_RATE = 40.f;
-  static constexpr auto MAX_DURATION_MS = 2000.0; // Max note duration
+  static constexpr auto MAX_RATE = 20.f;
+  static constexpr auto MIN_DURATION_MS = 60.0f;
+  static constexpr auto MAX_DURATION_MS = 300.0f;
   static constexpr auto MAX_GRAINS = 100; // Max grains active at once
 
   typedef struct GrainNote {
@@ -61,6 +63,7 @@ class GranularSynth : juce::Thread {
   float mDiversity =
       0.0;             // Extracts number of positions to find for freq match
   float mRate = 0.1;   // Grain rate normalized to 0-1
+  float mDuration = 0.0f; // Grain duration from 0-1
 
   // Generate gaussian envelope to be used for each grain
   void generateGaussianEnvelope();

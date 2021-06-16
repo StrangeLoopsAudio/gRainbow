@@ -63,6 +63,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto BUFFER_PROCESS_TIMEOUT = 10000;
 
   // UI variables
+  static constexpr auto POSITION_MARKER_WIDTH = 10;
+  static constexpr auto POSITION_MARKER_HEIGHT = 15;
   static constexpr auto SPEC_TYPE_HEIGHT = 50;
   static constexpr auto SPEC_TYPE_WIDTH = 130;
   static constexpr auto NUM_COLS = 600;

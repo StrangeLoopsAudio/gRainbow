@@ -245,6 +245,7 @@ bool PitchDetector::hasBetterCandidateAhead(int startFrame, float target, float 
       if (peakDev < deviation) return true;
     }
   }
+  return false;
 }
 
 PitchDetector::PitchClass PitchDetector::getPitchClass(float binNum) {

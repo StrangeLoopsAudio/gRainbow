@@ -14,6 +14,7 @@ GranularSynth::GranularSynth()
     : juce::Thread("granular thread") {
   generateGaussianEnvelope();
   mTotalSamps = 0;
+  mGrains.ensureStorageAllocated(MAX_GRAINS);
   startThread();
 }
 
@@ -23,33 +24,38 @@ void GranularSynth::run() {
   while (!threadShouldExit()) {
 
     float maxDurSamples = mSampleRate * (MAX_DURATION_MS / 1000.0);
+    float durMs = juce::jmap(mDuration, MIN_DURATION_MS, MAX_DURATION_MS);
     
     if (mFileBuffer != nullptr) {
       // Add one grain per active note
       for (GrainNote& gNote : mActiveNotes) {
-        if (mGrains.size() > MAX_GRAINS) continue;
+        if (mGrains.size() >= MAX_GRAINS) continue;
         int numPositions = gNote.positions.size();
         int posToPlay = -1;
         juce::Random random;
-        int newPos = juce::roundToInt(random.nextFloat() * (numPositions - 1));
+        int newPos = juce::jlimit(0, numPositions - 1, (int)(random.nextFloat() * numPositions));
         for (int i = 0; i < numPositions; ++i) {
-          if (gNote.positions[(newPos + i) % numPositions].isEnabled)
-            posToPlay = newPos;
+          int pos = (newPos + i) % numPositions;
+          if (gNote.positions[pos].isEnabled) posToPlay = pos;
         }
         if (posToPlay != -1) {
-          GrainPositionFinder::GrainPosition gPos = gNote.positions[posToPlay];          
-          auto durSamples =
-              gPos.pitch.duration * mFileBuffer->getNumSamples() * (1.0f / gPos.pbRate);
+          GrainPositionFinder::GrainPosition gPos = gNote.positions[posToPlay];
+          float durSamples =
+              mSampleRate * (durMs / 1000) * (1.0f / gPos.pbRate);
           durSamples = juce::jmin(durSamples, maxDurSamples);
+          float posSamples = gPos.pitch.posRatio * mFileBuffer->getNumSamples();
+          float posOffset =
+              juce::jmap(random.nextFloat(), 0.0f,
+                         (gPos.pitch.duration * mFileBuffer->getNumSamples()) -
+                             durSamples);
           auto grain = Grain(&mGaussianEnv, durSamples, gPos.pbRate,
-                             gPos.pitch.posRatio * mFileBuffer->getNumSamples(),
-                             mTotalSamps);
+                             posSamples + posOffset, mTotalSamps);
           mGrains.add(grain);
         }
       }
     }
-    auto waitPeriod = 1.0f / juce::jmap(mRate, MIN_RATE, MAX_RATE);
-    wait(waitPeriod * 1000);
+    auto waitPeriod = juce::jmap(1.0f - mRate, durMs / 8, durMs / 2);
+    wait(waitPeriod);
   }
 }
 
