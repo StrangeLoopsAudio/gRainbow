@@ -68,10 +68,21 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto SPEC_TYPE_HEIGHT = 50;
   static constexpr auto SPEC_TYPE_WIDTH = 130;
   static constexpr auto NUM_COLS = 600;
+  static constexpr auto SUN_RAY_WIDTH = 0.005;
+  //Colours
+  static constexpr auto COLOUR_MULTIPLIER = 20.0f;
+  static constexpr auto COLOUR_SUN_CENTER = 0xFFFFFF74;
+  static constexpr auto COLOUR_SUN_REGULAR_RAYS = 0x33FFFF74;
+  static constexpr auto COLOUR_SUN_END = 0xffffffce;
+  static constexpr auto COLOUR_RAYS_END = 0x00ffffce;
+  static constexpr auto COLOUR_NIGHT = 0x8806031B;
+  static constexpr auto COLOUR_DAY = 0xFF00566B;
+  //Pixel vibration
   static constexpr auto PIXEL_VIBRATION_SIZE = 2;
   static constexpr auto MAX_PIXEL_VIBRATION = 15;
   static constexpr auto MAX_VIBRATION_OFFSET =
       MAX_PIXEL_VIBRATION * MAX_PIXEL_VIBRATION;
+
   // TODO: make this relative
   static constexpr auto LOGO_PATH = "C:/Users/brady/Documents/GitHub/gRainbow/gRainbow-circles.png";
 

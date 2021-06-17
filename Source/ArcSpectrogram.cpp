@@ -49,19 +49,42 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
   // Draw selected type
   SpecType specType = (SpecType)(mSpecType.getSelectedId());
-  juce::Point<int> centerPoint = juce::Point<int>(getWidth() / 2, getHeight());
+  juce::Point<float> centerPoint =
+      juce::Point<float>(getWidth() / 2.0f, getHeight());
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
   juce::Image& curImage = mImages[specType];
 
+  if (specType != SpecType::LOGO) {
+    auto bgColourStart = mIsPlayingNote ? juce::Colour(COLOUR_SUN_REGULAR_RAYS)
+                                        : juce::Colour(COLOUR_NIGHT);
+    auto bgColourEnd =
+        mIsPlayingNote ? juce::Colour(COLOUR_DAY)
+                                      : juce::Colour(COLOUR_NIGHT);
+    g.setFillType(juce::ColourGradient(bgColourStart, centerPoint, bgColourEnd,
+                                       centerPoint.withY(0), true));
+    g.fillAll();
+  }
+
   if (mIsPlayingNote) {
+    juce::Path sunRays;
     juce::Image vibratingImage = juce::Image(curImage);
     vibratingImage.duplicateIfShared();
 
     for (GrainPositionFinder::GrainPosition gPos : mGPositions) {
       auto sweepPos = gPos.pitch.posRatio +
                     ((gPos.pitch.duration / 2) * (mNormalRand(mGenRandom) + 1));
+
+      // Fraw sun ray underneath the spectrogram
+      auto middlePos = gPos.pitch.posRatio + (gPos.pitch.duration / 2);
+      auto rayPoint1 = centerPoint.getPointOnCircumference(
+          getHeight(), (1.5 * M_PI) + ((middlePos - SUN_RAY_WIDTH) * M_PI));
+      auto rayPoint2 = centerPoint.getPointOnCircumference(
+          getHeight(), (1.5 * M_PI) + ((middlePos + SUN_RAY_WIDTH) * M_PI));
+      
+      sunRays.addTriangle(centerPoint, rayPoint1, rayPoint2);
+      
 
       for (int i = 0; i < bowWidth; ++i) {
         auto ogPoint = centerPoint.getPointOnCircumference(
@@ -72,9 +95,6 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
           auto yOffset = mNormalRand(mGenRandom) * MAX_PIXEL_VIBRATION;
           auto newPoint = juce::Point<float>(ogPoint.getX() + xOffset,
                                              ogPoint.getY() + yOffset);
-          //vibratingImage.setPixelAt(ogPoint.getX(), ogPoint.getY(),
-          //                          juce::Colours::black);
-          //auto distance = 1.0 - (std::abs(xOffset * yOffset) / MAX_VIBRATION_OFFSET);
           auto distance = ogPixel.getBrightness();
           vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY(),
                                     ogPixel.withBrightness(distance));
@@ -93,6 +113,24 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
         vibratingImage, getLocalBounds().toFloat(),
         juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
         false);
+
+    // Draw the sun rays
+    g.setFillType(juce::ColourGradient(
+        juce::Colour(COLOUR_SUN_CENTER), centerPoint,
+        juce::Colour(COLOUR_RAYS_END), centerPoint.withY(0), true));
+    g.fillPath(sunRays);
+
+    // Draw the sun
+    g.setFillType(juce::ColourGradient(
+        juce::Colour(COLOUR_SUN_CENTER), centerPoint,
+        juce::Colour(COLOUR_SUN_END), centerPoint.withY(getHeight() / 4.0f), true));
+    auto sunArea =
+        juce::Rectangle<float>(getHeight() / 2.0f, getHeight() / 2.0f);
+    sunArea = sunArea.withCentre(centerPoint);
+    g.fillEllipse(sunArea);
+
+
+
   } else {
     g.drawImage(
         mImages[specType], getLocalBounds().toFloat(),
@@ -124,7 +162,9 @@ void ArcSpectrogram::resized() {
   // Position markers around rainbow
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   for (int i = 0; i < mPositionMarkers.size(); ++i) {
-    float angleRad = (M_PI * mGPositions[i].pitch.posRatio) - (M_PI / 2.0f);
+    auto middlePos =
+        mGPositions[i].pitch.posRatio + (mGPositions[i].pitch.duration / 2);
+    float angleRad = (M_PI * middlePos) - (M_PI / 2.0f);
     juce::Point<float> p =
         startPoint.getPointOnCircumference(getHeight() - 10, getHeight() - 10, angleRad);
     mPositionMarkers[i]->setSize(POSITION_MARKER_WIDTH, POSITION_MARKER_HEIGHT);
@@ -146,7 +186,7 @@ void ArcSpectrogram::run() {
       (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size(); 
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mImages[mProcessType] =
-      juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
+      juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
   juce::Graphics g(mImages[mProcessType]);
 
   // Draw each column of frequencies
@@ -159,11 +199,10 @@ void ArcSpectrogram::run() {
       auto specRow = radPerc * maxRow;
 
       // Choose rainbow color depending on radius
-      auto rainbowColour = juce::Colour::fromHSV(1 - radPerc, 1.0, 1.0, 1.0);
+      auto level = juce::jlimit(
+          0.0f, 1.0f, spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
+      auto rainbowColour = juce::Colour::fromHSV(1 - radPerc, 1.0, 1.0f, level);
       g.setColour(rainbowColour);
-
-      // Set brightness according to the frequency's amplitude at this frame
-      g.setOpacity(juce::jlimit(0.0f, 1.0f, spec[specCol][specRow]));
 
       float xPerc = (float)specCol / spec.size();
       float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
