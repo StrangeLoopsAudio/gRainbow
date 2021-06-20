@@ -23,7 +23,8 @@ PitchDetector::~PitchDetector() { stopThread(4000); }
 
 void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer,
                                   double sampleRate) {
-  stopThread(2000);
+  
+  stopThread(4000);
   mFileBuffer = fileBuffer;
   mSampleRate = sampleRate;
   startThread();
@@ -31,15 +32,25 @@ void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer,
 
 void PitchDetector::run() {
   if (mFileBuffer == nullptr) return;
+  updateProgress(0.0);
   mFft.processBuffer(*mFileBuffer);
+  updateProgress(FFT_PROG_DIV);
   if (threadShouldExit()) return;
   computeHPCP();
   if (threadShouldExit()) return;
   segmentPitches();
+  updateProgress(FFT_PROG_DIV + HPCP_PROG_DIV);
   if (threadShouldExit()) return;
   getSegmentedPitchBuffer();
   if (onPitchesUpdated != nullptr && !threadShouldExit()) {
     onPitchesUpdated(mHPCP, mSegmentedPitches);
+  }
+  updateProgress(1.0);
+}
+
+void PitchDetector::updateProgress(double progress) {
+  if (onProgressUpdated != nullptr) {
+    onProgressUpdated(progress);
   }
 }
 
@@ -67,14 +78,13 @@ void PitchDetector::computeHPCP() {
 
   std::vector<std::vector<float>>& spec = mFft.getSpectrum();
   for (int frame = 0; frame < spec.size(); ++frame) {
+    updateProgress(FFT_PROG_DIV + HPCP_PROG_DIV * ((float)frame / spec.size()));
     mHPCP.push_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
 
     std::vector<float>& specFrame = mFft.getSpectrum()[frame];
 
     // Find local peaks to compute HPCP with
     std::vector<Peak>& peaks = getPeaks(MAX_SPEC_PEAKS, specFrame);
-
-    if (threadShouldExit()) return;
 
     float curMax = 0.0;
     for (int i = 0; i < peaks.size(); ++i) {
@@ -101,6 +111,7 @@ void PitchDetector::computeHPCP() {
           }
         }
       }
+      if (threadShouldExit()) return;
     }
 
     // Normalize HPCP frame

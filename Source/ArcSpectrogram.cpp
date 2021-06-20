@@ -56,7 +56,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   int bowWidth = endRadius - startRadius;
   juce::Image& curImage = mImages[specType];
 
-  if (specType != SpecType::LOGO) {
+  /*if (specType != SpecType::LOGO) {
     auto bgColourStart = mIsPlayingNote ? juce::Colour(COLOUR_SUN_REGULAR_RAYS)
                                         : juce::Colour(COLOUR_NIGHT);
     auto bgColourEnd =
@@ -65,7 +65,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     g.setFillType(juce::ColourGradient(bgColourStart, centerPoint, bgColourEnd,
                                        centerPoint.withY(0), true));
     g.fillAll();
-  }
+  } */
 
   if (mIsPlayingNote) {
     juce::Path sunRays;
@@ -115,19 +115,19 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
         false);
 
     // Draw the sun rays
-    g.setFillType(juce::ColourGradient(
+   /* g.setFillType(juce::ColourGradient(
         juce::Colour(COLOUR_SUN_CENTER), centerPoint,
         juce::Colour(COLOUR_RAYS_END), centerPoint.withY(0), true));
-    g.fillPath(sunRays);
+    g.fillPath(sunRays); */
 
     // Draw the sun
-    g.setFillType(juce::ColourGradient(
+   /* g.setFillType(juce::ColourGradient(
         juce::Colour(COLOUR_SUN_CENTER), centerPoint,
         juce::Colour(COLOUR_SUN_END), centerPoint.withY(getHeight() / 4.0f), true));
     auto sunArea =
         juce::Rectangle<float>(getHeight() / 2.0f, getHeight() / 2.0f);
     sunArea = sunArea.withCentre(centerPoint);
-    g.fillEllipse(sunArea);
+    g.fillEllipse(sunArea); */
 
 
 
@@ -201,7 +201,7 @@ void ArcSpectrogram::run() {
       // Choose rainbow color depending on radius
       auto level = juce::jlimit(
           0.0f, 1.0f, spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
-      auto rainbowColour = juce::Colour::fromHSV(1 - radPerc, 1.0, 1.0f, level);
+      auto rainbowColour = juce::Colour::fromHSV(1 - radPerc, 1.0, level, 1.0f);
       g.setColour(rainbowColour);
 
       float xPerc = (float)specCol / spec.size();
@@ -212,7 +212,7 @@ void ArcSpectrogram::run() {
           startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
       juce::AffineTransform rotation = juce::AffineTransform();
       rotation = rotation.rotated(angleRad, p.x, p.y);
-      juce::Rectangle<float> rect = juce::Rectangle<float>(1, 1);
+      juce::Rectangle<float> rect = juce::Rectangle<float>(2, 2);
       rect = rect.withCentre(p);
       rect = rect.transformedBy(rotation);
       juce::Path rectPath;

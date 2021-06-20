@@ -75,8 +75,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto COLOUR_SUN_REGULAR_RAYS = 0x33FFFF74;
   static constexpr auto COLOUR_SUN_END = 0xffffffce;
   static constexpr auto COLOUR_RAYS_END = 0x00ffffce;
-  static constexpr auto COLOUR_NIGHT = 0x8806031B;
-  static constexpr auto COLOUR_DAY = 0xFF00566B;
+  //static constexpr auto COLOUR_NIGHT = 0x8806031B;
+  //static constexpr auto COLOUR_DAY = 0xFF00566B;
   //Pixel vibration
   static constexpr auto PIXEL_VIBRATION_SIZE = 2;
   static constexpr auto MAX_PIXEL_VIBRATION = 15;

@@ -60,6 +60,10 @@ class PitchDetector : juce::Thread {
       onPitchesUpdated =
       nullptr;
 
+  std::function<void(double progress)>
+      onProgressUpdated =
+      nullptr;
+
   void processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate);
   juce::HashMap<PitchClass, std::vector<Pitch>>& getPitches() {
     return mPitches;
@@ -68,6 +72,9 @@ class PitchDetector : juce::Thread {
   void run() override;
 
  private:
+  // Progress divisions
+  static constexpr auto FFT_PROG_DIV = 0.1;
+  static constexpr auto HPCP_PROG_DIV = 0.8;
   // FFT
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 512;
@@ -134,7 +141,7 @@ class PitchDetector : juce::Thread {
   juce::HashMap<PitchClass, std::vector<Pitch>> mPitches;
 
   void computeHPCP();
-  
+  void updateProgress(double progress);
   void segmentPitches();
   void getSegmentedPitchBuffer();
   bool hasBetterCandidateAhead(

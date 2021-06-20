@@ -50,6 +50,7 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   static constexpr auto LABEL_HEIGHT = 20;
   static constexpr auto SPEC_WIDTH = 20;
   static constexpr auto SPEC_HEIGHT = 20;
+  static constexpr auto PROGRESS_SIZE = 80;
   static constexpr auto KEYBOARD_HEIGHT = 100;
   static constexpr auto MIN_NOTE_NUM = 45;
   static constexpr auto MAX_NOTE_NUM = 56;
@@ -68,6 +69,8 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   PitchDetector::PitchClass mCurPitchClass = PitchDetector::PitchClass::NONE;
   Fft mFft;
   juce::AudioBuffer<float> mFileBuffer;
+  double mLoadingProgress = 0.0;
+  bool mFileLoaded = false;
 
   /* DSP Modules */
   TransientDetector mTransientDetector;
@@ -80,6 +83,7 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   juce::TextButton mBtnOpenFile;
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
+  juce::ProgressBar mProgressBar;
   juce::MidiKeyboardState mKeyboardState;
   /* Parameters */
   juce::Slider mSliderDiversity;

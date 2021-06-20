@@ -4,8 +4,8 @@
 MainComponent::MainComponent()
     : mKeyboard(mKeyboardState),
       mFft(FFT_SIZE, HOP_SIZE),
-      juce::Thread("main fft thread")
-{
+      juce::Thread("main fft thread"),
+      mProgressBar(mLoadingProgress) {
   mFormatManager.registerBasicFormats();
 
   setLookAndFeel(&mRainbowLookAndFeel);
@@ -70,6 +70,8 @@ MainComponent::MainComponent()
                                       GrainPositionFinder::GrainPosition gPos) {
     mPositionFinder.updatePosition(midiNote, gPos);
   };
+  
+  addChildComponent(mProgressBar);
 
   mTransientDetector.onTransientsUpdated =
       [this](std::vector<TransientDetector::Transient>& transients) {
@@ -80,7 +82,19 @@ MainComponent::MainComponent()
       [this](std::vector<std::vector<float>>& hpcpBuffer, std::vector<std::vector<float>>& notesBuffer) {
         mArcSpec.loadBuffer(&hpcpBuffer, ArcSpectrogram::SpecType::HPCP);
         mArcSpec.loadBuffer(&notesBuffer, ArcSpectrogram::SpecType::NOTES);
+        mPositionFinder.setPitches(&mPitchDetector.getPitches());
+        mFileLoaded = true;
       };
+
+  mPitchDetector.onProgressUpdated = [this](float progress) {
+    mLoadingProgress = progress;
+    juce::MessageManagerLock lock;
+    if (progress >= 1.0) {
+      mProgressBar.setVisible(false);
+    } else if (!mProgressBar.isVisible()) {
+      mProgressBar.setVisible(true);
+    } 
+  };
 
   addAndMakeVisible(mKeyboard);
 
@@ -147,10 +161,10 @@ void MainComponent::getNextAudioBlock(
                                        true);
   if (!incomingMidi.isEmpty()) {
     for (juce::MidiMessageMetadata md : incomingMidi) {
-      if (md.getMessage().isNoteOn()) {
+      if (md.getMessage().isNoteOn() && mFileLoaded) {
         mCurPitchClass =
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber();
-      } else if (md.getMessage().isNoteOff()) {
+      } else if (md.getMessage().isNoteOff() && mFileLoaded) {
         mSynth.stopNote(
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber());
         mArcSpec.setNoteOff();
@@ -219,6 +233,8 @@ void MainComponent::resized() {
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
 
   mArcSpec.setBounds(r.removeFromBottom(r.getWidth() / 2.0f));
+  mProgressBar.setBounds(
+      mArcSpec.getBounds().withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
 }
 
 void MainComponent::openNewFile() {
@@ -256,7 +272,7 @@ void MainComponent::openNewFile() {
       //mTransientDetector.processBuffer(&mFileBuffer);
       mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
       mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
-      mPositionFinder.setPitches(&mPitchDetector.getPitches());
+      mFileLoaded = false;
     }
   }
   setAudioChannels(2, 2);
