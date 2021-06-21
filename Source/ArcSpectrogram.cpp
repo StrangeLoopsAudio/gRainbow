@@ -26,8 +26,9 @@ ArcSpectrogram::ArcSpectrogram():
   for (int i = 0; i < SpecType::NUM_TYPES; ++i) {
     mImages[i] = juce::Image(juce::Image::RGB, 512, 512, true);
   }
+
   mImages[SpecType::LOGO] =
-      juce::PNGImageFormat::loadFrom(juce::File(LOGO_PATH));
+      juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize);
 
   mSpecType.addItem("Spectrogram", (int)SpecType::SPECTROGRAM);
   mSpecType.addItem("Harmonic Profile", (int)SpecType::HPCP);

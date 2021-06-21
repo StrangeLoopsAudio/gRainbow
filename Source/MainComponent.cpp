@@ -21,6 +21,23 @@ MainComponent::MainComponent()
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
 
+  mBtnRecord.setButtonText("Start Recording");
+  mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
+                       juce::Colours::green);
+  mBtnRecord.onClick = [this] {
+    mIsRecording = !mIsRecording;
+    if (mIsRecording) {
+      mBtnRecord.setButtonText("Stop Recording");
+      mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
+                           juce::Colours::red);
+    } else {
+      mBtnRecord.setButtonText("Start Recording");
+      mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
+                           juce::Colours::green);
+    }
+  };
+  addAndMakeVisible(mBtnRecord);
+
   /* -------------- Knobs --------------*/
 
   /* Diversity */
@@ -201,6 +218,7 @@ void MainComponent::resized() {
   // Left Panel
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
   mBtnOpenFile.setBounds(leftPanel.removeFromTop(KNOB_HEIGHT));
+  mBtnRecord.setBounds(leftPanel.removeFromTop(KNOB_HEIGHT));
   leftPanel.removeFromTop(ROW_PADDING_HEIGHT);
   // Row 1
   auto row =

@@ -81,10 +81,13 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   /* UI Components */
   juce::ImageComponent mLogo;
   juce::TextButton mBtnOpenFile;
+  juce::TextButton mBtnRecord;
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
+  /* Bookkeeping */
   juce::MidiKeyboardState mKeyboardState;
+  bool mIsRecording = false;
   /* Parameters */
   juce::Slider mSliderDiversity;
   juce::Label mLabelDiversity;

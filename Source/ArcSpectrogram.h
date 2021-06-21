@@ -12,12 +12,13 @@
 
 #include <JuceHeader.h>
 
+#include <random>
+
 #include "Fft.h"
 #include "GranularSynth.h"
-#include "TransientDetector.h"
 #include "PositionMarker.h"
+#include "TransientDetector.h"
 #include "Utils.h"
-#include <random>
 
 //==============================================================================
 /*
@@ -29,13 +30,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   ArcSpectrogram();
   ~ArcSpectrogram() override;
 
-  enum SpecType {
-    LOGO,
-    SPECTROGRAM,
-    HPCP,
-    NOTES,
-    NUM_TYPES
-  };
+  enum SpecType { LOGO, SPECTROGRAM, HPCP, NOTES, NUM_TYPES };
 
   std::function<void(int, GrainPositionFinder::GrainPosition)>
       onPositionUpdated = nullptr;
@@ -49,7 +44,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   void loadBuffer(std::vector<std::vector<float>> *buffer, SpecType type);
   void setTransients(std::vector<TransientDetector::Transient> *transients);
   void setNoteOn(int midiNote,
-      std::vector<GrainPositionFinder::GrainPosition> gPositions);
+                 std::vector<GrainPositionFinder::GrainPosition> gPositions);
   void setNoteOff() { mIsPlayingNote = false; }
 
   //============================================================================
@@ -69,24 +64,22 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto SPEC_TYPE_WIDTH = 130;
   static constexpr auto NUM_COLS = 600;
   static constexpr auto SUN_RAY_WIDTH = 0.005;
-  //Colours
+  // Colours
   static constexpr auto COLOUR_MULTIPLIER = 20.0f;
   static constexpr auto COLOUR_SUN_CENTER = 0xFFFFFF74;
   static constexpr auto COLOUR_SUN_REGULAR_RAYS = 0x33FFFF74;
   static constexpr auto COLOUR_SUN_END = 0xffffffce;
   static constexpr auto COLOUR_RAYS_END = 0x00ffffce;
-  //static constexpr auto COLOUR_NIGHT = 0x8806031B;
-  //static constexpr auto COLOUR_DAY = 0xFF00566B;
-  //Pixel vibration
+  // static constexpr auto COLOUR_NIGHT = 0x8806031B;
+  // static constexpr auto COLOUR_DAY = 0xFF00566B;
+  // Pixel vibration
   static constexpr auto PIXEL_VIBRATION_SIZE = 2;
   static constexpr auto MAX_PIXEL_VIBRATION = 15;
   static constexpr auto MAX_VIBRATION_OFFSET =
       MAX_PIXEL_VIBRATION * MAX_PIXEL_VIBRATION;
 
-  // TODO: make this relative
-  static constexpr auto LOGO_PATH = "C:/Users/brady/Documents/GitHub/gRainbow/gRainbow-circles.png";
-
-  std::array<std::vector<std::vector<float>> *, SpecType::NUM_TYPES - 1> mBuffers;
+  std::array<std::vector<std::vector<float>> *, SpecType::NUM_TYPES - 1>
+      mBuffers;
   std::vector<GrainPositionFinder::GrainPosition> mGPositions;
   std::vector<TransientDetector::Transient> *mTransients = nullptr;
 
