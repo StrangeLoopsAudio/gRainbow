@@ -101,7 +101,7 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   juce::Label mLabelDuration;
 
   void openNewFile();
-  void processFile(juce::File &file);
+  void processFile(juce::File file);
   void startRecording();
   void stopRecording();
 

@@ -114,7 +114,7 @@ MainComponent::MainComponent()
     juce::RuntimePermissions::request(
         juce::RuntimePermissions::recordAudio,
         [&](bool granted) {
-          int numInputChannels = granted ? 2 : 0;
+          int numInputChannels = granted ? 1 : 0;
         mAudioDeviceManager.initialise(numInputChannels, 2, nullptr,
                                                    true, {}, nullptr);
         setAudioChannels(numInputChannels, 2); 
@@ -269,7 +269,7 @@ void MainComponent::openNewFile() {
   setAudioChannels(2, 2);
 }
 
-void MainComponent::processFile(juce::File &file) {
+void MainComponent::processFile(juce::File file) {
   std::unique_ptr<juce::AudioFormatReader> reader(
       mFormatManager.createReaderFor(file));
 
@@ -282,14 +282,12 @@ void MainComponent::processFile(juce::File &file) {
     juce::ScopedPointer<juce::LagrangeInterpolator> resampler =
         new juce::LagrangeInterpolator();
     double ratio = reader->sampleRate / mSampleRate;
-    if (ratio != 1.0) {
-      const float** inputs = tempBuffer.getArrayOfReadPointers();
-      float** outputs = mFileBuffer.getArrayOfWritePointers();
-      for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
-        resampler->reset();
-        resampler->process(ratio, inputs[c], outputs[c],
-                           mFileBuffer.getNumSamples());
-      }
+    const float** inputs = tempBuffer.getArrayOfReadPointers();
+    float** outputs = mFileBuffer.getArrayOfWritePointers();
+    for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
+      resampler->reset();
+      resampler->process(ratio, inputs[c], outputs[c],
+                         mFileBuffer.getNumSamples());
     }
     mArcSpec.resetBuffers();
     stopThread(4000);
