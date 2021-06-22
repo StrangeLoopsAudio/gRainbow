@@ -10,13 +10,6 @@ MainComponent::MainComponent()
 
   setLookAndFeel(&mRainbowLookAndFeel);
 
-  juce::Image logo = juce::PNGImageFormat::loadFrom(juce::File(
-      "C:/Users/brady/Documents/GitHub/gRainbow/gRainbow-circles.png"));
-
-  /* Title section */
-  // mLogo.setImage(logo, juce::RectanglePlacement::centred);
-  // addAndMakeVisible(mLogo);
-
   mBtnOpenFile.setButtonText("Open File");
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
@@ -25,15 +18,10 @@ MainComponent::MainComponent()
   mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
                        juce::Colours::green);
   mBtnRecord.onClick = [this] {
-    mIsRecording = !mIsRecording;
-    if (mIsRecording) {
-      mBtnRecord.setButtonText("Stop Recording");
-      mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
-                           juce::Colours::red);
+    if (mRecorder.isRecording()) {
+      stopRecording();
     } else {
-      mBtnRecord.setButtonText("Start Recording");
-      mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
-                           juce::Colours::green);
+      startRecording();
     }
   };
   addAndMakeVisible(mBtnRecord);
@@ -100,7 +88,7 @@ MainComponent::MainComponent()
         mArcSpec.loadBuffer(&hpcpBuffer, ArcSpectrogram::SpecType::HPCP);
         mArcSpec.loadBuffer(&notesBuffer, ArcSpectrogram::SpecType::NOTES);
         mPositionFinder.setPitches(&mPitchDetector.getPitches());
-        mFileLoaded = true;
+        mIsProcessingComplete = true;
       };
 
   mPitchDetector.onProgressUpdated = [this](float progress) {
@@ -125,16 +113,28 @@ MainComponent::MainComponent()
           juce::RuntimePermissions::recordAudio)) {
     juce::RuntimePermissions::request(
         juce::RuntimePermissions::recordAudio,
-        [&](bool granted) { setAudioChannels(granted ? 2 : 0, 2); });
+        [&](bool granted) {
+          int numInputChannels = granted ? 2 : 0;
+        mAudioDeviceManager.initialise(numInputChannels, 2, nullptr,
+                                                   true, {}, nullptr);
+        setAudioChannels(numInputChannels, 2); 
+      });
   } else {
     // Specify the number of input and output channels that we want to open
+    mAudioDeviceManager.initialise(2, 2, nullptr, true, {},
+                                   nullptr);
     setAudioChannels(2, 2);
   }
+  mAudioDeviceManager.addAudioCallback(&mRecorder);
 
   startTimer(50);  // Keyboard focus timer
 }
 
 MainComponent::~MainComponent() {
+  auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
+  auto recordFile = parentDir.getChildFile(RECORDING_FILE);
+  recordFile.deleteFile();
+  mAudioDeviceManager.removeAudioCallback(&mRecorder);
   setLookAndFeel(nullptr);
   stopThread(4000);
   // This shuts down the audio device and clears the audio source.
@@ -178,10 +178,10 @@ void MainComponent::getNextAudioBlock(
                                        true);
   if (!incomingMidi.isEmpty()) {
     for (juce::MidiMessageMetadata md : incomingMidi) {
-      if (md.getMessage().isNoteOn() && mFileLoaded) {
+      if (md.getMessage().isNoteOn() && mIsProcessingComplete) {
         mCurPitchClass =
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber();
-      } else if (md.getMessage().isNoteOff() && mFileLoaded) {
+      } else if (md.getMessage().isNoteOff() && mIsProcessingComplete) {
         mSynth.stopNote(
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber());
         mArcSpec.setNoteOff();
@@ -259,24 +259,30 @@ void MainComponent::openNewFile() {
   shutdownAudio();
 
   juce::FileChooser chooser("Select a file to granulize...",
-                            juce::File("C:/users/brady/Music"), "*.wav;*.mp3",
-                            false);
+                            juce::File::getCurrentWorkingDirectory(), "*.wav;*.mp3",
+                            true);
 
   if (chooser.browseForFileToOpen()) {
     auto file = chooser.getResult();
-    std::unique_ptr<juce::AudioFormatReader> reader(
-        mFormatManager.createReaderFor(file));
+    processFile(file);
+  }
+  setAudioChannels(2, 2);
+}
 
-    if (reader.get() != nullptr) {
-      auto duration = (float)reader->lengthInSamples / reader->sampleRate;
-      mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
+void MainComponent::processFile(juce::File &file) {
+  std::unique_ptr<juce::AudioFormatReader> reader(
+      mFormatManager.createReaderFor(file));
 
-      juce::AudioBuffer<float> tempBuffer = juce::AudioBuffer<float>(
-          reader->numChannels, (int)reader->lengthInSamples);
-      reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
-      juce::ScopedPointer<juce::LagrangeInterpolator> resampler =
-          new juce::LagrangeInterpolator();
-      double ratio = reader->sampleRate / mSampleRate;
+  if (reader.get() != nullptr) {
+    mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
+
+    juce::AudioBuffer<float> tempBuffer = juce::AudioBuffer<float>(
+        reader->numChannels, (int)reader->lengthInSamples);
+    reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
+    juce::ScopedPointer<juce::LagrangeInterpolator> resampler =
+        new juce::LagrangeInterpolator();
+    double ratio = reader->sampleRate / mSampleRate;
+    if (ratio != 1.0) {
       const float** inputs = tempBuffer.getArrayOfReadPointers();
       float** outputs = mFileBuffer.getArrayOfWritePointers();
       for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
@@ -284,14 +290,50 @@ void MainComponent::openNewFile() {
         resampler->process(ratio, inputs[c], outputs[c],
                            mFileBuffer.getNumSamples());
       }
-      mArcSpec.resetBuffers();
-      stopThread(4000);
-      startThread(); // process fft and pass to arc spec
-      //mTransientDetector.processBuffer(&mFileBuffer);
-      mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
-      mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
-      mFileLoaded = false;
     }
+    mArcSpec.resetBuffers();
+    stopThread(4000);
+    startThread();  // process fft and pass to arc spec
+    // mTransientDetector.processBuffer(&mFileBuffer);
+    mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
+    mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
+    mIsProcessingComplete = false; // Reset processing flag
   }
-  setAudioChannels(2, 2);
+}
+
+void MainComponent::startRecording() {
+  if (!juce::RuntimePermissions::isGranted(
+          juce::RuntimePermissions::writeExternalStorage)) {
+    SafePointer<MainComponent> safeThis(this);
+
+    juce::RuntimePermissions::request(
+        juce::RuntimePermissions::writeExternalStorage,
+        [safeThis](bool granted) mutable {
+          if (granted) safeThis->startRecording();
+        });
+    return;
+  }
+
+  auto parentDir =
+      juce::File::getSpecialLocation(juce::File::tempDirectory);
+  parentDir.getChildFile(RECORDING_FILE).deleteFile();
+  mRecordedFile = parentDir.getChildFile(RECORDING_FILE);
+
+  mRecorder.startRecording(mRecordedFile);
+
+  mBtnRecord.setButtonText("Stop Recording");
+  mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
+                       juce::Colours::red);
+}
+
+void MainComponent::stopRecording() {
+  mRecorder.stop();
+
+  processFile(mRecordedFile);
+
+  mRecordedFile = juce::File();
+
+  mBtnRecord.setButtonText("Start Recording");
+  mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
+                       juce::Colours::green);
 }

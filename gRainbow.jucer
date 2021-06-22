@@ -8,6 +8,9 @@
     </GROUP>
     <GROUP id="{60D4D942-21D3-C19F-F50C-B527C5EBF681}" name="Source">
       <GROUP id="{2B54AF71-8109-B401-8064-8E1A69683930}" name="DSP">
+        <FILE id="BnwVFw" name="AudioRecorder.cpp" compile="1" resource="0"
+              file="Source/AudioRecorder.cpp"/>
+        <FILE id="tkSMr8" name="AudioRecorder.h" compile="0" resource="0" file="Source/AudioRecorder.h"/>
         <FILE id="g4q8Bs" name="GranularSynth.cpp" compile="1" resource="0"
               file="Source/GranularSynth.cpp"/>
         <FILE id="OVr1gc" name="GranularSynth.h" compile="0" resource="0" file="Source/GranularSynth.h"/>

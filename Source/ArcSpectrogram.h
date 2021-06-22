@@ -5,6 +5,10 @@
     Created: 31 Mar 2021 10:18:28pm
     Author:  brady
 
+    The Arc Spectrogram is a rainbow arc version of the spectrogram, 
+    HPCP profile, and detected notes. It also displays the grain positions
+    and visualizes grains that are playing.
+
   ==============================================================================
 */
 

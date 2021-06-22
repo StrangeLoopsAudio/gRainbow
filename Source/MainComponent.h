@@ -10,6 +10,7 @@
 #include "TransientDetector.h"
 #include "PitchDetector.h"
 #include "Fft.h"
+#include "AudioRecorder.h"
 #include "GrainPositionFinder.h"
 
 //==============================================================================
@@ -42,6 +43,7 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   /* Algorithm Constants */
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 2048;
+  static constexpr auto RECORDING_FILE = "gRainbow_user_recording.wav";
 
   /* UI Layout */
   static constexpr auto PANEL_WIDTH = 300;
@@ -70,13 +72,14 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   Fft mFft;
   juce::AudioBuffer<float> mFileBuffer;
   double mLoadingProgress = 0.0;
-  bool mFileLoaded = false;
+  bool mIsProcessingComplete = false;
 
   /* DSP Modules */
   TransientDetector mTransientDetector;
   PitchDetector mPitchDetector;
   GrainPositionFinder mPositionFinder;
   GranularSynth mSynth;
+  AudioRecorder mRecorder;
 
   /* UI Components */
   juce::ImageComponent mLogo;
@@ -87,7 +90,8 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   juce::ProgressBar mProgressBar;
   /* Bookkeeping */
   juce::MidiKeyboardState mKeyboardState;
-  bool mIsRecording = false;
+  juce::File mRecordedFile;
+  juce::AudioDeviceManager mAudioDeviceManager;
   /* Parameters */
   juce::Slider mSliderDiversity;
   juce::Label mLabelDiversity;
@@ -97,6 +101,9 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   juce::Label mLabelDuration;
 
   void openNewFile();
+  void processFile(juce::File &file);
+  void startRecording();
+  void stopRecording();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };
