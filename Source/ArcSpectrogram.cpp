@@ -239,7 +239,9 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer, SpecTyp
   mProcessType = type;
   
   const juce::MessageManagerLock lock;
-  mSpecType.setSelectedId(mProcessType, juce::sendNotification);
+  if (type == SpecType::SPECTROGRAM || type == SpecType::HPCP) {
+    mSpecType.setSelectedId(mProcessType, juce::sendNotification);
+  }
   startThread();
 }
 

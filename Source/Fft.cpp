@@ -14,6 +14,8 @@ void Fft::processBuffer(juce::AudioBuffer<float>& fileBuffer) {
   mFileLength = fileBuffer.getNumSamples();
 
   const float* pBuffer = fileBuffer.getReadPointer(0);
+  mFftFrame.clear();
+  mFftFrame.resize(mWindowSize * 2, 0.0f);
   int curSample = 0;
 
   bool hasData = fileBuffer.getNumSamples() > mFftFrame.size();
