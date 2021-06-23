@@ -34,12 +34,12 @@ void PitchDetector::run() {
   if (mFileBuffer == nullptr) return;
   updateProgress(0.0);
   mFft.processBuffer(*mFileBuffer);
-  updateProgress(FFT_PROG_DIV);
+  updateProgress(0.1);
   if (threadShouldExit()) return;
   computeHPCP();
   if (threadShouldExit()) return;
   segmentPitches();
-  updateProgress(FFT_PROG_DIV + HPCP_PROG_DIV);
+  updateProgress(0.9);
   if (threadShouldExit()) return;
   getSegmentedPitchBuffer();
   if (onPitchesUpdated != nullptr && !threadShouldExit()) {
@@ -78,7 +78,7 @@ void PitchDetector::computeHPCP() {
 
   std::vector<std::vector<float>>& spec = mFft.getSpectrum();
   for (int frame = 0; frame < spec.size(); ++frame) {
-    updateProgress(FFT_PROG_DIV + HPCP_PROG_DIV * ((float)frame / spec.size()));
+    updateProgress(0.1 + 0.8 * ((float)frame / spec.size()));
     mHPCP.push_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
 
     std::vector<float>& specFrame = mFft.getSpectrum()[frame];
@@ -114,11 +114,16 @@ void PitchDetector::computeHPCP() {
       if (threadShouldExit()) return;
     }
 
-    // Normalize HPCP frame
+    // Normalize HPCP frame and clear low energy frames
+    float totalEnergy = 0.0f;
     if (curMax > 0.0f) {
       for (int pc = 0; pc < NUM_HPCP_BINS; ++pc) {
+        totalEnergy += mHPCP[frame][pc];
         mHPCP[frame][pc] /= curMax;
       }
+    }
+    if (totalEnergy / NUM_HPCP_BINS < MIN_AVG_FRAME_ENERGY) {
+      std::fill(mHPCP[frame].begin(), mHPCP[frame].end(), 0.0f);
     }
 
     if (threadShouldExit()) return;

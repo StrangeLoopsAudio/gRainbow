@@ -72,14 +72,12 @@ class PitchDetector : juce::Thread {
   void run() override;
 
  private:
-  // Progress divisions
-  static constexpr auto FFT_PROG_DIV = 0.1;
-  static constexpr auto HPCP_PROG_DIV = 0.8;
   // FFT
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 512;
   //Spectral Whitening
   static constexpr auto BPF_RESOLUTION = 100.0;
+  static constexpr auto MIN_AVG_FRAME_ENERGY = 0.0001;
   // HPCP
   static constexpr auto REF_FREQ = 440;
   static constexpr auto MAX_SPEC_PEAKS = 60;
