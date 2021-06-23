@@ -4,6 +4,7 @@
 
 #include "ArcSpectrogram.h"
 #include "RainbowKeyboard.h"
+#include "RainbowEnvelopes.h"
 #include "GranularSynth.h"
 #include "RainbowLookAndFeel.h"
 #include "Utils.h"
@@ -60,7 +61,7 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   /* Parameter defaults */
   static constexpr auto PARAM_DIVERSITY_DEFAULT = 0.1f;
   static constexpr auto MIN_DIVERSITY = 1.f;
-  static constexpr auto MAX_DIVERSITY = 5.f;
+  static constexpr auto MAX_DIVERSITY = 4.f;
   static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
   static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
 
@@ -88,17 +89,18 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
-  /* Bookkeeping */
-  juce::MidiKeyboardState mKeyboardState;
-  juce::File mRecordedFile;
-  juce::AudioDeviceManager mAudioDeviceManager;
-  /* Parameters */
   juce::Slider mSliderDiversity;
   juce::Label mLabelDiversity;
   juce::Slider mSliderRate;
   juce::Label mLabelRate;
   juce::Slider mSliderDuration;
   juce::Label mLabelDuration;
+  RainbowEnvelopes mGrainEnvelopes;
+
+  /* Bookkeeping */
+  juce::MidiKeyboardState mKeyboardState;
+  juce::File mRecordedFile;
+  juce::AudioDeviceManager mAudioDeviceManager;
 
   void openNewFile();
   void processFile(juce::File file);

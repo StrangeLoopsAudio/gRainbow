@@ -258,7 +258,7 @@ void ArcSpectrogram::setNoteOn(int midiNote,
   mGPositions = gPositions;
   mPositionMarkers.clear();
   for (int i = 0; i < gPositions.size(); ++i) {
-    auto newItem = new PositionMarker(gPositions[i]);
+    auto newItem = new PositionMarker(gPositions[i], juce::Colour(MARKER_COLOURS[i]));
     newItem->addListener(this);
     mPositionMarkers.add(newItem);
     addAndMakeVisible(newItem);

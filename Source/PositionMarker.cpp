@@ -12,6 +12,15 @@
 
 #include <JuceHeader.h>
 
+//==============================================================================
+PositionMarker::PositionMarker(GrainPositionFinder::GrainPosition gPos, juce::Colour colour)
+    : mGPos(gPos), juce::Button(juce::String()), mColour(colour) {
+  setToggleState(gPos.isEnabled, juce::dontSendNotification);
+  setClickingTogglesState(true);
+}
+
+PositionMarker::~PositionMarker() {}
+
 void PositionMarker::paintButton(juce::Graphics& g,
                                  bool shouldDrawButtonAsHighlighted,
                                  bool shouldDrawButtonAsDown) {
@@ -23,7 +32,7 @@ void PositionMarker::paintButton(juce::Graphics& g,
     box.setLeft(2);
     box.setRight(getWidth() - 2);
     box.setTop(2);
-    g.setColour(juce::Colours::goldenrod);
+    g.setColour(mColour);
     g.fillRect(box);
 
     // Draw point
@@ -44,20 +53,12 @@ void PositionMarker::paintButton(juce::Graphics& g,
   outlinePath.lineTo(r.getWidth() / 2, r.getBottom());
   outlinePath.lineTo(0, r.getHeight() * RECT_RATIO);
   outlinePath.closeSubPath();
-  g.setColour(juce::Colours::darkturquoise);
-  g.strokePath(outlinePath, juce::PathStrokeType(1, juce::PathStrokeType::JointStyle::mitered));
+  g.setColour(mColour);
+  g.strokePath(outlinePath, juce::PathStrokeType(
+                                1, juce::PathStrokeType::JointStyle::mitered));
 }
 
 void PositionMarker::clicked() {
   mGPos.isEnabled = !mGPos.isEnabled;
   repaint();
 }
-
-//==============================================================================
-PositionMarker::PositionMarker(GrainPositionFinder::GrainPosition gPos)
-    : mGPos(gPos), juce::Button(juce::String()) {
-  setToggleState(gPos.isEnabled, juce::dontSendNotification);
-  setClickingTogglesState(true);
-}
-
-PositionMarker::~PositionMarker() {}

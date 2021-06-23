@@ -5,15 +5,18 @@ MainComponent::MainComponent()
     : mKeyboard(mKeyboardState),
       mFft(FFT_SIZE, HOP_SIZE),
       juce::Thread("main fft thread"),
-      mProgressBar(mLoadingProgress) {
+      mProgressBar(mLoadingProgress),
+      mGrainEnvelopes(PARAM_RATE_DEFAULT, PARAM_DURATION_DEFAULT) {
   mFormatManager.registerBasicFormats();
 
   setLookAndFeel(&mRainbowLookAndFeel);
 
+  /* Open file button */
   mBtnOpenFile.setButtonText("Open File");
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
 
+  /* Recording button */
   mBtnRecord.setButtonText("Start Recording");
   mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
                        juce::Colours::green);
@@ -31,9 +34,9 @@ MainComponent::MainComponent()
   /* Diversity */
   mSliderDiversity.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderDiversity.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderDiversity.setRange(0.0, 1.0, 0.01);
+  mSliderDiversity.setRange(MIN_DIVERSITY, MAX_DIVERSITY, 1.0);
   mSliderDiversity.onValueChange = [this] {
-    mSynth.setDiversity(mSliderDiversity.getValue());
+    mGrainEnvelopes.setNumEnvelopes(mSliderDiversity.getValue());
   };
   mSliderDiversity.setValue(PARAM_DIVERSITY_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderDiversity);
@@ -48,6 +51,7 @@ MainComponent::MainComponent()
   mSliderRate.setRange(0.0, 1.0, 0.01);
   mSliderRate.onValueChange = [this] {
     mSynth.setRate(mSliderRate.getValue());
+    mGrainEnvelopes.setRate(mSliderRate.getValue());
   };
   mSliderRate.setValue(PARAM_RATE_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderRate);
@@ -62,6 +66,7 @@ MainComponent::MainComponent()
   mSliderDuration.setRange(0.0, 1.0, 0.01);
   mSliderDuration.onValueChange = [this] {
     mSynth.setDuration(mSliderDuration.getValue());
+    mGrainEnvelopes.setDuration(mSliderDuration.getValue());
   };
   mSliderDuration.setValue(PARAM_DURATION_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderDuration);
@@ -70,11 +75,15 @@ MainComponent::MainComponent()
   mLabelDuration.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelDuration);
 
+  /* Arc spectrogram */
   addAndMakeVisible(mArcSpec);
   mArcSpec.onPositionUpdated = [this](int midiNote,
                                       GrainPositionFinder::GrainPosition gPos) {
     mPositionFinder.updatePosition(midiNote, gPos);
   };
+
+  /* Grain rate envelopes */
+  addAndMakeVisible(mGrainEnvelopes);
   
   addChildComponent(mProgressBar);
 
@@ -143,8 +152,7 @@ MainComponent::~MainComponent() {
 
 void MainComponent::timerCallback() {
   if (mCurPitchClass != PitchDetector::PitchClass::NONE) {
-    int k = juce::jmap((float)mSliderDiversity.getValue(), MIN_DIVERSITY,
-                       MAX_DIVERSITY);
+    int k = mSliderDiversity.getValue();
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
         mPositionFinder.findPositions(k, mCurPitchClass);
     mSynth.setPositions(mCurPitchClass, gPositions);
@@ -209,9 +217,6 @@ void MainComponent::paint(juce::Graphics& g) {
 void MainComponent::resized() {
   auto r = getLocalBounds();
 
-  // auto titleSection = r.removeFromTop(LOGO_HEIGHT);
-  // mLogo.setBounds(titleSection.withSizeKeepingCentre(LOGO_HEIGHT * 2,
-  //                                                   titleSection.getHeight()));
   mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT)
                           .withSizeKeepingCentre(PANEL_WIDTH, KEYBOARD_HEIGHT));
 
@@ -247,6 +252,12 @@ void MainComponent::resized() {
           .withCentre(knob.getPosition().translated(
               knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
   mLabelDuration.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
+  // Row 3
+  row =
+      leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT + ROW_PADDING_HEIGHT);
+  // Grain Envelopes
+  auto envBounds = row;
+  mGrainEnvelopes.setBounds(envBounds);
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
 

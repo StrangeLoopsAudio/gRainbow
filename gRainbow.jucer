@@ -27,6 +27,10 @@
               file="Source/TransientDetector.h"/>
       </GROUP>
       <GROUP id="{32B46666-89F3-1953-7D07-B92E6B19F9CC}" name="Components">
+        <FILE id="l4WuPd" name="RainbowEnvelopes.cpp" compile="1" resource="0"
+              file="Source/RainbowEnvelopes.cpp"/>
+        <FILE id="BuwWMv" name="RainbowEnvelopes.h" compile="0" resource="0"
+              file="Source/RainbowEnvelopes.h"/>
         <FILE id="hxCpOe" name="RainbowKeyboard.cpp" compile="1" resource="0"
               file="Source/RainbowKeyboard.cpp"/>
         <FILE id="fxVnvT" name="RainbowKeyboard.h" compile="0" resource="0"

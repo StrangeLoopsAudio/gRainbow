@@ -18,7 +18,7 @@
  */
 class PositionMarker : public juce::Button {
  public:
-  PositionMarker(GrainPositionFinder::GrainPosition gPos);
+  PositionMarker(GrainPositionFinder::GrainPosition gPos, juce::Colour colour);
   ~PositionMarker() override;
 
   void paintButton(juce::Graphics &g, bool shouldDrawButtonAsHighlighted,
@@ -30,5 +30,6 @@ class PositionMarker : public juce::Button {
   static constexpr auto RECT_RATIO = 0.66;
 
   GrainPositionFinder::GrainPosition mGPos;
+  juce::Colour mColour;
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PositionMarker)
 };
