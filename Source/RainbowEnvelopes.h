@@ -17,8 +17,7 @@
  */
 class RainbowEnvelopes : public juce::Component {
  public:
-  RainbowEnvelopes(float rate, float duration)
-      : mRate(rate), mDuration(duration) {}
+  RainbowEnvelopes() {}
   ~RainbowEnvelopes() override {}
 
   void paint(juce::Graphics&) override;
@@ -26,17 +25,16 @@ class RainbowEnvelopes : public juce::Component {
 
   void setRate(float rate);
   void setDuration(float duration);
-  void setNumEnvelopes(int numEnvs);
+  void setGain(float gain);
+  void setColour(juce::Colour colour);
 
  private:
-  static constexpr auto MAX_ENVELOPES = 4;
-  static constexpr juce::int64 ENVELOPE_COLOURS[MAX_ENVELOPES] = {
-      0xFF52C4FF, 0xFFE352FF, 0xFFFF8D52, 0xFF6EFF52};
 
   /* Parameters */
-  float mRate;
-  float mDuration;
-  int mNumEnvelopes = 1;
+  float mRate = 0.5;
+  float mDuration = 0.5;
+  float mGain = 0.8;
+  juce::Colour mColour;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowEnvelopes)
 };

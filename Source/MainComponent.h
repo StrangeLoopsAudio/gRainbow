@@ -5,6 +5,7 @@
 #include "ArcSpectrogram.h"
 #include "RainbowKeyboard.h"
 #include "RainbowEnvelopes.h"
+#include "PositionBox.h"
 #include "GranularSynth.h"
 #include "RainbowLookAndFeel.h"
 #include "Utils.h"
@@ -59,11 +60,15 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   static constexpr auto MAX_NOTE_NUM = 56;
 
   /* Parameter defaults */
+  static constexpr auto NUM_POSITIONS = 4;
   static constexpr auto PARAM_DIVERSITY_DEFAULT = 0.1f;
   static constexpr auto MIN_DIVERSITY = 1.f;
   static constexpr auto MAX_DIVERSITY = 4.f;
   static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
   static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
+
+  static constexpr juce::int64 POSITION_COLOURS[NUM_POSITIONS] = {
+      0xFF52C4FF, 0xFFE352FF, 0xFFFF8D52, 0xFF6EFF52};
 
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
@@ -96,6 +101,7 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   juce::Slider mSliderDuration;
   juce::Label mLabelDuration;
   RainbowEnvelopes mGrainEnvelopes;
+  std::array<PositionBox, NUM_POSITIONS> mPositionBoxes;
 
   /* Bookkeeping */
   juce::MidiKeyboardState mKeyboardState;

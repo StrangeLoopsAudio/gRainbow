@@ -5,8 +5,7 @@ MainComponent::MainComponent()
     : mKeyboard(mKeyboardState),
       mFft(FFT_SIZE, HOP_SIZE),
       juce::Thread("main fft thread"),
-      mProgressBar(mLoadingProgress),
-      mGrainEnvelopes(PARAM_RATE_DEFAULT, PARAM_DURATION_DEFAULT) {
+      mProgressBar(mLoadingProgress) {
   mFormatManager.registerBasicFormats();
 
   setLookAndFeel(&mRainbowLookAndFeel);
@@ -29,6 +28,15 @@ MainComponent::MainComponent()
   };
   addAndMakeVisible(mBtnRecord);
 
+  /* Position boxes */
+  for (int i = 0; i < mPositionBoxes.size(); ++i) {
+    // TODO: remove once complete
+    if (i == 0) {
+      mPositionBoxes[i].setColour(juce::Colour(POSITION_COLOURS[i]));
+      addAndMakeVisible(mPositionBoxes[i]);
+    }
+  }
+
   /* -------------- Knobs --------------*/
 
   /* Diversity */
@@ -36,7 +44,7 @@ MainComponent::MainComponent()
   mSliderDiversity.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderDiversity.setRange(MIN_DIVERSITY, MAX_DIVERSITY, 1.0);
   mSliderDiversity.onValueChange = [this] {
-    mGrainEnvelopes.setNumEnvelopes(mSliderDiversity.getValue());
+    //mGrainEnvelopes.setNumEnvelopes(mSliderDiversity.getValue());
   };
   mSliderDiversity.setValue(PARAM_DIVERSITY_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderDiversity);
@@ -217,14 +225,15 @@ void MainComponent::paint(juce::Graphics& g) {
 void MainComponent::resized() {
   auto r = getLocalBounds();
 
-  mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT)
-                          .withSizeKeepingCentre(PANEL_WIDTH, KEYBOARD_HEIGHT));
-
   // Left Panel
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
-  mBtnOpenFile.setBounds(leftPanel.removeFromTop(KNOB_HEIGHT));
-  mBtnRecord.setBounds(leftPanel.removeFromTop(KNOB_HEIGHT));
-  leftPanel.removeFromTop(ROW_PADDING_HEIGHT);
+  mPositionBoxes[0].setBounds(
+      leftPanel.removeFromTop(leftPanel.getHeight() / 2));
+
+  auto rightPanel = r.removeFromRight(PANEL_WIDTH);
+  auto filePanel = r.removeFromTop(KNOB_HEIGHT);
+  mBtnOpenFile.setBounds(filePanel.removeFromLeft(filePanel.getWidth() / 2));
+  mBtnRecord.setBounds(filePanel);
   // Row 1
   auto row =
       leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT + ROW_PADDING_HEIGHT);
@@ -259,7 +268,8 @@ void MainComponent::resized() {
   auto envBounds = row;
   mGrainEnvelopes.setBounds(envBounds);
 
-  auto rightPanel = r.removeFromRight(PANEL_WIDTH);
+  mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT)
+                          .withSizeKeepingCentre(PANEL_WIDTH, KEYBOARD_HEIGHT));
 
   mArcSpec.setBounds(r.removeFromBottom(r.getWidth() / 2.0f));
   mProgressBar.setBounds(
