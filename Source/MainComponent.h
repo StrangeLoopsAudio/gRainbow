@@ -3,24 +3,27 @@
 #include <JuceHeader.h>
 
 #include "ArcSpectrogram.h"
-#include "RainbowKeyboard.h"
-#include "RainbowEnvelopes.h"
-#include "PositionBox.h"
-#include "GranularSynth.h"
-#include "RainbowLookAndFeel.h"
-#include "Utils.h"
-#include "TransientDetector.h"
-#include "PitchDetector.h"
-#include "Fft.h"
 #include "AudioRecorder.h"
+#include "Fft.h"
 #include "GrainPositionFinder.h"
+#include "GranularSynth.h"
+#include "PitchDetector.h"
+#include "PositionBox.h"
+#include "RainbowEnvelopes.h"
+#include "RainbowKeyboard.h"
+#include "RainbowLookAndFeel.h"
+#include "TransientDetector.h"
+#include "Utils.h"
 
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread {
+class MainComponent : public juce::AudioAppComponent,
+                      juce::Timer,
+                      juce::Thread,
+                      juce::Slider::Listener {
  public:
   //==============================================================================
   MainComponent();
@@ -41,11 +44,15 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   //==============================================================================
   void timerCallback() override;
 
+  //==============================================================================
+  void sliderValueChanged(juce::Slider *slider) override;
+
  private:
   /* Algorithm Constants */
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 2048;
   static constexpr auto RECORDING_FILE = "gRainbow_user_recording.wav";
+  static constexpr auto NUM_POSITIONS = 4;
 
   /* UI Layout */
   static constexpr auto PANEL_WIDTH = 300;
@@ -58,17 +65,6 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   static constexpr auto KEYBOARD_HEIGHT = 100;
   static constexpr auto MIN_NOTE_NUM = 45;
   static constexpr auto MAX_NOTE_NUM = 56;
-
-  /* Parameter defaults */
-  static constexpr auto NUM_POSITIONS = 4;
-  static constexpr auto PARAM_DIVERSITY_DEFAULT = 0.1f;
-  static constexpr auto MIN_DIVERSITY = 1.f;
-  static constexpr auto MAX_DIVERSITY = 4.f;
-  static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
-  static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
-
-  static constexpr juce::int64 POSITION_COLOURS[NUM_POSITIONS] = {
-      0xFF52C4FF, 0xFFE352FF, 0xFFFF8D52, 0xFF6EFF52};
 
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
@@ -94,13 +90,6 @@ class MainComponent : public juce::AudioAppComponent, juce::Timer, juce::Thread 
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
-  juce::Slider mSliderDiversity;
-  juce::Label mLabelDiversity;
-  juce::Slider mSliderRate;
-  juce::Label mLabelRate;
-  juce::Slider mSliderDuration;
-  juce::Label mLabelDuration;
-  RainbowEnvelopes mGrainEnvelopes;
   std::array<PositionBox, NUM_POSITIONS> mPositionBoxes;
 
   /* Bookkeeping */

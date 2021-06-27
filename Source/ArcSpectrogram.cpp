@@ -271,7 +271,7 @@ void ArcSpectrogram::buttonClicked(juce::Button* btn) {
   for (int i = 0; i < mPositionMarkers.size(); ++i) {
     if (btn == mPositionMarkers[i]) {
       auto gPos = mGPositions[i];
-      gPos.isEnabled = btn->getToggleState();
+      //gPos.isEnabled = btn->getToggleState();
       onPositionUpdated(mCurNote, gPos);
     }
   }

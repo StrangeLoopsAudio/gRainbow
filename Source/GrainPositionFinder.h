@@ -11,7 +11,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-
 #include "PitchDetector.h"
 
 class GrainPositionFinder {
@@ -19,9 +18,7 @@ class GrainPositionFinder {
   typedef struct GrainPosition {
     PitchDetector::Pitch pitch;
     float pbRate;  // timestretching ratio based on frequency offset from target
-    bool isEnabled = true;
-    bool solo = false;
-    GrainPosition() : pbRate(1.0f){}
+    GrainPosition() : pbRate(1.0f) {}
     GrainPosition(PitchDetector::Pitch pitch, float pbRate)
         : pitch(pitch), pbRate(pbRate) {}
     bool operator<(const GrainPosition& other) const {

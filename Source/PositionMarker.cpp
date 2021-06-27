@@ -15,7 +15,7 @@
 //==============================================================================
 PositionMarker::PositionMarker(GrainPositionFinder::GrainPosition gPos, juce::Colour colour)
     : mGPos(gPos), juce::Button(juce::String()), mColour(colour) {
-  setToggleState(gPos.isEnabled, juce::dontSendNotification);
+  setToggleState(true, juce::dontSendNotification);
   setClickingTogglesState(true);
 }
 
@@ -26,7 +26,7 @@ void PositionMarker::paintButton(juce::Graphics& g,
                                  bool shouldDrawButtonAsDown) {
   auto r = getLocalBounds();
 
-  if (mGPos.isEnabled) {
+  if (true) {
     // Draw rect
     auto box = r.removeFromTop(r.getHeight() * RECT_RATIO);
     box.setLeft(2);
@@ -59,6 +59,6 @@ void PositionMarker::paintButton(juce::Graphics& g,
 }
 
 void PositionMarker::clicked() {
-  mGPos.isEnabled = !mGPos.isEnabled;
+  //mGPos.isEnabled = !mGPos.isEnabled;
   repaint();
 }

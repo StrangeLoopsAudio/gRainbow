@@ -13,8 +13,7 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-PositionBox::PositionBox() { 
-
+PositionBox::PositionBox() {
   addAndMakeVisible(mBtnEnabled);
   addAndMakeVisible(mBtnSolo);
 
@@ -24,6 +23,8 @@ PositionBox::PositionBox() {
   mSliderRate.setRange(0.0, 1.0, 0.01);
   mSliderRate.onValueChange = [this] {
     mGrainEnvelopes.setRate(mSliderRate.getValue());
+    parameterChanged(GranularSynth::ParameterType::RATE,
+                     mSliderRate.getValue());
   };
   mSliderRate.setValue(PARAM_RATE_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderRate);
@@ -38,6 +39,8 @@ PositionBox::PositionBox() {
   mSliderDuration.setRange(0.0, 1.0, 0.01);
   mSliderDuration.onValueChange = [this] {
     mGrainEnvelopes.setDuration(mSliderDuration.getValue());
+    parameterChanged(GranularSynth::ParameterType::DURATION,
+                     mSliderDuration.getValue());
   };
   mSliderDuration.setValue(PARAM_DURATION_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderDuration);
@@ -52,6 +55,8 @@ PositionBox::PositionBox() {
   mSliderGain.setRange(0.0, 1.0, 0.01);
   mSliderGain.onValueChange = [this] {
     mGrainEnvelopes.setGain(mSliderGain.getValue());
+    parameterChanged(GranularSynth::ParameterType::GAIN,
+                     mSliderGain.getValue());
   };
   mSliderGain.setValue(PARAM_GAIN_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderGain);
@@ -59,24 +64,21 @@ PositionBox::PositionBox() {
   mLabelGain.setText("Gain", juce::dontSendNotification);
   mLabelGain.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelGain);
-  
+
   /* Envelope viz */
   addAndMakeVisible(mGrainEnvelopes);
-
 }
 
 PositionBox::~PositionBox() {}
 
 void PositionBox::paint(juce::Graphics& g) {
-
   g.fillAll(juce::Colours::black);
 
-  g.setColour(mColour);
+  g.setColour(juce::Colour(POSITION_COLOURS[mColour]));
   g.drawRoundedRectangle(getLocalBounds().toFloat(), 10.0f, 2.0f);
 }
 
 void PositionBox::resized() {
-
   auto r = getLocalBounds();
   // Add insets
   r.removeFromTop(PADDING_SIZE);
@@ -106,8 +108,15 @@ void PositionBox::resized() {
   mGrainEnvelopes.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
 }
 
-void PositionBox::setColour(juce::Colour colour) { 
+void PositionBox::setColour(GranularSynth::PositionColour colour) {
   mColour = colour;
-  mGrainEnvelopes.setColour(colour);
+  mGrainEnvelopes.setColour(juce::Colour(POSITION_COLOURS[colour]));
   repaint();
+}
+
+void PositionBox::parameterChanged(GranularSynth::ParameterType type,
+                                   float value) {
+  if (onParameterChanged != nullptr) {
+    onParameterChanged(mColour, type, value);
+  }
 }

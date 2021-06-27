@@ -30,58 +30,17 @@ MainComponent::MainComponent()
 
   /* Position boxes */
   for (int i = 0; i < mPositionBoxes.size(); ++i) {
-    // TODO: remove once complete
-    if (i == 0) {
-      mPositionBoxes[i].setColour(juce::Colour(POSITION_COLOURS[i]));
-      addAndMakeVisible(mPositionBoxes[i]);
+    if (i != 0) {
+      mPositionBoxes[i].setEnabled(false);
     }
+    mPositionBoxes[i].setColour((GranularSynth::PositionColour)i);
+    mPositionBoxes[i].onParameterChanged =
+          [this](GranularSynth::PositionColour pos,
+               GranularSynth::ParameterType param, float value) {
+          mSynth.updatePositionSettings(pos, param, value);
+      };
+      addAndMakeVisible(mPositionBoxes[i]);
   }
-
-  /* -------------- Knobs --------------*/
-
-  /* Diversity */
-  mSliderDiversity.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderDiversity.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderDiversity.setRange(MIN_DIVERSITY, MAX_DIVERSITY, 1.0);
-  mSliderDiversity.onValueChange = [this] {
-    //mGrainEnvelopes.setNumEnvelopes(mSliderDiversity.getValue());
-  };
-  mSliderDiversity.setValue(PARAM_DIVERSITY_DEFAULT, juce::sendNotification);
-  addAndMakeVisible(mSliderDiversity);
-
-  mLabelDiversity.setText("Diversity", juce::dontSendNotification);
-  mLabelDiversity.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelDiversity);
-
-  /* Rate */
-  mSliderRate.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderRate.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderRate.setRange(0.0, 1.0, 0.01);
-  mSliderRate.onValueChange = [this] {
-    mSynth.setRate(mSliderRate.getValue());
-    mGrainEnvelopes.setRate(mSliderRate.getValue());
-  };
-  mSliderRate.setValue(PARAM_RATE_DEFAULT, juce::sendNotification);
-  addAndMakeVisible(mSliderRate);
-
-  mLabelRate.setText("Rate", juce::dontSendNotification);
-  mLabelRate.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelRate);
-
-  /* Duration */
-  mSliderDuration.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderDuration.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderDuration.setRange(0.0, 1.0, 0.01);
-  mSliderDuration.onValueChange = [this] {
-    mSynth.setDuration(mSliderDuration.getValue());
-    mGrainEnvelopes.setDuration(mSliderDuration.getValue());
-  };
-  mSliderDuration.setValue(PARAM_DURATION_DEFAULT, juce::sendNotification);
-  addAndMakeVisible(mSliderDuration);
-
-  mLabelDuration.setText("Duration", juce::dontSendNotification);
-  mLabelDuration.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelDuration);
 
   /* Arc spectrogram */
   addAndMakeVisible(mArcSpec);
@@ -89,9 +48,6 @@ MainComponent::MainComponent()
                                       GrainPositionFinder::GrainPosition gPos) {
     mPositionFinder.updatePosition(midiNote, gPos);
   };
-
-  /* Grain rate envelopes */
-  addAndMakeVisible(mGrainEnvelopes);
   
   addChildComponent(mProgressBar);
 
@@ -119,6 +75,10 @@ MainComponent::MainComponent()
   };
 
   addAndMakeVisible(mKeyboard);
+
+  /* Synth */
+  mSynth.updatePositionSettings(GranularSynth::PositionColour::BLUE,
+                                GranularSynth::ParameterType::ENABLED, true);
 
   setSize(1200, 600);
 
@@ -160,9 +120,8 @@ MainComponent::~MainComponent() {
 
 void MainComponent::timerCallback() {
   if (mCurPitchClass != PitchDetector::PitchClass::NONE) {
-    int k = mSliderDiversity.getValue();
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
-        mPositionFinder.findPositions(k, mCurPitchClass);
+        mPositionFinder.findPositions(NUM_POSITIONS, mCurPitchClass);
     mSynth.setPositions(mCurPitchClass, gPositions);
     mArcSpec.setNoteOn(mCurPitchClass, gPositions);
     mCurPitchClass = PitchDetector::PitchClass::NONE;
@@ -172,6 +131,10 @@ void MainComponent::timerCallback() {
 void MainComponent::run() { 
   mFft.processBuffer(mFileBuffer);
   mArcSpec.loadBuffer(&mFft.getSpectrum(), ArcSpectrogram::SpecType::SPECTROGRAM);
+}
+
+void MainComponent::sliderValueChanged(juce::Slider* slider) {
+
 }
 
 //==============================================================================
@@ -225,48 +188,19 @@ void MainComponent::paint(juce::Graphics& g) {
 void MainComponent::resized() {
   auto r = getLocalBounds();
 
-  // Left Panel
+  // Position boxes
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
   mPositionBoxes[0].setBounds(
       leftPanel.removeFromTop(leftPanel.getHeight() / 2));
-
+  mPositionBoxes[1].setBounds(leftPanel);
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
+  mPositionBoxes[2].setBounds(
+      rightPanel.removeFromTop(rightPanel.getHeight() / 2));
+  mPositionBoxes[3].setBounds(rightPanel);
+  
   auto filePanel = r.removeFromTop(KNOB_HEIGHT);
   mBtnOpenFile.setBounds(filePanel.removeFromLeft(filePanel.getWidth() / 2));
   mBtnRecord.setBounds(filePanel);
-  // Row 1
-  auto row =
-      leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT + ROW_PADDING_HEIGHT);
-  // Diversity
-  auto knob = row.removeFromLeft(row.getWidth() / 2);
-  mSliderDiversity.setBounds(
-      knob.withSize(KNOB_HEIGHT * 2, KNOB_HEIGHT)
-          .withCentre(knob.getPosition().translated(
-              knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
-  mLabelDiversity.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
-  // Rate
-  knob = row;
-  mSliderRate.setBounds(
-      knob.withSize(KNOB_HEIGHT * 2, KNOB_HEIGHT)
-          .withCentre(knob.getPosition().translated(
-              knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
-  mLabelRate.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
-  // Row 2
-  row =
-      leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT + ROW_PADDING_HEIGHT);
-  // Rate
-  knob = row;
-  mSliderDuration.setBounds(
-      knob.withSize(KNOB_HEIGHT * 2, KNOB_HEIGHT)
-          .withCentre(knob.getPosition().translated(
-              knob.getWidth() / 2, (knob.getHeight() - LABEL_HEIGHT) / 2)));
-  mLabelDuration.setBounds(knob.removeFromBottom(LABEL_HEIGHT));
-  // Row 3
-  row =
-      leftPanel.removeFromTop(KNOB_HEIGHT + LABEL_HEIGHT + ROW_PADDING_HEIGHT);
-  // Grain Envelopes
-  auto envBounds = row;
-  mGrainEnvelopes.setBounds(envBounds);
 
   mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT)
                           .withSizeKeepingCentre(PANEL_WIDTH, KEYBOARD_HEIGHT));

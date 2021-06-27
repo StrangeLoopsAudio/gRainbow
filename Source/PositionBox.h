@@ -11,7 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-
+#include "GranularSynth.h"
 #include "RainbowEnvelopes.h"
 
 //==============================================================================
@@ -25,7 +25,11 @@ class PositionBox : public juce::Component {
   void paint(juce::Graphics&) override;
   void resized() override;
 
-  void setColour(juce::Colour colour);
+  void setColour(GranularSynth::PositionColour colour);
+  std::function<void(GranularSynth::PositionColour pos,
+                     GranularSynth::ParameterType param,
+                     float value)>
+      onParameterChanged = nullptr;
 
  private:
   /* Params */
@@ -41,7 +45,12 @@ class PositionBox : public juce::Component {
   static constexpr auto LABEL_HEIGHT = 20;
   static constexpr auto ENVELOPE_HEIGHT = 60;
 
-  juce::Colour mColour;
+  static constexpr juce::int64 POSITION_COLOURS[GranularSynth::NUM_POSITIONS] =
+      {
+      0xFF52C4FF, 0xFFE352FF,
+                                                      0xFFFF8D52, 0xFF6EFF52};
+
+  GranularSynth::PositionColour mColour;
 
   /* UI Components */
   juce::ToggleButton mBtnEnabled;
@@ -53,6 +62,8 @@ class PositionBox : public juce::Component {
   juce::Slider mSliderGain;
   juce::Label mLabelGain;
   RainbowEnvelopes mGrainEnvelopes;
+
+  void parameterChanged(GranularSynth::ParameterType type, float value);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PositionBox)
 };
