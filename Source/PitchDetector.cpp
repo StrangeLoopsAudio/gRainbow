@@ -23,7 +23,7 @@ PitchDetector::~PitchDetector() { stopThread(4000); }
 
 void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer,
                                   double sampleRate) {
-  
+
   stopThread(4000);
   mFileBuffer = fileBuffer;
   mSampleRate = sampleRate;
@@ -212,7 +212,7 @@ void PitchDetector::segmentPitches() {
       // Check for segment expiration
       if (curSegment.idleFrame != -1 &&
           (frame - curSegment.idleFrame) > maxIdleFrames) {
-        
+
         if (frame - curSegment.startFrame > minNoteFrames) {
           // Push to completed segments
           PitchClass pc = getPitchClass(curSegment.binNum);

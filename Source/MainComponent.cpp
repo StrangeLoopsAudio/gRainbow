@@ -48,7 +48,7 @@ MainComponent::MainComponent()
                                       GrainPositionFinder::GrainPosition gPos) {
     mPositionFinder.updatePosition(midiNote, gPos);
   };
-  
+
   addChildComponent(mProgressBar);
 
   mTransientDetector.onTransientsUpdated =
@@ -71,7 +71,7 @@ MainComponent::MainComponent()
       mProgressBar.setVisible(false);
     } else if (!mProgressBar.isVisible()) {
       mProgressBar.setVisible(true);
-    } 
+    }
   };
 
   addAndMakeVisible(mKeyboard);
@@ -94,7 +94,7 @@ MainComponent::MainComponent()
           int numInputChannels = granted ? 1 : 0;
         mAudioDeviceManager.initialise(numInputChannels, 2, nullptr,
                                                    true, {}, nullptr);
-        setAudioChannels(numInputChannels, 2); 
+        setAudioChannels(numInputChannels, 2);
       });
   } else {
     // Specify the number of input and output channels that we want to open
@@ -128,7 +128,7 @@ void MainComponent::timerCallback() {
   }
 }
 
-void MainComponent::run() { 
+void MainComponent::run() {
   mFft.processBuffer(mFileBuffer);
   mArcSpec.loadBuffer(&mFft.getSpectrum(), ArcSpectrogram::SpecType::SPECTROGRAM);
 }
@@ -197,7 +197,7 @@ void MainComponent::resized() {
   mPositionBoxes[2].setBounds(
       rightPanel.removeFromTop(rightPanel.getHeight() / 2));
   mPositionBoxes[3].setBounds(rightPanel);
-  
+
   auto filePanel = r.removeFromTop(KNOB_HEIGHT);
   mBtnOpenFile.setBounds(filePanel.removeFromLeft(filePanel.getWidth() / 2));
   mBtnRecord.setBounds(filePanel);

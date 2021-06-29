@@ -1,0 +1,4 @@
+---
+# Use defaults from the Google style with the following exceptions:
+BasedOnStyle: Google
+...

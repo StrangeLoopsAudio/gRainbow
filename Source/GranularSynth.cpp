@@ -10,8 +10,7 @@
 
 #include "GranularSynth.h"
 
-GranularSynth::GranularSynth()
-    : juce::Thread("granular thread") {
+GranularSynth::GranularSynth() : juce::Thread("granular thread") {
   generateGaussianEnvelope();
   mTotalSamps = 0;
   mGrains.ensureStorageAllocated(MAX_GRAINS);
@@ -35,7 +34,7 @@ void GranularSynth::run() {
     float maxDurSamples = mSampleRate * (MAX_DURATION_MS / 1000.0);
     float durMs = juce::jmap(mPositionSettings[mNextPositionToPlay].duration,
                              MIN_DURATION_MS, MAX_DURATION_MS);
-    
+
     if (mFileBuffer != nullptr) {
       // Add one grain per active note
       for (GrainNote& gNote : mActiveNotes) {

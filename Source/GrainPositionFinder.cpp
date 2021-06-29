@@ -21,7 +21,7 @@ GrainPositionFinder::findPositions(int numPosToFind, PitchDetector::PitchClass p
   // Look for detected pitches with correct pitch and good gain
   bool foundAll = false;
   int numSearches = 0;
-  
+
   while (!foundAll) {
     int noteMin = pitchClass - numSearches;
     int noteMax = pitchClass + numSearches;
