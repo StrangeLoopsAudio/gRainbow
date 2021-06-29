@@ -34,20 +34,20 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
 }
 
 juce::Rectangle<float> RainbowKeyboard::getKeyRectangle(int pitchClass) {
-  auto keyWidth = getWidth() / 7;
-  auto blackKeyOffset = BLACK_NOTE_SIZE_RATIO * keyWidth / 2;
+  float keyWidth = static_cast<float>(getWidth() / 7);
+  float blackKeyOffset = BLACK_NOTE_SIZE_RATIO * keyWidth / 2.0f;
   static const float notePos[] = {0.0f,
                                   keyWidth - blackKeyOffset,
                                   keyWidth,
-                                  2 * keyWidth - blackKeyOffset,
-                                  2 * keyWidth,
-                                  3 * keyWidth,
-                                  4 * keyWidth - blackKeyOffset,
-                                  4 * keyWidth,
-                                  5 * keyWidth - blackKeyOffset,
-                                  5 * keyWidth,
-                                  6 * keyWidth - blackKeyOffset,
-                                  6 * keyWidth};
+                                  2.0f * keyWidth - blackKeyOffset,
+                                  2.0f * keyWidth,
+                                  3.0f * keyWidth,
+                                  4.0f * keyWidth - blackKeyOffset,
+                                  4.0f * keyWidth,
+                                  5.0f * keyWidth - blackKeyOffset,
+                                  5.0f * keyWidth,
+                                  6.0f * keyWidth - blackKeyOffset,
+                                  6.0f * keyWidth};
 
   auto isBlackKey = ((1 << (pitchClass)) & 0x054a) != 0;
   auto width = isBlackKey ? BLACK_NOTE_SIZE_RATIO * keyWidth : keyWidth;

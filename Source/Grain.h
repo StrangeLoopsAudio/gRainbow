@@ -42,5 +42,5 @@ class Grain {
   const float gain;    // Grain gain
 
  private:
-  std::array<float, 512>& mEnv;
+  std::array<float, 512> mEnv;
 };
