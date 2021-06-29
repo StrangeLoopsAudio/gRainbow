@@ -27,24 +27,6 @@ void PositionMarker::paintButton(juce::Graphics& g,
                                  bool shouldDrawButtonAsDown) {
   auto r = getLocalBounds();
 
-  if (true) {
-    // Draw rect
-    auto box = r.removeFromTop(r.getHeight() * RECT_RATIO);
-    box.setLeft(2);
-    box.setRight(getWidth() - 2);
-    box.setTop(2);
-    g.setColour(mColour);
-    g.fillRect(box);
-
-    // Draw point
-    juce::Path pointPath;
-    pointPath.startNewSubPath(r.getTopLeft().translated(2, 0).toFloat());
-    pointPath.lineTo(r.getTopRight().translated(-2, 0).toFloat());
-    pointPath.lineTo(r.getWidth() / 2, r.getBottom());
-    pointPath.closeSubPath();
-    g.fillPath(pointPath);
-  }
-
   // Draw outline
   r = getLocalBounds();
   juce::Path outlinePath;
@@ -55,8 +37,7 @@ void PositionMarker::paintButton(juce::Graphics& g,
   outlinePath.lineTo(0, r.getHeight() * RECT_RATIO);
   outlinePath.closeSubPath();
   g.setColour(mColour);
-  g.strokePath(outlinePath, juce::PathStrokeType(
-                                1, juce::PathStrokeType::JointStyle::mitered));
+  g.fillPath(outlinePath);
 }
 
 void PositionMarker::clicked() {

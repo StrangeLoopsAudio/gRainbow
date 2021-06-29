@@ -18,6 +18,7 @@ class GrainPositionFinder {
   typedef struct GrainPosition {
     PitchDetector::Pitch pitch;
     float pbRate;  // timestretching ratio based on frequency offset from target
+    bool isActive = false;
     GrainPosition() : pbRate(1.0f) {}
     GrainPosition(PitchDetector::Pitch pitch, float pbRate)
         : pitch(pitch), pbRate(pbRate) {}

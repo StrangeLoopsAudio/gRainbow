@@ -24,6 +24,7 @@ class PositionBox : public juce::Component {
 
   void paint(juce::Graphics&) override;
   void resized() override;
+  bool getActive() { return mIsActive; }
   void setActive(bool isActive);
 
   void setColour(GranularSynth::PositionColour colour);

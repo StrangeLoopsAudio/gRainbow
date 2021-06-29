@@ -122,6 +122,9 @@ void MainComponent::timerCallback() {
   if (mCurPitchClass != PitchDetector::PitchClass::NONE) {
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
         mPositionFinder.findPositions(NUM_POSITIONS, mCurPitchClass);
+    for (int i = 0; i < gPositions.size(); ++i) {
+      gPositions[i].isActive = mPositionBoxes[i].getActive();
+    }
     mSynth.setPositions(mCurPitchClass, gPositions);
     mArcSpec.setNoteOn(mCurPitchClass, gPositions);
     mCurPitchClass = PitchDetector::PitchClass::NONE;

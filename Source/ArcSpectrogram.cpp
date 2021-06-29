@@ -73,6 +73,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     vibratingImage.duplicateIfShared();
 
     for (GrainPositionFinder::GrainPosition gPos : mGPositions) {
+      if (!gPos.isActive) continue;
       auto sweepPos = gPos.pitch.posRatio +
                     ((gPos.pitch.duration / 2) * (mNormalRand(mGenRandom) + 1));
 
@@ -162,6 +163,7 @@ void ArcSpectrogram::resized() {
   // Position markers around rainbow
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   for (int i = 0; i < mPositionMarkers.size(); ++i) {
+    if (!mGPositions[i].isActive) continue;
     auto middlePos =
         mGPositions[i].pitch.posRatio + (mGPositions[i].pitch.duration / 2);
     float angleRad = (M_PI * middlePos) - (M_PI / 2.0f);
