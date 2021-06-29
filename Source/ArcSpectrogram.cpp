@@ -18,8 +18,7 @@
 #include "Utils.h"
 
 //==============================================================================
-ArcSpectrogram::ArcSpectrogram():
-      juce::Thread("spectrogram thread") {
+ArcSpectrogram::ArcSpectrogram() : juce::Thread("spectrogram thread") {
   setFramesPerSecond(10);
   mBuffers.fill(nullptr);
 

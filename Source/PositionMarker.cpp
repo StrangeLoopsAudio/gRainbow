@@ -13,7 +13,8 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-PositionMarker::PositionMarker(GrainPositionFinder::GrainPosition gPos, juce::Colour colour)
+PositionMarker::PositionMarker(GrainPositionFinder::GrainPosition gPos,
+                               juce::Colour colour)
     : mGPos(gPos), juce::Button(juce::String()), mColour(colour) {
   setToggleState(true, juce::dontSendNotification);
   setClickingTogglesState(true);

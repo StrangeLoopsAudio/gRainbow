@@ -10,8 +10,7 @@
 
 #include "GranularSynth.h"
 
-GranularSynth::GranularSynth()
-    : juce::Thread("granular thread") {
+GranularSynth::GranularSynth() : juce::Thread("granular thread") {
   generateGaussianEnvelope();
   mTotalSamps = 0;
   mGrains.ensureStorageAllocated(MAX_GRAINS);

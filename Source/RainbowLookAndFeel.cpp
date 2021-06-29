@@ -13,10 +13,12 @@
 #include "Utils.h"
 #include <math.h>
 
-void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
-  float sliderPosProportional, float rotaryStartAngle,
-  float rotaryEndAngle, juce::Slider& slider)
-{
+void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y,
+                                          int width, int height,
+                                          float sliderPosProportional,
+                                          float rotaryStartAngle,
+                                          float rotaryEndAngle,
+                                          juce::Slider& slider) {
   float endRadians = (1.5 * M_PI) + (sliderPosProportional * M_PI);
   juce::Path rainbowPath = juce::Path();
   g.setColour(juce::Colours::white);
