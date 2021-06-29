@@ -107,17 +107,17 @@ class Utils {
         r = 0;
         g = 0.5;
         b = 1;
-        break;      
+        break;
       case 8: // blue
         r = 0;
         g = 0;
         b = 1;
-        break;      
+        break;
       case 9: // purple
         r = 0.5;
         g = 0;
         b = 1;
-        break;      
+        break;
       case 10: // violet
         r = 1;
         g = 0;

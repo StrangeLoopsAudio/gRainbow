@@ -63,5 +63,5 @@ void RainbowEnvelopes::setGain(float gain) {
 
 void RainbowEnvelopes::setColour(juce::Colour colour) {
   mColour = colour;
-  repaint(); 
+  repaint();
 }

@@ -130,7 +130,7 @@ class PitchDetector : juce::Thread {
   // HPCP fields
   std::vector<HarmonicWeight> mHarmonicWeights;
   std::vector<std::vector<float>> mHPCP;  // harmonic pitch class profile
-  
+
   // Pitch segments in buffer form
   std::vector<std::vector<float>> mSegmentedPitches;
   std::array<PitchSegment, NUM_ACTIVE_SEGMENTS> mSegments;

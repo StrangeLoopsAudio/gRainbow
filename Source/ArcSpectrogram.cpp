@@ -34,7 +34,7 @@ ArcSpectrogram::ArcSpectrogram():
   mSpecType.addItem("Harmonic Profile", (int)SpecType::HPCP);
   mSpecType.addItem("Detected Pitches", (int)SpecType::NOTES);
   mSpecType.setSelectedId(0, juce::dontSendNotification);
-  mSpecType.onChange = [this](void) { 
+  mSpecType.onChange = [this](void) {
     if (mSpecType.getSelectedId() != SpecType::LOGO) {
       mSpecType.setVisible(true);
     }
@@ -83,9 +83,9 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
           getHeight(), (1.5 * M_PI) + ((middlePos - SUN_RAY_WIDTH) * M_PI));
       auto rayPoint2 = centerPoint.getPointOnCircumference(
           getHeight(), (1.5 * M_PI) + ((middlePos + SUN_RAY_WIDTH) * M_PI));
-      
+
       sunRays.addTriangle(centerPoint, rayPoint1, rayPoint2);
-      
+
 
       for (int i = 0; i < bowWidth; ++i) {
         auto ogPoint = centerPoint.getPointOnCircumference(
@@ -184,7 +184,7 @@ void ArcSpectrogram::run() {
   int endRadius = getHeight() - POSITION_MARKER_HEIGHT;
   int bowWidth = endRadius - startRadius;
   int maxRow =
-      (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size(); 
+      (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size();
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mImages[mProcessType] =
       juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
@@ -237,7 +237,7 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer, SpecTyp
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   mBuffers[type - 1] = buffer;
   mProcessType = type;
-  
+
   const juce::MessageManagerLock lock;
   if (type == SpecType::SPECTROGRAM || type == SpecType::HPCP) {
     mSpecType.setSelectedId(mProcessType, juce::sendNotification);
