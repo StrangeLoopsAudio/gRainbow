@@ -14,12 +14,31 @@
 
 //==============================================================================
 PositionBox::PositionBox() {
+
+  mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::darkgrey);
+  mBtnEnabled.onClick = [this] {
+    setActive(!mIsActive);
+  };
   addAndMakeVisible(mBtnEnabled);
+
+  mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
+                        juce::Colours::blue);
   addAndMakeVisible(mBtnSolo);
+
+  /* Knob params */
+  auto rotaryParams = juce::Slider::RotaryParameters();
+  rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
+  rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi; 
+  rotaryParams.stopAtEnd = true; 
+
+  mLabelRate.setEnabled(mIsActive);
+  mLabelDuration.setEnabled(mIsActive);
+  mLabelGain.setEnabled(mIsActive);
 
   /* Rate */
   mSliderRate.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderRate.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderRate.setRotaryParameters(rotaryParams);
   mSliderRate.setRange(0.0, 1.0, 0.01);
   mSliderRate.onValueChange = [this] {
     mGrainEnvelopes.setRate(mSliderRate.getValue());
@@ -36,6 +55,7 @@ PositionBox::PositionBox() {
   /* Duration */
   mSliderDuration.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderDuration.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderDuration.setRotaryParameters(rotaryParams);
   mSliderDuration.setRange(0.0, 1.0, 0.01);
   mSliderDuration.onValueChange = [this] {
     mGrainEnvelopes.setDuration(mSliderDuration.getValue());
@@ -52,6 +72,7 @@ PositionBox::PositionBox() {
   /* Gain */
   mSliderGain.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderGain.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderGain.setRotaryParameters(rotaryParams);
   mSliderGain.setRange(0.0, 1.0, 0.01);
   mSliderGain.onValueChange = [this] {
     mGrainEnvelopes.setGain(mSliderGain.getValue());
@@ -74,8 +95,9 @@ PositionBox::~PositionBox() {}
 void PositionBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
-  g.setColour(juce::Colour(POSITION_COLOURS[mColour]));
-  g.drawRoundedRectangle(getLocalBounds().toFloat(), 10.0f, 2.0f);
+  g.setColour(mIsActive ? juce::Colour(POSITION_COLOURS[mColour])
+                        : juce::Colours::darkgrey);
+  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1), 10.0f, 2.0f);
 }
 
 void PositionBox::resized() {
@@ -89,8 +111,11 @@ void PositionBox::resized() {
   // Enable and solo buttons
   auto btnPanel = r.removeFromTop(TOGGLE_SIZE);
   mBtnEnabled.setBounds(btnPanel.removeFromLeft(TOGGLE_SIZE));
-  btnPanel.removeFromLeft(PADDING_SIZE);
-  mBtnSolo.setBounds(btnPanel.removeFromLeft(TOGGLE_SIZE));
+  mBtnSolo.setBounds(btnPanel.removeFromRight(TOGGLE_SIZE));
+  
+  /* Envelopes */
+  mGrainEnvelopes.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
+  r.removeFromTop(PADDING_SIZE);
 
   // Knobs and labels
   auto knobWidth = r.getWidth() / NUM_PARAMS;
@@ -103,13 +128,43 @@ void PositionBox::resized() {
   mLabelRate.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelDuration.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
+}
 
-  /* Envelopes */
-  mGrainEnvelopes.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
+void PositionBox::setActive(bool isActive) {
+  mIsActive = isActive;
+
+  juce::Colour knobColour = isActive ? juce::Colour(POSITION_COLOURS[mColour])
+                                     : juce::Colours::darkgrey;
+
+  mBtnEnabled.setToggleState(isActive, juce::dontSendNotification);
+  mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
+                        knobColour);
+  mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
+                     juce::Colours::blue);
+  mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
+                        knobColour);
+  mGrainEnvelopes.setActive(isActive);
+  
+  mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                        knobColour);
+  mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                            knobColour);
+  mSliderGain.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                        knobColour);
+  mLabelRate.setEnabled(isActive);
+  mLabelDuration.setEnabled(isActive);
+  mLabelGain.setEnabled(isActive);
+  repaint();
 }
 
 void PositionBox::setColour(GranularSynth::PositionColour colour) {
   mColour = colour;
+  if (mIsActive) {
+    mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
+                          juce::Colour(POSITION_COLOURS[colour]));
+    mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
+                       juce::Colours::blue);
+  }
   mGrainEnvelopes.setColour(juce::Colour(POSITION_COLOURS[colour]));
   repaint();
 }

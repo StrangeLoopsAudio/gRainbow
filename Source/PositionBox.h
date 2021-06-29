@@ -24,6 +24,7 @@ class PositionBox : public juce::Component {
 
   void paint(juce::Graphics&) override;
   void resized() override;
+  void setActive(bool isActive);
 
   void setColour(GranularSynth::PositionColour colour);
   std::function<void(GranularSynth::PositionColour pos,
@@ -51,6 +52,7 @@ class PositionBox : public juce::Component {
                                                       0xFFFF8D52, 0xFF6EFF52};
 
   GranularSynth::PositionColour mColour;
+  bool mIsActive = false;
 
   /* UI Components */
   juce::ToggleButton mBtnEnabled;

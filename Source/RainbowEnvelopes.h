@@ -23,6 +23,7 @@ class RainbowEnvelopes : public juce::Component {
   void paint(juce::Graphics&) override;
   void resized() override;
 
+  void setActive(bool isActive);
   void setRate(float rate);
   void setDuration(float duration);
   void setGain(float gain);
@@ -34,6 +35,7 @@ class RainbowEnvelopes : public juce::Component {
   float mRate = 0.5;
   float mDuration = 0.5;
   float mGain = 0.8;
+  bool mIsActive = false;
   juce::Colour mColour;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowEnvelopes)

@@ -41,8 +41,6 @@
               file="Source/PositionMarker.cpp"/>
         <FILE id="aJYlgQ" name="PositionMarker.h" compile="0" resource="0"
               file="Source/PositionMarker.h"/>
-        <FILE id="xqANdX" name="RainbowLookAndFeel.cpp" compile="1" resource="0"
-              file="Source/RainbowLookAndFeel.cpp"/>
         <FILE id="ev5uXx" name="RainbowLookAndFeel.h" compile="0" resource="0"
               file="Source/RainbowLookAndFeel.h"/>
         <FILE id="K8OlZe" name="ArcSpectrogram.cpp" compile="1" resource="0"

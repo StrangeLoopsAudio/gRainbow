@@ -30,10 +30,10 @@ MainComponent::MainComponent()
 
   /* Position boxes */
   for (int i = 0; i < mPositionBoxes.size(); ++i) {
-    if (i != 0) {
-      mPositionBoxes[i].setEnabled(false);
-    }
     mPositionBoxes[i].setColour((GranularSynth::PositionColour)i);
+    if (i == 0) {
+      mPositionBoxes[i].setActive(true);
+    }
     mPositionBoxes[i].onParameterChanged =
           [this](GranularSynth::PositionColour pos,
                GranularSynth::ParameterType param, float value) {
@@ -131,10 +131,6 @@ void MainComponent::timerCallback() {
 void MainComponent::run() {
   mFft.processBuffer(mFileBuffer);
   mArcSpec.loadBuffer(&mFft.getSpectrum(), ArcSpectrogram::SpecType::SPECTROGRAM);
-}
-
-void MainComponent::sliderValueChanged(juce::Slider* slider) {
-
 }
 
 //==============================================================================

@@ -15,14 +15,15 @@
 void RainbowEnvelopes::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
-  g.setColour(mColour);
+  juce::Colour envColour = mIsActive ? mColour : juce::Colours::darkgrey;
+  g.setColour(envColour);
 
   float minEnvWidth = getWidth() / 10.0f;
   float maxEnvWidth = getWidth() / 3.0f;
   float envWidth = juce::jmap(mDuration, minEnvWidth, maxEnvWidth);
   float envOffset = juce::jmax(envWidth * (1.0f - mRate), 1.0f);
   float envTop = ((1.0f - mGain) * (getHeight() - 2)) + 2;
-  float envBottom = getHeight() - 2;
+  float envBottom = getHeight();
   float envHeight = juce::jmax(0.0f, envBottom - envTop);
   juce::PathStrokeType pathStroke =
       juce::PathStrokeType(2, juce::PathStrokeType::JointStyle::curved,
@@ -45,6 +46,11 @@ void RainbowEnvelopes::paint(juce::Graphics& g) {
 }
 
 void RainbowEnvelopes::resized() {}
+
+void RainbowEnvelopes::setActive(bool isActive) {
+  mIsActive = isActive;
+  repaint();
+}
 
 void RainbowEnvelopes::setRate(float rate) {
   mRate = rate;

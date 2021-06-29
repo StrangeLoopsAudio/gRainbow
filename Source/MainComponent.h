@@ -22,8 +22,7 @@
 */
 class MainComponent : public juce::AudioAppComponent,
                       juce::Timer,
-                      juce::Thread,
-                      juce::Slider::Listener {
+                      juce::Thread {
  public:
   //==============================================================================
   MainComponent();
@@ -43,9 +42,6 @@ class MainComponent : public juce::AudioAppComponent,
 
   //==============================================================================
   void timerCallback() override;
-
-  //==============================================================================
-  void sliderValueChanged(juce::Slider *slider) override;
 
  private:
   /* Algorithm Constants */
