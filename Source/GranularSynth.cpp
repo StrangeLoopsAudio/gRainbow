@@ -133,6 +133,8 @@ void GranularSynth::updatePositionSettings(
     case ParameterType::GAIN:
       mPositionSettings[colour].gain = value;
       break;
+    default:
+      jassert(false);
   }
 }
 
@@ -145,6 +147,8 @@ void GranularSynth::updatePositionSettings(
     case ParameterType::SOLO:
       mPositionSettings[colour].solo = value;
       break;
+    default:
+      jassert(false);
   }
 }
 

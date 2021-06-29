@@ -84,7 +84,7 @@ void PitchDetector::computeHPCP() {
     std::vector<float>& specFrame = mFft.getSpectrum()[frame];
 
     // Find local peaks to compute HPCP with
-    std::vector<Peak>& peaks = getPeaks(MAX_SPEC_PEAKS, specFrame);
+    std::vector<PitchDetector::Peak> peaks = getPeaks(MAX_SPEC_PEAKS, specFrame);
 
     float curMax = 0.0;
     for (int i = 0; i < peaks.size(); ++i) {

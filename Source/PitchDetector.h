@@ -39,7 +39,7 @@ class PitchDetector : juce::Thread {
   PitchDetector();
   ~PitchDetector();
 
-  static enum PitchClass { NONE = -1, C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, NUM_PITCH_CLASSES };
+  enum PitchClass { NONE = -1, C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, NUM_PITCH_CLASSES };
 
   typedef struct Pitch {
     PitchClass pitchClass;
