@@ -34,6 +34,9 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
 }
 
 juce::Rectangle<float> RainbowKeyboard::getKeyRectangle(int pitchClass) {
+  // Originially this was a mix of float and ints
+  // Was changed to bring everything to floats
+  // if any precision issue occur, feel free to keep as int as long as needed
   float keyWidth = static_cast<float>(getWidth() / 7);
   float blackKeyOffset = BLACK_NOTE_SIZE_RATIO * keyWidth / 2.0f;
   static const float notePos[] = {0.0f,
