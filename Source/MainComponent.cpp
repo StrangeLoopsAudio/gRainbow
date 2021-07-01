@@ -209,17 +209,27 @@ void MainComponent::resized() {
       mArcSpec.getBounds().withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
 }
 
-void MainComponent::openNewFile() {
+/** Pauses audio to open file
+    @param path optional path to load, otherwise will prompt user for file
+   location
+*/
+void MainComponent::openNewFile(const char* path) {
   shutdownAudio();
 
-  juce::FileChooser chooser("Select a file to granulize...",
-                            juce::File::getCurrentWorkingDirectory(), "*.wav;*.mp3",
-                            true);
+  if (path == nullptr) {
+    juce::FileChooser chooser("Select a file to granulize...",
+                              juce::File::getCurrentWorkingDirectory(),
+                              "*.wav;*.mp3", true);
 
-  if (chooser.browseForFileToOpen()) {
-    auto file = chooser.getResult();
+    if (chooser.browseForFileToOpen()) {
+      auto file = chooser.getResult();
+      processFile(file);
+    }
+  } else {
+    auto file = juce::File(juce::String(path));
     processFile(file);
   }
+
   setAudioChannels(2, 2);
 }
 
@@ -288,4 +298,15 @@ void MainComponent::stopRecording() {
   mBtnRecord.setButtonText("Start Recording");
   mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
                        juce::Colours::green);
+}
+
+/** Fast Debug Mode is used to speed up iterations of testing
+    This method should be called only once and no-op if not being used
+*/
+void MainComponent::fastDebugMode() {
+#ifdef FDB_LOAD_FILE
+  // Loads a file right away - make sure macro is in quotes in Projucer
+  DBG("Fast Debug Mode - Loading file " << FDB_LOAD_FILE);
+  openNewFile(FDB_LOAD_FILE);
+#endif  // FDB_LOAD_FILE
 }
