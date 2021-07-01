@@ -96,13 +96,14 @@ void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer) {
   // Reset timestamps if no grains active to keep numbers low
   if (mGrains.isEmpty()) {
     mTotalSamps = 0;
-  }
-
-  // Normalize the block before sending onward
-  for (int i = 0; i < blockBuffer->getNumSamples(); ++i) {
-    for (int ch = 0; ch < blockBuffer->getNumChannels(); ++ch) {
-      float* channelBlock = blockBuffer->getWritePointer(ch);
-      channelBlock[i] /= mGrains.size();
+  } else {
+    // Normalize the block before sending onward
+    // if grains is empty, don't want to divid by zero
+    for (int i = 0; i < blockBuffer->getNumSamples(); ++i) {
+      for (int ch = 0; ch < blockBuffer->getNumChannels(); ++ch) {
+        float* channelBlock = blockBuffer->getWritePointer(ch);
+        channelBlock[i] /= mGrains.size();
+      }
     }
   }
 
