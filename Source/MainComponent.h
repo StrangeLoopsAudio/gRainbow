@@ -43,6 +43,8 @@ class MainComponent : public juce::AudioAppComponent,
   //==============================================================================
   void timerCallback() override;
 
+  void fastDebugMode();
+
  private:
   /* Algorithm Constants */
   static constexpr auto FFT_SIZE = 4096;
@@ -93,7 +95,7 @@ class MainComponent : public juce::AudioAppComponent,
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
 
-  void openNewFile();
+  void openNewFile(const char* path = nullptr);
   void processFile(juce::File file);
   void startRecording();
   void stopRecording();

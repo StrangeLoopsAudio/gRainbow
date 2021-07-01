@@ -30,6 +30,16 @@ public:
    // code..
 
    mainWindow.reset(new MainWindow(getApplicationName()));
+
+   // JUCE doesn't seem to have a "everything is ready" methond as there are
+   // many threads and "is ready" is really arbitrary to what one is looking
+   // for. The goal of this delay is to be invoked when a normal user would be
+   // able to start giving input (a few milliseconds should be enough).
+   juce::Timer::callAfterDelay(250, [this]() {
+     juce::Component* mainComponent = mainWindow->getContentComponent();
+     jassert(mainComponent != nullptr);
+     reinterpret_cast<MainComponent*>(mainComponent)->fastDebugMode();
+   });
  }
 
  void shutdown() override {
