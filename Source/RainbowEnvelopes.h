@@ -31,6 +31,9 @@ class RainbowEnvelopes : public juce::Component {
 
  private:
 
+  static constexpr auto MIN_RATE_RATIO = .125f;
+  static constexpr auto MAX_RATE_RATIO = 1.0f;
+
   /* Parameters */
   float mRate = 0.5;
   float mDuration = 0.5;

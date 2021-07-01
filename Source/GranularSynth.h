@@ -22,13 +22,17 @@ class GranularSynth : juce::Thread {
 
   enum ParameterType { ENABLED, SOLO, RATE, DURATION, GAIN };
   enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_POSITIONS };
-  typedef struct PositionSettings {
+  typedef struct PositionParams {
     bool isEnabled = false;
     bool solo = false;
     float rate;
     float duration;
     float gain;
-  } PositionSettings;
+    PositionParams() {}
+    PositionParams(bool isEnabled, bool solo, float rate, float duration,
+                   float gain)
+        : isEnabled(isEnabled), solo(solo), rate(rate), duration(duration) {}
+  } PositionParams;
 
   GranularSynth();
   ~GranularSynth();
@@ -38,10 +42,9 @@ class GranularSynth : juce::Thread {
   void process(juce::AudioBuffer<float>* blockBuffer);
   void setPositions(PitchDetector::PitchClass pitchClass,
                     std::vector<GrainPositionFinder::GrainPosition> gPositions);
-  void updatePositionSettings(PositionColour colour, ParameterType param,
+  void updateParameters(PositionColour colour, PositionParams settings);
+  void updateParameter(PositionColour colour, ParameterType param,
                               float value);
-  void updatePositionSettings(PositionColour colour, ParameterType param,
-                              bool value);
   void stopNote(PitchDetector::PitchClass pitchClass);
 
   //==============================================================================
@@ -52,6 +55,8 @@ class GranularSynth : juce::Thread {
   static constexpr auto MAX_RATE = 20.f;
   static constexpr auto MIN_DURATION_MS = 60.0f;
   static constexpr auto MAX_DURATION_MS = 300.0f;
+  static constexpr auto MIN_RATE_RATIO = .125f;
+  static constexpr auto MAX_RATE_RATIO = 1.0f;
   static constexpr auto MAX_GRAINS = 100; // Max grains active at once
 
   typedef struct GrainNote {
@@ -72,7 +77,7 @@ class GranularSynth : juce::Thread {
   double mSampleRate;
 
   /* Grain position parameters */
-  std::array<PositionSettings, NUM_POSITIONS> mPositionSettings;
+  std::array<PositionParams, NUM_POSITIONS> mPositionSettings;
   std::array<float, NUM_POSITIONS>
       mGrainTriggersMs;  // Keeps track of triggering grains from each position
   PositionColour mNextPositionToPlay = PositionColour::BLUE;

@@ -31,7 +31,6 @@ GranularSynth::~GranularSynth() { stopThread(4000); }
 void GranularSynth::run() {
   while (!threadShouldExit()) {
 
-    float maxDurSamples = mSampleRate * (MAX_DURATION_MS / 1000.0);
     float durMs = juce::jmap(mPositionSettings[mNextPositionToPlay].duration,
                              MIN_DURATION_MS, MAX_DURATION_MS);
 
@@ -47,7 +46,6 @@ void GranularSynth::run() {
         GrainPositionFinder::GrainPosition gPos =
             gNote.positions[mNextPositionToPlay];
         float durSamples = mSampleRate * (durMs / 1000) * (1.0f / gPos.pbRate);
-        durSamples = juce::jmin(durSamples, maxDurSamples);
         float posSamples = gPos.pitch.posRatio * mFileBuffer->getNumSamples();
         float posOffset = juce::jmap(
             random.nextFloat(), 0.0f,
@@ -56,6 +54,7 @@ void GranularSynth::run() {
                            posSamples + posOffset, mTotalSamps,
                            mPositionSettings[mNextPositionToPlay].gain);
         mGrains.add(grain);
+        DBG("playing pos: " << mNextPositionToPlay);
       }
     }
 
@@ -63,7 +62,7 @@ void GranularSynth::run() {
     // TODO: reflect actual rate like below in envelops viz
     mGrainTriggersMs[mNextPositionToPlay] =
         juce::jmap(1.0f - mPositionSettings[mNextPositionToPlay].rate,
-                   durMs / 8, durMs / 2);
+                   durMs * MIN_RATE_RATIO, durMs * MAX_RATE_RATIO);
     auto nextGrainPosition = mNextPositionToPlay;
     float nextGrainWaitTime = mGrainTriggersMs[mNextPositionToPlay];
     for (int i = 0; i < mGrainTriggersMs.size(); ++i) {
@@ -72,6 +71,7 @@ void GranularSynth::run() {
         nextGrainPosition = (PositionColour)i;
       }
     }
+    
     mNextPositionToPlay = nextGrainPosition;
 
     // Subtract wait time from each trigger
@@ -122,7 +122,19 @@ void GranularSynth::setPositions(
   mActiveNotes.add(GrainNote(pitchClass, gPositions));
 }
 
-void GranularSynth::updatePositionSettings(
+void GranularSynth::updateParameters(PositionColour colour,
+  PositionParams params) {
+  mPositionSettings[colour] = params;
+  // Initialize grain triggering timestamps
+  for (int i = 0; i < mGrainTriggersMs.size(); ++i) {
+    float durMs = juce::jmap(mPositionSettings[i].duration, MIN_DURATION_MS,
+                             MAX_DURATION_MS);
+    mGrainTriggersMs[i] =
+        juce::jmap(1.0f - mPositionSettings[i].rate, durMs / 8, durMs / 2);
+  }
+}
+
+void GranularSynth::updateParameter(
     PositionColour colour, ParameterType param, float value) {
   switch (param) {
     case ParameterType::RATE:
@@ -134,14 +146,6 @@ void GranularSynth::updatePositionSettings(
     case ParameterType::GAIN:
       mPositionSettings[colour].gain = value;
       break;
-    default:
-      jassert(false);
-  }
-}
-
-void GranularSynth::updatePositionSettings(
-    PositionColour colour, ParameterType param, bool value) {
-  switch (param) {
     case ParameterType::ENABLED:
       mPositionSettings[colour].isEnabled = value;
       break;

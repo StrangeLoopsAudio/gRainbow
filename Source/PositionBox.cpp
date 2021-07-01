@@ -18,11 +18,16 @@ PositionBox::PositionBox() {
   mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::darkgrey);
   mBtnEnabled.onClick = [this] {
     setActive(!mIsActive);
+    parameterChanged(GranularSynth::ParameterType::ENABLED, mBtnEnabled.getToggleState());
   };
   addAndMakeVisible(mBtnEnabled);
 
   mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                         juce::Colours::blue);
+  mBtnSolo.onClick = [this] {
+    parameterChanged(GranularSynth::ParameterType::SOLO,
+                     mBtnSolo.getToggleState());
+  };
   addAndMakeVisible(mBtnSolo);
 
   /* Knob params */
@@ -155,6 +160,13 @@ void PositionBox::setActive(bool isActive) {
   mLabelDuration.setEnabled(isActive);
   mLabelGain.setEnabled(isActive);
   repaint();
+}
+
+GranularSynth::PositionParams PositionBox::getParams() {
+  return GranularSynth::PositionParams(
+      mBtnEnabled.getToggleState(), mBtnSolo.getToggleState(),
+      mSliderRate.getValue(), mSliderDuration.getValue(),
+      mSliderGain.getValue());
 }
 
 void PositionBox::setColour(GranularSynth::PositionColour colour) {

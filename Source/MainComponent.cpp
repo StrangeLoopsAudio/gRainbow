@@ -34,10 +34,12 @@ MainComponent::MainComponent()
     if (i == 0) {
       mPositionBoxes[i].setActive(true);
     }
+    mSynth.updateParameters((GranularSynth::PositionColour)i,
+                            mPositionBoxes[i].getParams());
     mPositionBoxes[i].onParameterChanged =
           [this](GranularSynth::PositionColour pos,
                GranularSynth::ParameterType param, float value) {
-          mSynth.updatePositionSettings(pos, param, value);
+          mSynth.updateParameter(pos, param, value);
       };
       addAndMakeVisible(mPositionBoxes[i]);
   }
@@ -77,7 +79,7 @@ MainComponent::MainComponent()
   addAndMakeVisible(mKeyboard);
 
   /* Synth */
-  mSynth.updatePositionSettings(GranularSynth::PositionColour::BLUE,
+  mSynth.updateParameter(GranularSynth::PositionColour::BLUE,
                                 GranularSynth::ParameterType::ENABLED, true);
 
   setSize(1200, 600);

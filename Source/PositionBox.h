@@ -28,6 +28,7 @@ class PositionBox : public juce::Component {
   void setActive(bool isActive);
 
   void setColour(GranularSynth::PositionColour colour);
+  GranularSynth::PositionParams getParams();
   std::function<void(GranularSynth::PositionColour pos,
                      GranularSynth::ParameterType param,
                      float value)>

@@ -21,7 +21,7 @@ void RainbowEnvelopes::paint(juce::Graphics& g) {
   float minEnvWidth = getWidth() / 10.0f;
   float maxEnvWidth = getWidth() / 3.0f;
   float envWidth = juce::jmap(mDuration, minEnvWidth, maxEnvWidth);
-  float envOffset = juce::jmax(envWidth * (1.0f - mRate), 1.0f);
+  float envOffset = juce::jmap(1.0f - mRate, envWidth * MIN_RATE_RATIO, envWidth * MAX_RATE_RATIO);
   float envTop = ((1.0f - mGain) * (getHeight() - 2)) + 2;
   float envBottom = getHeight();
   float envHeight = juce::jmax(0.0f, envBottom - envTop);
