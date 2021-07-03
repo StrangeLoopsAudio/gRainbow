@@ -31,7 +31,7 @@ class GranularSynth : juce::Thread {
     PositionParams() {}
     PositionParams(bool isEnabled, bool solo, float rate, float duration,
                    float gain)
-        : isEnabled(isEnabled), solo(solo), rate(rate), duration(duration) {}
+        : isEnabled(isEnabled), solo(solo), rate(rate), duration(duration), gain(gain) {}
   } PositionParams;
 
   GranularSynth();
@@ -42,7 +42,7 @@ class GranularSynth : juce::Thread {
   void process(juce::AudioBuffer<float>* blockBuffer);
   void setPositions(PitchDetector::PitchClass pitchClass,
                     std::vector<GrainPositionFinder::GrainPosition> gPositions);
-  void updateParameters(PositionColour colour, PositionParams settings);
+  void updateParameters(PositionColour colour, PositionParams params);
   void updateParameter(PositionColour colour, ParameterType param,
                               float value);
   void stopNote(PitchDetector::PitchClass pitchClass);

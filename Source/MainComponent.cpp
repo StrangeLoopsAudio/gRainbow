@@ -45,6 +45,8 @@ MainComponent::MainComponent()
                     (value == true) ? PositionBox::BoxState::SOLO_WAIT
                                     : PositionBox::BoxState::READY);
               }
+              mSynth.updateParameter((GranularSynth::PositionColour)i, GranularSynth::ParameterType::SOLO,
+                                     false);
             }
           }
           mSynth.updateParameter(pos, param, value);
@@ -136,7 +138,8 @@ void MainComponent::timerCallback() {
       bool isActive =
           mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO_WAIT
               ? false
-              : mPositionBoxes[i].getActive();
+              : mPositionBoxes[i].getActive() ||
+                    mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO;
       gPositions[i].isActive = isActive;
     }
     mSynth.setPositions(mCurPitchClass, gPositions);

@@ -147,6 +147,10 @@ void PositionBox::setActive(bool isActive) {
 void PositionBox::setState(BoxState state) {
   mState = state;
 
+  if (state == BoxState::SOLO_WAIT) {
+    mBtnSolo.setToggleState(false, juce::dontSendNotification);
+  }
+
   juce::Colour enabledColour = (state != BoxState::SOLO_WAIT)
                                 ? juce::Colour(POSITION_COLOURS[mColour])
                                      : juce::Colours::darkgrey;

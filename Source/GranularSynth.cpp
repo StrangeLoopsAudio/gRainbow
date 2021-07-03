@@ -37,10 +37,18 @@ void GranularSynth::run() {
     if (mFileBuffer != nullptr) {
       // Add one grain per active note
       for (GrainNote& gNote : mActiveNotes) {
-        if (mGrains.size() >= MAX_GRAINS ||
-            !mPositionSettings[mNextPositionToPlay].isEnabled)
+        // Skip if not enabled or full of grains
+        if (mGrains.size() >= MAX_GRAINS) continue;
+        // Also skip if it isn't enabled or solo'd
+        if (!mPositionSettings[mNextPositionToPlay].isEnabled &&
+            !mPositionSettings[mNextPositionToPlay].solo)
           continue;
-        // TODO: solo checking above ^
+        // Also skip if another pos is solo'd
+        bool foundSolo = false;
+        for (int i = 0; i < mPositionSettings.size(); ++i) {
+          if (mPositionSettings[i].solo) foundSolo = true;
+        }
+        if (foundSolo && !mPositionSettings[mNextPositionToPlay].solo) continue;
 
         juce::Random random;
         GrainPositionFinder::GrainPosition gPos =
@@ -54,7 +62,6 @@ void GranularSynth::run() {
                            posSamples + posOffset, mTotalSamps,
                            mPositionSettings[mNextPositionToPlay].gain);
         mGrains.add(grain);
-        DBG("playing pos: " << mNextPositionToPlay);
       }
     }
 
