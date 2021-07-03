@@ -32,10 +32,14 @@ MainComponent::MainComponent()
   for (int i = 0; i < mPositionBoxes.size(); ++i) {
     mPositionBoxes[i].setColour((GranularSynth::PositionColour)i);
     mPositionBoxes[i].setActive(i == 0);
+    mPositionBoxes[i].setPosition(i);
     mSynth.updateParameters((GranularSynth::PositionColour)i,
                             mPositionBoxes[i].getParams());
+    mPositionBoxes[i].onPositionChanged = [this](bool isRight) {
+
+    };
     mPositionBoxes[i].onParameterChanged =
-          [this](GranularSynth::PositionColour pos,
+        [this](GranularSynth::PositionColour pos,
                GranularSynth::ParameterType param, float value) {
           if (param == GranularSynth::ParameterType::SOLO) {
             for (int i = 0; i < GranularSynth::PositionColour::NUM_POSITIONS;
@@ -45,13 +49,13 @@ MainComponent::MainComponent()
                     (value == true) ? PositionBox::BoxState::SOLO_WAIT
                                     : PositionBox::BoxState::READY);
               }
-              mSynth.updateParameter((GranularSynth::PositionColour)i, GranularSynth::ParameterType::SOLO,
-                                     false);
+              mSynth.updateParameter((GranularSynth::PositionColour)i,
+                                     GranularSynth::ParameterType::SOLO, false);
             }
           }
           mSynth.updateParameter(pos, param, value);
-      };
-      addAndMakeVisible(mPositionBoxes[i]);
+        };
+    addAndMakeVisible(mPositionBoxes[i]);
   }
 
   /* Arc spectrogram */
@@ -270,6 +274,7 @@ void MainComponent::processFile(juce::File file) {
       resampler->process(ratio, inputs[c], outputs[c],
                          mFileBuffer.getNumSamples());
     }
+    resetPositions();
     mArcSpec.resetBuffers();
     stopThread(4000);
     startThread();  // process fft and pass to arc spec
@@ -277,6 +282,14 @@ void MainComponent::processFile(juce::File file) {
     mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
     mSynth.setFileBuffer(&mFileBuffer, mSampleRate);
     mIsProcessingComplete = false; // Reset processing flag
+  }
+}
+
+void MainComponent::resetPositions() {
+  for (int i = 0; i < mPositions.size(); ++i) {
+    for (int j = 0; j < mPositions[i].size(); ++j) {
+      mPositions[i][j] = j;
+    }
   }
 }
 

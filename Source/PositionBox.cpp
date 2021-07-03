@@ -15,6 +15,13 @@
 //==============================================================================
 PositionBox::PositionBox() {
 
+  mPositionChanger.onPositionChanged = [this](bool isRight) {
+    if (onPositionChanged != nullptr) {
+      onPositionChanged(isRight);
+    }
+  };
+  addAndMakeVisible(mPositionChanger);
+
   mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::darkgrey);
   mBtnEnabled.onClick = [this] {
     mIsActive = !mIsActive;
@@ -120,6 +127,8 @@ void PositionBox::resized() {
   auto btnPanel = r.removeFromTop(TOGGLE_SIZE);
   mBtnEnabled.setBounds(btnPanel.removeFromLeft(TOGGLE_SIZE));
   mBtnSolo.setBounds(btnPanel.removeFromRight(TOGGLE_SIZE));
+  mPositionChanger.setBounds(btnPanel.withSizeKeepingCentre(
+      btnPanel.getWidth() * 0.7, btnPanel.getHeight()));
   
   /* Envelopes */
   mGrainEnvelopes.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
@@ -165,6 +174,7 @@ void PositionBox::setState(BoxState state) {
   juce::Colour knobColour = componentsLit
                                 ? juce::Colour(POSITION_COLOURS[mColour])
                                 : juce::Colours::darkgrey;
+  mPositionChanger.setActive(componentsLit);
   mGrainEnvelopes.setActive(componentsLit);
   
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
@@ -194,8 +204,14 @@ void PositionBox::setColour(GranularSynth::PositionColour colour) {
     mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                        juce::Colours::blue);
   }
+  mPositionChanger.setColour(juce::Colour(POSITION_COLOURS[colour]));
   mGrainEnvelopes.setColour(juce::Colour(POSITION_COLOURS[colour]));
   repaint();
+}
+
+void PositionBox::setPosition(int position) { 
+  mPosition = position; 
+  mPositionChanger.setPosition(position);
 }
 
 void PositionBox::parameterChanged(GranularSynth::ParameterType type,

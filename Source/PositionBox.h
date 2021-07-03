@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 #include "GranularSynth.h"
 #include "RainbowEnvelopes.h"
+#include "PositionChanger.h"
 
 //==============================================================================
 /*
@@ -30,10 +31,13 @@ class PositionBox : public juce::Component {
 
   void paint(juce::Graphics&) override;
   void resized() override;
+
   BoxState getState() { return mState; };
   void setState(BoxState state);
   bool getActive() { return mIsActive; }
   void setActive(bool isActive);
+  int getPosition() { return mPosition; }
+  void setPosition(int position);
 
   void setColour(GranularSynth::PositionColour colour);
   GranularSynth::PositionParams getParams();
@@ -41,6 +45,8 @@ class PositionBox : public juce::Component {
                      GranularSynth::ParameterType param,
                      float value)>
       onParameterChanged = nullptr;
+
+  std::function<void(bool isRight)> onPositionChanged = nullptr;
 
  private:
   /* Params */
@@ -64,8 +70,10 @@ class PositionBox : public juce::Component {
   GranularSynth::PositionColour mColour;
   BoxState mState = BoxState::READY;
   bool mIsActive = false;
+  int mPosition = 0;
 
   /* UI Components */
+  PositionChanger mPositionChanger;
   juce::ToggleButton mBtnEnabled;
   juce::ToggleButton mBtnSolo;
   juce::Slider mSliderRate;

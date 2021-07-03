@@ -94,11 +94,15 @@ class MainComponent : public juce::AudioAppComponent,
   juce::MidiKeyboardState mKeyboardState;
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
+  std::array<std::array<int, NUM_POSITIONS>,
+             PitchDetector::PitchClass::NUM_PITCH_CLASSES>
+      mPositions;
 
   void openNewFile(const char* path = nullptr);
   void processFile(juce::File file);
   void startRecording();
   void stopRecording();
+  void resetPositions();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };
