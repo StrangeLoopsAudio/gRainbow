@@ -31,14 +31,22 @@ MainComponent::MainComponent()
   /* Position boxes */
   for (int i = 0; i < mPositionBoxes.size(); ++i) {
     mPositionBoxes[i].setColour((GranularSynth::PositionColour)i);
-    if (i == 0) {
-      mPositionBoxes[i].setActive(true);
-    }
+    mPositionBoxes[i].setActive(i == 0);
     mSynth.updateParameters((GranularSynth::PositionColour)i,
                             mPositionBoxes[i].getParams());
     mPositionBoxes[i].onParameterChanged =
           [this](GranularSynth::PositionColour pos,
                GranularSynth::ParameterType param, float value) {
+          if (param == GranularSynth::ParameterType::SOLO) {
+            for (int i = 0; i < GranularSynth::PositionColour::NUM_POSITIONS;
+                 ++i) {
+              if (i != pos) {
+                mPositionBoxes[i].setState(
+                    (value == true) ? PositionBox::BoxState::SOLO_WAIT
+                                    : PositionBox::BoxState::READY);
+              }
+            }
+          }
           mSynth.updateParameter(pos, param, value);
       };
       addAndMakeVisible(mPositionBoxes[i]);
@@ -125,7 +133,11 @@ void MainComponent::timerCallback() {
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
         mPositionFinder.findPositions(NUM_POSITIONS, mCurPitchClass);
     for (int i = 0; i < gPositions.size(); ++i) {
-      gPositions[i].isActive = mPositionBoxes[i].getActive();
+      bool isActive =
+          mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO_WAIT
+              ? false
+              : mPositionBoxes[i].getActive();
+      gPositions[i].isActive = isActive;
     }
     mSynth.setPositions(mCurPitchClass, gPositions);
     mArcSpec.setNoteOn(mCurPitchClass, gPositions);

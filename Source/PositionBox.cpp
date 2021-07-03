@@ -17,7 +17,8 @@ PositionBox::PositionBox() {
 
   mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::darkgrey);
   mBtnEnabled.onClick = [this] {
-    setActive(!mIsActive);
+    mIsActive = !mIsActive;
+    setState(mState);
     parameterChanged(GranularSynth::ParameterType::ENABLED, mBtnEnabled.getToggleState());
   };
   addAndMakeVisible(mBtnEnabled);
@@ -25,6 +26,7 @@ PositionBox::PositionBox() {
   mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                         juce::Colours::blue);
   mBtnSolo.onClick = [this] {
+    setState(mBtnSolo.getToggleState() ? BoxState::SOLO : BoxState::READY);
     parameterChanged(GranularSynth::ParameterType::SOLO,
                      mBtnSolo.getToggleState());
   };
@@ -36,9 +38,9 @@ PositionBox::PositionBox() {
   rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi; 
   rotaryParams.stopAtEnd = true; 
 
-  mLabelRate.setEnabled(mIsActive);
-  mLabelDuration.setEnabled(mIsActive);
-  mLabelGain.setEnabled(mIsActive);
+  mLabelRate.setEnabled(mState == BoxState::READY);
+  mLabelDuration.setEnabled(mState == BoxState::READY);
+  mLabelGain.setEnabled(mState == BoxState::READY);
 
   /* Rate */
   mSliderRate.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
@@ -100,7 +102,8 @@ PositionBox::~PositionBox() {}
 void PositionBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
-  g.setColour(mIsActive ? juce::Colour(POSITION_COLOURS[mColour])
+  bool borderLit = (mIsActive || mState == BoxState::SOLO);
+  g.setColour(borderLit ? juce::Colour(POSITION_COLOURS[mColour])
                         : juce::Colours::darkgrey);
   g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1), 10.0f, 2.0f);
 }
@@ -137,18 +140,28 @@ void PositionBox::resized() {
 
 void PositionBox::setActive(bool isActive) {
   mIsActive = isActive;
-
-  juce::Colour knobColour = isActive ? juce::Colour(POSITION_COLOURS[mColour])
-                                     : juce::Colours::darkgrey;
-
   mBtnEnabled.setToggleState(isActive, juce::dontSendNotification);
+  setState(mState);
+}
+
+void PositionBox::setState(BoxState state) {
+  mState = state;
+
+  juce::Colour enabledColour = (state != BoxState::SOLO_WAIT)
+                                ? juce::Colour(POSITION_COLOURS[mColour])
+                                     : juce::Colours::darkgrey;
   mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                        knobColour);
-  mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                     juce::Colours::blue);
-  mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                        knobColour);
-  mGrainEnvelopes.setActive(isActive);
+                        enabledColour);
+  juce::Colour soloColour = (state != BoxState::SOLO_WAIT)
+                                   ? juce::Colours::blue
+                                   : juce::Colours::darkgrey;
+  mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId, soloColour);
+
+  bool componentsLit = (mIsActive && state == BoxState::READY || state == BoxState::SOLO);
+  juce::Colour knobColour = componentsLit
+                                ? juce::Colour(POSITION_COLOURS[mColour])
+                                : juce::Colours::darkgrey;
+  mGrainEnvelopes.setActive(componentsLit);
   
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                         knobColour);
@@ -156,9 +169,9 @@ void PositionBox::setActive(bool isActive) {
                             knobColour);
   mSliderGain.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                         knobColour);
-  mLabelRate.setEnabled(isActive);
-  mLabelDuration.setEnabled(isActive);
-  mLabelGain.setEnabled(isActive);
+  mLabelRate.setEnabled(componentsLit);
+  mLabelDuration.setEnabled(componentsLit);
+  mLabelGain.setEnabled(componentsLit);
   repaint();
 }
 
@@ -171,7 +184,7 @@ GranularSynth::PositionParams PositionBox::getParams() {
 
 void PositionBox::setColour(GranularSynth::PositionColour colour) {
   mColour = colour;
-  if (mIsActive) {
+  if (mState == BoxState::READY) {
     mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
                           juce::Colour(POSITION_COLOURS[colour]));
     mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,

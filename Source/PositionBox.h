@@ -22,8 +22,16 @@ class PositionBox : public juce::Component {
   PositionBox();
   ~PositionBox() override;
 
+  enum BoxState {
+    READY,
+    SOLO,
+    SOLO_WAIT
+  };
+
   void paint(juce::Graphics&) override;
   void resized() override;
+  BoxState getState() { return mState; };
+  void setState(BoxState state);
   bool getActive() { return mIsActive; }
   void setActive(bool isActive);
 
@@ -54,6 +62,7 @@ class PositionBox : public juce::Component {
                                                       0xFFFF8D52, 0xFF6EFF52};
 
   GranularSynth::PositionColour mColour;
+  BoxState mState = BoxState::READY;
   bool mIsActive = false;
 
   /* UI Components */
