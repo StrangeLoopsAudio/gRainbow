@@ -153,8 +153,12 @@ void PositionBox::setActive(bool isActive) {
   setState(mState);
 }
 
-void PositionBox::setPositions(std::vector<int> positions, int numPositions) {
-  mPositionChanger.setGlobalPositions(positions, numPositions);
+void PositionBox::setPositions(std::vector<int> positions) {
+  mPositionChanger.setGlobalPositions(positions);
+}
+
+void PositionBox::setNumPositions(int numPositions) {
+  mPositionChanger.setNumPositions(numPositions);
 }
 
 void PositionBox::setState(BoxState state) {
@@ -195,7 +199,6 @@ void PositionBox::setState(BoxState state) {
 
 GranularSynth::PositionParams PositionBox::getParams() {
   return GranularSynth::PositionParams(
-      mBtnEnabled.getToggleState(), mBtnSolo.getToggleState(),
       mSliderRate.getValue(), mSliderDuration.getValue(),
       mSliderGain.getValue());
 }

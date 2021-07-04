@@ -31,7 +31,8 @@ class PositionChanger : public juce::Component {
 
   void setActive(bool isActive);
   void setColour(int indexInBoxes, juce::Colour colour);
-  void setGlobalPositions(std::vector<int> positions, int numPositions);
+  void setGlobalPositions(std::vector<int> positions);
+  void setNumPositions(int numPositions);
 
   std::function<void(bool isRight)> onPositionChanged = nullptr;
 
@@ -55,7 +56,6 @@ class PositionChanger : public juce::Component {
   bool isLeftArrow(juce::Point<float> point);
   bool isRightArrow(juce::Point<float> point);
   void positionChanged(bool isRight);
-  juce::Colour getBubbleColour(int position);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PositionChanger)
 };

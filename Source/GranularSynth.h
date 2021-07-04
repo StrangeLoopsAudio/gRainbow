@@ -23,15 +23,13 @@ class GranularSynth : juce::Thread {
   enum ParameterType { ENABLED, SOLO, RATE, DURATION, GAIN };
   enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_BOXES };
   typedef struct PositionParams {
-    bool isEnabled = false;
-    bool solo = false;
     float rate;
     float duration;
     float gain;
     PositionParams() {}
-    PositionParams(bool isEnabled, bool solo, float rate, float duration,
+    PositionParams(float rate, float duration,
                    float gain)
-        : isEnabled(isEnabled), solo(solo), rate(rate), duration(duration), gain(gain) {}
+        : rate(rate), duration(duration), gain(gain) {}
   } PositionParams;
 
   GranularSynth();

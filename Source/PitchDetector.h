@@ -107,7 +107,8 @@ class PitchDetector : juce::Thread {
     int startFrame; // Start frame of segment
     int idleFrame; // Start frame of when segment began being idle (or -1 when active)
     float salience; // Confidence level accumulator from gains
-    PitchSegment() : binNum(0), startFrame(0), idleFrame(-1), salience(0.0) {}
+    bool isAvailable; // True when segment isn't being used to track a pitch 
+    PitchSegment() : binNum(0), startFrame(0), idleFrame(-1), salience(0.0), isAvailable(true) {}
   } PitchSegment;
 
   typedef struct Peak {

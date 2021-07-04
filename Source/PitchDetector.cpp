@@ -134,93 +134,80 @@ void PitchDetector::segmentPitches() {
   if (mHPCP.empty()) return;
 
   mPitches.clear();
+  for (int i = 0; i < mSegments.size(); ++i) {
+    mSegments[i].isAvailable = true;
+  }
 
   // Initialize parameters
   int maxIdleFrames = mSampleRate * (MAX_IDLE_TIME_MS / 1000.0) / HOP_SIZE;
   int minNoteFrames = mSampleRate * (MIN_NOTE_TIME_MS / 1000.0) / HOP_SIZE;
   float maxConfidence = 0;
 
-  // Initialize the first segments using the first valid peaks
-  std::vector<PitchDetector::Peak> firstPeaks;
-  int startFrame = 0;
-  for (int frame = 0; frame < mHPCP.size(); ++frame) {
-    std::vector<PitchDetector::Peak> peaks =
-        getPeaks(NUM_ACTIVE_SEGMENTS, mHPCP[frame]);
-    if (!peaks.empty()) {
-      auto peak = peaks.begin();
-      // Keep pushing peaks until starting segments are full
-      while (firstPeaks.size() < NUM_ACTIVE_SEGMENTS && peak != peaks.end()) {
-        firstPeaks.push_back(*peak);
-        peak++;
-        startFrame++;
-      }
-    }
-  }
-
-  // Get a better audio clip bro
-  if (firstPeaks.size() != NUM_ACTIVE_SEGMENTS) return;
-
-  for (int i = 0; i < NUM_ACTIVE_SEGMENTS; ++i) {
-    mSegments[i].binNum = firstPeaks[i].binNum;
-    mSegments[i].salience = firstPeaks[i].gain;
-  }
-
   // Calculate note trajectories through the clip
-  for (int frame = startFrame; frame < mHPCP.size(); ++frame) {
+  for (int frame = 0; frame < mHPCP.size(); ++frame) {
     // Get the new pitch candidates
     std::vector<PitchDetector::Peak> peaks =
         getPeaks(NUM_ACTIVE_SEGMENTS, mHPCP[frame]);
 
     // Look for continuation candidates in peaks
     for (int i = 0; i < mSegments.size(); ++i) {
-      int closestIdx = -1;
-      for (int j = 0; j < peaks.size(); ++j) {
-        float devBins = std::abs(mSegments[i].binNum - peaks[j].binNum);
-        if (devBins <= MAX_DEVIATION_BINS) {
-          // Replace candidate if:
-          if (closestIdx == -1) {  // It is the first one
-            closestIdx = j;
-          } else if (devBins <
-                         std::abs(mSegments[i].binNum -
-                                  peaks[closestIdx]
-                                      .binNum) ||  // It is closer to the target
-                     (peaks[closestIdx].binNum == peaks[j].binNum &&
-                      (peaks[closestIdx].gain <
-                       peaks[j].gain))) {  // It's tied for distance
-                                           // but has a higher gain
-            closestIdx = j;
+      if (!mSegments[i].isAvailable) {
+        int closestIdx = -1;
+        for (int j = 0; j < peaks.size(); ++j) {
+          float devBins = std::abs(mSegments[i].binNum - peaks[j].binNum);
+          if (devBins <= MAX_DEVIATION_BINS) {
+            // Replace candidate if:
+            if (closestIdx == -1) {  // It is the first one
+              closestIdx = j;
+            } else if (devBins <
+                           std::abs(
+                               mSegments[i].binNum -
+                               peaks[closestIdx]
+                                   .binNum) ||  // It is closer to the target
+                       (peaks[closestIdx].binNum == peaks[j].binNum &&
+                        (peaks[closestIdx].gain <
+                         peaks[j].gain))) {  // It's tied for distance
+                                             // but has a higher gain
+              closestIdx = j;
+            }
           }
         }
-      }
+        if (closestIdx == -1) {
+          // Mark segment as waiting for continuance
+          if (mSegments[i].idleFrame == -1) mSegments[i].idleFrame = frame;
+        } else {
+          // Continue segment
+          mSegments[i].idleFrame = -1;
+          // Change bin num to better candidate if needed
+          if (!hasBetterCandidateAhead(
+                  frame + 1, mSegments[i].binNum,
+                  std::abs(mSegments[i].binNum - peaks[closestIdx].binNum))) {
+            mSegments[i].binNum = peaks[closestIdx].binNum;
+          }
+          mSegments[i].salience += peaks[closestIdx].gain;
+          peaks[closestIdx].binNum =
+              INVALID_BIN;  // Mark peak so it isn't reused for multiple
+                            // segments
+        }
 
-      if (closestIdx == -1) {
-        // Mark segment as waiting for continuance
-        if (mSegments[i].idleFrame == -1) mSegments[i].idleFrame = frame;
+        // Check for segment expiration
+        if (mSegments[i].idleFrame > 0 &&
+            (frame - mSegments[i].idleFrame) > maxIdleFrames) {
+          PitchClass pc = getPitchClass(mSegments[i].binNum);
+          if (frame - mSegments[i].startFrame > minNoteFrames) {
+            // Push to completed segments
+            float confidence =
+                mSegments[i].salience / (frame - mSegments[i].startFrame);
+            if (confidence > maxConfidence) maxConfidence = confidence;
+            mPitches.getReference(pc).push_back(
+                Pitch(pc, (float)mSegments[i].startFrame / mHPCP.size(),
+                      (float)(frame - mSegments[i].startFrame) / mHPCP.size(),
+                      confidence));
+          }
+          // Replace segment with new peak
+          mSegments[i].isAvailable = true;
+        }
       } else {
-        // Continue segment
-        mSegments[i].idleFrame = -1;
-        if (!hasBetterCandidateAhead(frame + 1, mSegments[i].binNum,
-                std::abs(mSegments[i].binNum - peaks[closestIdx].binNum))) {
-          mSegments[i].binNum = peaks[closestIdx].binNum;
-        }
-        mSegments[i].salience +=
-            peaks[closestIdx].gain;
-        peaks[closestIdx].binNum =
-            INVALID_BIN;  // Mark peak so it isn't reused for multiple segments
-      }
-
-      // Check for segment expiration
-      if (mSegments[i].idleFrame > 0 && (frame - mSegments[i].idleFrame) > maxIdleFrames) {
-        PitchClass pc = getPitchClass(mSegments[i].binNum);
-        if (frame - mSegments[i].startFrame > minNoteFrames) {
-          // Push to completed segments
-          float confidence =
-              mSegments[i].salience / (frame - mSegments[i].startFrame);
-          if (confidence > maxConfidence) maxConfidence = confidence;
-          mPitches.getReference(pc).push_back(
-              Pitch(pc, (float)mSegments[i].startFrame / mHPCP.size(),
-                                   (float)(frame - mSegments[i].startFrame) / mHPCP.size(), confidence));
-        }
         // Replace segment with new peak
         for (int j = 0; j < peaks.size(); ++j) {
           if (peaks[j].binNum != INVALID_BIN) {
@@ -228,10 +215,13 @@ void PitchDetector::segmentPitches() {
             mSegments[i].idleFrame = -1;
             mSegments[i].binNum = peaks[j].binNum;
             mSegments[i].salience = peaks[j].gain;
+            mSegments[i].isAvailable = false;
             break;
           }
         }
       }
+
+
     }
   }
 

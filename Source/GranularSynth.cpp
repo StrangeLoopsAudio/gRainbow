@@ -39,16 +39,7 @@ void GranularSynth::run() {
       for (GrainNote& gNote : mActiveNotes) {
         // Skip if not enabled or full of grains
         if (mGrains.size() >= MAX_GRAINS) continue;
-        // Also skip if it isn't enabled or solo'd
-        if (!mPositionSettings[mNextPositionToPlay].isEnabled &&
-            !mPositionSettings[mNextPositionToPlay].solo)
-          continue;
-        // Also skip if another pos is solo'd
-        bool foundSolo = false;
-        for (int i = 0; i < mPositionSettings.size(); ++i) {
-          if (mPositionSettings[i].solo) foundSolo = true;
-        }
-        if (foundSolo && !mPositionSettings[mNextPositionToPlay].solo) continue;
+        if (!gNote.positions[mNextPositionToPlay].isActive) continue;
 
         juce::Random random;
         GrainPositionFinder::GrainPosition gPos =
@@ -129,6 +120,11 @@ void GranularSynth::setPositions(
   mActiveNotes.add(GrainNote(pitchClass, gPositions));
 }
 
+void GranularSynth::stopNote(PitchDetector::PitchClass pitchClass) {
+  mActiveNotes.removeIf(
+      [pitchClass](GrainNote& note) { return note.pitchClass == pitchClass; });
+}
+
 void GranularSynth::updateParameters(PositionColour colour,
   PositionParams params) {
   mPositionSettings[colour] = params;
@@ -153,20 +149,9 @@ void GranularSynth::updateParameter(
     case ParameterType::GAIN:
       mPositionSettings[colour].gain = value;
       break;
-    case ParameterType::ENABLED:
-      mPositionSettings[colour].isEnabled = value;
-      break;
-    case ParameterType::SOLO:
-      mPositionSettings[colour].solo = value;
-      break;
     default:
-      jassert(false);
+      break;
   }
-}
-
-void GranularSynth::stopNote(PitchDetector::PitchClass pitchClass) {
-  mActiveNotes.removeIf(
-      [pitchClass](GrainNote& note) { return note.pitchClass == pitchClass; });
 }
 
 void GranularSynth::generateGaussianEnvelope() {

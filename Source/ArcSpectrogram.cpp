@@ -262,7 +262,6 @@ void ArcSpectrogram::setNoteOn(
   mPositionMarkers.clear();
   for (int i = 0; i < boxPositions.size(); ++i) {
     GrainPositionFinder::GrainPosition pos = gPositions[boxPositions[i]];
-    DBG("box pos: " << i << ", pos: " << pos.pitch.posRatio);
     mGPositions.push_back(pos);
     auto newItem = new PositionMarker(pos,
                                       juce::Colour(MARKER_COLOURS[i]));

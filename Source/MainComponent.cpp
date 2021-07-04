@@ -40,7 +40,7 @@ MainComponent::MainComponent()
       for (int box = 0; box < mPositionBoxes.size(); ++box) {
           mPositionBoxes[box].setPositions(
               std::vector<int>(mPositions[mCurPitchClass].begin(),
-                               mPositions[mCurPitchClass].end()), 0);
+                               mPositions[mCurPitchClass].end()));
       }
     };
     mPositionBoxes[i].onParameterChanged =
@@ -54,8 +54,6 @@ MainComponent::MainComponent()
                     (value == true) ? PositionBox::BoxState::SOLO_WAIT
                                     : PositionBox::BoxState::READY);
               }
-              mSynth.updateParameter((GranularSynth::PositionColour)i,
-                                     GranularSynth::ParameterType::SOLO, false);
             }
           }
           mSynth.updateParameter(pos, param, value);
@@ -96,10 +94,6 @@ MainComponent::MainComponent()
   };
 
   addAndMakeVisible(mKeyboard);
-
-  /* Synth */
-  mSynth.updateParameter(GranularSynth::PositionColour::BLUE,
-                                GranularSynth::ParameterType::ENABLED, true);
 
   setSize(1200, 600);
 
@@ -143,22 +137,29 @@ void MainComponent::timerCallback() {
   if (mStartedPlayingTrig && mCurPitchClass != PitchDetector::PitchClass::NONE) {
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
         mPositionFinder.findPositions(PositionBox::MAX_POSITIONS, mCurPitchClass);
+    std::vector<GrainPositionFinder::GrainPosition> gPosToPlay;
     for (int i = 0; i < mPositionBoxes.size(); ++i) {
-      // Messy way of checking if box should be played
-      bool isActive =
-          (mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO_WAIT)
-              ? false
-              : mPositionBoxes[i].getActive() ||
-                    (mPositionBoxes[i].getState() ==
-                     PositionBox::BoxState::SOLO);
-      gPositions[mPositions[mCurPitchClass][i]].isActive = isActive;
+      bool canPlay =
+          mPositionBoxes[i].getState() != PositionBox::BoxState::SOLO_WAIT;
+      bool shouldPlay =
+          mPositionBoxes[i].getActive() ||
+          (mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO);
+      if (canPlay && shouldPlay) {
+        gPositions[mPositions[mCurPitchClass][i]].isActive = true;
+        gPosToPlay.push_back(gPositions[mPositions[mCurPitchClass][i]]);
+      } else {
+        // Push back an inactive position for the synth
+        gPosToPlay.push_back(
+            GrainPositionFinder::GrainPosition(PitchDetector::Pitch(), 1.0));
+      }
     }
     std::vector<int> boxPositions = std::vector<int>(mPositions[mCurPitchClass].begin(),
                            mPositions[mCurPitchClass].end());
     for (int i = 0; i < mPositionBoxes.size(); ++i) {
-      mPositionBoxes[i].setPositions(boxPositions, gPositions.size());
+      mPositionBoxes[i].setPositions(boxPositions);
+      mPositionBoxes[i].setNumPositions(gPositions.size());
     }
-    mSynth.setPositions(mCurPitchClass, gPositions);
+    mSynth.setPositions(mCurPitchClass, gPosToPlay);
     mArcSpec.setNoteOn(mCurPitchClass, gPositions, boxPositions);
     mStartedPlayingTrig = false;
   }

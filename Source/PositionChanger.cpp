@@ -78,19 +78,22 @@ void PositionChanger::paint(juce::Graphics& g) {
         (BUBBLE_WIDTH * mNumPositions) + (BUBBLE_PADDING * (mNumPositions - 1));
     int startX = (getWidth() / 2) - (totalWidth / 2);
     for (int i = 0; i < mNumPositions; ++i) {
-      juce::Colour bubbleColour = getBubbleColour(i);
-      if (!mIsActive) bubbleColour = juce::Colours::darkgrey;
-
       int bubbleStart = startX + i * (BUBBLE_WIDTH + BUBBLE_PADDING);
       juce::Rectangle<float> bubbleRect =
           juce::Rectangle<float>(BUBBLE_WIDTH, BUBBLE_WIDTH);
       bubbleRect = bubbleRect.withCentre(juce::Point<float>(
           bubbleStart + (BUBBLE_WIDTH / 2), getHeight() / 2));
-      g.setColour(bubbleColour);
+      
       if (i == mGlobalPositions[mIndexInBoxes]) {
+        g.setColour(mColour);
         g.fillEllipse(bubbleRect);
       } else {
-        g.drawEllipse(bubbleRect, 1);
+        bool isTaken =
+            std::find(mGlobalPositions.begin(), mGlobalPositions.end(), i) !=
+            mGlobalPositions.end();
+        g.setColour(juce::Colours::darkgrey);
+        if (isTaken) g.fillEllipse(bubbleRect);
+        else g.drawEllipse(bubbleRect, 1);
       }
     }
   }
@@ -170,17 +173,12 @@ void PositionChanger::positionChanged(bool isRight) {
   }
 }
 
-void PositionChanger::setGlobalPositions(std::vector<int> positions, int numPositions) {
+void PositionChanger::setGlobalPositions(std::vector<int> positions) {
   mGlobalPositions = positions;
-  mNumPositions = numPositions;
   repaint();
 }
 
-juce::Colour PositionChanger::getBubbleColour(int position) {
-  for (int i = 0; i < mGlobalPositions.size(); ++i) {
-    if (mGlobalPositions[i] == position) {
-      return juce::Colour(Utils::POSITION_COLOURS[i]);
-    }
-  }
-  return juce::Colours::darkgrey;
+void PositionChanger::setNumPositions(int numPositions) {
+  mNumPositions = numPositions;
+  repaint();
 }

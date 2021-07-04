@@ -36,7 +36,8 @@ class PositionBox : public juce::Component {
   void setState(BoxState state);
   bool getActive() { return mIsActive; }
   void setActive(bool isActive);
-  void setPositions(std::vector<int> positions, int numPositions);
+  void setPositions(std::vector<int> positions);
+  void setNumPositions(int numPositions);
 
   void setColour(GranularSynth::PositionColour colour);
   GranularSynth::PositionParams getParams();
