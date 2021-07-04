@@ -151,6 +151,7 @@ void PitchDetector::segmentPitches() {
       // Keep pushing peaks until starting segments are full
       while (firstPeaks.size() < NUM_ACTIVE_SEGMENTS && peak != peaks.end()) {
         firstPeaks.push_back(*peak);
+        peak++;
         startFrame++;
       }
     }
@@ -172,16 +173,15 @@ void PitchDetector::segmentPitches() {
 
     // Look for continuation candidates in peaks
     for (int i = 0; i < mSegments.size(); ++i) {
-      PitchSegment& curSegment = mSegments[i];
       int closestIdx = -1;
       for (int j = 0; j < peaks.size(); ++j) {
-        float devBins = std::abs(curSegment.binNum - peaks[j].binNum);
+        float devBins = std::abs(mSegments[i].binNum - peaks[j].binNum);
         if (devBins <= MAX_DEVIATION_BINS) {
           // Replace candidate if:
           if (closestIdx == -1) {  // It is the first one
             closestIdx = j;
           } else if (devBins <
-                         std::abs(curSegment.binNum -
+                         std::abs(mSegments[i].binNum -
                                   peaks[closestIdx]
                                       .binNum) ||  // It is closer to the target
                      (peaks[closestIdx].binNum == peaks[j].binNum &&
@@ -195,41 +195,39 @@ void PitchDetector::segmentPitches() {
 
       if (closestIdx == -1) {
         // Mark segment as waiting for continuance
-        if (curSegment.idleFrame == -1) curSegment.idleFrame = frame;
+        if (mSegments[i].idleFrame == -1) mSegments[i].idleFrame = frame;
       } else {
         // Continue segment
-        curSegment.idleFrame = -1;
-        if (!hasBetterCandidateAhead(frame + 1, curSegment.binNum,
-                std::abs(curSegment.binNum - peaks[closestIdx].binNum))) {
-          curSegment.binNum = peaks[closestIdx].binNum;
+        mSegments[i].idleFrame = -1;
+        if (!hasBetterCandidateAhead(frame + 1, mSegments[i].binNum,
+                std::abs(mSegments[i].binNum - peaks[closestIdx].binNum))) {
+          mSegments[i].binNum = peaks[closestIdx].binNum;
         }
-        curSegment.salience +=
+        mSegments[i].salience +=
             peaks[closestIdx].gain;
         peaks[closestIdx].binNum =
             INVALID_BIN;  // Mark peak so it isn't reused for multiple segments
       }
 
       // Check for segment expiration
-      if (curSegment.idleFrame != -1 &&
-          (frame - curSegment.idleFrame) > maxIdleFrames) {
-
-        if (frame - curSegment.startFrame > minNoteFrames) {
+      if (mSegments[i].idleFrame > 0 && (frame - mSegments[i].idleFrame) > maxIdleFrames) {
+        PitchClass pc = getPitchClass(mSegments[i].binNum);
+        if (frame - mSegments[i].startFrame > minNoteFrames) {
           // Push to completed segments
-          PitchClass pc = getPitchClass(curSegment.binNum);
           float confidence =
-              curSegment.salience / (frame - curSegment.startFrame);
+              mSegments[i].salience / (frame - mSegments[i].startFrame);
           if (confidence > maxConfidence) maxConfidence = confidence;
           mPitches.getReference(pc).push_back(
-              Pitch(pc, (float)curSegment.startFrame / mHPCP.size(),
-                                   (float)(frame - curSegment.startFrame) / mHPCP.size(), confidence));
+              Pitch(pc, (float)mSegments[i].startFrame / mHPCP.size(),
+                                   (float)(frame - mSegments[i].startFrame) / mHPCP.size(), confidence));
         }
         // Replace segment with new peak
         for (int j = 0; j < peaks.size(); ++j) {
           if (peaks[j].binNum != INVALID_BIN) {
-            curSegment.startFrame = frame;
-            curSegment.idleFrame = -1;
-            curSegment.binNum = peaks[j].binNum;
-            curSegment.salience = peaks[j].gain;
+            mSegments[i].startFrame = frame;
+            mSegments[i].idleFrame = -1;
+            mSegments[i].binNum = peaks[j].binNum;
+            mSegments[i].salience = peaks[j].gain;
             break;
           }
         }

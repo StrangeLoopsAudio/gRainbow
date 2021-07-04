@@ -9,7 +9,7 @@
 */
 
 #include "PositionBox.h"
-
+#include "Utils.h"
 #include <JuceHeader.h>
 
 //==============================================================================
@@ -110,7 +110,7 @@ void PositionBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
   bool borderLit = (mIsActive || mState == BoxState::SOLO);
-  g.setColour(borderLit ? juce::Colour(POSITION_COLOURS[mColour])
+  g.setColour(borderLit ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                         : juce::Colours::darkgrey);
   g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1), 10.0f, 2.0f);
 }
@@ -153,6 +153,10 @@ void PositionBox::setActive(bool isActive) {
   setState(mState);
 }
 
+void PositionBox::setPositions(std::vector<int> positions, int numPositions) {
+  mPositionChanger.setGlobalPositions(positions, numPositions);
+}
+
 void PositionBox::setState(BoxState state) {
   mState = state;
 
@@ -161,7 +165,7 @@ void PositionBox::setState(BoxState state) {
   }
 
   juce::Colour enabledColour = (state != BoxState::SOLO_WAIT)
-                                ? juce::Colour(POSITION_COLOURS[mColour])
+          ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                                      : juce::Colours::darkgrey;
   mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
                         enabledColour);
@@ -172,7 +176,7 @@ void PositionBox::setState(BoxState state) {
 
   bool componentsLit = (mIsActive && state == BoxState::READY || state == BoxState::SOLO);
   juce::Colour knobColour = componentsLit
-                                ? juce::Colour(POSITION_COLOURS[mColour])
+                                ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                                 : juce::Colours::darkgrey;
   mPositionChanger.setActive(componentsLit);
   mGrainEnvelopes.setActive(componentsLit);
@@ -200,18 +204,14 @@ void PositionBox::setColour(GranularSynth::PositionColour colour) {
   mColour = colour;
   if (mState == BoxState::READY) {
     mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                          juce::Colour(POSITION_COLOURS[colour]));
+                          juce::Colour(Utils::POSITION_COLOURS[colour]));
     mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                        juce::Colours::blue);
   }
-  mPositionChanger.setColour(juce::Colour(POSITION_COLOURS[colour]));
-  mGrainEnvelopes.setColour(juce::Colour(POSITION_COLOURS[colour]));
+  mPositionChanger.setColour(colour,
+                             juce::Colour(Utils::POSITION_COLOURS[colour]));
+  mGrainEnvelopes.setColour(juce::Colour(Utils::POSITION_COLOURS[colour]));
   repaint();
-}
-
-void PositionBox::setPosition(int position) { 
-  mPosition = position; 
-  mPositionChanger.setPosition(position);
 }
 
 void PositionBox::parameterChanged(GranularSynth::ParameterType type,

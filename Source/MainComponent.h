@@ -50,7 +50,7 @@ class MainComponent : public juce::AudioAppComponent,
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 2048;
   static constexpr auto RECORDING_FILE = "gRainbow_user_recording.wav";
-  static constexpr auto NUM_POSITIONS = 4;
+  static constexpr auto NUM_BOXES = 4;
 
   /* UI Layout */
   static constexpr auto PANEL_WIDTH = 300;
@@ -69,6 +69,7 @@ class MainComponent : public juce::AudioAppComponent,
   juce::MidiMessageCollector mMidiCollector;
   double mSampleRate;
   PitchDetector::PitchClass mCurPitchClass = PitchDetector::PitchClass::NONE;
+  bool mStartedPlayingTrig = false;
   Fft mFft;
   juce::AudioBuffer<float> mFileBuffer;
   double mLoadingProgress = 0.0;
@@ -88,13 +89,13 @@ class MainComponent : public juce::AudioAppComponent,
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
-  std::array<PositionBox, NUM_POSITIONS> mPositionBoxes;
+  std::array<PositionBox, NUM_BOXES> mPositionBoxes;
 
   /* Bookkeeping */
   juce::MidiKeyboardState mKeyboardState;
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
-  std::array<std::array<int, NUM_POSITIONS>,
+  std::array<std::array<int, NUM_BOXES>,
              PitchDetector::PitchClass::NUM_PITCH_CLASSES>
       mPositions;
 
@@ -103,6 +104,7 @@ class MainComponent : public juce::AudioAppComponent,
   void startRecording();
   void stopRecording();
   void resetPositions();
+  int findNextPosition(int boxNum, bool isRight);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

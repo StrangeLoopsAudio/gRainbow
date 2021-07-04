@@ -16,7 +16,7 @@ GrainPositionFinder::findPositions(int numPosToFind, PitchDetector::PitchClass p
   if (mPitches == nullptr) return grainPositions;
 
   // TODO: only return numPosToFind positions below
-  if (mGPositions[pitchClass].size() >= numPosToFind) return mGPositions[pitchClass];
+  if (mGPositions[pitchClass].size() > 0) return mGPositions[pitchClass];
 
   // Look for detected pitches with correct pitch and good gain
   bool foundAll = false;
@@ -50,7 +50,7 @@ GrainPositionFinder::findPositions(int numPosToFind, PitchDetector::PitchClass p
       }
     }
     numSearches++;
-    if (numSearches > 11) break;
+    if (numSearches >= 11 || foundAll) break;
   }
 
   pushPositions(pitchClass, grainPositions);

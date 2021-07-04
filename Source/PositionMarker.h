@@ -23,8 +23,9 @@ class PositionMarker : public juce::Button {
 
   void paintButton(juce::Graphics &g, bool shouldDrawButtonAsHighlighted,
                    bool shouldDrawButtonAsDown) override;
-
   void clicked() override;
+
+  GrainPositionFinder::GrainPosition getGrainPosition() { return mGPos; }
 
  private:
   static constexpr auto RECT_RATIO = 0.66;

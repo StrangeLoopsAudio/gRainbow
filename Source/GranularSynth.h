@@ -21,7 +21,7 @@ class GranularSynth : juce::Thread {
  public:
 
   enum ParameterType { ENABLED, SOLO, RATE, DURATION, GAIN };
-  enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_POSITIONS };
+  enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_BOXES };
   typedef struct PositionParams {
     bool isEnabled = false;
     bool solo = false;
@@ -77,8 +77,8 @@ class GranularSynth : juce::Thread {
   double mSampleRate;
 
   /* Grain position parameters */
-  std::array<PositionParams, NUM_POSITIONS> mPositionSettings;
-  std::array<float, NUM_POSITIONS>
+  std::array<PositionParams, NUM_BOXES> mPositionSettings;
+  std::array<float, NUM_BOXES>
       mGrainTriggersMs;  // Keeps track of triggering grains from each position
   PositionColour mNextPositionToPlay = PositionColour::BLUE;
 

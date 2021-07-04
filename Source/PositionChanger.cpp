@@ -9,7 +9,7 @@
 */
 
 #include "PositionChanger.h"
-
+#include "GranularSynth.h"
 #include <JuceHeader.h>
 
 //==============================================================================
@@ -61,17 +61,39 @@ void PositionChanger::paint(juce::Graphics& g) {
                         getWidth() - (arrowWidth * 0.3), getHeight() / 2),
       2, 6, 6);
 
-  /* Draw title rect */
   juce::Rectangle<int> titleRect = getLocalBounds().withSizeKeepingCentre(
       getWidth() * TITLE_PERC, getHeight());
-  g.setColour(bgColour);
+
+  /* Fill in title section to mask ellipses */
+  g.setColour(juce::Colours::black);
   g.fillRect(titleRect);
 
-  /* Draw title text */
-  g.setColour(juce::Colours::black);
-  g.setFont(14.0f);
-  juce::String posString = juce::String("Position #") + juce::String(mPosition);
-  g.drawText(posString, titleRect, juce::Justification::centred, true);
+  /* Draw top/bottom borders */
+  g.setColour(bgColour);
+  g.drawRect(titleRect, 2);
+
+  /* Draw position bubbles */
+  if (mGlobalPositions.size() > 0) {
+    int totalWidth =
+        (BUBBLE_WIDTH * mNumPositions) + (BUBBLE_PADDING * (mNumPositions - 1));
+    int startX = (getWidth() / 2) - (totalWidth / 2);
+    for (int i = 0; i < mNumPositions; ++i) {
+      juce::Colour bubbleColour = getBubbleColour(i);
+      if (!mIsActive) bubbleColour = juce::Colours::darkgrey;
+
+      int bubbleStart = startX + i * (BUBBLE_WIDTH + BUBBLE_PADDING);
+      juce::Rectangle<float> bubbleRect =
+          juce::Rectangle<float>(BUBBLE_WIDTH, BUBBLE_WIDTH);
+      bubbleRect = bubbleRect.withCentre(juce::Point<float>(
+          bubbleStart + (BUBBLE_WIDTH / 2), getHeight() / 2));
+      g.setColour(bubbleColour);
+      if (i == mGlobalPositions[mIndexInBoxes]) {
+        g.fillEllipse(bubbleRect);
+      } else {
+        g.drawEllipse(bubbleRect, 1);
+      }
+    }
+  }
 }
 
 void PositionChanger::resized() {}
@@ -81,13 +103,9 @@ void PositionChanger::setActive(bool isActive) {
   repaint();
 }
 
-void PositionChanger::setColour(juce::Colour colour) {
+void PositionChanger::setColour(int indexInBoxes, juce::Colour colour) {
+  mIndexInBoxes = indexInBoxes;
   mColour = colour;
-  repaint();
-}
-
-void PositionChanger::setPosition(int position) {
-  mPosition = position;
   repaint();
 }
 
@@ -150,4 +168,19 @@ void PositionChanger::positionChanged(bool isRight) {
   if (onPositionChanged != nullptr) {
     onPositionChanged(isRight);
   }
+}
+
+void PositionChanger::setGlobalPositions(std::vector<int> positions, int numPositions) {
+  mGlobalPositions = positions;
+  mNumPositions = numPositions;
+  repaint();
+}
+
+juce::Colour PositionChanger::getBubbleColour(int position) {
+  for (int i = 0; i < mGlobalPositions.size(); ++i) {
+    if (mGlobalPositions[i] == position) {
+      return juce::Colour(Utils::POSITION_COLOURS[i]);
+    }
+  }
+  return juce::Colours::darkgrey;
 }

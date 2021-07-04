@@ -36,8 +36,7 @@ class PositionBox : public juce::Component {
   void setState(BoxState state);
   bool getActive() { return mIsActive; }
   void setActive(bool isActive);
-  int getPosition() { return mPosition; }
-  void setPosition(int position);
+  void setPositions(std::vector<int> positions, int numPositions);
 
   void setColour(GranularSynth::PositionColour colour);
   GranularSynth::PositionParams getParams();
@@ -47,6 +46,7 @@ class PositionBox : public juce::Component {
       onParameterChanged = nullptr;
 
   std::function<void(bool isRight)> onPositionChanged = nullptr;
+  static constexpr auto MAX_POSITIONS = 6;
 
  private:
   /* Params */
@@ -62,15 +62,10 @@ class PositionBox : public juce::Component {
   static constexpr auto LABEL_HEIGHT = 20;
   static constexpr auto ENVELOPE_HEIGHT = 60;
 
-  static constexpr juce::int64 POSITION_COLOURS[GranularSynth::NUM_POSITIONS] =
-      {
-      0xFF52C4FF, 0xFFE352FF,
-                                                      0xFFFF8D52, 0xFF6EFF52};
-
+  /* Bookkeeping */
   GranularSynth::PositionColour mColour;
   BoxState mState = BoxState::READY;
   bool mIsActive = false;
-  int mPosition = 0;
 
   /* UI Components */
   PositionChanger mPositionChanger;

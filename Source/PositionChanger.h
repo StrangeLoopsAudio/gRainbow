@@ -30,8 +30,8 @@ class PositionChanger : public juce::Component {
   void mouseExit(const juce::MouseEvent&) override;
 
   void setActive(bool isActive);
-  void setColour(juce::Colour colour);
-  void setPosition(int position);
+  void setColour(int indexInBoxes, juce::Colour colour);
+  void setGlobalPositions(std::vector<int> positions, int numPositions);
 
   std::function<void(bool isRight)> onPositionChanged = nullptr;
 
@@ -39,10 +39,14 @@ class PositionChanger : public juce::Component {
 
   static constexpr auto TITLE_PERC = 0.6;
   static constexpr auto ARROW_PERC = (1.0 - TITLE_PERC) / 2.0;
+  static constexpr auto BUBBLE_WIDTH = 10;
+  static constexpr auto BUBBLE_PADDING = 5;
 
   bool mIsActive = false;
   juce::Colour mColour;
-  int mPosition = 0;
+  int mIndexInBoxes; // Index among other boxes on screen
+  std::vector<int> mGlobalPositions; // Position indices for each box
+  int mNumPositions = 1;
   bool mIsClickingArrow = false;
   bool mIsOverLeftArrow = false;
   bool mIsOverRightArrow = false;
@@ -51,6 +55,7 @@ class PositionChanger : public juce::Component {
   bool isLeftArrow(juce::Point<float> point);
   bool isRightArrow(juce::Point<float> point);
   void positionChanged(bool isRight);
+  juce::Colour getBubbleColour(int position);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PositionChanger)
 };

@@ -32,17 +32,22 @@ MainComponent::MainComponent()
   for (int i = 0; i < mPositionBoxes.size(); ++i) {
     mPositionBoxes[i].setColour((GranularSynth::PositionColour)i);
     mPositionBoxes[i].setActive(i == 0);
-    mPositionBoxes[i].setPosition(i);
     mSynth.updateParameters((GranularSynth::PositionColour)i,
                             mPositionBoxes[i].getParams());
-    mPositionBoxes[i].onPositionChanged = [this](bool isRight) {
-
+    mPositionBoxes[i].onPositionChanged = [this, i](bool isRight) {
+      mPositions[mCurPitchClass][i] =
+          findNextPosition(i, isRight);
+      for (int box = 0; box < mPositionBoxes.size(); ++box) {
+          mPositionBoxes[box].setPositions(
+              std::vector<int>(mPositions[mCurPitchClass].begin(),
+                               mPositions[mCurPitchClass].end()), 0);
+      }
     };
     mPositionBoxes[i].onParameterChanged =
         [this](GranularSynth::PositionColour pos,
                GranularSynth::ParameterType param, float value) {
           if (param == GranularSynth::ParameterType::SOLO) {
-            for (int i = 0; i < GranularSynth::PositionColour::NUM_POSITIONS;
+            for (int i = 0; i < GranularSynth::PositionColour::NUM_BOXES;
                  ++i) {
               if (i != pos) {
                 mPositionBoxes[i].setState(
@@ -135,20 +140,27 @@ MainComponent::~MainComponent() {
 }
 
 void MainComponent::timerCallback() {
-  if (mCurPitchClass != PitchDetector::PitchClass::NONE) {
+  if (mStartedPlayingTrig && mCurPitchClass != PitchDetector::PitchClass::NONE) {
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
-        mPositionFinder.findPositions(NUM_POSITIONS, mCurPitchClass);
-    for (int i = 0; i < gPositions.size(); ++i) {
+        mPositionFinder.findPositions(PositionBox::MAX_POSITIONS, mCurPitchClass);
+    for (int i = 0; i < mPositionBoxes.size(); ++i) {
+      // Messy way of checking if box should be played
       bool isActive =
-          mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO_WAIT
+          (mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO_WAIT)
               ? false
               : mPositionBoxes[i].getActive() ||
-                    mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO;
-      gPositions[i].isActive = isActive;
+                    (mPositionBoxes[i].getState() ==
+                     PositionBox::BoxState::SOLO);
+      gPositions[mPositions[mCurPitchClass][i]].isActive = isActive;
+    }
+    std::vector<int> boxPositions = std::vector<int>(mPositions[mCurPitchClass].begin(),
+                           mPositions[mCurPitchClass].end());
+    for (int i = 0; i < mPositionBoxes.size(); ++i) {
+      mPositionBoxes[i].setPositions(boxPositions, gPositions.size());
     }
     mSynth.setPositions(mCurPitchClass, gPositions);
-    mArcSpec.setNoteOn(mCurPitchClass, gPositions);
-    mCurPitchClass = PitchDetector::PitchClass::NONE;
+    mArcSpec.setNoteOn(mCurPitchClass, gPositions, boxPositions);
+    mStartedPlayingTrig = false;
   }
 }
 
@@ -180,6 +192,7 @@ void MainComponent::getNextAudioBlock(
       if (md.getMessage().isNoteOn() && mIsProcessingComplete) {
         mCurPitchClass =
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber();
+        mStartedPlayingTrig = true;
       } else if (md.getMessage().isNoteOff() && mIsProcessingComplete) {
         mSynth.stopNote(
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber());
@@ -328,6 +341,24 @@ void MainComponent::stopRecording() {
   mBtnRecord.setButtonText("Start Recording");
   mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
                        juce::Colours::green);
+}
+
+int MainComponent::findNextPosition(int boxNum, bool isRight) {
+  int curPos = mPositions[mCurPitchClass][boxNum];
+  for (int i = 1; i <= PositionBox::MAX_POSITIONS; ++i) {
+    int newPos = isRight ? curPos + i : curPos - i;
+    newPos = newPos % PositionBox::MAX_POSITIONS;
+    bool isValid = true;
+    for (int j = 0; j < mPositions[mCurPitchClass].size(); ++j) {
+      if (mPositions[mCurPitchClass][j] == newPos && boxNum != j) {
+        // Position already taken, move on
+        isValid = false;
+        break;
+      }
+    }
+    if (isValid) return newPos;
+  }
+  return curPos;
 }
 
 /** Fast Debug Mode is used to speed up iterations of testing

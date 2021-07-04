@@ -72,19 +72,20 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     juce::Image vibratingImage = juce::Image(curImage);
     vibratingImage.duplicateIfShared();
 
-    for (GrainPositionFinder::GrainPosition gPos : mGPositions) {
+    for (PositionMarker* marker : mPositionMarkers) {
+      auto gPos = marker->getGrainPosition();
       if (!gPos.isActive) continue;
       auto sweepPos = gPos.pitch.posRatio +
                     ((gPos.pitch.duration / 2) * (mNormalRand(mGenRandom) + 1));
 
-      // Fraw sun ray underneath the spectrogram
-      auto middlePos = gPos.pitch.posRatio + (gPos.pitch.duration / 2);
+      // Draw sun ray underneath the spectrogram
+      /* auto middlePos = gPos.pitch.posRatio + (gPos.pitch.duration / 2);
       auto rayPoint1 = centerPoint.getPointOnCircumference(
           getHeight(), (1.5 * M_PI) + ((middlePos - SUN_RAY_WIDTH) * M_PI));
       auto rayPoint2 = centerPoint.getPointOnCircumference(
           getHeight(), (1.5 * M_PI) + ((middlePos + SUN_RAY_WIDTH) * M_PI));
 
-      sunRays.addTriangle(centerPoint, rayPoint1, rayPoint2);
+      sunRays.addTriangle(centerPoint, rayPoint1, rayPoint2); */
 
 
       for (int i = 0; i < bowWidth; ++i) {
@@ -163,9 +164,9 @@ void ArcSpectrogram::resized() {
   // Position markers around rainbow
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   for (int i = 0; i < mPositionMarkers.size(); ++i) {
-    if (!mGPositions[i].isActive) continue;
-    auto middlePos =
-        mGPositions[i].pitch.posRatio + (mGPositions[i].pitch.duration / 2);
+    auto gPos = mPositionMarkers[i]->getGrainPosition();
+    if (!gPos.isActive) continue;
+    auto middlePos = gPos.pitch.posRatio + (gPos.pitch.duration / 2);
     float angleRad = (M_PI * middlePos) - (M_PI / 2.0f);
     juce::Point<float> p =
         startPoint.getPointOnCircumference(getHeight() - 10, getHeight() - 10, angleRad);
@@ -251,15 +252,20 @@ void ArcSpectrogram::setTransients(
   mTransients = transients;
 }
 
-void ArcSpectrogram::setNoteOn(int midiNote,
-    std::vector<GrainPositionFinder::GrainPosition> gPositions) {
+void ArcSpectrogram::setNoteOn(
+    int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions,
+    std::vector<int> boxPositions) {
   mIsPlayingNote = true;
-  mGPositions = gPositions;
+  mGPositions = std::vector<GrainPositionFinder::GrainPosition>();
   mCurNote = midiNote;
   mGPositions = gPositions;
   mPositionMarkers.clear();
-  for (int i = 0; i < gPositions.size(); ++i) {
-    auto newItem = new PositionMarker(gPositions[i], juce::Colour(MARKER_COLOURS[i]));
+  for (int i = 0; i < boxPositions.size(); ++i) {
+    GrainPositionFinder::GrainPosition pos = gPositions[boxPositions[i]];
+    DBG("box pos: " << i << ", pos: " << pos.pitch.posRatio);
+    mGPositions.push_back(pos);
+    auto newItem = new PositionMarker(pos,
+                                      juce::Colour(MARKER_COLOURS[i]));
     newItem->addListener(this);
     mPositionMarkers.add(newItem);
     addAndMakeVisible(newItem);
@@ -272,7 +278,6 @@ void ArcSpectrogram::buttonClicked(juce::Button* btn) {
   for (int i = 0; i < mPositionMarkers.size(); ++i) {
     if (btn == mPositionMarkers[i]) {
       auto gPos = mGPositions[i];
-      //gPos.isEnabled = btn->getToggleState();
       onPositionUpdated(mCurNote, gPos);
     }
   }

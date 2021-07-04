@@ -15,6 +15,8 @@
 
 class Utils {
  public:
+  static constexpr juce::int64 POSITION_COLOURS[4] = {
+      0xFF52C4FF, 0xFFE352FF, 0xFFFF8D52, 0xFF6EFF52};
   static inline juce::Colour getRainbowColour(float value) {
     int rStripe = (int)std::floor(value * 7);
     float r, g, b;
