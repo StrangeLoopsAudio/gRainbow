@@ -139,26 +139,26 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
 void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
   auto pos = e.getEventRelativeTo(this).position;
   int newNote = xyToNote(pos);
-  bool isValidNote = newNote >= 0 && newNote < NUM_KEYS;
+  bool isValidNote = newNote != INVALID_NOTE;
   if (newNote != mMouseOverNote) {
     // Hovering over new note, send note off for old note if necessary
     if (mIsNotePressed) {
       mState.noteOff(MIDI_CHANNEL, mPressedNote, mNoteVelocity);
-      mPressedNote = -1;
+      mPressedNote = INVALID_NOTE;
     }
     if (isDown && isValidNote) {
       mState.noteOn(MIDI_CHANNEL, newNote, mNoteVelocity);
       mPressedNote = newNote;
     }
   } else {
-    if (isDown && mPressedNote == -1 && isValidNote) {
+    if (isDown && mPressedNote == INVALID_NOTE && isValidNote) {
       // Note on if pressing current note
       mState.noteOn(MIDI_CHANNEL, newNote, mNoteVelocity);
       mPressedNote = newNote;
     } else if (mIsNotePressed && !isDown) {
       // Note off if released current note
       mState.noteOff(MIDI_CHANNEL, mPressedNote, mNoteVelocity);
-      mPressedNote = -1;
+      mPressedNote = INVALID_NOTE;
     }
   }
   mMouseOverNote = newNote;
@@ -167,7 +167,7 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
 }
 
 int RainbowKeyboard::xyToNote(juce::Point<float> pos) {
-  if (!reallyContains(pos.toInt(), false)) return -1;
+  if (!reallyContains(pos.toInt(), false)) return INVALID_NOTE;
   // Since the Juce canvas is all in float, keep in float to prevent strange
   // int-vs-float rounding errors selecting the wrong key
   const float componentHeight = static_cast<float>(getHeight());
@@ -192,5 +192,5 @@ int RainbowKeyboard::xyToNote(juce::Point<float> pos) {
 
   // note not found
   mNoteVelocity = 0;
-  return -1;
+  return INVALID_NOTE;
 }

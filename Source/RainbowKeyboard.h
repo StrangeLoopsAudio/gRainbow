@@ -35,20 +35,19 @@ class RainbowKeyboard : public juce::Component {
 
  private:
   static constexpr int NUM_KEYS = 12;
+  static constexpr int INVALID_NOTE = -1;
   static constexpr float BLACK_NOTE_SIZE_RATIO = 0.7f;
   static constexpr int MIDI_CHANNEL = 1;
-  static constexpr int MIDI_CHANNEL_MASK = 0xffff;
   const int WHITE_KEY_INDICES[7] = {0, 2, 4, 5, 7, 9, 11};
   const int BLACK_KEY_INDICES[5] = {1, 3, 6, 8, 10};
 
   inline bool isBlackKey(int pitchClass) {
-    return ((1 << (pitchClass)) & 0x054a) != 0;  // uses midi channel mask
+    return ((1 << (pitchClass)) & 0x054a) != 0;
   }
 
   juce::MidiKeyboardState& mState;
-  bool shouldCheckState = false;
-  int mMouseOverNote = -1;
-  int mPressedNote = -1;
+  int mMouseOverNote = INVALID_NOTE;
+  int mPressedNote = INVALID_NOTE;
   bool mIsNotePressed = false;
   float mNoteVelocity = 1.0f;
 
