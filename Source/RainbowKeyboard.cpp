@@ -33,6 +33,20 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
   }
 }
 
+float RainbowKeyboard::getPitchXRatio(int pitchClass) {
+  float noteMiddle = getKeyRectangle(pitchClass).getCentreX() / getWidth();
+  bool needsLeftShift = ((1 << (pitchClass)) & 0x021) != 0;
+  bool needsRightShift = ((1 << (pitchClass)) & 0x810) != 0;
+  float shiftAmount = (1.0f / 7.0f) * (BLACK_NOTE_SIZE_RATIO / 4.0f);
+  if (needsLeftShift) { 
+    return noteMiddle - shiftAmount;
+  } else if (needsRightShift) {
+    return noteMiddle + shiftAmount;
+  } else {
+    return noteMiddle;
+  }
+}
+
 juce::Rectangle<float> RainbowKeyboard::getKeyRectangle(int pitchClass) {
   // Originially this was a mix of float and ints
   // Was changed to bring everything to floats
@@ -69,6 +83,16 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, int pitchClass) {
 
   juce::Rectangle<float> area = getKeyRectangle(pitchClass);
   g.setColour(keyColor);
+  if (isDown) {
+    g.setFillType(juce::ColourGradient(
+        keyColor.brighter(), juce::Point<float>(0.0f, 0.0f), keyColor,
+        juce::Point<float>(0, getHeight()), false));
+  } else {
+    g.setFillType(juce::ColourGradient(
+        keyColor, juce::Point<float>(0.0f, 0.0f), keyColor.brighter(),
+        juce::Point<float>(0, getHeight()), false));
+  }
+
   g.fillRect(area);
   g.setColour(juce::Colours::black);
   auto isBlackKey = ((1 << (pitchClass)) & 0x054a) != 0;

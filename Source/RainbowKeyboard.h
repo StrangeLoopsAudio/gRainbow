@@ -29,6 +29,10 @@ class RainbowKeyboard : public juce::Component {
   void mouseEnter(const juce::MouseEvent&) override;
   void mouseExit(const juce::MouseEvent&) override;
 
+  // Returns a value between 0.0-1.0 representing the note's x position on the
+  // keyboard
+  float getPitchXRatio(int pitchClass);
+
  private:
   static constexpr auto NUM_KEYS = 12;
   static constexpr auto BLACK_NOTE_SIZE_RATIO = 0.7f;

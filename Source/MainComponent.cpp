@@ -144,7 +144,8 @@ void MainComponent::timerCallback() {
       bool shouldPlay =
           mPositionBoxes[i].getActive() ||
           (mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO);
-      if (canPlay && shouldPlay) {
+      if (canPlay && shouldPlay && !mPositions.empty() &&
+          gPositions.size() >= NUM_BOXES) {
         gPositions[mPositions[mCurPitchClass][i]].isActive = true;
         gPosToPlay.push_back(gPositions[mPositions[mCurPitchClass][i]]);
       } else {
@@ -153,15 +154,20 @@ void MainComponent::timerCallback() {
             GrainPositionFinder::GrainPosition(PitchDetector::Pitch(), 1.0));
       }
     }
-    std::vector<int> boxPositions = std::vector<int>(mPositions[mCurPitchClass].begin(),
-                           mPositions[mCurPitchClass].end());
-    for (int i = 0; i < mPositionBoxes.size(); ++i) {
-      mPositionBoxes[i].setPositions(boxPositions);
-      mPositionBoxes[i].setNumPositions(gPositions.size());
+
+    if (!mPositions.empty()) {
+      std::vector<int> boxPositions = std::vector<int>(
+          mPositions[mCurPitchClass].begin(), mPositions[mCurPitchClass].end());
+      for (int i = 0; i < mPositionBoxes.size(); ++i) {
+        mPositionBoxes[i].setPositions(boxPositions);
+        mPositionBoxes[i].setNumPositions(gPositions.size());
+      }
+
+      mSynth.setPositions(mCurPitchClass, gPosToPlay);
+      mArcSpec.setNoteOn(mCurPitchClass, gPositions, boxPositions);
     }
-    mSynth.setPositions(mCurPitchClass, gPosToPlay);
-    mArcSpec.setNoteOn(mCurPitchClass, gPositions, boxPositions);
     mStartedPlayingTrig = false;
+    repaint(); // Update note display
   }
 }
 
@@ -190,11 +196,11 @@ void MainComponent::getNextAudioBlock(
                                        true);
   if (!incomingMidi.isEmpty()) {
     for (juce::MidiMessageMetadata md : incomingMidi) {
-      if (md.getMessage().isNoteOn() && mIsProcessingComplete) {
+      if (md.getMessage().isNoteOn()) {
         mCurPitchClass =
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber();
         mStartedPlayingTrig = true;
-      } else if (md.getMessage().isNoteOff() && mIsProcessingComplete) {
+      } else if (md.getMessage().isNoteOff()) {
         mSynth.stopNote(
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber());
         mArcSpec.setNoteOff();
@@ -214,9 +220,33 @@ void MainComponent::releaseResources() {
 
 //==============================================================================
 void MainComponent::paint(juce::Graphics& g) {
-  // (Our component is opaque, so we must completely fill the background with a
-  // solid colour)
   g.fillAll(juce::Colours::black);
+
+  // Draw note display
+  juce::Colour noteDisplayColour;
+  if (mCurPitchClass != PitchDetector::PitchClass::NONE) {
+    noteDisplayColour = Utils::getRainbow12Colour(
+        1.0f - (float)(mCurPitchClass + 0.5f) / PitchDetector::PitchClass::NUM_PITCH_CLASSES);
+    g.setColour(noteDisplayColour);
+    float offsetPadding =
+        mKeyboard.getWidth() *
+        mKeyboard.getPitchXRatio(PitchDetector::PitchClass::C);
+    g.drawRoundedRectangle(
+        mKeyboard.getBounds()
+            .withTop(mArcSpec.getY() - 2.0f)
+            .withBottom(mArcSpec.getBottom() + 2.0f)
+            .withLeft(mKeyboard.getX() + 2.0f)
+            .withRight(mKeyboard.getRight() - 2.0f)
+            .toFloat(),
+        10.0f, 3.0f);
+    juce::Path displayPath;
+    float noteX =
+        mKeyboard.getBounds().getX() +
+        (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(mCurPitchClass));
+    g.drawLine(juce::Line<float>(noteX, mNoteDisplayRect.getBottom(), noteX,
+                          mArcSpec.getBottom()), 4.0f);
+    
+  }
 }
 
 void MainComponent::resized() {
@@ -232,14 +262,19 @@ void MainComponent::resized() {
       rightPanel.removeFromTop(rightPanel.getHeight() / 2));
   mPositionBoxes[3].setBounds(rightPanel);
 
+  // Open and record buttons
   auto filePanel = r.removeFromTop(KNOB_HEIGHT);
   mBtnOpenFile.setBounds(filePanel.removeFromLeft(filePanel.getWidth() / 2));
   mBtnRecord.setBounds(filePanel);
 
-  mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT)
-                          .withSizeKeepingCentre(PANEL_WIDTH, KEYBOARD_HEIGHT));
+  // Keyboard
+  mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT));
 
-  mArcSpec.setBounds(r.removeFromBottom(r.getWidth() / 2.0f));
+  // Space for note display
+  mNoteDisplayRect = r.removeFromBottom(NOTE_DISPLAY_HEIGHT).reduced(3).toFloat();
+
+  // Arc spectrogram
+  mArcSpec.setBounds(r.removeFromBottom(r.getWidth() / 2.0f).reduced(10));
   mProgressBar.setBounds(
       mArcSpec.getBounds().withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
 }

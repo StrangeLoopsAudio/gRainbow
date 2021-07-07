@@ -260,15 +260,17 @@ void ArcSpectrogram::setNoteOn(
   mCurNote = midiNote;
   mGPositions = gPositions;
   mPositionMarkers.clear();
-  for (int i = 0; i < boxPositions.size(); ++i) {
-    GrainPositionFinder::GrainPosition pos = gPositions[boxPositions[i]];
-    mGPositions.push_back(pos);
-    auto newItem = new PositionMarker(pos,
-                                      juce::Colour(MARKER_COLOURS[i]));
-    newItem->addListener(this);
-    mPositionMarkers.add(newItem);
-    addAndMakeVisible(newItem);
+  if (gPositions.size() >= NUM_TYPES) {
+    for (int i = 0; i < boxPositions.size(); ++i) {
+      GrainPositionFinder::GrainPosition pos = gPositions[boxPositions[i]];
+      mGPositions.push_back(pos);
+      auto newItem = new PositionMarker(pos, juce::Colour(MARKER_COLOURS[i]));
+      newItem->addListener(this);
+      mPositionMarkers.add(newItem);
+      addAndMakeVisible(newItem);
+    }
   }
+
   resized();
 }
 
