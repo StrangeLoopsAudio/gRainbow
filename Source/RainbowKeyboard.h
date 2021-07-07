@@ -41,6 +41,10 @@ class RainbowKeyboard : public juce::Component {
   const int WHITE_KEY_INDICES[7] = {0, 2, 4, 5, 7, 9, 11};
   const int BLACK_KEY_INDICES[5] = {1, 3, 6, 8, 10};
 
+  inline bool isBlackKey(int pitchClass) {
+    return ((1 << (pitchClass)) & 0x054a) != 0;  // uses midi channel mask
+  }
+
   juce::MidiKeyboardState& mState;
   bool shouldCheckState = false;
   int mMouseOverNote = -1;

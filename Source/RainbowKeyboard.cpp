@@ -23,11 +23,11 @@ RainbowKeyboard::~RainbowKeyboard() {}
 void RainbowKeyboard::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
-  // Draw each white key but rainbowy
+  // Draw each white key then black key so the black keys rect are fully on top
+  // of white key rect visually
   for (int key : WHITE_KEY_INDICES) {
     drawKey(g, key);
   }
-  // Draw each black key but rainbowy
   for (int key : BLACK_KEY_INDICES) {
     drawKey(g, key);
   }
@@ -66,9 +66,9 @@ juce::Rectangle<float> RainbowKeyboard::getKeyRectangle(int pitchClass) {
                                   6.0f * keyWidth - blackKeyOffset,
                                   6.0f * keyWidth};
 
-  auto isBlackKey = ((1 << (pitchClass)) & 0x054a) != 0;
-  auto width = isBlackKey ? BLACK_NOTE_SIZE_RATIO * keyWidth : keyWidth;
-  auto height = isBlackKey ? getHeight() / 2 : getHeight();
+  bool blackKey = isBlackKey(pitchClass);
+  auto width = blackKey ? BLACK_NOTE_SIZE_RATIO * keyWidth : keyWidth;
+  auto height = blackKey ? getHeight() / 2 : getHeight();
 
   return juce::Rectangle<float>(notePos[pitchClass], 0, width, height);
 }
@@ -76,9 +76,9 @@ juce::Rectangle<float> RainbowKeyboard::getKeyRectangle(int pitchClass) {
 void RainbowKeyboard::drawKey(juce::Graphics& g, int pitchClass) {
   bool isOver = pitchClass == mMouseOverNote;
   bool isDown = isOver && mIsNotePressed;
-  float normPc = (pitchClass + 0.5) / NUM_KEYS;
-  auto keyColor = Utils::getRainbow12Colour(1.0f - normPc);
+  auto keyColor = Utils::getRainbow12Colour(pitchClass);
   if (isOver) keyColor = keyColor.darker();
+  // Will make 2nd level darker on press
   if (isDown) keyColor = keyColor.darker();
 
   juce::Rectangle<float> area = getKeyRectangle(pitchClass);
@@ -95,8 +95,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, int pitchClass) {
 
   g.fillRect(area);
   g.setColour(juce::Colours::black);
-  auto isBlackKey = ((1 << (pitchClass)) & 0x054a) != 0;
-  g.drawRect(area, isBlackKey ? 2 : 1);
+  g.drawRect(area, isBlackKey(pitchClass) ? 2 : 1);
 }
 
 void RainbowKeyboard::resized() {}
