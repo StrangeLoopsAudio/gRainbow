@@ -38,7 +38,7 @@ float RainbowKeyboard::getPitchXRatio(int pitchClass) {
   bool needsLeftShift = ((1 << (pitchClass)) & 0x021) != 0;
   bool needsRightShift = ((1 << (pitchClass)) & 0x810) != 0;
   float shiftAmount = (1.0f / 7.0f) * (BLACK_NOTE_SIZE_RATIO / 4.0f);
-  if (needsLeftShift) { 
+  if (needsLeftShift) {
     return noteMiddle - shiftAmount;
   } else if (needsRightShift) {
     return noteMiddle + shiftAmount;
@@ -47,30 +47,43 @@ float RainbowKeyboard::getPitchXRatio(int pitchClass) {
   }
 }
 
+void RainbowKeyboard::fillNoteRectangleMap() {
+  // Keep everything in float to match Retangale type
+  const float componentWidth = static_cast<float>(getWidth());
+  const float componentHeight = static_cast<float>(getHeight());
+
+  const float keyWidth = componentWidth / 7.0f;
+  const float blackKeyOffset = BLACK_NOTE_SIZE_RATIO * keyWidth / 2.0f;
+
+  const float notePos[NUM_KEYS] = {0.0f * keyWidth,
+                                   1.0f * keyWidth - blackKeyOffset,
+                                   1.0f * keyWidth,
+                                   2.0f * keyWidth - blackKeyOffset,
+                                   2.0f * keyWidth,
+                                   3.0f * keyWidth,
+                                   4.0f * keyWidth - blackKeyOffset,
+                                   4.0f * keyWidth,
+                                   5.0f * keyWidth - blackKeyOffset,
+                                   5.0f * keyWidth,
+                                   6.0f * keyWidth - blackKeyOffset,
+                                   6.0f * keyWidth};
+
+  const float blackNoteWidth = BLACK_NOTE_SIZE_RATIO * keyWidth;
+  const float whiteNoteWidth = keyWidth;
+  const float blackNoteHeight = componentHeight / 2.0f;
+  const float whiteNoteHeight = componentHeight;
+
+  for (int key = 0; key < NUM_KEYS; key++) {
+    const bool blackKey = isBlackKey(key);
+    mNoteRectangleMap[key].setBounds(
+        notePos[key], 0, (blackKey) ? blackNoteWidth : whiteNoteWidth,
+        (blackKey) ? blackNoteHeight : whiteNoteHeight);
+  }
+}
+
 juce::Rectangle<float> RainbowKeyboard::getKeyRectangle(int pitchClass) {
-  // Originially this was a mix of float and ints
-  // Was changed to bring everything to floats
-  // if any precision issue occur, feel free to keep as int as long as needed
-  float keyWidth = static_cast<float>(getWidth() / 7);
-  float blackKeyOffset = BLACK_NOTE_SIZE_RATIO * keyWidth / 2.0f;
-  static const float notePos[] = {0.0f,
-                                  keyWidth - blackKeyOffset,
-                                  keyWidth,
-                                  2.0f * keyWidth - blackKeyOffset,
-                                  2.0f * keyWidth,
-                                  3.0f * keyWidth,
-                                  4.0f * keyWidth - blackKeyOffset,
-                                  4.0f * keyWidth,
-                                  5.0f * keyWidth - blackKeyOffset,
-                                  5.0f * keyWidth,
-                                  6.0f * keyWidth - blackKeyOffset,
-                                  6.0f * keyWidth};
-
-  bool blackKey = isBlackKey(pitchClass);
-  auto width = blackKey ? BLACK_NOTE_SIZE_RATIO * keyWidth : keyWidth;
-  auto height = blackKey ? getHeight() / 2 : getHeight();
-
-  return juce::Rectangle<float>(notePos[pitchClass], 0, width, height);
+  jassert(pitchClass >= 0 && pitchClass < NUM_KEYS);
+  return mNoteRectangleMap[pitchClass];
 }
 
 void RainbowKeyboard::drawKey(juce::Graphics& g, int pitchClass) {
@@ -98,7 +111,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, int pitchClass) {
   g.drawRect(area, isBlackKey(pitchClass) ? 2 : 1);
 }
 
-void RainbowKeyboard::resized() {}
+void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
 
 void RainbowKeyboard::mouseMove(const juce::MouseEvent& e) {
   updateNoteOver(e, false);
@@ -126,7 +139,7 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
 void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
   auto pos = e.getEventRelativeTo(this).position;
   int newNote = xyToNote(pos);
-  bool isValidNote = newNote >= 0 && newNote <= 12;
+  bool isValidNote = newNote >= 0 && newNote < NUM_KEYS;
   if (newNote != mMouseOverNote) {
     // Hovering over new note, send note off for old note if necessary
     if (mIsNotePressed) {
@@ -155,9 +168,12 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
 
 int RainbowKeyboard::xyToNote(juce::Point<float> pos) {
   if (!reallyContains(pos.toInt(), false)) return -1;
-  auto p = pos;
-  auto blackNoteLength = getHeight() / 2;
+  // Since the Juce canvas is all in float, keep in float to prevent strange
+  // int-vs-float rounding errors selecting the wrong key
+  const float componentHeight = static_cast<float>(getHeight());
+  const float blackNoteLength = componentHeight / 2.0f;
 
+  // can skip quick checking black notes from y position
   if (pos.getY() < blackNoteLength) {
     for (int note : BLACK_KEY_INDICES) {
       if (getKeyRectangle(note).contains(pos)) {
@@ -169,12 +185,12 @@ int RainbowKeyboard::xyToNote(juce::Point<float> pos) {
 
   for (int note : WHITE_KEY_INDICES) {
     if (getKeyRectangle(note).contains(pos)) {
-      auto whiteNoteLength = getHeight();
-      mNoteVelocity = juce::jmax(0.0f, pos.y / (float)whiteNoteLength);
+      mNoteVelocity = juce::jmax(0.0f, pos.y / componentHeight);
       return note;
     }
   }
 
+  // note not found
   mNoteVelocity = 0;
   return -1;
 }
