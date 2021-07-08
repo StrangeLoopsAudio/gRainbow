@@ -34,21 +34,27 @@ class RainbowKeyboard : public juce::Component {
   float getPitchXRatio(int pitchClass);
 
  private:
-  static constexpr auto NUM_KEYS = 12;
-  static constexpr auto BLACK_NOTE_SIZE_RATIO = 0.7f;
-  static constexpr auto MIDI_CHANNEL = 1;
-  static constexpr auto MIDI_CHANNEL_MASK = 0xffff;
+  static constexpr int NUM_KEYS = 12;
+  static constexpr int INVALID_NOTE = -1;
+  static constexpr float BLACK_NOTE_SIZE_RATIO = 0.7f;
+  static constexpr int MIDI_CHANNEL = 1;
   const int WHITE_KEY_INDICES[7] = {0, 2, 4, 5, 7, 9, 11};
   const int BLACK_KEY_INDICES[5] = {1, 3, 6, 8, 10};
 
+  inline bool isBlackKey(int pitchClass) {
+    return ((1 << (pitchClass)) & 0x054a) != 0;
+  }
+
   juce::MidiKeyboardState& mState;
-  bool shouldCheckState = false;
-  int mMouseOverNote = -1;
-  int mPressedNote = -1;
+  int mMouseOverNote = INVALID_NOTE;
+  int mPressedNote = INVALID_NOTE;
   bool mIsNotePressed = false;
   float mNoteVelocity = 1.0f;
 
-  juce::Rectangle<float> getKeyRectangle(int pitchClass);
+  // Notes rectangle are recreated on resize and then just become a LUT
+  juce::Rectangle<float> mNoteRectangleMap[NUM_KEYS];
+  void fillNoteRectangleMap();
+
   void drawKey(juce::Graphics& g, int pitchClass);
   void updateNoteOver(const juce::MouseEvent& e, bool isDown);
   int xyToNote(juce::Point<float> pos);
