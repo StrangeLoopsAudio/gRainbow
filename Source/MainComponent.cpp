@@ -225,8 +225,7 @@ void MainComponent::paint(juce::Graphics& g) {
   // Draw note display
   juce::Colour noteDisplayColour;
   if (mCurPitchClass != PitchDetector::PitchClass::NONE) {
-    noteDisplayColour = Utils::getRainbow12Colour(
-        1.0f - (float)(mCurPitchClass + 0.5f) / PitchDetector::PitchClass::NUM_PITCH_CLASSES);
+    noteDisplayColour = Utils::getRainbow12Colour(mCurPitchClass);
     g.setColour(noteDisplayColour);
     float offsetPadding =
         mKeyboard.getWidth() *
