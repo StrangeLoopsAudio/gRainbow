@@ -23,8 +23,8 @@ RainbowKeyboard::~RainbowKeyboard() {}
 void RainbowKeyboard::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
-  // Draw each white key then black key so the black keys rect are fully on top
-  // of white key rect visually
+  // Draw each white key, but rainbowy, then black key, but rainbowy, so the
+  // black keys rect are fully on top of white key rect visually
   for (int key : WHITE_KEY_INDICES) {
     drawKey(g, key);
   }
@@ -34,7 +34,8 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
 }
 
 float RainbowKeyboard::getPitchXRatio(int pitchClass) {
-  float noteMiddle = getKeyRectangle(pitchClass).getCentreX() / getWidth();
+  float noteMiddle = mNoteRectangleMap[pitchClass].getCentreX() /
+                     static_cast<float>(getWidth());
   bool needsLeftShift = ((1 << (pitchClass)) & 0x021) != 0;
   bool needsRightShift = ((1 << (pitchClass)) & 0x810) != 0;
   float shiftAmount = (1.0f / 7.0f) * (BLACK_NOTE_SIZE_RATIO / 4.0f);
@@ -48,7 +49,7 @@ float RainbowKeyboard::getPitchXRatio(int pitchClass) {
 }
 
 void RainbowKeyboard::fillNoteRectangleMap() {
-  // Keep everything in float to match Retangale type
+  // Keep everything in float to match Rectangle type
   const float componentWidth = static_cast<float>(getWidth());
   const float componentHeight = static_cast<float>(getHeight());
 
@@ -81,11 +82,6 @@ void RainbowKeyboard::fillNoteRectangleMap() {
   }
 }
 
-juce::Rectangle<float> RainbowKeyboard::getKeyRectangle(int pitchClass) {
-  jassert(pitchClass >= 0 && pitchClass < NUM_KEYS);
-  return mNoteRectangleMap[pitchClass];
-}
-
 void RainbowKeyboard::drawKey(juce::Graphics& g, int pitchClass) {
   bool isOver = pitchClass == mMouseOverNote;
   bool isDown = isOver && mIsNotePressed;
@@ -94,7 +90,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, int pitchClass) {
   // Will make 2nd level darker on press
   if (isDown) keyColor = keyColor.darker();
 
-  juce::Rectangle<float> area = getKeyRectangle(pitchClass);
+  juce::Rectangle<float> area = mNoteRectangleMap[pitchClass];
   g.setColour(keyColor);
   if (isDown) {
     g.setFillType(juce::ColourGradient(
@@ -176,7 +172,7 @@ int RainbowKeyboard::xyToNote(juce::Point<float> pos) {
   // can skip quick checking black notes from y position
   if (pos.getY() < blackNoteLength) {
     for (int note : BLACK_KEY_INDICES) {
-      if (getKeyRectangle(note).contains(pos)) {
+      if (mNoteRectangleMap[note].contains(pos)) {
         mNoteVelocity = juce::jmax(0.0f, pos.y / blackNoteLength);
         return note;
       }
@@ -184,7 +180,7 @@ int RainbowKeyboard::xyToNote(juce::Point<float> pos) {
   }
 
   for (int note : WHITE_KEY_INDICES) {
-    if (getKeyRectangle(note).contains(pos)) {
+    if (mNoteRectangleMap[note].contains(pos)) {
       mNoteVelocity = juce::jmax(0.0f, pos.y / componentHeight);
       return note;
     }

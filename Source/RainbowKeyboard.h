@@ -54,7 +54,6 @@ class RainbowKeyboard : public juce::Component {
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectangleMap[NUM_KEYS];
   void fillNoteRectangleMap();
-  juce::Rectangle<float> getKeyRectangle(int pitchClass);
 
   void drawKey(juce::Graphics& g, int pitchClass);
   void updateNoteOver(const juce::MouseEvent& e, bool isDown);
