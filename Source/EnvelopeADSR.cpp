@@ -34,17 +34,16 @@ void EnvelopeADSR::paint (juce::Graphics& g)
                            getLocalBounds().getBottomLeft().toFloat(), false));
 
   // Draw ADSR path
-  float maxParamWidth = getWidth() / 4.0f;
   juce::Path adsrPath;
   adsrPath.startNewSubPath(juce::Point<float>(0, getHeight()));
-  adsrPath.lineTo(juce::Point<float>(mAttack * maxParamWidth, 0));
+  adsrPath.lineTo(juce::Point<float>(mAttack * getWidth() * 0.375f, 0));
   adsrPath.lineTo(adsrPath.getCurrentPosition()
-                      .translated(mDecay * maxParamWidth, 0.0f)
+                      .translated(mDecay * getWidth() * 0.375f, 0.0f)
                       .withY((1.0f - mSustain) * getHeight()));
-  adsrPath.lineTo(juce::Point<float>(maxParamWidth * 3.0f,
+  adsrPath.lineTo(juce::Point<float>(getWidth() * 0.75f,
                                      (1.0f - mSustain) * getHeight()));
   adsrPath.lineTo(adsrPath.getCurrentPosition()
-                      .translated(mRelease * maxParamWidth, 0.0f)
+                      .translated(mRelease * getWidth() * 0.25f, 0.0f)
                       .withY(getHeight()));
   adsrPath.closeSubPath();
   g.fillPath(adsrPath);
