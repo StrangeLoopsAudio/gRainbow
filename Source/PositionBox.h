@@ -12,7 +12,8 @@
 
 #include <JuceHeader.h>
 #include "GranularSynth.h"
-#include "RainbowEnvelopes.h"
+#include "EnvelopeGrain.h"
+#include "EnvelopeADSR.h"
 #include "PositionChanger.h"
 
 //==============================================================================
@@ -51,10 +52,15 @@ class PositionBox : public juce::Component {
 
  private:
   /* Params */
-  static constexpr auto NUM_PARAMS = 3;
+  static constexpr auto NUM_AMP_ENV_PARAMS = 4;
+  static constexpr auto NUM_GRAIN_ENV_PARAMS = 3;
   static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
   static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
   static constexpr auto PARAM_GAIN_DEFAULT = 0.8f;
+  static constexpr auto PARAM_ATTACK_DEFAULT = 0.2f;
+  static constexpr auto PARAM_DECAY_DEFAULT = 0.2f;
+  static constexpr auto PARAM_SUSTAIN_DEFAULT = 0.8f;
+  static constexpr auto PARAM_RELEASE_DEFAULT = 0.5f;
 
   /* UI Layout */
   static constexpr auto PADDING_SIZE = 5;
@@ -78,7 +84,16 @@ class PositionBox : public juce::Component {
   juce::Label mLabelDuration;
   juce::Slider mSliderGain;
   juce::Label mLabelGain;
-  RainbowEnvelopes mGrainEnvelopes;
+  EnvelopeGrain mEnvelopeGrain;
+  EnvelopeADSR mEnvelopeAmp;
+  juce::Slider mSliderAttack;
+  juce::Label mLabelAttack;
+  juce::Slider mSliderDecay;
+  juce::Label mLabelDecay;
+  juce::Slider mSliderSustain;
+  juce::Label mLabelSustain;
+  juce::Slider mSliderRelease;
+  juce::Label mLabelRelease;
 
   void parameterChanged(GranularSynth::ParameterType type, float value);
 

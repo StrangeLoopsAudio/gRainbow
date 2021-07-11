@@ -27,16 +27,18 @@
               file="Source/TransientDetector.h"/>
       </GROUP>
       <GROUP id="{32B46666-89F3-1953-7D07-B92E6B19F9CC}" name="Components">
+        <FILE id="Kneijy" name="EnvelopeADSR.cpp" compile="1" resource="0"
+              file="Source/EnvelopeADSR.cpp"/>
+        <FILE id="S0aoQH" name="EnvelopeADSR.h" compile="0" resource="0" file="Source/EnvelopeADSR.h"/>
         <FILE id="pUL1nX" name="PositionChanger.cpp" compile="1" resource="0"
               file="Source/PositionChanger.cpp"/>
         <FILE id="aiE1ou" name="PositionChanger.h" compile="0" resource="0"
               file="Source/PositionChanger.h"/>
         <FILE id="ZdXIcB" name="PositionBox.cpp" compile="1" resource="0" file="Source/PositionBox.cpp"/>
         <FILE id="GJ2blE" name="PositionBox.h" compile="0" resource="0" file="Source/PositionBox.h"/>
-        <FILE id="l4WuPd" name="RainbowEnvelopes.cpp" compile="1" resource="0"
-              file="Source/RainbowEnvelopes.cpp"/>
-        <FILE id="BuwWMv" name="RainbowEnvelopes.h" compile="0" resource="0"
-              file="Source/RainbowEnvelopes.h"/>
+        <FILE id="l4WuPd" name="EnvelopeGrain.cpp" compile="1" resource="0"
+              file="Source/EnvelopeGrain.cpp"/>
+        <FILE id="BuwWMv" name="EnvelopeGrain.h" compile="0" resource="0" file="Source/EnvelopeGrain.h"/>
         <FILE id="hxCpOe" name="RainbowKeyboard.cpp" compile="1" resource="0"
               file="Source/RainbowKeyboard.cpp"/>
         <FILE id="fxVnvT" name="RainbowKeyboard.h" compile="0" resource="0"

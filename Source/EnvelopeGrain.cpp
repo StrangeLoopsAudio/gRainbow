@@ -1,18 +1,17 @@
 /*
   ==============================================================================
 
-    RainbowEnvelopes.cpp
+    EnvelopeGrain.cpp
     Created: 23 Jun 2021 8:34:54pm
     Author:  brady
 
   ==============================================================================
 */
 
-#include "RainbowEnvelopes.h"
-
+#include "EnvelopeGrain.h"
 #include <JuceHeader.h>
 
-void RainbowEnvelopes::paint(juce::Graphics& g) {
+void EnvelopeGrain::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
   juce::Colour envColour = mIsActive ? mColour : juce::Colours::darkgrey;
@@ -45,29 +44,29 @@ void RainbowEnvelopes::paint(juce::Graphics& g) {
   }
 }
 
-void RainbowEnvelopes::resized() {}
+void EnvelopeGrain::resized() {}
 
-void RainbowEnvelopes::setActive(bool isActive) {
+void EnvelopeGrain::setActive(bool isActive) {
   mIsActive = isActive;
   repaint();
 }
 
-void RainbowEnvelopes::setRate(float rate) {
+void EnvelopeGrain::setRate(float rate) {
   mRate = rate;
   repaint();
 }
 
-void RainbowEnvelopes::setDuration(float duration) {
+void EnvelopeGrain::setDuration(float duration) {
   mDuration = duration;
   repaint();
 }
 
-void RainbowEnvelopes::setGain(float gain) {
+void EnvelopeGrain::setGain(float gain) {
   mGain = gain;
   repaint();
 }
 
-void RainbowEnvelopes::setColour(juce::Colour colour) {
+void EnvelopeGrain::setColour(juce::Colour colour) {
   mColour = colour;
   repaint();
 }

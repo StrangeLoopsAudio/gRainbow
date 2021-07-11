@@ -9,7 +9,6 @@
 #include "GranularSynth.h"
 #include "PitchDetector.h"
 #include "PositionBox.h"
-#include "RainbowEnvelopes.h"
 #include "RainbowKeyboard.h"
 #include "RainbowLookAndFeel.h"
 #include "TransientDetector.h"

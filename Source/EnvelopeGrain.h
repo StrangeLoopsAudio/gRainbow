@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    RainbowEnvelopes.h
+    EnvelopeGrain.h
     Created: 23 Jun 2021 8:34:54pm
     Author:  brady
 
@@ -15,10 +15,10 @@
 //==============================================================================
 /*
  */
-class RainbowEnvelopes : public juce::Component {
+class EnvelopeGrain : public juce::Component {
  public:
-  RainbowEnvelopes() {}
-  ~RainbowEnvelopes() override {}
+  EnvelopeGrain() {}
+  ~EnvelopeGrain() override {}
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -41,5 +41,5 @@ class RainbowEnvelopes : public juce::Component {
   bool mIsActive = false;
   juce::Colour mColour;
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowEnvelopes)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeGrain)
 };

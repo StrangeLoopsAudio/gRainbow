@@ -55,7 +55,7 @@ PositionBox::PositionBox() {
   mSliderRate.setRotaryParameters(rotaryParams);
   mSliderRate.setRange(0.0, 1.0, 0.01);
   mSliderRate.onValueChange = [this] {
-    mGrainEnvelopes.setRate(mSliderRate.getValue());
+    mEnvelopeGrain.setRate(mSliderRate.getValue());
     parameterChanged(GranularSynth::ParameterType::RATE,
                      mSliderRate.getValue());
   };
@@ -72,7 +72,7 @@ PositionBox::PositionBox() {
   mSliderDuration.setRotaryParameters(rotaryParams);
   mSliderDuration.setRange(0.0, 1.0, 0.01);
   mSliderDuration.onValueChange = [this] {
-    mGrainEnvelopes.setDuration(mSliderDuration.getValue());
+    mEnvelopeGrain.setDuration(mSliderDuration.getValue());
     parameterChanged(GranularSynth::ParameterType::DURATION,
                      mSliderDuration.getValue());
   };
@@ -89,7 +89,7 @@ PositionBox::PositionBox() {
   mSliderGain.setRotaryParameters(rotaryParams);
   mSliderGain.setRange(0.0, 1.0, 0.01);
   mSliderGain.onValueChange = [this] {
-    mGrainEnvelopes.setGain(mSliderGain.getValue());
+    mEnvelopeGrain.setGain(mSliderGain.getValue());
     parameterChanged(GranularSynth::ParameterType::GAIN,
                      mSliderGain.getValue());
   };
@@ -100,8 +100,79 @@ PositionBox::PositionBox() {
   mLabelGain.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelGain);
 
-  /* Envelope viz */
-  addAndMakeVisible(mGrainEnvelopes);
+  /* Grain envelope viz */
+  addAndMakeVisible(mEnvelopeGrain);
+
+  /* Amp envelope viz */
+  addAndMakeVisible(mEnvelopeAmp);
+
+  /* Attack */
+  mSliderAttack.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderAttack.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderAttack.setRotaryParameters(rotaryParams);
+  mSliderAttack.setRange(0.0, 1.0, 0.01);
+  mSliderAttack.onValueChange = [this] {
+    mEnvelopeAmp.setAttack(mSliderAttack.getValue());
+    parameterChanged(GranularSynth::ParameterType::ATTACK,
+                     mSliderAttack.getValue());
+  };
+  mSliderAttack.setValue(PARAM_ATTACK_DEFAULT, juce::sendNotification);
+  addAndMakeVisible(mSliderAttack);
+
+  mLabelAttack.setText("Attack", juce::dontSendNotification);
+  mLabelAttack.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelAttack);
+
+  /* Decay */
+  mSliderDecay.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderDecay.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderDecay.setRotaryParameters(rotaryParams);
+  mSliderDecay.setRange(0.0, 1.0, 0.01);
+  mSliderDecay.onValueChange = [this] {
+    mEnvelopeAmp.setDecay(mSliderDecay.getValue());
+    parameterChanged(GranularSynth::ParameterType::DECAY,
+                     mSliderDecay.getValue());
+  };
+  mSliderDecay.setValue(PARAM_DECAY_DEFAULT, juce::sendNotification);
+  addAndMakeVisible(mSliderDecay);
+
+  mLabelDecay.setText("Decay", juce::dontSendNotification);
+  mLabelDecay.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelDecay);
+
+  /* Sustain */
+  mSliderSustain.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderSustain.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderSustain.setRotaryParameters(rotaryParams);
+  mSliderSustain.setRange(0.0, 1.0, 0.01);
+  mSliderSustain.onValueChange = [this] {
+    mEnvelopeAmp.setSustain(mSliderSustain.getValue());
+    parameterChanged(GranularSynth::ParameterType::SUSTAIN,
+                     mSliderSustain.getValue());
+  };
+  mSliderSustain.setValue(PARAM_SUSTAIN_DEFAULT, juce::sendNotification);
+  addAndMakeVisible(mSliderSustain);
+
+  mLabelSustain.setText("Sustain", juce::dontSendNotification);
+  mLabelSustain.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelSustain);
+
+  /* Release */
+  mSliderRelease.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderRelease.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderRelease.setRotaryParameters(rotaryParams);
+  mSliderRelease.setRange(0.0, 1.0, 0.01);
+  mSliderRelease.onValueChange = [this] {
+    mEnvelopeAmp.setRelease(mSliderRelease.getValue());
+    parameterChanged(GranularSynth::ParameterType::RELEASE,
+                     mSliderRelease.getValue());
+  };
+  mSliderRelease.setValue(PARAM_RELEASE_DEFAULT, juce::sendNotification);
+  addAndMakeVisible(mSliderRelease);
+
+  mLabelRelease.setText("Release", juce::dontSendNotification);
+  mLabelRelease.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelRelease);
 }
 
 PositionBox::~PositionBox() {}
@@ -129,19 +200,39 @@ void PositionBox::resized() {
   mBtnSolo.setBounds(btnPanel.removeFromRight(TOGGLE_SIZE));
   mPositionChanger.setBounds(btnPanel.withSizeKeepingCentre(
       btnPanel.getWidth() * 0.7, btnPanel.getHeight()));
+
+  r.removeFromTop(PADDING_SIZE);
   
-  /* Envelopes */
-  mGrainEnvelopes.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
+  // Amp envelope
+  mEnvelopeAmp.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
   r.removeFromTop(PADDING_SIZE);
 
-  // Knobs and labels
-  auto knobWidth = r.getWidth() / NUM_PARAMS;
+  // Amp env knobs
+  auto knobWidth = r.getWidth() / NUM_AMP_ENV_PARAMS;
   auto knobPanel = r.removeFromTop(knobWidth / 2);
+  mSliderAttack.setBounds(knobPanel.removeFromLeft(knobWidth));
+  mSliderDecay.setBounds(knobPanel.removeFromLeft(knobWidth));
+  mSliderSustain.setBounds(knobPanel.removeFromLeft(knobWidth));
+  mSliderRelease.setBounds(knobPanel.removeFromLeft(knobWidth));
+
+  auto labelPanel = r.removeFromTop(LABEL_HEIGHT);
+  mLabelAttack.setBounds(labelPanel.removeFromLeft(knobWidth));
+  mLabelDecay.setBounds(labelPanel.removeFromLeft(knobWidth));
+  mLabelSustain.setBounds(labelPanel.removeFromLeft(knobWidth));
+  mLabelRelease.setBounds(labelPanel.removeFromLeft(knobWidth));
+
+  // Grain envelopes
+  mEnvelopeGrain.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
+  r.removeFromTop(PADDING_SIZE);
+
+  // Grain env knobs
+  knobWidth = r.getWidth() / NUM_GRAIN_ENV_PARAMS;
+  knobPanel = r.removeFromTop(knobWidth / 2);
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderDuration.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderGain.setBounds(knobPanel.removeFromLeft(knobWidth));
 
-  auto labelPanel = r.removeFromTop(LABEL_HEIGHT);
+  labelPanel = r.removeFromTop(LABEL_HEIGHT);
   mLabelRate.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelDuration.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
@@ -183,8 +274,22 @@ void PositionBox::setState(BoxState state) {
                                 ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                                 : juce::Colours::darkgrey;
   mPositionChanger.setActive(componentsLit);
-  mGrainEnvelopes.setActive(componentsLit);
   
+  mEnvelopeAmp.setActive(componentsLit);
+  mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                        knobColour);
+  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                        knobColour);
+  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                        knobColour);
+  mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                        knobColour);
+  mLabelAttack.setEnabled(componentsLit);
+  mLabelDecay.setEnabled(componentsLit);
+  mLabelSustain.setEnabled(componentsLit);
+  mLabelRelease.setEnabled(componentsLit);
+  
+  mEnvelopeGrain.setActive(componentsLit);
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                         knobColour);
   mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
@@ -200,20 +305,22 @@ void PositionBox::setState(BoxState state) {
 GranularSynth::PositionParams PositionBox::getParams() {
   return GranularSynth::PositionParams(
       mSliderRate.getValue(), mSliderDuration.getValue(),
-      mSliderGain.getValue());
+      mSliderGain.getValue(), mSliderAttack.getValue(), mSliderDecay.getValue(),
+      mSliderSustain.getValue(), mSliderRelease.getValue());
 }
 
 void PositionBox::setColour(GranularSynth::PositionColour colour) {
   mColour = colour;
+  juce::Colour newColour = juce::Colour(Utils::POSITION_COLOURS[colour]);
   if (mState == BoxState::READY) {
     mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                          juce::Colour(Utils::POSITION_COLOURS[colour]));
+                          newColour);
     mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                        juce::Colours::blue);
   }
-  mPositionChanger.setColour(colour,
-                             juce::Colour(Utils::POSITION_COLOURS[colour]));
-  mGrainEnvelopes.setColour(juce::Colour(Utils::POSITION_COLOURS[colour]));
+  mPositionChanger.setColour(colour, newColour);
+  mEnvelopeGrain.setColour(newColour);
+  mEnvelopeAmp.setColour(newColour);
   repaint();
 }
 

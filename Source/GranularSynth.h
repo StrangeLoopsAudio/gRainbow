@@ -20,16 +20,26 @@
 class GranularSynth : juce::Thread {
  public:
 
-  enum ParameterType { ENABLED, SOLO, RATE, DURATION, GAIN };
+  enum ParameterType { ENABLED, SOLO, RATE, DURATION, GAIN, ATTACK, DECAY, SUSTAIN, RELEASE };
   enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_BOXES };
   typedef struct PositionParams {
     float rate;
     float duration;
     float gain;
+    float attack;
+    float decay;
+    float sustain;
+    float release;
     PositionParams() {}
-    PositionParams(float rate, float duration,
-                   float gain)
-        : rate(rate), duration(duration), gain(gain) {}
+    PositionParams(float rate, float duration, float gain, float attack,
+                   float decay, float sustain, float release)
+        : rate(rate),
+          duration(duration),
+          gain(gain),
+          attack(attack),
+          decay(decay),
+          sustain(sustain),
+          release(release) {}
   } PositionParams;
 
   GranularSynth();
@@ -55,6 +65,12 @@ class GranularSynth : juce::Thread {
   static constexpr auto MAX_DURATION_MS = 300.0f;
   static constexpr auto MIN_RATE_RATIO = .125f;
   static constexpr auto MAX_RATE_RATIO = 1.0f;
+  static constexpr auto MIN_ATTACK_MS = 10.0f;
+  static constexpr auto MAX_ATTACK_MS = 10000.0f;
+  static constexpr auto MIN_DECAY_MS = 10.0f;
+  static constexpr auto MAX_DECAY_MS = 10000.0f;
+  static constexpr auto MIN_RELEASE_MS = 10.0f;
+  static constexpr auto MAX_RELEASE_MS = 10000.0f;
   static constexpr auto MAX_GRAINS = 100; // Max grains active at once
 
   typedef struct GrainNote {
