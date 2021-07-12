@@ -48,7 +48,6 @@ class RainbowKeyboard : public juce::Component {
   juce::MidiKeyboardState& mState;
   int mMouseOverNote = INVALID_NOTE;
   int mPressedNote = INVALID_NOTE;
-  bool mIsNotePressed = false;
   float mNoteVelocity = 1.0f;
 
   // Notes rectangle are recreated on resize and then just become a LUT
