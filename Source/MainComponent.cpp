@@ -30,9 +30,9 @@ MainComponent::MainComponent()
 
   /* Position boxes */
   for (int i = 0; i < mPositionBoxes.size(); ++i) {
-    mPositionBoxes[i].setColour((GranularSynth::PositionColour)i);
+    mPositionBoxes[i].setColour((Utils::PositionColour)i);
     mPositionBoxes[i].setActive(i == 0);
-    mSynth.updateParameters((GranularSynth::PositionColour)i,
+    mSynth.updateParameters((Utils::PositionColour)i,
                             mPositionBoxes[i].getParams());
     mPositionBoxes[i].onPositionChanged = [this, i](bool isRight) {
       mPositions[mCurPitchClass][i] =
@@ -44,10 +44,10 @@ MainComponent::MainComponent()
       }
     };
     mPositionBoxes[i].onParameterChanged =
-        [this](GranularSynth::PositionColour pos,
+        [this](Utils::PositionColour pos,
                GranularSynth::ParameterType param, float value) {
           if (param == GranularSynth::ParameterType::SOLO) {
-            for (int i = 0; i < GranularSynth::PositionColour::NUM_BOXES;
+            for (int i = 0; i < Utils::PositionColour::NUM_BOXES;
                  ++i) {
               if (i != pos) {
                 mPositionBoxes[i].setState(
@@ -95,7 +95,7 @@ MainComponent::MainComponent()
 
   addAndMakeVisible(mKeyboard);
 
-  setSize(1200, 600);
+  setSize(1200, 565);
 
   // Some platforms require permissions to open input channels so request that
   // here

@@ -66,7 +66,7 @@ void GranularSynth::run() {
     for (int i = 0; i < mGrainTriggersMs.size(); ++i) {
       if (mGrainTriggersMs[i] < nextGrainWaitTime) {
         nextGrainWaitTime = mGrainTriggersMs[i];
-        nextGrainPosition = (PositionColour)i;
+        nextGrainPosition = (Utils::PositionColour)i;
       }
     }
     
@@ -125,7 +125,7 @@ void GranularSynth::stopNote(PitchDetector::PitchClass pitchClass) {
       [pitchClass](GrainNote& note) { return note.pitchClass == pitchClass; });
 }
 
-void GranularSynth::updateParameters(PositionColour colour,
+void GranularSynth::updateParameters(Utils::PositionColour colour,
   PositionParams params) {
   mPositionSettings[colour] = params;
   // Initialize grain triggering timestamps
@@ -137,8 +137,8 @@ void GranularSynth::updateParameters(PositionColour colour,
   }
 }
 
-void GranularSynth::updateParameter(
-    PositionColour colour, ParameterType param, float value) {
+void GranularSynth::updateParameter(Utils::PositionColour colour,
+                                    ParameterType param, float value) {
   switch (param) {
     case ParameterType::RATE:
       mPositionSettings[colour].rate = value;

@@ -27,7 +27,7 @@ void EnvelopeADSR::paint (juce::Graphics& g)
 {
   g.fillAll(juce::Colours::black);
 
-  juce::Colour envColour = mIsActive ? mColour : juce::Colours::darkgrey;
+  juce::Colour envColour = mIsActive ? juce::Colour(Utils::POSITION_COLOURS[mColour]) : juce::Colours::darkgrey;
   g.setFillType(
       juce::ColourGradient(envColour, getLocalBounds().getTopLeft().toFloat(),
                            envColour.withAlpha(0.4f),
@@ -47,6 +47,38 @@ void EnvelopeADSR::paint (juce::Graphics& g)
                       .withY(getHeight()));
   adsrPath.closeSubPath();
   g.fillPath(adsrPath);
+
+  // Draw highlight lines on top of each segment
+  g.setColour(mIsActive
+                  ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][0])
+                  : juce::Colours::darkgrey);
+  g.drawLine(
+      juce::Line<float>(0, getHeight(), mAttack * getWidth() * 0.375f, 0),
+      2.0f);
+  g.setColour(mIsActive
+                  ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][1])
+                  : juce::Colours::darkgrey);
+  g.drawLine(juce::Line<float>(
+                 mAttack * getWidth() * 0.375f, 0,
+                 mAttack * getWidth() * 0.375f + mDecay * getWidth() * 0.375f,
+                 (1.0f - mSustain) * getHeight()),
+             2.0f);
+  g.setColour(mIsActive
+                  ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][2])
+                  : juce::Colours::darkgrey);
+  g.drawLine(juce::Line<float>(
+                 mAttack * getWidth() * 0.375f + mDecay * getWidth() * 0.375f,
+                 (1.0f - mSustain) * getHeight(), getWidth() * 0.75f,
+                 (1.0f - mSustain) * getHeight()),
+             2.0f);
+  g.setColour(mIsActive
+                  ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][3])
+                  : juce::Colours::darkgrey);
+  g.drawLine(
+      juce::Line<float>(getWidth() * 0.75f, (1.0f - mSustain) * getHeight(),
+                        mRelease * getWidth() * 0.25f + getWidth() * 0.75f,
+                        getHeight()),
+      2.0f);
 }
 
 void EnvelopeADSR::resized()
@@ -78,7 +110,7 @@ void EnvelopeADSR::setRelease(float release) {
   repaint();
 }
 
-void EnvelopeADSR::setColour(juce::Colour colour) {
+void EnvelopeADSR::setColour(Utils::PositionColour colour) {
   mColour = colour;
   repaint();
 }

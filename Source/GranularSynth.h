@@ -21,7 +21,6 @@ class GranularSynth : juce::Thread {
  public:
 
   enum ParameterType { ENABLED, SOLO, RATE, DURATION, GAIN, ATTACK, DECAY, SUSTAIN, RELEASE };
-  enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_BOXES };
   typedef struct PositionParams {
     float rate;
     float duration;
@@ -50,8 +49,8 @@ class GranularSynth : juce::Thread {
   void process(juce::AudioBuffer<float>* blockBuffer);
   void setPositions(PitchDetector::PitchClass pitchClass,
                     std::vector<GrainPositionFinder::GrainPosition> gPositions);
-  void updateParameters(PositionColour colour, PositionParams params);
-  void updateParameter(PositionColour colour, ParameterType param,
+  void updateParameters(Utils::PositionColour colour, PositionParams params);
+  void updateParameter(Utils::PositionColour colour, ParameterType param,
                               float value);
   void stopNote(PitchDetector::PitchClass pitchClass);
 
@@ -91,10 +90,10 @@ class GranularSynth : juce::Thread {
   double mSampleRate;
 
   /* Grain position parameters */
-  std::array<PositionParams, NUM_BOXES> mPositionSettings;
-  std::array<float, NUM_BOXES>
+  std::array<PositionParams, Utils::NUM_BOXES> mPositionSettings;
+  std::array<float, Utils::NUM_BOXES>
       mGrainTriggersMs;  // Keeps track of triggering grains from each position
-  PositionColour mNextPositionToPlay = PositionColour::BLUE;
+  Utils::PositionColour mNextPositionToPlay = Utils::PositionColour::BLUE;
 
   // Generate gaussian envelope to be used for each grain
   void generateGaussianEnvelope();

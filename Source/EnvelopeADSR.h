@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Utils.h"
 
 //==============================================================================
 /*
@@ -28,7 +29,7 @@ class EnvelopeADSR : public juce::Component {
   void setDecay(float decay);
   void setSustain(float sustain);
   void setRelease(float release);
-  void setColour(juce::Colour colour);
+  void setColour(Utils::PositionColour colour);
 
  private:
 
@@ -38,7 +39,7 @@ class EnvelopeADSR : public juce::Component {
   float mSustain = 0.8f;
   float mRelease = 0.2f;
   bool mIsActive = false;
-  juce::Colour mColour;
+  Utils::PositionColour mColour;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeADSR)
 };

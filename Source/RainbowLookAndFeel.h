@@ -30,24 +30,30 @@ private:
    int stripeInc = (height - curStripeStart) / 7;
    juce::Colour rainbowCol =
        slider.findColour(juce::Slider::ColourIds::rotarySliderFillColourId);
+
+   // Draw main arc
    g.setFillType(
        juce::ColourGradient(rainbowCol, slider.getLocalBounds().getBottomLeft().toFloat(),
                             rainbowCol.withAlpha(0.4f),
                             slider.getLocalBounds().getTopLeft().toFloat(), false));
    juce::Path rainbowPath = juce::Path();
-   rainbowPath.addCentredArc(width / 2.0f, height, width / 3.0f, width / 3.0f,
+   rainbowPath.addCentredArc(width / 2.0f, height, width / 2.7f, width / 2.7f,
                              0, startRadians, endRadians, true);
    g.strokePath(rainbowPath, juce::PathStrokeType(width / 4.0f));
-   // Draw boundaries
+
+   // Draw outline arcs
+   juce::Colour outlineCol =
+       slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
+   g.setFillType(juce::ColourGradient(
+       outlineCol, slider.getLocalBounds().getBottomLeft().toFloat(),
+       outlineCol.withAlpha(0.4f),
+       slider.getLocalBounds().getTopLeft().toFloat(), false));
    rainbowPath.clear();
-   rainbowPath.addCentredArc(width / 2.f, height, height / 2.5, height / 2.5, 0,
-                             1.5 * juce::MathConstants<float>::pi,
-                             2.5 * juce::MathConstants<float>::pi,
+   rainbowPath.addCentredArc(width / 2.0f, height, (width / 2.0f) - 2,
+                             (width / 2.0f) - 2, 0, startRadians, endRadians,
                              true);
-   rainbowPath.addCentredArc(width / 2.f, height, curStripeStart, curStripeStart, 0,
-                             1.5 * juce::MathConstants<float>::pi,
-                             2.5 * juce::MathConstants<float>::pi, true);
- }
+   g.strokePath(rainbowPath, juce::PathStrokeType(3));
+  }
 
   void drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn,
                        bool shouldDrawButtonAsHighlighted,
