@@ -26,8 +26,18 @@ public:
 
  //==============================================================================
  void initialise(const juce::String& commandLine) override {
-   // This method is where you should put your application's initialisation
-   // code..
+   // Where JUCEApplicationBase::main() first calls into post
+   // gRainbowApplication construction
+
+   // There is no known reason for pre-6 not being valid, just lack of testing
+   // with older versions It is quite possible gRainbow works perfectly with
+   // older versions
+   if (JUCE_MAJOR_VERSION < 6) {
+     DBG("[ERROR] Using JUCE version "
+         << juce::SystemStats::getJUCEVersion()
+         << " but gRainbow requires JUCE 6.0.0 or greater");
+     jassertfalse;
+   }
 
    mainWindow.reset(new MainWindow(getApplicationName()));
 
