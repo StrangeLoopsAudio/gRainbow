@@ -25,24 +25,19 @@ private:
    float pos = juce::jmax(0.02f, sliderPosProportional);
     float startRadians = 1.5f * juce::MathConstants<float>::pi;
    float endRadians = startRadians + (pos * juce::MathConstants<float>::pi);
-   juce::Path rainbowPath = juce::Path();
+   
    int curStripeStart = height / 2.5;
    int stripeInc = (height - curStripeStart) / 7;
    juce::Colour rainbowCol =
        slider.findColour(juce::Slider::ColourIds::rotarySliderFillColourId);
-   for (int i = 0; i < 7; i++) {
-     rainbowPath.clear();
-     rainbowPath.addCentredArc(width / 2.f, height,
-                               curStripeStart + (stripeInc / 2.0f),
-                               curStripeStart + (stripeInc / 2.0f), 0,
-                               startRadians, endRadians, true);
-     curStripeStart += stripeInc;
-     juce::Colour stripeCol =
-         rainbowCol.interpolatedWith(
-         rainbowCol.withLightness(1.0), i / 28.0f);
-     g.setColour(stripeCol);
-     g.strokePath(rainbowPath, juce::PathStrokeType(stripeInc + 1));
-   }
+   g.setFillType(
+       juce::ColourGradient(rainbowCol, slider.getLocalBounds().getBottomLeft().toFloat(),
+                            rainbowCol.withAlpha(0.4f),
+                            slider.getLocalBounds().getTopLeft().toFloat(), false));
+   juce::Path rainbowPath = juce::Path();
+   rainbowPath.addCentredArc(width / 2.0f, height, width / 3.0f, width / 3.0f,
+                             0, startRadians, endRadians, true);
+   g.strokePath(rainbowPath, juce::PathStrokeType(width / 4.0f));
    // Draw boundaries
    rainbowPath.clear();
    rainbowPath.addCentredArc(width / 2.f, height, height / 2.5, height / 2.5, 0,
