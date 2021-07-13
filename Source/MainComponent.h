@@ -53,6 +53,9 @@ class MainComponent : public juce::AudioAppComponent,
   static constexpr auto NUM_BOXES = 4;
 
   /* UI Layout */
+  static constexpr auto BTN_PANEL_HEIGHT = 50;
+  static constexpr auto BTN_PADDING = 5;
+  static constexpr auto OPEN_FILE_WIDTH = 80;
   static constexpr auto PANEL_WIDTH = 300;
   static constexpr auto ROW_PADDING_HEIGHT = 10;
   static constexpr auto KNOB_HEIGHT = 50;
@@ -75,8 +78,8 @@ class MainComponent : public juce::AudioAppComponent,
 
   /* UI Components */
   juce::ImageComponent mLogo;
-  juce::TextButton mBtnOpenFile;
-  juce::TextButton mBtnRecord;
+  juce::ImageButton mBtnOpenFile;
+  juce::ImageButton mBtnRecord;
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;

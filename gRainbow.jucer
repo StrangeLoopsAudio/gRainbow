@@ -4,7 +4,14 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="ba9WAI" name="gRainbow">
     <GROUP id="{3D076030-E8B1-BD35-63A3-8EC3578EB076}" name="Resources">
-      <FILE id="t7g2fA" name="logo.png" compile="0" resource="1" file="logo.png"/>
+      <FILE id="pRRPGl" name="logo.png" compile="0" resource="1" file="Source/Resources/logo.png"/>
+      <FILE id="sUPYzB" name="microphone.png" compile="0" resource="1" file="Source/Resources/microphone.png"/>
+      <FILE id="aoVA5U" name="microphoneOver.png" compile="0" resource="1"
+            file="Source/Resources/microphoneOver.png"/>
+      <FILE id="FtKTl3" name="openFileNormal.png" compile="0" resource="1"
+            file="Source/Resources/openFileNormal.png"/>
+      <FILE id="Anmb9x" name="openFileOver.png" compile="0" resource="1"
+            file="Source/Resources/openFileOver.png"/>
     </GROUP>
     <GROUP id="{60D4D942-21D3-C19F-F50C-B527C5EBF681}" name="Source">
       <GROUP id="{2B54AF71-8109-B401-8064-8E1A69683930}" name="DSP">

@@ -11,14 +11,26 @@ MainComponent::MainComponent()
   setLookAndFeel(&mRainbowLookAndFeel);
 
   /* Open file button */
-  mBtnOpenFile.setButtonText("Open File");
+  juce::Image openFileNormal = juce::PNGImageFormat::loadFrom(
+      BinaryData::openFileNormal_png, BinaryData::openFileNormal_pngSize);
+  juce::Image openFileOver = juce::PNGImageFormat::loadFrom(
+      BinaryData::openFileOver_png, BinaryData::openFileOver_pngSize);
+  mBtnOpenFile.setImages(false, true, true, openFileNormal, 1.0f,
+                         juce::Colours::transparentBlack, openFileOver, 1.0f,
+                         juce::Colours::transparentBlack, openFileOver, 1.0f,
+                         juce::Colours::transparentBlack);
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
 
   /* Recording button */
-  mBtnRecord.setButtonText("Start Recording");
-  mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
-                       juce::Colours::green);
+  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(
+      BinaryData::microphone_png, BinaryData::microphone_pngSize);
+  juce::Image recordOver = juce::PNGImageFormat::loadFrom(
+      BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
+  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f,
+                       juce::Colours::transparentBlack, recordOver, 1.0f,
+                       juce::Colours::transparentBlack, recordOver, 1.0f,
+                       juce::Colours::transparentBlack);
   mBtnRecord.onClick = [this] {
     if (mRecorder.isRecording()) {
       stopRecording();
@@ -222,6 +234,15 @@ void MainComponent::releaseResources() {
 //==============================================================================
 void MainComponent::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
+
+  // Draw background for open file button
+  g.setColour(juce::Colours::darkgrey);
+  g.fillRoundedRectangle(mBtnOpenFile.getBounds().toFloat(), 14);
+
+  // Draw background for record button
+  g.setColour(mRecorder.isRecording() ? juce::Colours::red
+                                    : juce::Colours::darkgrey);
+  g.fillRoundedRectangle(mBtnRecord.getBounds().toFloat(), 14);
 }
 
 void MainComponent::paintOverChildren(juce::Graphics& g) {
@@ -273,9 +294,12 @@ void MainComponent::resized() {
   mPositionBoxes[3].setBounds(rightPanel);
 
   // Open and record buttons
-  auto filePanel = r.removeFromTop(KNOB_HEIGHT);
-  mBtnOpenFile.setBounds(filePanel.removeFromLeft(filePanel.getWidth() / 2));
-  mBtnRecord.setBounds(filePanel);
+  auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT + BTN_PADDING);
+  filePanel.removeFromLeft(BTN_PADDING);
+  filePanel.removeFromTop(BTN_PADDING);
+  mBtnOpenFile.setBounds(filePanel.removeFromLeft(OPEN_FILE_WIDTH));
+  filePanel.removeFromLeft(BTN_PADDING);
+  mBtnRecord.setBounds(filePanel.removeFromLeft(OPEN_FILE_WIDTH));
 
   r.removeFromTop(NOTE_DISPLAY_HEIGHT); // Just padding
   
@@ -374,9 +398,14 @@ void MainComponent::startRecording() {
 
   mRecorder.startRecording(mRecordedFile);
 
-  mBtnRecord.setButtonText("Stop Recording");
-  mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
-                       juce::Colours::red);
+  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(
+      BinaryData::microphone_png, BinaryData::microphone_pngSize);
+  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f,
+                       juce::Colours::transparentBlack, recordIcon, 1.0f,
+                       juce::Colours::transparentBlack, recordIcon, 1.0f,
+                       juce::Colours::transparentBlack);
+
+  repaint();
 }
 
 void MainComponent::stopRecording() {
@@ -386,9 +415,16 @@ void MainComponent::stopRecording() {
 
   mRecordedFile = juce::File();
 
-  mBtnRecord.setButtonText("Start Recording");
-  mBtnRecord.setColour(juce::TextButton::ColourIds::buttonColourId,
-                       juce::Colours::green);
+  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(
+      BinaryData::microphone_png, BinaryData::microphone_pngSize);
+  juce::Image recordOver = juce::PNGImageFormat::loadFrom(
+      BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
+  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f,
+                       juce::Colours::transparentBlack, recordOver, 1.0f,
+                       juce::Colours::transparentBlack, recordOver, 1.0f,
+                       juce::Colours::transparentBlack);
+
+  repaint();
 }
 
 int MainComponent::findNextPosition(int boxNum, bool isRight) {

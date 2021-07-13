@@ -21,10 +21,10 @@ class Utils {
   static constexpr juce::int64 POSITION_COLOURS[4] = {0xFF52C4FF, 0xFFE352FF,
                                                       0xFFFF8D52, 0xFF6EFF52};
   static constexpr juce::int64 SECONDARY_POSITION_COLOURS[4][4] = {
-      {0xFF526EFF, 0xFF8D52FF, 0xFFE352FF, 0xFFFF52C4},
-      {0xFFFF52C5, 0xFFFF526E, 0xFFFF8C52, 0xFFFFE352},
-      {0xFFFFE352, 0xFFC4FF52, 0xFF6DFF52, 0xFF52FF8D},
-      {0xFF52FF8C, 0xFF52FFE3, 0xFF52C5FF, 0xFF526EFF}};
+      {0xFF529AFF, 0xFF526FFF, 0xFF6152FF, 0xFF8C52FF},
+      {0xFFFF52F0, 0xFFFF52C5, 0xFFFF5299, 0xFFFF526E},
+      {0xFFFFB752, 0xFFFFE352, 0xFFF0FF52, 0xFFC5FF52},
+      {0xFF52FF60, 0xFF52FF8C, 0xFF52FFB7, 0xFF52FFE2}};
 
   static inline juce::Colour getRainbowColour(int value) {
     jassert(value >= 0 && value <= 6);
