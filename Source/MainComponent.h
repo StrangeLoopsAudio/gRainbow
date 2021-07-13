@@ -35,6 +35,7 @@ class MainComponent : public juce::AudioAppComponent,
 
   //==============================================================================
   void paint(juce::Graphics& g) override;
+  void paintOverChildren(juce::Graphics& g) override;
   void resized() override;
 
   void run() override;
@@ -62,18 +63,8 @@ class MainComponent : public juce::AudioAppComponent,
   static constexpr auto KEYBOARD_HEIGHT = 200;
   static constexpr auto MIN_NOTE_NUM = 45;
   static constexpr auto MAX_NOTE_NUM = 56;
-  static constexpr auto NOTE_DISPLAY_HEIGHT = 5;
-
-  RainbowLookAndFeel mRainbowLookAndFeel;
-  juce::AudioFormatManager mFormatManager;
-  juce::MidiMessageCollector mMidiCollector;
-  double mSampleRate;
-  PitchDetector::PitchClass mCurPitchClass = PitchDetector::PitchClass::NONE;
-  bool mStartedPlayingTrig = false;
-  Fft mFft;
-  juce::AudioBuffer<float> mFileBuffer;
-  double mLoadingProgress = 0.0;
-  bool mIsProcessingComplete = false;
+  static constexpr auto NOTE_BULB_SIZE = 10;
+  static constexpr auto NOTE_DISPLAY_HEIGHT = 20;
 
   /* DSP Modules */
   TransientDetector mTransientDetector;
@@ -93,12 +84,23 @@ class MainComponent : public juce::AudioAppComponent,
   juce::Rectangle<float> mNoteDisplayRect;
 
   /* Bookkeeping */
+  double mSampleRate;
+  PitchDetector::PitchClass mCurPitchClass = PitchDetector::PitchClass::NONE;
+  std::vector<GrainPositionFinder::GrainPosition> mCurPositions;
   juce::MidiKeyboardState mKeyboardState;
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
   std::array<std::array<int, NUM_BOXES>,
              PitchDetector::PitchClass::NUM_PITCH_CLASSES>
       mPositions;
+  double mLoadingProgress = 0.0;
+  bool mIsProcessingComplete = false;
+  bool mStartedPlayingTrig = false;
+  Fft mFft;
+  juce::AudioBuffer<float> mFileBuffer;
+  RainbowLookAndFeel mRainbowLookAndFeel;
+  juce::AudioFormatManager mFormatManager;
+  juce::MidiMessageCollector mMidiCollector;
 
   void openNewFile(const char* path = nullptr);
   void processFile(juce::File file);

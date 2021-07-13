@@ -8,13 +8,10 @@
   ==============================================================================
 */
 
-#define _USE_MATH_DEFINES
-
 #include "ArcSpectrogram.h"
 
 #include <JuceHeader.h>
 #include <limits.h>
-#include <math.h>
 #include "Utils.h"
 
 //==============================================================================
@@ -56,17 +53,6 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   int bowWidth = endRadius - startRadius;
   juce::Image& curImage = mImages[specType];
 
-  /*if (specType != SpecType::LOGO) {
-    auto bgColourStart = mIsPlayingNote ? juce::Colour(COLOUR_SUN_REGULAR_RAYS)
-                                        : juce::Colour(COLOUR_NIGHT);
-    auto bgColourEnd =
-        mIsPlayingNote ? juce::Colour(COLOUR_DAY)
-                                      : juce::Colour(COLOUR_NIGHT);
-    g.setFillType(juce::ColourGradient(bgColourStart, centerPoint, bgColourEnd,
-                                       centerPoint.withY(0), true));
-    g.fillAll();
-  } */
-
   if (mIsPlayingNote) {
     juce::Path sunRays;
     juce::Image vibratingImage = juce::Image(curImage);
@@ -77,37 +63,42 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
       if (!gPos.isActive) continue;
       auto sweepPos = gPos.pitch.posRatio +
                     ((gPos.pitch.duration / 2) * (mNormalRand(mGenRandom) + 1));
+      int startVibRad =
+          startRadius + (((float)gPos.pitch.pitchClass / PitchDetector::PitchClass::NUM_PITCH_CLASSES) * bowWidth) - (bowWidth / 4.0f);
+      int endVibRad = startVibRad + (bowWidth / 2.0f);
 
-      // Draw sun ray underneath the spectrogram
-      /* auto middlePos = gPos.pitch.posRatio + (gPos.pitch.duration / 2);
-      auto rayPoint1 = centerPoint.getPointOnCircumference(
-          getHeight(), (1.5 * M_PI) + ((middlePos - SUN_RAY_WIDTH) * M_PI));
-      auto rayPoint2 = centerPoint.getPointOnCircumference(
-          getHeight(), (1.5 * M_PI) + ((middlePos + SUN_RAY_WIDTH) * M_PI));
-
-      sunRays.addTriangle(centerPoint, rayPoint1, rayPoint2); */
-
-
-      for (int i = 0; i < bowWidth; ++i) {
+      for (int radius = startVibRad; radius < endVibRad; ++radius) {
         auto ogPoint = centerPoint.getPointOnCircumference(
-            (getHeight() / 4.0f) + i, (1.5 * M_PI) + (sweepPos * M_PI));
-        auto ogPixel = curImage.getPixelAt(ogPoint.getX(), ogPoint.getY());
+            radius, (1.5 * juce::MathConstants<float>::pi) +
+                        (sweepPos * juce::MathConstants<float>::pi));
+        juce::Colour ogPixel =
+            curImage.getPixelAt(ogPoint.getX(), ogPoint.getY());
         if (ogPixel.getBrightness() > 0.1) {
-          auto xOffset = mNormalRand(mGenRandom) * MAX_PIXEL_VIBRATION;
-          auto yOffset = mNormalRand(mGenRandom) * MAX_PIXEL_VIBRATION;
-          auto newPoint = juce::Point<float>(ogPoint.getX() + xOffset,
-                                             ogPoint.getY() + yOffset);
-          auto distance = ogPixel.getBrightness();
+          float xOffset = mNormalRand(mGenRandom) * MAX_PIXEL_VIBRATION;
+          float yOffset = mNormalRand(mGenRandom) * MAX_PIXEL_VIBRATION;
+          juce::Point<float> newPoint = juce::Point<float>(
+              ogPoint.getX() + xOffset, ogPoint.getY() + yOffset);
+          juce::Colour newPixel = curImage.getPixelAt(newPoint.getX(), newPoint.getY());
+          juce::Colour newColour = ogPixel.withAlpha(
+              juce::jmax(ogPixel.getAlpha(), newPixel.getAlpha()));
           vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY(),
-                                    ogPixel.withBrightness(distance));
-          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY(), ogPixel.withBrightness(distance));
-          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY(), ogPixel.withBrightness(distance));
-          vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY() + 1, ogPixel.withBrightness(distance));
-          vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY() - 1, ogPixel.withBrightness(distance));
-          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY() + 1, ogPixel.withBrightness(distance));
-          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY() - 1, ogPixel.withBrightness(distance));
-          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY() + 1, ogPixel.withBrightness(distance));
-          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY() - 1, ogPixel.withBrightness(distance));
+                                    newColour);
+          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY(),
+                                    newColour);
+          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY(),
+                                    newColour);
+          vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY() + 1,
+                                    newColour);
+          vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY() - 1,
+                                    newColour);
+          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY() + 1,
+                                    newColour);
+          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY() - 1,
+                                    newColour);
+          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY() + 1,
+                                    newColour);
+          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY() - 1,
+                                    newColour);
         }
       }
     }
@@ -115,24 +106,6 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
         vibratingImage, getLocalBounds().toFloat(),
         juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
         false);
-
-    // Draw the sun rays
-   /* g.setFillType(juce::ColourGradient(
-        juce::Colour(COLOUR_SUN_CENTER), centerPoint,
-        juce::Colour(COLOUR_RAYS_END), centerPoint.withY(0), true));
-    g.fillPath(sunRays); */
-
-    // Draw the sun
-   /* g.setFillType(juce::ColourGradient(
-        juce::Colour(COLOUR_SUN_CENTER), centerPoint,
-        juce::Colour(COLOUR_SUN_END), centerPoint.withY(getHeight() / 4.0f), true));
-    auto sunArea =
-        juce::Rectangle<float>(getHeight() / 2.0f, getHeight() / 2.0f);
-    sunArea = sunArea.withCentre(centerPoint);
-    g.fillEllipse(sunArea); */
-
-
-
   } else {
     g.drawImage(
         mImages[specType], getLocalBounds().toFloat(),
@@ -147,9 +120,13 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     for (int i = 0; i < mTransients->size(); ++i) {
       TransientDetector::Transient transient = mTransients->at(i);
       auto startPoint = centerPoint.getPointOnCircumference(
-          getHeight() - 21, (1.5 * M_PI) + (transient.posRatio * M_PI));
+          getHeight() - 21,
+          (1.5 * juce::MathConstants<float>::pi) +
+              (transient.posRatio * juce::MathConstants<float>::pi));
       auto endPoint = centerPoint.getPointOnCircumference(
-          getHeight() - 17, (1.5 * M_PI) + (transient.posRatio * M_PI));
+          getHeight() - 17,
+          (1.5 * juce::MathConstants<float>::pi) +
+              (transient.posRatio * juce::MathConstants<float>::pi));
       g.drawLine(juce::Line<float>(startPoint, endPoint), 1.0f);
     }
   }
@@ -167,7 +144,8 @@ void ArcSpectrogram::resized() {
     auto gPos = mPositionMarkers[i]->getGrainPosition();
     if (!gPos.isActive) continue;
     auto middlePos = gPos.pitch.posRatio + (gPos.pitch.duration / 2);
-    float angleRad = (M_PI * middlePos) - (M_PI / 2.0f);
+    float angleRad = (juce::MathConstants<float>::pi * middlePos) -
+                     (juce::MathConstants<float>::pi / 2.0f);
     juce::Point<float> p =
         startPoint.getPointOnCircumference(getHeight() - 10, getHeight() - 10, angleRad);
     mPositionMarkers[i]->setSize(POSITION_MARKER_WIDTH, POSITION_MARKER_HEIGHT);
@@ -204,11 +182,12 @@ void ArcSpectrogram::run() {
       // Choose rainbow color depending on radius
       auto level = juce::jlimit(
           0.0f, 1.0f, spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
-      auto rainbowColour = juce::Colour::fromHSV(1 - radPerc, 1.0, level, 1.0f);
+      auto rainbowColour = juce::Colour::fromHSV(radPerc, 1.0, 1.0f, level);
       g.setColour(rainbowColour);
 
       float xPerc = (float)specCol / spec.size();
-      float angleRad = (M_PI * xPerc) - (M_PI / 2.0f);
+      float angleRad = (juce::MathConstants<float>::pi * xPerc) -
+                       (juce::MathConstants<float>::pi / 2.0f);
 
       // Create and rotate a rectangle to represent the "pixel"
       juce::Point<float> p =

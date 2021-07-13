@@ -163,6 +163,7 @@ void MainComponent::timerCallback() {
         mPositionBoxes[i].setNumPositions(gPositions.size());
       }
 
+      mCurPositions = gPositions;
       mSynth.setNoteOn(mCurPitchClass, gPosToPlay);
       mArcSpec.setNoteOn(mCurPitchClass, gPositions, boxPositions);
     }
@@ -221,30 +222,40 @@ void MainComponent::releaseResources() {
 //==============================================================================
 void MainComponent::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
+}
 
+void MainComponent::paintOverChildren(juce::Graphics& g) {
   // Draw note display
-  juce::Colour noteDisplayColour;
   if (mCurPitchClass != PitchDetector::PitchClass::NONE) {
-    noteDisplayColour = Utils::getRainbow12Colour(mCurPitchClass);
-    g.setColour(noteDisplayColour);
-    float offsetPadding =
-        mKeyboard.getWidth() *
-        mKeyboard.getPitchXRatio(PitchDetector::PitchClass::C);
-    g.drawRoundedRectangle(
-        mKeyboard.getBounds()
-            .withTop(mArcSpec.getY() - 2.0f)
-            .withBottom(mArcSpec.getBottom() + 2.0f)
-            .withLeft(mKeyboard.getX() + 2.0f)
-            .withRight(mKeyboard.getRight() - 2.0f)
-            .toFloat(),
-        10.0f, 3.0f);
-    juce::Path displayPath;
+    // Draw position arrows
+    for (int i = 0; i < mCurPositions.size(); ++i) {
+      if (mCurPositions[i].isActive) {
+        g.setColour(juce::Colour(Utils::POSITION_COLOURS[i]));
+        auto middlePos = mCurPositions[i].pitch.posRatio +
+                         (mCurPositions[i].pitch.duration / 2.0f);
+        float angleRad = (juce::MathConstants<float>::pi * middlePos) -
+                         (juce::MathConstants<float>::pi / 2.0f);
+        juce::Point<float> startPoint = juce::Point<float>(
+            mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
+        juce::Point<float> endPoint = startPoint.getPointOnCircumference(
+            mArcSpec.getHeight() / 4.5f, angleRad);
+        g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
+      }
+    }
+    // Draw path to positions
     float noteX =
         mKeyboard.getBounds().getX() +
         (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(mCurPitchClass));
-    g.drawLine(juce::Line<float>(noteX, mNoteDisplayRect.getBottom(), noteX,
-                          mArcSpec.getBottom()), 4.0f);
-    
+    juce::Path displayPath;
+    displayPath.startNewSubPath(noteX, mNoteDisplayRect.getBottom());
+    displayPath.lineTo(noteX, mNoteDisplayRect.getBottom() - (NOTE_DISPLAY_HEIGHT / 2.0f));
+    displayPath.lineTo(mNoteDisplayRect.getCentre());
+    displayPath.lineTo(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
+    g.setColour(Utils::getRainbow12Colour(mCurPitchClass));
+    g.strokePath(displayPath, juce::PathStrokeType(4.0f));
+    g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f),
+                  mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
+                  NOTE_BULB_SIZE, NOTE_BULB_SIZE);
   }
 }
 
@@ -266,16 +277,18 @@ void MainComponent::resized() {
   mBtnOpenFile.setBounds(filePanel.removeFromLeft(filePanel.getWidth() / 2));
   mBtnRecord.setBounds(filePanel);
 
-  // Keyboard
-  mKeyboard.setBounds(r.removeFromBottom(KEYBOARD_HEIGHT));
-
-  // Space for note display
-  mNoteDisplayRect = r.removeFromBottom(NOTE_DISPLAY_HEIGHT).reduced(3).toFloat();
-
+  r.removeFromTop(NOTE_DISPLAY_HEIGHT); // Just padding
+  
   // Arc spectrogram
-  mArcSpec.setBounds(r.removeFromBottom(r.getWidth() / 2.0f).reduced(10));
+  mArcSpec.setBounds(r.removeFromTop(r.getWidth() / 2.0f));
   mProgressBar.setBounds(
       mArcSpec.getBounds().withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
+
+  // Space for note display
+  mNoteDisplayRect = r.removeFromTop(NOTE_DISPLAY_HEIGHT).toFloat();
+
+  // Keyboard
+  mKeyboard.setBounds(r.removeFromTop(KEYBOARD_HEIGHT));
 }
 
 /** Pauses audio to open file
