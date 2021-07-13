@@ -63,7 +63,6 @@ class MainComponent : public juce::AudioAppComponent,
   static constexpr auto SPEC_WIDTH = 20;
   static constexpr auto SPEC_HEIGHT = 20;
   static constexpr auto PROGRESS_SIZE = 80;
-  static constexpr auto KEYBOARD_HEIGHT = 200;
   static constexpr auto MIN_NOTE_NUM = 45;
   static constexpr auto MAX_NOTE_NUM = 56;
   static constexpr auto NOTE_BULB_SIZE = 10;

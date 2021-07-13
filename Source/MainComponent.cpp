@@ -312,7 +312,10 @@ void MainComponent::resized() {
   mNoteDisplayRect = r.removeFromTop(NOTE_DISPLAY_HEIGHT).toFloat();
 
   // Keyboard
-  mKeyboard.setBounds(r.removeFromTop(KEYBOARD_HEIGHT));
+  juce::Rectangle<int> keyboardRect =
+      r.removeFromTop(r.getHeight() - NOTE_DISPLAY_HEIGHT)
+          .reduced(NOTE_DISPLAY_HEIGHT, 0.0f);
+  mKeyboard.setBounds(keyboardRect);
 }
 
 /** Pauses audio to open file
