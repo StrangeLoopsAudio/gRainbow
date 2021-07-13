@@ -163,7 +163,7 @@ void MainComponent::timerCallback() {
         mPositionBoxes[i].setNumPositions(gPositions.size());
       }
 
-      mSynth.setPositions(mCurPitchClass, gPosToPlay);
+      mSynth.setNoteOn(mCurPitchClass, gPosToPlay);
       mArcSpec.setNoteOn(mCurPitchClass, gPositions, boxPositions);
     }
     mStartedPlayingTrig = false;
@@ -201,7 +201,7 @@ void MainComponent::getNextAudioBlock(
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber();
         mStartedPlayingTrig = true;
       } else if (md.getMessage().isNoteOff()) {
-        mSynth.stopNote(
+        mSynth.setNoteOff(
             (PitchDetector::PitchClass)md.getMessage().getNoteNumber());
         mArcSpec.setNoteOff();
       }

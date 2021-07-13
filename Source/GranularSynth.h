@@ -47,12 +47,12 @@ class GranularSynth : juce::Thread {
   void setFileBuffer(juce::AudioBuffer<float>* buffer, double sr);
 
   void process(juce::AudioBuffer<float>* blockBuffer);
-  void setPositions(PitchDetector::PitchClass pitchClass,
+  void setNoteOn(PitchDetector::PitchClass pitchClass,
                     std::vector<GrainPositionFinder::GrainPosition> gPositions);
+  void setNoteOff(PitchDetector::PitchClass pitchClass);
   void updateParameters(Utils::PositionColour colour, PositionParams params);
   void updateParameter(Utils::PositionColour colour, ParameterType param,
                               float value);
-  void stopNote(PitchDetector::PitchClass pitchClass);
 
   //==============================================================================
   void run() override;
@@ -64,20 +64,25 @@ class GranularSynth : juce::Thread {
   static constexpr auto MAX_DURATION_MS = 300.0f;
   static constexpr auto MIN_RATE_RATIO = .125f;
   static constexpr auto MAX_RATE_RATIO = 1.0f;
-  static constexpr auto MIN_ATTACK_MS = 10.0f;
-  static constexpr auto MAX_ATTACK_MS = 10000.0f;
-  static constexpr auto MIN_DECAY_MS = 10.0f;
-  static constexpr auto MAX_DECAY_MS = 10000.0f;
-  static constexpr auto MIN_RELEASE_MS = 10.0f;
-  static constexpr auto MAX_RELEASE_MS = 10000.0f;
+  static constexpr auto MIN_ATTACK_SEC = 0.01f;
+  static constexpr auto MAX_ATTACK_SEC = 1.0f;
+  static constexpr auto MIN_DECAY_SEC = 0.01f;
+  static constexpr auto MAX_DECAY_SEC = 1.0f;
+  static constexpr auto MIN_RELEASE_SEC = 0.01f;
+  static constexpr auto MAX_RELEASE_SEC = 1.0f;
   static constexpr auto MAX_GRAINS = 100; // Max grains active at once
 
   typedef struct GrainNote {
     PitchDetector::PitchClass pitchClass;
     std::vector<GrainPositionFinder::GrainPosition> positions;
+    long noteOnTs;
+    long noteOffTs;
     GrainNote(PitchDetector::PitchClass pitchClass,
-              std::vector<GrainPositionFinder::GrainPosition> positions)
-        : pitchClass(pitchClass), positions(positions) {}
+              std::vector<GrainPositionFinder::GrainPosition> positions, long ts)
+        : pitchClass(pitchClass),
+          positions(positions),
+          noteOnTs(ts),
+          noteOffTs(-1) {}
   } GrainNote;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
@@ -97,4 +102,6 @@ class GranularSynth : juce::Thread {
 
   // Generate gaussian envelope to be used for each grain
   void generateGaussianEnvelope();
+  // Returns maximum release time out of all positions in samples
+  long getMaxReleaseTime();
 };

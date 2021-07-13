@@ -17,6 +17,7 @@ class Utils {
  public:
   // Tetradic colours
   enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_BOXES };
+  enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
   static constexpr juce::int64 POSITION_COLOURS[4] = {0xFF52C4FF, 0xFFE352FF,
                                                       0xFFFF8D52, 0xFF6EFF52};
   static constexpr juce::int64 SECONDARY_POSITION_COLOURS[4][4] = {
