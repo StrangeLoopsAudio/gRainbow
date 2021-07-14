@@ -45,9 +45,27 @@ PositionBox::PositionBox() {
   rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi; 
   rotaryParams.stopAtEnd = true; 
 
+  mLabelShape.setEnabled(mState == BoxState::READY);
   mLabelRate.setEnabled(mState == BoxState::READY);
   mLabelDuration.setEnabled(mState == BoxState::READY);
   mLabelGain.setEnabled(mState == BoxState::READY);
+
+  /* Shape */
+  mSliderShape.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderShape.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderShape.setRotaryParameters(rotaryParams);
+  mSliderShape.setRange(0.0, 1.0, 0.01);
+  mSliderShape.onValueChange = [this] {
+    mEnvelopeGrain.setShape(mSliderShape.getValue());
+    parameterChanged(GranularSynth::ParameterType::SHAPE,
+                     mSliderShape.getValue());
+  };
+  mSliderShape.setValue(PARAM_SHAPE_DEFAULT, juce::sendNotification);
+  addAndMakeVisible(mSliderShape);
+
+  mLabelShape.setText("Shape", juce::dontSendNotification);
+  mLabelShape.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelShape);
 
   /* Rate */
   mSliderRate.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
@@ -228,11 +246,13 @@ void PositionBox::resized() {
   // Grain env knobs
   knobWidth = r.getWidth() / NUM_GRAIN_ENV_PARAMS;
   knobPanel = r.removeFromTop(knobWidth / 2);
+  mSliderShape.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderDuration.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderGain.setBounds(knobPanel.removeFromLeft(knobWidth));
 
   labelPanel = r.removeFromTop(LABEL_HEIGHT);
+  mLabelShape.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelRate.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelDuration.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
@@ -310,12 +330,16 @@ void PositionBox::setState(BoxState state) {
   mLabelRelease.setEnabled(componentsLit);
 
   mEnvelopeGrain.setActive(componentsLit);
+  mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                         knobColour);
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                         knobColour);
   mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                             knobColour);
   mSliderGain.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                         knobColour);
+  mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                         knobColour);
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                         knobColour);
   mSliderDuration.setColour(
@@ -330,8 +354,9 @@ void PositionBox::setState(BoxState state) {
 
 GranularSynth::PositionParams PositionBox::getParams() {
   return GranularSynth::PositionParams(
-      mSliderRate.getValue(), mSliderDuration.getValue(),
-      mSliderGain.getValue(), mSliderAttack.getValue(), mSliderDecay.getValue(),
+      mSliderShape.getValue(), mSliderRate.getValue(),
+      mSliderDuration.getValue(), mSliderGain.getValue(),
+      mSliderAttack.getValue(), mSliderDecay.getValue(),
       mSliderSustain.getValue(), mSliderRelease.getValue());
 }
 

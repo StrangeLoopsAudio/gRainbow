@@ -22,7 +22,7 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   float envWidth = juce::jmap(mDuration, minEnvWidth, maxEnvWidth);
   float envOffset = juce::jmap(1.0f - mRate, envWidth * MIN_RATE_RATIO, envWidth * MAX_RATE_RATIO);
   float envTop = ((1.0f - mGain) * (getHeight() - 2)) + 2;
-  float envBottom = getHeight();
+  float envBottom = getHeight() - 1.0f;
   float envHeight = juce::jmax(0.0f, envBottom - envTop);
   juce::PathStrokeType pathStroke =
       juce::PathStrokeType(2, juce::PathStrokeType::JointStyle::curved,
@@ -31,13 +31,14 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   while (curXStart < getWidth()) {
     juce::Path envPath;
     juce::Point<float> startPoint = juce::Point<float>(curXStart, envBottom);
+    float envCtrl = juce::jmap(1.0f - mShape, 0.0f, envWidth / 2.0f);
     envPath.startNewSubPath(startPoint);
-    envPath.cubicTo(startPoint.translated(envWidth / 4.0f, 0),
-                    startPoint.translated(envWidth / 4.0f, -envHeight),
+    envPath.cubicTo(startPoint.translated(envCtrl, 0),
+                    startPoint.translated(envCtrl, -envHeight),
                     startPoint.translated(envWidth / 2.0f, -envHeight));
     startPoint = startPoint.translated(envWidth / 2.0f, -envHeight);
-    envPath.cubicTo(startPoint.translated(envWidth / 4.0f, 0),
-                    startPoint.translated(envWidth / 4.0f, envHeight),
+    envPath.cubicTo(startPoint.translated(envWidth / 2.0f - envCtrl, 0),
+                    startPoint.translated(envWidth / 2.0f - envCtrl, envHeight),
                     startPoint.translated(envWidth / 2.0f, envHeight));
     g.strokePath(envPath, pathStroke);
     curXStart += envOffset;
@@ -48,6 +49,11 @@ void EnvelopeGrain::resized() {}
 
 void EnvelopeGrain::setActive(bool isActive) {
   mIsActive = isActive;
+  repaint();
+}
+
+void EnvelopeGrain::setShape(float shape) { 
+  mShape = shape;
   repaint();
 }
 
@@ -65,6 +71,8 @@ void EnvelopeGrain::setGain(float gain) {
   mGain = gain;
   repaint();
 }
+
+
 
 void EnvelopeGrain::setColour(juce::Colour colour) {
   mColour = colour;

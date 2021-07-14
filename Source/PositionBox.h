@@ -53,9 +53,10 @@ class PositionBox : public juce::Component {
  private:
   /* Params */
   static constexpr auto NUM_AMP_ENV_PARAMS = 4;
-  static constexpr auto NUM_GRAIN_ENV_PARAMS = 3;
-  static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
+  static constexpr auto NUM_GRAIN_ENV_PARAMS = 4;
+  static constexpr auto PARAM_SHAPE_DEFAULT = 0.5f;
   static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
+  static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
   static constexpr auto PARAM_GAIN_DEFAULT = 0.8f;
   static constexpr auto PARAM_ATTACK_DEFAULT = 0.2f;
   static constexpr auto PARAM_DECAY_DEFAULT = 0.2f;
@@ -78,6 +79,8 @@ class PositionBox : public juce::Component {
   PositionChanger mPositionChanger;
   juce::ToggleButton mBtnEnabled;
   juce::ToggleButton mBtnSolo;
+  juce::Slider mSliderShape;
+  juce::Label mLabelShape;
   juce::Slider mSliderRate;
   juce::Label mLabelRate;
   juce::Slider mSliderDuration;

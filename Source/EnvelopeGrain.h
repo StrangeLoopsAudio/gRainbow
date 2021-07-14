@@ -27,6 +27,7 @@ class EnvelopeGrain : public juce::Component {
   void setRate(float rate);
   void setDuration(float duration);
   void setGain(float gain);
+  void setShape(float shape);
   void setColour(juce::Colour colour);
 
  private:
@@ -35,9 +36,10 @@ class EnvelopeGrain : public juce::Component {
   static constexpr auto MAX_RATE_RATIO = 1.0f;
 
   /* Parameters */
-  float mRate = 0.5;
-  float mDuration = 0.5;
-  float mGain = 0.8;
+  float mShape = 0.5f;
+  float mRate = 0.5f;
+  float mDuration = 0.5f;
+  float mGain = 0.8f;
   bool mIsActive = false;
   juce::Colour mColour;
 

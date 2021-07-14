@@ -35,9 +35,9 @@ class EnvelopeADSR : public juce::Component {
 
   /* Parameters */
   float mAttack = 0.2f;
-  float mDecay = 0.1f;
+  float mDecay = 0.2f;
   float mSustain = 0.8f;
-  float mRelease = 0.2f;
+  float mRelease = 0.5f;
   bool mIsActive = false;
   Utils::PositionColour mColour;
 
