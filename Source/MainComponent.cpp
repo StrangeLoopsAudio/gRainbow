@@ -175,7 +175,7 @@ void MainComponent::timerCallback() {
         mPositionBoxes[i].setNumPositions(gPositions.size());
       }
 
-      mCurPositions = gPositions;
+      mCurPositions = gPosToPlay;
       mSynth.setNoteOn(mCurPitchClass, gPosToPlay);
       mArcSpec.setNoteOn(mCurPitchClass, gPositions, boxPositions);
     }
