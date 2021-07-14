@@ -44,10 +44,7 @@ private:
    // Draw outline arcs
    juce::Colour outlineCol =
        slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
-   g.setFillType(juce::ColourGradient(
-       outlineCol, slider.getLocalBounds().getBottomLeft().toFloat(),
-       outlineCol.withAlpha(0.4f),
-       slider.getLocalBounds().getTopLeft().toFloat(), false));
+   g.setColour(outlineCol);
    rainbowPath.clear();
    rainbowPath.addCentredArc(width / 2.0f, height, (width / 2.0f) - 2,
                              (width / 2.0f) - 2, 0, startRadians, endRadians,

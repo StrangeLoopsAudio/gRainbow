@@ -49,36 +49,37 @@ void EnvelopeADSR::paint (juce::Graphics& g)
   g.fillPath(adsrPath);
 
   // Draw highlight lines on top of each segment
+  float highlightWidth = 3.0f;
   g.setColour(mIsActive
                   ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][0])
                   : juce::Colours::darkgrey);
   g.drawLine(
-      juce::Line<float>(0, getHeight(), mAttack * getWidth() * 0.375f, 0),
-      2.0f);
+      juce::Line<float>(1.0f, getHeight() - 1.0f, mAttack * getWidth() * 0.375f + 1.0f, 1.0f),
+      highlightWidth);
   g.setColour(mIsActive
                   ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][1])
                   : juce::Colours::darkgrey);
   g.drawLine(juce::Line<float>(
-                 mAttack * getWidth() * 0.375f, 0,
-                 mAttack * getWidth() * 0.375f + mDecay * getWidth() * 0.375f,
+                 mAttack * getWidth() * 0.375f, 1.0f,
+                 mAttack * getWidth() * 0.375f + mDecay * getWidth() * 0.375f + 1.0f,
                  (1.0f - mSustain) * getHeight()),
-             2.0f);
+             highlightWidth);
   g.setColour(mIsActive
                   ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][2])
                   : juce::Colours::darkgrey);
   g.drawLine(juce::Line<float>(
                  mAttack * getWidth() * 0.375f + mDecay * getWidth() * 0.375f,
-                 (1.0f - mSustain) * getHeight(), getWidth() * 0.75f,
+                 (1.0f - mSustain) * getHeight(), getWidth() * 0.75f + 1.0f,
                  (1.0f - mSustain) * getHeight()),
-             2.0f);
+             highlightWidth);
   g.setColour(mIsActive
                   ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][3])
                   : juce::Colours::darkgrey);
   g.drawLine(
       juce::Line<float>(getWidth() * 0.75f, (1.0f - mSustain) * getHeight(),
                         mRelease * getWidth() * 0.25f + getWidth() * 0.75f,
-                        getHeight()),
-      2.0f);
+                        getHeight() - 1.0f),
+      highlightWidth);
 }
 
 void EnvelopeADSR::resized()
