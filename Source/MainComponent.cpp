@@ -302,7 +302,7 @@ void MainComponent::resized() {
   mBtnRecord.setBounds(filePanel.removeFromLeft(OPEN_FILE_WIDTH));
 
   r.removeFromTop(NOTE_DISPLAY_HEIGHT); // Just padding
-  
+
   // Arc spectrogram
   mArcSpec.setBounds(r.removeFromTop(r.getWidth() / 2.0f));
   mProgressBar.setBounds(
@@ -352,8 +352,8 @@ void MainComponent::processFile(juce::File file) {
     juce::AudioBuffer<float> tempBuffer = juce::AudioBuffer<float>(
         reader->numChannels, (int)reader->lengthInSamples);
     reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
-    juce::ScopedPointer<juce::LagrangeInterpolator> resampler =
-        new juce::LagrangeInterpolator();
+    std::unique_ptr<juce::LagrangeInterpolator> resampler =
+        std::make_unique<juce::LagrangeInterpolator>();
     double ratio = reader->sampleRate / mSampleRate;
     const float** inputs = tempBuffer.getArrayOfReadPointers();
     float** outputs = mFileBuffer.getArrayOfWritePointers();
