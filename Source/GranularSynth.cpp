@@ -11,7 +11,6 @@
 #include "GranularSynth.h"
 
 GranularSynth::GranularSynth() : juce::Thread("granular thread") {
-  generateGaussianEnvelope();
   mTotalSamps = 0;
   mGrains.ensureStorageAllocated(MAX_GRAINS);
 
@@ -53,7 +52,7 @@ void GranularSynth::run() {
             (gPos.pitch.duration * mFileBuffer->getNumSamples()) - durSamples);
 
         float gain = gPos.ampEnvLevel * params.gain;
-        auto grain = Grain(mGaussianEnv, durSamples, gPos.pbRate,
+        auto grain = Grain(generateGrainEnvelope(params.shape), durSamples, gPos.pbRate,
                            posSamples + posOffset, mTotalSamps, gain);
         mGrains.add(grain);
         
@@ -212,6 +211,9 @@ void GranularSynth::updateParameters(Utils::PositionColour colour,
 void GranularSynth::updateParameter(Utils::PositionColour colour,
                                     ParameterType param, float value) {
   switch (param) {
+    case ParameterType::SHAPE:
+      mPositionSettings[colour].shape = value;
+      break;
     case ParameterType::RATE:
       mPositionSettings[colour].rate = value;
       break;
@@ -238,11 +240,21 @@ void GranularSynth::updateParameter(Utils::PositionColour colour,
   }
 }
 
-void GranularSynth::generateGaussianEnvelope() {
-  for (int i = 0; i < mGaussianEnv.size(); i++) {
-    mGaussianEnv[i] = std::exp(
-        -1.0f * std::pow((i - ((511) / 2.0)) / (0.4 * ((511) / 2.0)), 2.0));
+std::vector<float> GranularSynth::generateGrainEnvelope(float shape) {
+  std::vector<float> grainEnv;
+  // Each half: f(x) = 3nx(1-x)^2 + 3nx^2(1-x) + x^3
+  for (int i = 0; i < 512; i++) {
+    float perc = (float)i / 512;
+    if (perc <= 0.5f) {
+      perc *= 2.0f;
+    } else {
+      perc = (1.0f - perc) * 2.0f;
+    }
+    grainEnv.push_back(3.0f * shape * perc * std::pow(1.0f - perc, 2.0f) +
+                      3.0f * shape * std::pow(perc, 2.0f) * (1.0f - perc) +
+                      std::pow(perc, 3.0f));
   }
+  return grainEnv;
 }
 
 long GranularSynth::getMaxReleaseTime() {

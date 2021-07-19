@@ -99,7 +99,6 @@ class GranularSynth : juce::Thread {
   } GrainNote;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
-  std::array<float, 512> mGaussianEnv;
 
   /* Grain control */
   juce::Array<Grain> mGrains;
@@ -114,7 +113,7 @@ class GranularSynth : juce::Thread {
   Utils::PositionColour mNextPositionToPlay = Utils::PositionColour::BLUE;
 
   // Generate gaussian envelope to be used for each grain
-  void generateGaussianEnvelope();
+  std::vector<float> generateGrainEnvelope(float shape);
   // Returns maximum release time out of all positions in samples
   long getMaxReleaseTime();
 };

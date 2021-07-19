@@ -18,9 +18,8 @@ class Grain {
         pbRate(1.0),
         startPos(0),
         trigTs(0),
-        gain(0.0),
-        mEnv(std::array<float, 512>()) {}
-  Grain(std::array<float, 512>& env, int duration, float pbRate, int startPos,
+        gain(0.0) {}
+  Grain(std::vector<float> env, int duration, float pbRate, int startPos,
         int trigTs, float gain)
       : mEnv(env),
         duration(duration),
@@ -42,5 +41,5 @@ class Grain {
   const float gain;    // Grain gain
 
  private:
-  std::array<float, 512> mEnv;
+  std::vector<float> mEnv;
 };
