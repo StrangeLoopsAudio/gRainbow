@@ -142,11 +142,11 @@ void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer) {
     mTotalSamps = 0;
   } else {
     // Normalize the block before sending onward
-    // if grains is empty, don't want to divid by zero
+    // if grains is empty, don't want to divide by zero
     for (int i = 0; i < blockBuffer->getNumSamples(); ++i) {
       for (int ch = 0; ch < blockBuffer->getNumChannels(); ++ch) {
-        float* channelBlock = blockBuffer->getWritePointer(ch);
-        channelBlock[i] /= mGrains.size();
+        //float* channelBlock = blockBuffer->getWritePointer(ch);
+        //channelBlock[i] /= mGrains.size();
       }
     }
   }

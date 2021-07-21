@@ -31,6 +31,7 @@ void Grain::process(juce::AudioBuffer<float>& fileBuffer,
 }
 
 float Grain::getAmplitude(float timePerc) {
+  if (mEnv.size() == 0) return 0.0f;
   timePerc = juce::jlimit(0.0f, 1.0f, timePerc);
   int i = timePerc * (mEnv.size() - 1);
   return mEnv[i];
