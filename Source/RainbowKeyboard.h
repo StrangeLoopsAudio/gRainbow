@@ -36,6 +36,7 @@ class RainbowKeyboard : public juce::Component {
  private:
   static constexpr int NUM_KEYS = 12;
   static constexpr int INVALID_NOTE = -1;
+  static constexpr float INVALID_VELOCITY = 0.0f;
   static constexpr float BLACK_NOTE_SIZE_RATIO = 0.7f;
   static constexpr int MIDI_CHANNEL = 1;
   const int WHITE_KEY_INDICES[7] = {0, 2, 4, 5, 7, 9, 11};
@@ -46,9 +47,13 @@ class RainbowKeyboard : public juce::Component {
   }
 
   juce::MidiKeyboardState& mState;
-  int mMouseOverNote = INVALID_NOTE;
-  int mPressedNote = INVALID_NOTE;
-  float mNoteVelocity = 1.0f;
+
+  struct Note {
+    int pitch = INVALID_NOTE;
+    float velocity = INVALID_VELOCITY;
+  };
+  // Since only one note can be pressed at once, only need on instance of Note
+  Note mCurrentNote;
 
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectangleMap[NUM_KEYS];
@@ -56,7 +61,7 @@ class RainbowKeyboard : public juce::Component {
 
   void drawKey(juce::Graphics& g, int pitchClass);
   void updateNoteOver(const juce::MouseEvent& e, bool isDown);
-  int xyToNote(juce::Point<float> pos);
+  Note xyToNote(juce::Point<float> pos);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowKeyboard)
 };
