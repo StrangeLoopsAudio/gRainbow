@@ -14,8 +14,7 @@
 
 //==============================================================================
 RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state)
-    : mState(state),
-      mCurrentNote({Utils::PitchClass::NONE, Utils::INVALID_VELOCITY}) {}
+    : mState(state) {}
 
 RainbowKeyboard::~RainbowKeyboard() {}
 

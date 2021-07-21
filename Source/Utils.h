@@ -254,5 +254,7 @@ class Utils {
   struct Note {
     PitchClass pitch;
     float velocity;
+    Note() : pitch(PitchClass::NONE), velocity(INVALID_VELOCITY) {}
+    Note(PitchClass pitch, float velocity) : pitch(pitch), velocity(velocity) {}
   };
 };  // Utils
