@@ -170,7 +170,7 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
 
 Utils::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
   if (!reallyContains(pos.toInt(), false))
-    return {Utils::PitchClass::NONE, Utils::INVALID_VELOCITY};
+    return Utils::Note(Utils::PitchClass::NONE, Utils::INVALID_VELOCITY);
   // Since the Juce canvas is all in float, keep in float to prevent strange
   // int-vs-float rounding errors selecting the wrong key
   const float componentHeight = static_cast<float>(getHeight());
@@ -180,17 +180,18 @@ Utils::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
   if (pos.getY() < blackNoteLength) {
     for (Utils::PitchClass pitchClass : Utils::BLACK_KEYS_PITCH_CLASS) {
       if (mNoteRectangleMap[pitchClass].contains(pos)) {
-        return {pitchClass, juce::jmax(0.0f, pos.y / blackNoteLength)};
+        return Utils::Note(pitchClass,
+                           juce::jmax(0.0f, pos.y / blackNoteLength));
       }
     }
   }
 
   for (Utils::PitchClass pitchClass : Utils::WHITE_KEYS_PITCH_CLASS) {
     if (mNoteRectangleMap[pitchClass].contains(pos)) {
-      return {pitchClass, juce::jmax(0.0f, pos.y / componentHeight)};
+      return Utils::Note(pitchClass, juce::jmax(0.0f, pos.y / componentHeight));
     }
   }
 
   // note not found
-  return {Utils::PitchClass::NONE, Utils::INVALID_VELOCITY};
+  return Utils::Note(Utils::PitchClass::NONE, Utils::INVALID_VELOCITY);
 }
