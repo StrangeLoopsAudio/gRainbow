@@ -87,14 +87,12 @@ class MainComponent : public juce::AudioAppComponent,
 
   /* Bookkeeping */
   double mSampleRate;
-  PitchDetector::PitchClass mCurPitchClass = PitchDetector::PitchClass::NONE;
+  Utils::PitchClass mCurPitchClass = Utils::PitchClass::NONE;
   std::vector<GrainPositionFinder::GrainPosition> mCurPositions;
   juce::MidiKeyboardState mKeyboardState;
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
-  std::array<std::array<int, NUM_BOXES>,
-             PitchDetector::PitchClass::NUM_PITCH_CLASSES>
-      mPositions;
+  std::array<std::array<int, NUM_BOXES>, Utils::PitchClass::COUNT> mPositions;
   double mLoadingProgress = 0.0;
   bool mIsProcessingComplete = false;
   bool mStartedPlayingTrig = false;

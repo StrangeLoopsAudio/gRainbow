@@ -30,6 +30,7 @@
 #include <JuceHeader.h>
 
 #include "Fft.h"
+#include "Utils.h"
 
 class PitchDetector : juce::Thread {
  public:
@@ -39,20 +40,22 @@ class PitchDetector : juce::Thread {
   PitchDetector();
   ~PitchDetector();
 
-  enum PitchClass { NONE = -1, C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, NUM_PITCH_CLASSES };
-
   typedef struct Pitch {
-    PitchClass pitchClass;
+    Utils::PitchClass pitchClass;
     float posRatio; // position in track from 0-1
     float duration; // note duration from 0-1
     float gain; // pitch salience
     Pitch()
-        : pitchClass(PitchClass::NONE),
+        : pitchClass(Utils::PitchClass::NONE),
           posRatio(0.0),
           duration(0.0),
           gain(0.0) {}
-    Pitch(PitchClass pitchClass, float posRatio, float duration, float gain)
-        : pitchClass(pitchClass), posRatio(posRatio), duration(duration), gain(gain) {}
+    Pitch(Utils::PitchClass pitchClass, float posRatio, float duration,
+          float gain)
+        : pitchClass(pitchClass),
+          posRatio(posRatio),
+          duration(duration),
+          gain(gain) {}
   } Pitch;
 
   std::function<void(std::vector<std::vector<float>>& hpcp,
@@ -65,7 +68,7 @@ class PitchDetector : juce::Thread {
       nullptr;
 
   void processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate);
-  juce::HashMap<PitchClass, std::vector<Pitch>>& getPitches() {
+  juce::HashMap<Utils::PitchClass, std::vector<Pitch>>& getPitches() {
     return mPitches;
   }
 
@@ -90,13 +93,13 @@ class PitchDetector : juce::Thread {
   static constexpr auto MAGNITUDE_THRESHOLD = 0.00001;
   static constexpr auto PITCH_CLASS_OFFSET = 9; // Offset from reference freq A to lowest class C
   static constexpr auto PITCH_CLASS_OFFSET_BINS =
-      (NUM_HPCP_BINS / PitchClass::NUM_PITCH_CLASSES) * PITCH_CLASS_OFFSET;
+      (NUM_HPCP_BINS / Utils::PitchClass::COUNT) * PITCH_CLASS_OFFSET;
   // Pitch segmenting
   static constexpr auto NUM_ACTIVE_SEGMENTS = 1;
   static constexpr auto MAX_DEVIATION_CENTS = 15;
   static constexpr auto INVALID_BIN = -1;
-  static constexpr int  MAX_DEVIATION_BINS =
-      (NUM_HPCP_BINS / PitchClass::NUM_PITCH_CLASSES) *
+  static constexpr int MAX_DEVIATION_BINS =
+      (NUM_HPCP_BINS / Utils::PitchClass::COUNT) *
       (MAX_DEVIATION_CENTS / 100.0);
   static constexpr auto MAX_IDLE_TIME_MS = 62.5;
   static constexpr auto MIN_NOTE_TIME_MS = 125;
@@ -107,7 +110,7 @@ class PitchDetector : juce::Thread {
     int startFrame; // Start frame of segment
     int idleFrame; // Start frame of when segment began being idle (or -1 when active)
     float salience; // Confidence level accumulator from gains
-    bool isAvailable; // True when segment isn't being used to track a pitch 
+    bool isAvailable;  // True when segment isn't being used to track a pitch
     PitchSegment() : binNum(0), startFrame(0), idleFrame(-1), salience(0.0), isAvailable(true) {}
   } PitchSegment;
 
@@ -137,7 +140,7 @@ class PitchDetector : juce::Thread {
   std::array<PitchSegment, NUM_ACTIVE_SEGMENTS> mSegments;
 
   // Hashmap of detected pitches
-  juce::HashMap<PitchClass, std::vector<Pitch>> mPitches;
+  juce::HashMap<Utils::PitchClass, std::vector<Pitch>> mPitches;
 
   void computeHPCP();
   void updateProgress(double progress);
@@ -146,7 +149,8 @@ class PitchDetector : juce::Thread {
   bool hasBetterCandidateAhead(
       int startFrame, float target,
       float deviation);                    // True if a closer target is ahead
-  PitchClass getPitchClass(float binNum);  // Finds the closest pitch class
+  Utils::PitchClass getPitchClass(
+      float binNum);  // Finds the closest pitch class
   Peak interpolatePeak(int frame, int bin);
   void interpolatePeak(const float leftVal, const float middleVal,
                        const float rightVal, int currentBin, float& resultVal,
