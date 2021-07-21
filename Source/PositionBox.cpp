@@ -199,9 +199,19 @@ void PositionBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
   bool borderLit = (mIsActive || mState == BoxState::SOLO);
-  g.setColour(borderLit ? juce::Colour(Utils::POSITION_COLOURS[mColour])
-                        : juce::Colours::darkgrey);
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1), 10.0f, 2.0f);
+  juce::Colour fillCol = borderLit
+                             ? juce::Colour(Utils::POSITION_COLOURS[mColour])
+                             : juce::Colours::darkgrey;
+
+  // Draw separator lines
+  g.setColour(fillCol);
+  g.drawLine(0.0f, mLabelAttack.getBottom(), getWidth(),
+             mLabelAttack.getBottom(), 2.0f);
+  g.drawLine(0.0f, mLabelGain.getBottom(), getWidth(),
+             mLabelGain.getBottom(), 2.0f);
+
+
+  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.4f), 10.0f, 2.5f);
 }
 
 void PositionBox::resized() {
@@ -238,6 +248,8 @@ void PositionBox::resized() {
   mLabelDecay.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelSustain.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelRelease.setBounds(labelPanel.removeFromLeft(knobWidth));
+
+  r.removeFromTop(PADDING_SIZE);
 
   // Grain envelopes
   mEnvelopeGrain.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
@@ -306,24 +318,18 @@ void PositionBox::setState(BoxState state) {
                            knobColour);
   mSliderAttack.setColour(
       juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][0])
-          : juce::Colours::darkgrey);
-  mSliderDecay.setColour(
-      juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][1])
-          : juce::Colours::darkgrey);
-  mSliderSustain.setColour(
-      juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][2])
-          : juce::Colours::darkgrey);
+      componentsLit ? knobColour.brighter() : juce::Colours::darkgrey);
+  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                         componentsLit ? knobColour.brighter().brighter()
+                                       : juce::Colours::darkgrey);
+  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                           componentsLit
+                               ? knobColour.brighter().brighter().brighter()
+                               : juce::Colours::darkgrey);
   mSliderRelease.setColour(
       juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][3])
-          : juce::Colours::darkgrey);
+      componentsLit ? knobColour.brighter().brighter().brighter().brighter()
+                    : juce::Colours::darkgrey);
   mLabelAttack.setEnabled(componentsLit);
   mLabelDecay.setEnabled(componentsLit);
   mLabelSustain.setEnabled(componentsLit);

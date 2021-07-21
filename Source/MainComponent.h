@@ -93,6 +93,7 @@ class MainComponent : public juce::AudioAppComponent,
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
   std::array<std::array<int, NUM_BOXES>, Utils::PitchClass::COUNT> mPositions;
+  int mCurPositionTab = 0;
   double mLoadingProgress = 0.0;
   bool mIsProcessingComplete = false;
   bool mStartedPlayingTrig = false;

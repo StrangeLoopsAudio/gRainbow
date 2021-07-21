@@ -25,8 +25,6 @@ EnvelopeADSR::~EnvelopeADSR()
 
 void EnvelopeADSR::paint (juce::Graphics& g)
 {
-  g.fillAll(juce::Colours::black);
-
   juce::Colour envColour = mIsActive ? juce::Colour(Utils::POSITION_COLOURS[mColour]) : juce::Colours::darkgrey;
   g.setFillType(
       juce::ColourGradient(envColour, getLocalBounds().getTopLeft().toFloat(),
@@ -50,30 +48,26 @@ void EnvelopeADSR::paint (juce::Graphics& g)
 
   // Draw highlight lines on top of each segment
   float highlightWidth = 3.0f;
-  g.setColour(mIsActive
-                  ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][0])
+  g.setColour(mIsActive ? envColour.brighter()
                   : juce::Colours::darkgrey);
   g.drawLine(
       juce::Line<float>(1.0f, getHeight() - 1.0f, mAttack * getWidth() * 0.375f + 1.0f, 1.0f),
       highlightWidth);
-  g.setColour(mIsActive
-                  ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][1])
+  g.setColour(mIsActive ? envColour.brighter().brighter()
                   : juce::Colours::darkgrey);
   g.drawLine(juce::Line<float>(
                  mAttack * getWidth() * 0.375f, 1.0f,
                  mAttack * getWidth() * 0.375f + mDecay * getWidth() * 0.375f + 1.0f,
                  (1.0f - mSustain) * getHeight()),
              highlightWidth);
-  g.setColour(mIsActive
-                  ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][2])
+  g.setColour(mIsActive ? envColour.brighter().brighter().brighter()
                   : juce::Colours::darkgrey);
   g.drawLine(juce::Line<float>(
                  mAttack * getWidth() * 0.375f + mDecay * getWidth() * 0.375f,
                  (1.0f - mSustain) * getHeight(), getWidth() * 0.75f + 1.0f,
                  (1.0f - mSustain) * getHeight()),
              highlightWidth);
-  g.setColour(mIsActive
-                  ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][3])
+  g.setColour(mIsActive ? envColour.brighter().brighter().brighter().brighter()
                   : juce::Colours::darkgrey);
   g.drawLine(
       juce::Line<float>(getWidth() * 0.75f, (1.0f - mSustain) * getHeight(),

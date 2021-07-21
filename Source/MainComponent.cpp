@@ -70,7 +70,8 @@ MainComponent::MainComponent()
           }
           mSynth.updateParameter(pos, param, value);
         };
-    addAndMakeVisible(mPositionBoxes[i]);
+    addChildComponent(mPositionBoxes[i]);
+    if (i == 0) mPositionBoxes[i].setVisible(true);
   }
 
   /* Arc spectrogram */
@@ -283,13 +284,12 @@ void MainComponent::resized() {
 
   // Position boxes
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
-  mPositionBoxes[0].setBounds(
-      leftPanel.removeFromTop(leftPanel.getHeight() / 2));
-  mPositionBoxes[1].setBounds(leftPanel);
+  for (int i = 0; i < mPositionBoxes.size(); ++i) {
+    mPositionBoxes[i].setBounds(leftPanel);
+  }
+
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
-  mPositionBoxes[2].setBounds(
-      rightPanel.removeFromTop(rightPanel.getHeight() / 2));
-  mPositionBoxes[3].setBounds(rightPanel);
+  // TODO: global param box
 
   // Open and record buttons
   auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT + BTN_PADDING);
