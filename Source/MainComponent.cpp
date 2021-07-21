@@ -40,6 +40,8 @@ MainComponent::MainComponent()
   };
   addAndMakeVisible(mBtnRecord);
 
+  addAndMakeVisible(mPositionTabs);
+
   /* Position boxes */
   for (int i = 0; i < mPositionBoxes.size(); ++i) {
     mPositionBoxes[i].setColour((Utils::PositionColour)i);
@@ -282,8 +284,10 @@ void MainComponent::paintOverChildren(juce::Graphics& g) {
 void MainComponent::resized() {
   auto r = getLocalBounds();
 
-  // Position boxes
+  // Position tabs
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
+  mPositionTabs.setBounds(leftPanel.removeFromTop(TABS_HEIGHT));
+  // Position boxes
   for (int i = 0; i < mPositionBoxes.size(); ++i) {
     mPositionBoxes[i].setBounds(leftPanel);
   }

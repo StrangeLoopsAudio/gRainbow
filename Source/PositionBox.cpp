@@ -211,7 +211,7 @@ void PositionBox::paint(juce::Graphics& g) {
              mLabelGain.getBottom(), 2.0f);
 
 
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.4f), 10.0f, 2.5f);
+  g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.4f), 10.0f, 2.5f);
 }
 
 void PositionBox::resized() {

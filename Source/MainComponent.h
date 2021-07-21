@@ -8,6 +8,7 @@
 #include "GrainPositionFinder.h"
 #include "GranularSynth.h"
 #include "PitchDetector.h"
+#include "PositionTabs.h"
 #include "PositionBox.h"
 #include "RainbowKeyboard.h"
 #include "RainbowLookAndFeel.h"
@@ -57,14 +58,9 @@ class MainComponent : public juce::AudioAppComponent,
   static constexpr auto BTN_PADDING = 5;
   static constexpr auto OPEN_FILE_WIDTH = 80;
   static constexpr auto PANEL_WIDTH = 300;
-  static constexpr auto ROW_PADDING_HEIGHT = 10;
   static constexpr auto KNOB_HEIGHT = 50;
-  static constexpr auto LABEL_HEIGHT = 20;
-  static constexpr auto SPEC_WIDTH = 20;
-  static constexpr auto SPEC_HEIGHT = 20;
+  static constexpr auto TABS_HEIGHT = 30;
   static constexpr auto PROGRESS_SIZE = 80;
-  static constexpr auto MIN_NOTE_NUM = 45;
-  static constexpr auto MAX_NOTE_NUM = 56;
   static constexpr auto NOTE_BULB_SIZE = 10;
   static constexpr auto NOTE_DISPLAY_HEIGHT = 20;
 
@@ -82,6 +78,7 @@ class MainComponent : public juce::AudioAppComponent,
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
+  PositionTabs mPositionTabs;
   std::array<PositionBox, NUM_BOXES> mPositionBoxes;
   juce::Rectangle<float> mNoteDisplayRect;
 
