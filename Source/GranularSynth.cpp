@@ -244,15 +244,17 @@ std::vector<float> GranularSynth::generateGrainEnvelope(float shape) {
   std::vector<float> grainEnv;
   // Each half: f(x) = 3nx(1-x)^2 + 3nx^2(1-x) + x^3
   for (int i = 0; i < 512; i++) {
-    float perc = (float)i / 512;
-    if (perc <= 0.5f) {
-      perc *= 2.0f;
+    float x = (float)i / 512;
+    float t = 3.0f * shape * x * std::pow(1.0f - x, 2.0f) +
+              3.0f * shape * std::pow(x, 2.0f) * (1.0f - x) + std::pow(x, 3.0f);
+    if (t <= 0.5f) {
+      t *= 2.0f;
     } else {
-      perc = (1.0f - perc) * 2.0f;
+      t = (1.0f - t) * 2.0f;
     }
-    grainEnv.push_back(3.0f * shape * perc * std::pow(1.0f - perc, 2.0f) +
-                      3.0f * shape * std::pow(perc, 2.0f) * (1.0f - perc) +
-                      std::pow(perc, 3.0f));
+    grainEnv.push_back(3.0f * shape * t * std::pow(1.0f - t, 2.0f) +
+                      3.0f * shape * std::pow(t, 2.0f) * (1.0f - t) +
+                      std::pow(t, 3.0f));
   }
   return grainEnv;
 }
