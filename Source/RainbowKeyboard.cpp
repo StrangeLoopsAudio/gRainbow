@@ -144,7 +144,7 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
     // Will turn off also if mouse exit keyboard
     if (mCurrentNote.pitch != Utils::PitchClass::NONE) {
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-      mCurrentNote = {Utils::PitchClass::NONE, Utils::INVALID_VELOCITY};
+      mCurrentNote = Utils::Note();
     }
     if (isDown && isValidNote) {
       mState.noteOn(MIDI_CHANNEL, newNote.pitch, newNote.velocity);
@@ -159,7 +159,7 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
     } else if ((mCurrentNote.pitch != Utils::PitchClass::NONE) && !isDown) {
       // Note off if released current note
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-      mCurrentNote = {Utils::PitchClass::NONE, Utils::INVALID_VELOCITY};
+      mCurrentNote = Utils::Note();
     } else {
       // still update state
       mCurrentNote = newNote;
@@ -169,8 +169,7 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
 }
 
 Utils::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
-  if (!reallyContains(pos.toInt(), false))
-    return Utils::Note(Utils::PitchClass::NONE, Utils::INVALID_VELOCITY);
+  if (!reallyContains(pos.toInt(), false)) return Utils::Note();
   // Since the Juce canvas is all in float, keep in float to prevent strange
   // int-vs-float rounding errors selecting the wrong key
   const float componentHeight = static_cast<float>(getHeight());
@@ -193,5 +192,5 @@ Utils::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
   }
 
   // note not found
-  return Utils::Note(Utils::PitchClass::NONE, Utils::INVALID_VELOCITY);
+  return Utils::Note();
 }
