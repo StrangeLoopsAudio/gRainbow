@@ -64,7 +64,10 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
       auto sweepPos = gPos.pitch.posRatio +
                     ((gPos.pitch.duration / 2) * (mNormalRand(mGenRandom) + 1));
       int startVibRad =
-          startRadius + (((float)gPos.pitch.pitchClass / PitchDetector::PitchClass::NUM_PITCH_CLASSES) * bowWidth) - (bowWidth / 4.0f);
+          startRadius +
+          (((float)gPos.pitch.pitchClass / Utils::PitchClass::COUNT) *
+           bowWidth) -
+          (bowWidth / 4.0f);
       int endVibRad = startVibRad + (bowWidth / 2.0f);
 
       for (int radius = startVibRad; radius < endVibRad; ++radius) {

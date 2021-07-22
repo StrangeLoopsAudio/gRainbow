@@ -146,7 +146,7 @@ MainComponent::~MainComponent() {
 }
 
 void MainComponent::timerCallback() {
-  if (mStartedPlayingTrig && mCurPitchClass != PitchDetector::PitchClass::NONE) {
+  if (mStartedPlayingTrig && mCurPitchClass != Utils::PitchClass::NONE) {
     std::vector<GrainPositionFinder::GrainPosition> gPositions =
         mPositionFinder.findPositions(PositionBox::MAX_POSITIONS, mCurPitchClass);
     std::vector<GrainPositionFinder::GrainPosition> gPosToPlay;
@@ -210,12 +210,10 @@ void MainComponent::getNextAudioBlock(
   if (!incomingMidi.isEmpty()) {
     for (juce::MidiMessageMetadata md : incomingMidi) {
       if (md.getMessage().isNoteOn()) {
-        mCurPitchClass =
-            (PitchDetector::PitchClass)md.getMessage().getNoteNumber();
+        mCurPitchClass = (Utils::PitchClass)md.getMessage().getNoteNumber();
         mStartedPlayingTrig = true;
       } else if (md.getMessage().isNoteOff()) {
-        mSynth.setNoteOff(
-            (PitchDetector::PitchClass)md.getMessage().getNoteNumber());
+        mSynth.setNoteOff((Utils::PitchClass)md.getMessage().getNoteNumber());
         mArcSpec.setNoteOff();
       }
     }
@@ -247,7 +245,7 @@ void MainComponent::paint(juce::Graphics& g) {
 
 void MainComponent::paintOverChildren(juce::Graphics& g) {
   // Draw note display
-  if (mCurPitchClass != PitchDetector::PitchClass::NONE) {
+  if (mCurPitchClass != Utils::PitchClass::NONE) {
     // Draw position arrows
     for (int i = 0; i < mCurPositions.size(); ++i) {
       if (mCurPositions[i].isActive) {

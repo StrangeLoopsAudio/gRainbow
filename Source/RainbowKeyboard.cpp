@@ -12,8 +12,6 @@
 
 #include <JuceHeader.h>
 
-#include "Utils.h"
-
 //==============================================================================
 RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state)
     : mState(state) {}
@@ -25,15 +23,15 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
 
   // Draw each white key, but rainbowy, then black key, but rainbowy, so the
   // black keys rect are fully on top of white key rect visually
-  for (int key : WHITE_KEY_INDICES) {
-    drawKey(g, key);
+  for (Utils::PitchClass pitchClass : Utils::WHITE_KEYS_PITCH_CLASS) {
+    drawKey(g, pitchClass);
   }
-  for (int key : BLACK_KEY_INDICES) {
-    drawKey(g, key);
+  for (Utils::PitchClass pitchClass : Utils::BLACK_KEYS_PITCH_CLASS) {
+    drawKey(g, pitchClass);
   }
 }
 
-float RainbowKeyboard::getPitchXRatio(int pitchClass) {
+float RainbowKeyboard::getPitchXRatio(Utils::PitchClass pitchClass) {
   float noteMiddle = mNoteRectangleMap[pitchClass].getCentreX() /
                      static_cast<float>(getWidth());
   bool needsLeftShift = ((1 << (pitchClass)) & 0x021) != 0;
@@ -56,35 +54,36 @@ void RainbowKeyboard::fillNoteRectangleMap() {
   const float keyWidth = componentWidth / 7.0f;
   const float blackKeyOffset = BLACK_NOTE_SIZE_RATIO * keyWidth / 2.0f;
 
-  const float notePos[NUM_KEYS] = {0.0f * keyWidth,
-                                   1.0f * keyWidth - blackKeyOffset,
-                                   1.0f * keyWidth,
-                                   2.0f * keyWidth - blackKeyOffset,
-                                   2.0f * keyWidth,
-                                   3.0f * keyWidth,
-                                   4.0f * keyWidth - blackKeyOffset,
-                                   4.0f * keyWidth,
-                                   5.0f * keyWidth - blackKeyOffset,
-                                   5.0f * keyWidth,
-                                   6.0f * keyWidth - blackKeyOffset,
-                                   6.0f * keyWidth};
+  const float notePos[Utils::PitchClass::COUNT] = {
+      0.0f * keyWidth,
+      1.0f * keyWidth - blackKeyOffset,
+      1.0f * keyWidth,
+      2.0f * keyWidth - blackKeyOffset,
+      2.0f * keyWidth,
+      3.0f * keyWidth,
+      4.0f * keyWidth - blackKeyOffset,
+      4.0f * keyWidth,
+      5.0f * keyWidth - blackKeyOffset,
+      5.0f * keyWidth,
+      6.0f * keyWidth - blackKeyOffset,
+      6.0f * keyWidth};
 
   const float blackNoteWidth = BLACK_NOTE_SIZE_RATIO * keyWidth;
   const float whiteNoteWidth = keyWidth;
   const float blackNoteHeight = componentHeight / 2.0f;
   const float whiteNoteHeight = componentHeight;
 
-  for (int key = 0; key < NUM_KEYS; key++) {
-    const bool blackKey = isBlackKey(key);
+  for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
+    const bool blackKey = Utils::isBlackKey(key);
     mNoteRectangleMap[key].setBounds(
         notePos[key], 0, (blackKey) ? blackNoteWidth : whiteNoteWidth,
         (blackKey) ? blackNoteHeight : whiteNoteHeight);
   }
 }
 
-void RainbowKeyboard::drawKey(juce::Graphics& g, int pitchClass) {
+void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   bool isOver = pitchClass == mCurrentNote.pitch;
-  bool isDown = isOver && (mCurrentNote.pitch != INVALID_NOTE);
+  bool isDown = isOver && (mCurrentNote.pitch != Utils::PitchClass::NONE);
   auto keyColor = Utils::getRainbow12Colour(pitchClass);
   if (isOver) keyColor = keyColor.darker();
   // Will make 2nd level darker on press
@@ -104,7 +103,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, int pitchClass) {
 
   g.fillRect(area);
   g.setColour(juce::Colours::black);
-  g.drawRect(area, isBlackKey(pitchClass) ? 2 : 1);
+  g.drawRect(area, Utils::isBlackKey(pitchClass) ? 2 : 1);
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
@@ -137,29 +136,30 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
 
 void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
   auto pos = e.getEventRelativeTo(this).position;
-  Note newNote = xyToNote(pos);
+  Utils::Note newNote = xyToNote(pos);
   // Will be invalid if mouse is dragged outside of keyboard
-  bool isValidNote = newNote.pitch != INVALID_NOTE;
+  bool isValidNote = newNote.pitch != Utils::PitchClass::NONE;
   if (newNote.pitch != mCurrentNote.pitch) {
     // Hovering over new note, send note off for old note if necessary
     // Will turn off also if mouse exit keyboard
-    if (mCurrentNote.pitch != INVALID_NOTE) {
+    if (mCurrentNote.pitch != Utils::PitchClass::NONE) {
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-      mCurrentNote = {INVALID_NOTE, INVALID_VELOCITY};
+      mCurrentNote = Utils::Note();
     }
     if (isDown && isValidNote) {
       mState.noteOn(MIDI_CHANNEL, newNote.pitch, newNote.velocity);
       mCurrentNote = newNote;
     }
   } else {
-    if (isDown && (mCurrentNote.pitch == INVALID_NOTE) && isValidNote) {
+    if (isDown && (mCurrentNote.pitch == Utils::PitchClass::NONE) &&
+        isValidNote) {
       // Note on if pressing current note
       mState.noteOn(MIDI_CHANNEL, newNote.pitch, newNote.velocity);
       mCurrentNote = newNote;
-    } else if ((mCurrentNote.pitch != INVALID_NOTE) && !isDown) {
+    } else if ((mCurrentNote.pitch != Utils::PitchClass::NONE) && !isDown) {
       // Note off if released current note
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-      mCurrentNote = {INVALID_NOTE, INVALID_VELOCITY};
+      mCurrentNote = Utils::Note();
     } else {
       // still update state
       mCurrentNote = newNote;
@@ -168,9 +168,8 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
   repaint();
 }
 
-RainbowKeyboard::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
-  if (!reallyContains(pos.toInt(), false))
-    return {INVALID_NOTE, INVALID_VELOCITY};
+Utils::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
+  if (!reallyContains(pos.toInt(), false)) return Utils::Note();
   // Since the Juce canvas is all in float, keep in float to prevent strange
   // int-vs-float rounding errors selecting the wrong key
   const float componentHeight = static_cast<float>(getHeight());
@@ -178,19 +177,20 @@ RainbowKeyboard::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
 
   // can skip quick checking black notes from y position
   if (pos.getY() < blackNoteLength) {
-    for (int note : BLACK_KEY_INDICES) {
-      if (mNoteRectangleMap[note].contains(pos)) {
-        return {note, juce::jmax(0.0f, pos.y / blackNoteLength)};
+    for (Utils::PitchClass pitchClass : Utils::BLACK_KEYS_PITCH_CLASS) {
+      if (mNoteRectangleMap[pitchClass].contains(pos)) {
+        return Utils::Note(pitchClass,
+                           juce::jmax(0.0f, pos.y / blackNoteLength));
       }
     }
   }
 
-  for (int note : WHITE_KEY_INDICES) {
-    if (mNoteRectangleMap[note].contains(pos)) {
-      return {note, juce::jmax(0.0f, pos.y / componentHeight)};
+  for (Utils::PitchClass pitchClass : Utils::WHITE_KEYS_PITCH_CLASS) {
+    if (mNoteRectangleMap[pitchClass].contains(pos)) {
+      return Utils::Note(pitchClass, juce::jmax(0.0f, pos.y / componentHeight));
     }
   }
 
   // note not found
-  return {INVALID_NOTE, INVALID_VELOCITY};
+  return Utils::Note();
 }

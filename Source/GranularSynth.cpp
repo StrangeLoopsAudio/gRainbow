@@ -55,7 +55,7 @@ void GranularSynth::run() {
         auto grain = Grain(generateGrainEnvelope(params.shape), durSamples, gPos.pbRate,
                            posSamples + posOffset, mTotalSamps, gain);
         mGrains.add(grain);
-        
+
         // Update amplitude envelope for position that just played
         float attackSamples =
             mSampleRate *
@@ -63,7 +63,7 @@ void GranularSynth::run() {
         float decaySamples =
             mSampleRate *
             juce::jmap(params.decay, MIN_DECAY_SEC, MAX_DECAY_SEC);
-        switch (gPos.envState) { 
+        switch (gPos.envState) {
           case Utils::EnvelopeState::ATTACK: {
             gPos.ampEnvLevel = juce::jlimit(0.0f, 1.0f, (mTotalSamps - gNote.noteOnTs) / (float)attackSamples);
             if (gPos.ampEnvLevel >= 1.0f) {
@@ -115,7 +115,7 @@ void GranularSynth::run() {
         nextGrainPosition = (Utils::PositionColour)i;
       }
     }
-    
+
     mNextPositionToPlay = nextGrainPosition;
 
     // Subtract wait time from each trigger
@@ -167,7 +167,7 @@ void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, double sr) {
 }
 
 void GranularSynth::setNoteOn(
-    PitchDetector::PitchClass pitchClass,
+    Utils::PitchClass pitchClass,
     std::vector<GrainPositionFinder::GrainPosition> gPositions) {
   bool isPlayingAlready = false;
   for (GrainNote& gNote : mActiveNotes) {
@@ -183,7 +183,7 @@ void GranularSynth::setNoteOn(
   }
 }
 
-void GranularSynth::setNoteOff(PitchDetector::PitchClass pitchClass) {
+void GranularSynth::setNoteOff(Utils::PitchClass pitchClass) {
   for (GrainNote& gNote : mActiveNotes) {
     if (gNote.pitchClass == pitchClass) {
       // Set note off timestamp and set env state to release for each pos

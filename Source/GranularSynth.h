@@ -60,9 +60,9 @@ class GranularSynth : juce::Thread {
   void setFileBuffer(juce::AudioBuffer<float>* buffer, double sr);
 
   void process(juce::AudioBuffer<float>* blockBuffer);
-  void setNoteOn(PitchDetector::PitchClass pitchClass,
-                    std::vector<GrainPositionFinder::GrainPosition> gPositions);
-  void setNoteOff(PitchDetector::PitchClass pitchClass);
+  void setNoteOn(Utils::PitchClass pitchClass,
+                 std::vector<GrainPositionFinder::GrainPosition> gPositions);
+  void setNoteOff(Utils::PitchClass pitchClass);
   void updateParameters(Utils::PositionColour colour, PositionParams params);
   void updateParameter(Utils::PositionColour colour, ParameterType param,
                               float value);
@@ -86,12 +86,13 @@ class GranularSynth : juce::Thread {
   static constexpr auto MAX_GRAINS = 100; // Max grains active at once
 
   typedef struct GrainNote {
-    PitchDetector::PitchClass pitchClass;
+    Utils::PitchClass pitchClass;
     std::vector<GrainPositionFinder::GrainPosition> positions;
     long noteOnTs;
     long noteOffTs;
-    GrainNote(PitchDetector::PitchClass pitchClass,
-              std::vector<GrainPositionFinder::GrainPosition> positions, long ts)
+    GrainNote(Utils::PitchClass pitchClass,
+              std::vector<GrainPositionFinder::GrainPosition> positions,
+              long ts)
         : pitchClass(pitchClass),
           positions(positions),
           noteOnTs(ts),
