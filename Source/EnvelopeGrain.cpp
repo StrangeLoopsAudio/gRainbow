@@ -12,8 +12,6 @@
 #include <JuceHeader.h>
 
 void EnvelopeGrain::paint(juce::Graphics& g) {
-  g.fillAll(juce::Colours::black);
-
   juce::Colour envColour = mIsActive ? mColour : juce::Colours::darkgrey;
   g.setColour(envColour);
 

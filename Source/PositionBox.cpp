@@ -22,14 +22,6 @@ PositionBox::PositionBox() {
   };
   addAndMakeVisible(mPositionChanger);
 
-  mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::darkgrey);
-  mBtnEnabled.onClick = [this] {
-    mIsActive = !mIsActive;
-    setState(mState);
-    parameterChanged(GranularSynth::ParameterType::ENABLED, mBtnEnabled.getToggleState());
-  };
-  addAndMakeVisible(mBtnEnabled);
-
   mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                         juce::Colours::blue);
   mBtnSolo.onClick = [this] {
@@ -199,9 +191,31 @@ void PositionBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
   bool borderLit = (mIsActive || mState == BoxState::SOLO);
-  g.setColour(borderLit ? juce::Colour(Utils::POSITION_COLOURS[mColour])
-                        : juce::Colours::darkgrey);
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1), 10.0f, 2.0f);
+  juce::Colour fillCol = borderLit
+                             ? juce::Colour(Utils::POSITION_COLOURS[mColour])
+                             : juce::Colours::darkgrey;
+  g.setColour(fillCol);
+
+  // Draw line to connect to tab
+  float tabWidth = getWidth() / Utils::PositionColour::NUM_BOXES;
+  if (mColour > 0) {
+    g.drawLine(1.0f, 0.0f, mColour * tabWidth + 2.0f, 0.0f,
+               2.0f);
+  }
+  if (mColour < Utils::PositionColour::NUM_BOXES - 1) {
+    g.drawLine((mColour + 1) * tabWidth - 2.0f, 0.0f, getWidth() - 1.0f, 0.0f,
+               2.0f);
+  }
+  
+
+  // Draw separator lines
+  g.drawLine(0.0f, mLabelAttack.getBottom(), getWidth() - 1,
+             mLabelAttack.getBottom(), 2.0f);
+  g.drawLine(0.0f, mLabelGain.getBottom(), getWidth() - 1,
+             mLabelGain.getBottom(), 2.0f);
+
+
+  g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.0f), 10.0f, 2.0f);
 }
 
 void PositionBox::resized() {
@@ -214,10 +228,10 @@ void PositionBox::resized() {
 
   // Enable and solo buttons
   auto btnPanel = r.removeFromTop(TOGGLE_SIZE);
-  mBtnEnabled.setBounds(btnPanel.removeFromLeft(TOGGLE_SIZE));
   mBtnSolo.setBounds(btnPanel.removeFromRight(TOGGLE_SIZE));
+  btnPanel.removeFromLeft(TOGGLE_SIZE); // For symmetry
   mPositionChanger.setBounds(btnPanel.withSizeKeepingCentre(
-      btnPanel.getWidth() * 0.7, btnPanel.getHeight()));
+      btnPanel.getWidth() * 0.5, btnPanel.getHeight()));
 
   r.removeFromTop(PADDING_SIZE);
   
@@ -238,6 +252,8 @@ void PositionBox::resized() {
   mLabelDecay.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelSustain.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelRelease.setBounds(labelPanel.removeFromLeft(knobWidth));
+
+  r.removeFromTop(PADDING_SIZE);
 
   // Grain envelopes
   mEnvelopeGrain.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
@@ -260,7 +276,6 @@ void PositionBox::resized() {
 
 void PositionBox::setActive(bool isActive) {
   mIsActive = isActive;
-  mBtnEnabled.setToggleState(isActive, juce::dontSendNotification);
   setState(mState);
 }
 
@@ -279,11 +294,6 @@ void PositionBox::setState(BoxState state) {
     mBtnSolo.setToggleState(false, juce::dontSendNotification);
   }
 
-  juce::Colour enabledColour = (state != BoxState::SOLO_WAIT)
-          ? juce::Colour(Utils::POSITION_COLOURS[mColour])
-                                     : juce::Colours::darkgrey;
-  mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                        enabledColour);
   juce::Colour soloColour = (state != BoxState::SOLO_WAIT)
                                    ? juce::Colours::blue
                                    : juce::Colours::darkgrey;
@@ -306,24 +316,18 @@ void PositionBox::setState(BoxState state) {
                            knobColour);
   mSliderAttack.setColour(
       juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][0])
-          : juce::Colours::darkgrey);
-  mSliderDecay.setColour(
-      juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][1])
-          : juce::Colours::darkgrey);
-  mSliderSustain.setColour(
-      juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][2])
-          : juce::Colours::darkgrey);
+      componentsLit ? knobColour.brighter() : juce::Colours::darkgrey);
+  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                         componentsLit ? knobColour.brighter().brighter()
+                                       : juce::Colours::darkgrey);
+  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                           componentsLit
+                               ? knobColour.brighter().brighter().brighter()
+                               : juce::Colours::darkgrey);
   mSliderRelease.setColour(
       juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][3])
-          : juce::Colours::darkgrey);
+      componentsLit ? knobColour.brighter().brighter().brighter().brighter()
+                    : juce::Colours::darkgrey);
   mLabelAttack.setEnabled(componentsLit);
   mLabelDecay.setEnabled(componentsLit);
   mLabelSustain.setEnabled(componentsLit);
@@ -364,8 +368,6 @@ void PositionBox::setColour(Utils::PositionColour colour) {
   mColour = colour;
   juce::Colour newColour = juce::Colour(Utils::POSITION_COLOURS[colour]);
   if (mState == BoxState::READY) {
-    mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                          newColour);
     mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                        juce::Colours::blue);
   }

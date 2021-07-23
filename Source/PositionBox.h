@@ -65,7 +65,7 @@ class PositionBox : public juce::Component {
 
   /* UI Layout */
   static constexpr auto PADDING_SIZE = 5;
-  static constexpr auto TOGGLE_SIZE = 20;
+  static constexpr auto TOGGLE_SIZE = 16;
   static constexpr auto KNOB_HEIGHT = 40;
   static constexpr auto LABEL_HEIGHT = 20;
   static constexpr auto ENVELOPE_HEIGHT = 60;
@@ -77,7 +77,6 @@ class PositionBox : public juce::Component {
 
   /* UI Components */
   PositionChanger mPositionChanger;
-  juce::ToggleButton mBtnEnabled;
   juce::ToggleButton mBtnSolo;
   juce::Slider mSliderShape;
   juce::Label mLabelShape;

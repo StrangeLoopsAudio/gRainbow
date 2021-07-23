@@ -72,30 +72,12 @@ void PositionChanger::paint(juce::Graphics& g) {
   g.setColour(bgColour);
   g.drawRect(titleRect, 2);
 
-  /* Draw position bubbles */
+  /* Draw position text */
   if (mGlobalPositions.size() > 0) {
-    int totalWidth =
-        (BUBBLE_WIDTH * mNumPositions) + (BUBBLE_PADDING * (mNumPositions - 1));
-    int startX = (getWidth() / 2) - (totalWidth / 2);
-    for (int i = 0; i < mNumPositions; ++i) {
-      int bubbleStart = startX + i * (BUBBLE_WIDTH + BUBBLE_PADDING);
-      juce::Rectangle<float> bubbleRect =
-          juce::Rectangle<float>(BUBBLE_WIDTH, BUBBLE_WIDTH);
-      bubbleRect = bubbleRect.withCentre(juce::Point<float>(
-          bubbleStart + (BUBBLE_WIDTH / 2), getHeight() / 2));
-      
-      if (i == mGlobalPositions[mIndexInBoxes]) {
-        g.setColour(mColour);
-        g.fillEllipse(bubbleRect);
-      } else {
-        bool isTaken =
-            std::find(mGlobalPositions.begin(), mGlobalPositions.end(), i) !=
-            mGlobalPositions.end();
-        g.setColour(juce::Colours::darkgrey);
-        if (isTaken) g.fillEllipse(bubbleRect);
-        else g.drawEllipse(bubbleRect, 1);
-      }
-    }
+    juce::String posString =
+        juce::String(mGlobalPositions[mIndexInBoxes] + 1) + juce::String(" / ") + juce::String(mNumPositions);
+    g.setColour(bgColour);
+    g.drawText(posString, titleRect, juce::Justification::centred);
   }
 }
 
