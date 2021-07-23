@@ -14,33 +14,94 @@
 
 //==============================================================================
 PositionTabs::PositionTabs() {
-  // In your constructor, you should add any child components, and
-  // initialise any special settings that your component needs.
+  for (int i = 0; i < mBtnsEnabled.size(); ++i) {
+    mBtnsEnabled[i].setToggleState(mCurSelectedTab == i, juce::dontSendNotification);
+    juce::Colour tabColour = mBtnsEnabled[i].getToggleState()
+                                 ? juce::Colour(Utils::POSITION_COLOURS[i])
+                                 : juce::Colours::darkgrey;
+    mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
+                              tabColour);
+    mBtnsEnabled[i].onClick = [this, i] {
+      tabChanged((Utils::PositionColour)i, mCurSelectedTab == i, mBtnsEnabled[i].getToggleState());
+      juce::Colour tabColour = mBtnsEnabled[i].getToggleState()
+                                   ? juce::Colour(Utils::POSITION_COLOURS[i])
+                                   : juce::Colours::darkgrey;
+      mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
+                                tabColour);
+    };
+    mBtnsEnabled[i].addMouseListener(this, false);
+    addAndMakeVisible(mBtnsEnabled[i]);
+  }
 }
 
 PositionTabs::~PositionTabs() {}
 
 void PositionTabs::paint(juce::Graphics& g) {
-  /* This demo code just fills the component's background and
-     draws some placeholder text to get you started.
+  float tabWidth = getWidth() / Utils::PositionColour::NUM_BOXES - 2.0f;
+  float curStart = 1.0f;
+  for (int i = 0; i < Utils::PositionColour::NUM_BOXES; ++i) {
+    juce::Colour tabColour = mBtnsEnabled[i].getToggleState()
+                                 ? juce::Colour(Utils::POSITION_COLOURS[i])
+                                 : juce::Colours::darkgrey;
+    float tabHeight = (mCurSelectedTab == i) ? getHeight() + 20.0f : getHeight() - 2.0f;
+    juce::Rectangle<float> tabRect =
+        juce::Rectangle<float>(curStart, 1.0f, tabWidth, tabHeight);
+    if (mCurHoverTab == i && mCurSelectedTab != i) {
+      g.setColour(tabColour.withAlpha(0.3f));
+      g.fillRoundedRectangle(tabRect, 10.0f);
+    }
+    g.setColour(tabColour);
+    g.drawRoundedRectangle(tabRect, 10.0f, 2.0f);
 
-     You should replace everything in this method with your own
-     drawing code..
-  */
+    g.setColour(juce::Colours::white);
+    g.drawText(juce::String(i + 1), tabRect.withHeight(getHeight() - 2.0f), juce::Justification::centred);
+    curStart += tabWidth + 2.0f;
+  }
+}
 
-  g.fillAll(getLookAndFeel().findColour(
-      juce::ResizableWindow::backgroundColourId));  // clear the background
+void PositionTabs::mouseMove(const juce::MouseEvent& event) {
+  int tabHover = (event.getEventRelativeTo(this).getPosition().getX() / (float)getWidth()) *
+                 Utils::PositionColour::NUM_BOXES;
+  mCurHoverTab = tabHover;
+  repaint();
+}
 
-  g.setColour(juce::Colours::grey);
-  g.drawRect(getLocalBounds(), 1);  // draw an outline around the component
+void PositionTabs::mouseExit(const juce::MouseEvent& event) {
+  mCurHoverTab = -1;
+  repaint();
+}
 
-  g.setColour(juce::Colours::white);
-  g.setFont(14.0f);
-  g.drawText("PositionTabs", getLocalBounds(), juce::Justification::centred,
-             true);  // draw some placeholder text
+void PositionTabs::mouseUp(const juce::MouseEvent& event) {
+  if (event.eventComponent != this) return;
+  int tabClick = (event.getEventRelativeTo(this).getPosition().getX() /
+                  (float)getWidth()) *
+                 Utils::PositionColour::NUM_BOXES;
+  if (tabClick != mCurSelectedTab) {
+    tabChanged(mCurSelectedTab, false,
+               mBtnsEnabled[mCurSelectedTab].getToggleState());
+    tabChanged((Utils::PositionColour)tabClick, true,
+               mBtnsEnabled[tabClick].getToggleState());
+  }
+  mCurSelectedTab = (Utils::PositionColour)tabClick;
+  repaint();
 }
 
 void PositionTabs::resized() {
-  // This method is where you should set the bounds of any child
-  // components that your component contains..
+  juce::Rectangle<int> r = getLocalBounds();
+
+  // Enable/disable buttons
+  juce::Rectangle<int> btnRect = juce::Rectangle<int>(TOGGLE_SIZE, TOGGLE_SIZE);
+  float tabWidth = getWidth() / Utils::PositionColour::NUM_BOXES - 2.0f;
+  float curStart = 1.0f;
+  for (int i = 0; i < mBtnsEnabled.size(); ++i) {
+    mBtnsEnabled[i].setBounds(btnRect.withCentre(juce::Point<int>(curStart + (TOGGLE_SIZE / 2) + 5, getHeight() / 2)));
+    curStart += tabWidth + 2.0f;
+  }
+}
+
+void PositionTabs::tabChanged(Utils::PositionColour tab, bool isSelected, bool isEnabled) {
+  if (onTabChanged != nullptr) {
+    onTabChanged(tab, isSelected, isEnabled);
+  }
+  repaint();
 }

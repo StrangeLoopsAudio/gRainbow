@@ -202,16 +202,28 @@ void PositionBox::paint(juce::Graphics& g) {
   juce::Colour fillCol = borderLit
                              ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                              : juce::Colours::darkgrey;
+  g.setColour(fillCol);
+
+  // Draw line to connect to tab
+  float tabWidth = getWidth() / Utils::PositionColour::NUM_BOXES;
+  if (mColour > 0) {
+    g.drawLine(1.0f, 0.0f, mColour * tabWidth + 2.0f, 0.0f,
+               2.0f);
+  }
+  if (mColour < Utils::PositionColour::NUM_BOXES - 1) {
+    g.drawLine((mColour + 1) * tabWidth - 2.0f, 0.0f, getWidth() - 1.0f, 0.0f,
+               2.0f);
+  }
+  
 
   // Draw separator lines
-  g.setColour(fillCol);
-  g.drawLine(0.0f, mLabelAttack.getBottom(), getWidth(),
+  g.drawLine(0.0f, mLabelAttack.getBottom(), getWidth() - 1,
              mLabelAttack.getBottom(), 2.0f);
-  g.drawLine(0.0f, mLabelGain.getBottom(), getWidth(),
+  g.drawLine(0.0f, mLabelGain.getBottom(), getWidth() - 1,
              mLabelGain.getBottom(), 2.0f);
 
 
-  g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.4f), 10.0f, 2.5f);
+  g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.0f), 10.0f, 2.0f);
 }
 
 void PositionBox::resized() {

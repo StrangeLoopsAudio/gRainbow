@@ -40,6 +40,12 @@ MainComponent::MainComponent()
   };
   addAndMakeVisible(mBtnRecord);
 
+  /* Position tabs */
+  mPositionTabs.onTabChanged = [this](Utils::PositionColour tab,
+                                      bool isSelected, bool isEnabled) {
+    mPositionBoxes[tab].setVisible(isSelected);
+    mPositionBoxes[tab].setActive(isEnabled);
+  };
   addAndMakeVisible(mPositionTabs);
 
   /* Position boxes */
