@@ -45,6 +45,7 @@ MainComponent::MainComponent()
                                       bool isSelected, bool isEnabled) {
     mPositionBoxes[tab].setVisible(isSelected);
     mPositionBoxes[tab].setActive(isEnabled);
+    mSynth.updateParameter(tab, GranularSynth::ParameterType::ENABLED, isEnabled);
   };
   addAndMakeVisible(mPositionTabs);
 

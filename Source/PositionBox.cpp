@@ -22,14 +22,6 @@ PositionBox::PositionBox() {
   };
   addAndMakeVisible(mPositionChanger);
 
-  mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::darkgrey);
-  mBtnEnabled.onClick = [this] {
-    mIsActive = !mIsActive;
-    setState(mState);
-    parameterChanged(GranularSynth::ParameterType::ENABLED, mBtnEnabled.getToggleState());
-  };
-  addAndMakeVisible(mBtnEnabled);
-
   mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                         juce::Colours::blue);
   mBtnSolo.onClick = [this] {
@@ -236,10 +228,10 @@ void PositionBox::resized() {
 
   // Enable and solo buttons
   auto btnPanel = r.removeFromTop(TOGGLE_SIZE);
-  mBtnEnabled.setBounds(btnPanel.removeFromLeft(TOGGLE_SIZE));
   mBtnSolo.setBounds(btnPanel.removeFromRight(TOGGLE_SIZE));
+  btnPanel.removeFromLeft(TOGGLE_SIZE); // For symmetry
   mPositionChanger.setBounds(btnPanel.withSizeKeepingCentre(
-      btnPanel.getWidth() * 0.7, btnPanel.getHeight()));
+      btnPanel.getWidth() * 0.5, btnPanel.getHeight()));
 
   r.removeFromTop(PADDING_SIZE);
   
@@ -284,7 +276,6 @@ void PositionBox::resized() {
 
 void PositionBox::setActive(bool isActive) {
   mIsActive = isActive;
-  mBtnEnabled.setToggleState(isActive, juce::dontSendNotification);
   setState(mState);
 }
 
@@ -303,11 +294,6 @@ void PositionBox::setState(BoxState state) {
     mBtnSolo.setToggleState(false, juce::dontSendNotification);
   }
 
-  juce::Colour enabledColour = (state != BoxState::SOLO_WAIT)
-          ? juce::Colour(Utils::POSITION_COLOURS[mColour])
-                                     : juce::Colours::darkgrey;
-  mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                        enabledColour);
   juce::Colour soloColour = (state != BoxState::SOLO_WAIT)
                                    ? juce::Colours::blue
                                    : juce::Colours::darkgrey;
@@ -382,8 +368,6 @@ void PositionBox::setColour(Utils::PositionColour colour) {
   mColour = colour;
   juce::Colour newColour = juce::Colour(Utils::POSITION_COLOURS[colour]);
   if (mState == BoxState::READY) {
-    mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                          newColour);
     mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                        juce::Colours::blue);
   }
