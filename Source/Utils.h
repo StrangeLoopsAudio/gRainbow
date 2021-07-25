@@ -228,6 +228,8 @@ class Utils {
     COUNT
   };
 
+  enum class InputType { NONE, MOUSE, KEYBOARD, MIDI };
+
   // Use initializer_list to do "for (PitchClass key : ALL_PITCH_CLASS)" logic
   static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
       PitchClass::C,  PitchClass::Cs, PitchClass::D,  PitchClass::Ds,
@@ -249,8 +251,13 @@ class Utils {
   struct Note {
     PitchClass pitch;
     float velocity;
+    InputType input;  // prevents other inputs from stepping on each other
 
-    Note() : pitch(PitchClass::NONE), velocity(INVALID_VELOCITY) {}
-    Note(PitchClass pitch, float velocity) : pitch(pitch), velocity(velocity) {}
+    Note()
+        : pitch(PitchClass::NONE),
+          velocity(INVALID_VELOCITY),
+          input(InputType::NONE) {}
+    Note(PitchClass pitch, float velocity, InputType input)
+        : pitch(pitch), velocity(velocity), input(input) {}
   };
 };  // Utils

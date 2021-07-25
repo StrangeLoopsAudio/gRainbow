@@ -38,6 +38,7 @@ class MainComponent : public juce::AudioAppComponent,
   void paint(juce::Graphics& g) override;
   void paintOverChildren(juce::Graphics& g) override;
   void resized() override;
+  bool keyStateChanged(bool) override;
 
   void run() override;
 

@@ -141,6 +141,9 @@ MainComponent::MainComponent()
   }
   mAudioDeviceManager.addAudioCallback(&mRecorder);
 
+  /* Computer Keyboard input */
+  setWantsKeyboardFocus(true);
+
   startTimer(50);  // Keyboard focus timer
 }
 
@@ -325,6 +328,18 @@ void MainComponent::resized() {
       r.removeFromTop(r.getHeight() - NOTE_DISPLAY_HEIGHT)
           .reduced(NOTE_DISPLAY_HEIGHT, 0.0f);
   mKeyboard.setBounds(keyboardRect);
+}
+
+/**
+ * @brief To properly handle all keyboard input, the main component is used as
+ * it will always be "in focus". From here it can pass through and decide what
+ * keyboard inputs are sent to each child component
+ */
+bool MainComponent::keyStateChanged(bool isKeyDown) {
+  mKeyboard.updateKeyState(isKeyDown);
+
+  // End KeyListener here as no other component should need it
+  return true;
 }
 
 /** Pauses audio to open file
