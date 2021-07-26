@@ -59,7 +59,7 @@ class GranularSynth : juce::Thread {
 
   void setFileBuffer(juce::AudioBuffer<float>* buffer, double sr);
 
-  void process(juce::AudioBuffer<float>* blockBuffer);
+  void process(juce::AudioBuffer<float>& buffer);
   void setNoteOn(Utils::PitchClass pitchClass,
                  std::vector<GrainPositionFinder::GrainPosition> gPositions);
   void setNoteOff(Utils::PitchClass pitchClass);

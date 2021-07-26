@@ -127,12 +127,12 @@ void GranularSynth::run() {
   }
 }
 
-void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer) {
+void GranularSynth::process(juce::AudioBuffer<float>& buffer) {
   // Add contributions from each grain
   juce::Array<Grain> grains = mGrains; // Copy to avoid threading issues
-  for (int i = 0; i < blockBuffer->getNumSamples(); ++i) {
+  for (int i = 0; i < buffer.getNumSamples(); ++i) {
     for (int g = 0; g < grains.size(); ++g) {
-      grains[g].process(*mFileBuffer, *blockBuffer, mTotalSamps);
+      grains[g].process(*mFileBuffer, buffer, mTotalSamps);
     }
     mTotalSamps++;
   }
@@ -143,9 +143,9 @@ void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer) {
   } else {
     // Normalize the block before sending onward
     // if grains is empty, don't want to divide by zero
-    for (int i = 0; i < blockBuffer->getNumSamples(); ++i) {
-      for (int ch = 0; ch < blockBuffer->getNumChannels(); ++ch) {
-        //float* channelBlock = blockBuffer->getWritePointer(ch);
+    for (int i = 0; i < buffer.getNumSamples(); ++i) {
+      for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+        //float* channelBlock = buffer->getWritePointer(ch);
         //channelBlock[i] /= mGrains.size();
       }
     }
