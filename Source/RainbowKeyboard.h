@@ -33,7 +33,7 @@ class RainbowKeyboard : public juce::Component {
 
   // Takes input of Component::keyStateChanged from parent component due to lack
   // of always having focus on this component
-  void updateKeyState(bool isKeyDown);
+  void updateKeyState(const juce::KeyPress* pKey, bool isKeyDown);
 
   // Returns a value between 0.0-1.0 representing the note's x position on the
   // keyboard
@@ -45,6 +45,7 @@ class RainbowKeyboard : public juce::Component {
 
   juce::MidiKeyboardState& mState;
   juce::KeyPress mKeyPresses[Utils::PitchClass::COUNT];
+  Utils::PitchClass mLastPressedKey = Utils::PitchClass::NONE;
 
   // Since only one note can be pressed at once, only need on instance of Note
   Utils::Note mCurrentNote;

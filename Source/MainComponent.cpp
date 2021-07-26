@@ -336,7 +336,18 @@ void MainComponent::resized() {
  * keyboard inputs are sent to each child component
  */
 bool MainComponent::keyStateChanged(bool isKeyDown) {
-  mKeyboard.updateKeyState(isKeyDown);
+  mKeyboard.updateKeyState(nullptr, isKeyDown);
+
+  // End KeyListener here as no other component should need it
+  return true;
+}
+
+/**
+ * @brief keyPressed is called after keyStateChanged, but know which key was
+ * pressed
+ */
+bool MainComponent::keyPressed(const juce::KeyPress& key) {
+  mKeyboard.updateKeyState(&key, true);
 
   // End KeyListener here as no other component should need it
   return true;

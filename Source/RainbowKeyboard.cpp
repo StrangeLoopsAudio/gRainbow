@@ -144,34 +144,65 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
   updateMouseState(e, false);
 }
 
-void RainbowKeyboard::updateKeyState(bool isKeyDown) {
+void RainbowKeyboard::updateKeyState(const juce::KeyPress* pKey,
+                                     bool isKeyDown) {
   if (mCurrentNote.input != Utils::InputType::KEYBOARD &&
       mCurrentNote.input != Utils::InputType::NONE) {
+    // if other input types are being used, ignore keyboard inputs all together
     return;
   }
-  bool notePressed = mCurrentNote.pitch != Utils::PitchClass::NONE;
+
+  const bool notePlaying = mCurrentNote.pitch != Utils::PitchClass::NONE;
   bool stateChange = false;
 
-  if (notePressed && !isKeyDown) {
-    // Note is playing
+  // Get the last pressed note
+  if (pKey != nullptr) {
+    jassert(isKeyDown == true);  // juce::KeyListener only gives key on presses
+    const int keyCode = pKey->getKeyCode();
+
+    if (notePlaying && mKeyPresses[mLastPressedKey].isKeyCode(keyCode)) {
+      return;  // same note being played is being held down
+    }
+
+    // look for new key being pressed
+    bool validKey = false;
+    for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
+      if (mKeyPresses[pitchClass].isKeyCode(keyCode)) {
+        mLastPressedKey = pitchClass;
+        validKey = true;
+        break;
+      }
+    }
+
+    if (!validKey) {
+      // another key, that is not related to keyboard, was pressed
+      return;
+    }
+  } else if (isKeyDown) {
+    // if pKey is null and note is down, then its just
+    // juce::KeyListener::keyStateChanged giving redundant information
+    return;
+  }
+
+  if (isKeyDown) {
+    // new key is pressed
+    if (notePlaying) {
+      // two keys were pressed, so need to turn off old one first
+      mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
+      printf("[Off 0] %d\n", mCurrentNote.pitch);
+    }
+    mCurrentNote =
+        Utils::Note(mLastPressedKey, 0.5f, Utils::InputType::KEYBOARD);
+    mState.noteOn(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
+    printf("[on 0] %d\n", mCurrentNote.pitch);
+    stateChange = true;
+  } else {
     if (!mKeyPresses[mCurrentNote.pitch].isCurrentlyDown()) {
       // key has been released
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
+      printf("[Off 1] %d\n", mCurrentNote.pitch);
       mCurrentNote = Utils::Note();
       stateChange = true;
-    } else {
-      // another note is being pressed, nothing to do for now
-    }
-  } else if (!notePressed && isKeyDown) {
-    // Nothing is playing and look for first key pressed to play
-    for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
-      if (mKeyPresses[pitchClass].isCurrentlyDown()) {
-        mCurrentNote =
-            Utils::Note(pitchClass, 0.5f, Utils::InputType::KEYBOARD);
-        mState.noteOn(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-        stateChange = true;
-        break;
-      }
     }
   }
 
