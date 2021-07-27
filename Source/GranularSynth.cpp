@@ -53,6 +53,7 @@ void GranularSynth::run() {
             (gPos.pitch.duration * mFileBuffer->getNumSamples()) - durSamples);
 
         float gain = gPos.ampEnvLevel * params.gain;
+        jassert(gPos.pbRate > 0.1f);
         auto grain = Grain(generateGrainEnvelope(params.shape), durSamples, gPos.pbRate,
                            posSamples + posOffset, mTotalSamps, gain);
         mGrains.add(grain);
