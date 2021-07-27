@@ -197,12 +197,12 @@ void PositionBox::paint(juce::Graphics& g) {
   g.setColour(fillCol);
 
   // Draw line to connect to tab
-  float tabWidth = getWidth() / Utils::PositionColour::NUM_BOXES;
+  float tabWidth = getWidth() / Utils::PositionColour::NUM_POS;
   if (mColour > 0) {
     g.drawLine(1.0f, 0.0f, mColour * tabWidth + 2.0f, 0.0f,
                2.0f);
   }
-  if (mColour < Utils::PositionColour::NUM_BOXES - 1) {
+  if (mColour < Utils::PositionColour::NUM_POS - 1) {
     g.drawLine((mColour + 1) * tabWidth - 2.0f, 0.0f, getWidth() - 1.0f, 0.0f,
                2.0f);
   }
@@ -279,8 +279,8 @@ void PositionBox::setActive(bool isActive) {
   setState(mState);
 }
 
-void PositionBox::setPositions(std::vector<int> positions) {
-  mPositionChanger.setGlobalPositions(positions);
+void PositionBox::setPosition(int position) {
+  mPositionChanger.setPosition(position);
 }
 
 void PositionBox::setNumPositions(int numPositions) {
@@ -299,7 +299,8 @@ void PositionBox::setState(BoxState state) {
                                    : juce::Colours::darkgrey;
   mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId, soloColour);
 
-  bool componentsLit = (mIsActive && state == BoxState::READY || state == BoxState::SOLO);
+  bool componentsLit = (mIsActive && state == BoxState::READY ||
+                        state == BoxState::SOLO);
   juce::Colour knobColour = componentsLit
                                 ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                                 : juce::Colours::darkgrey;
@@ -357,7 +358,12 @@ void PositionBox::setState(BoxState state) {
 }
 
 GranularSynth::PositionParams PositionBox::getParams() {
+  bool canPlay =
+      mState != PositionBox::BoxState::SOLO_WAIT;
+  bool shouldPlay = mIsActive ||
+      mState == PositionBox::BoxState::SOLO;
   return GranularSynth::PositionParams(
+      canPlay && shouldPlay,
       mSliderShape.getValue(), mSliderRate.getValue(),
       mSliderDuration.getValue(), mSliderGain.getValue(),
       mSliderAttack.getValue(), mSliderDecay.getValue(),
@@ -371,7 +377,7 @@ void PositionBox::setColour(Utils::PositionColour colour) {
     mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                        juce::Colours::blue);
   }
-  mPositionChanger.setColour(colour, newColour);
+  mPositionChanger.setColour(newColour);
   mEnvelopeGrain.setColour(newColour);
   mEnvelopeAmp.setColour(colour);
   repaint();

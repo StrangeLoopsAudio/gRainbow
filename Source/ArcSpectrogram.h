@@ -28,16 +28,12 @@
 /*
  */
 class ArcSpectrogram : public juce::AnimatedAppComponent,
-                       juce::Thread,
-                       juce::Button::Listener {
+                       juce::Thread {
  public:
   ArcSpectrogram();
   ~ArcSpectrogram() override;
 
   enum SpecType { LOGO, SPECTROGRAM, HPCP, NOTES, NUM_TYPES };
-
-  std::function<void(int, GrainPositionFinder::GrainPosition)>
-      onPositionUpdated = nullptr;
 
   void update() override{};
   void paint(juce::Graphics &) override;
@@ -48,13 +44,11 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   void loadBuffer(std::vector<std::vector<float>> *buffer, SpecType type);
   void setTransients(std::vector<TransientDetector::Transient> *transients);
   void setNoteOn(int midiNote,
-                 std::vector<GrainPositionFinder::GrainPosition> gPositions, std::vector<int> boxPositions);
+                 std::vector<GrainPositionFinder::GrainPosition> gPositions);
   void setNoteOff() { mIsPlayingNote = false; }
 
   //============================================================================
   void run() override;
-
-  void buttonClicked(juce::Button *btn) override;
 
  private:
   static constexpr auto MIN_FREQ = 100;
@@ -77,8 +71,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto MAX_MARKERS = 4;
   static constexpr juce::int64 MARKER_COLOURS[MAX_MARKERS] = {
       0xFF52C4FF, 0xFFE352FF, 0xFFFF8D52, 0xFF6EFF52};
-  // static constexpr auto COLOUR_NIGHT = 0x8806031B;
-  // static constexpr auto COLOUR_DAY = 0xFF00566B;
+
   // Pixel vibration
   static constexpr auto PIXEL_VIBRATION_SIZE = 2;
   static constexpr auto MAX_PIXEL_VIBRATION = 15;

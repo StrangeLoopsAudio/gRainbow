@@ -19,6 +19,16 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
       mProgressBar(mLoadingProgress) {
   mFormatManager.registerBasicFormats();
 
+  mProcessor.onNoteChanged = [this](Utils::PitchClass pitchClass,
+    bool isNoteOn) {
+      mCurPitchClass = pitchClass;
+    if (isNoteOn) {
+      mStartedPlayingTrig = true;
+    } else {
+      mArcSpec.setNoteOff();
+    }
+  };
+
   setLookAndFeel(&mRainbowLookAndFeel);
 
   /* Open file button */
@@ -58,6 +68,16 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     mPositionBoxes[tab].setActive(isEnabled);
     mProcessor.synth.updateParameter(tab, GranularSynth::ParameterType::ENABLED,
                            isEnabled);
+    std::vector<bool> positionStates;
+    for (int i = 0; i < Utils::PositionColour::NUM_POS; ++i) {
+      bool canPlay =
+          mPositionBoxes[i].getState() != PositionBox::BoxState::SOLO_WAIT;
+      bool shouldPlay =
+          mPositionBoxes[i].getActive() ||
+          mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO;
+      positionStates.push_back(canPlay && shouldPlay);
+    }
+    mProcessor.synth.updatePositionStates(positionStates);
   };
   addAndMakeVisible(mPositionTabs);
 
@@ -68,24 +88,28 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     mProcessor.synth.updateParameters((Utils::PositionColour)i,
                             mPositionBoxes[i].getParams());
     mPositionBoxes[i].onPositionChanged = [this, i](bool isRight) {
-      mPositions[mCurPitchClass][i] = findNextPosition(i, isRight);
-      for (int box = 0; box < mPositionBoxes.size(); ++box) {
-        mPositionBoxes[box].setPositions(
-            std::vector<int>(mPositions[mCurPitchClass].begin(),
-                             mPositions[mCurPitchClass].end()));
-      }
+      int newPosition = mProcessor.synth.incrementPosition(i, isRight);
+      mPositionBoxes[i].setPosition(newPosition);
     };
     mPositionBoxes[i].onParameterChanged =
         [this](Utils::PositionColour pos, GranularSynth::ParameterType param,
                float value) {
           if (param == GranularSynth::ParameterType::SOLO) {
-            for (int i = 0; i < Utils::PositionColour::NUM_BOXES; ++i) {
+            std::vector<bool> positionStates;
+            for (int i = 0; i < Utils::PositionColour::NUM_POS; ++i) {
               if (i != pos) {
                 mPositionBoxes[i].setState(
                     (value == true) ? PositionBox::BoxState::SOLO_WAIT
                                     : PositionBox::BoxState::READY);
               }
+              bool canPlay = mPositionBoxes[i].getState() !=
+                             PositionBox::BoxState::SOLO_WAIT;
+              bool shouldPlay =
+                  mPositionBoxes[i].getActive() ||
+                  mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO;
+              positionStates.push_back(canPlay && shouldPlay);
             }
+            mProcessor.synth.updatePositionStates(positionStates);
           }
           mProcessor.synth.updateParameter(pos, param, value);
         };
@@ -95,10 +119,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
 
   /* Arc spectrogram */
   addAndMakeVisible(mArcSpec);
-  mArcSpec.onPositionUpdated = [this](int midiNote,
-                                      GrainPositionFinder::GrainPosition gPos) {
-    mPositionFinder.updatePosition(midiNote, gPos);
-  };
 
   addChildComponent(mProgressBar);
 
@@ -112,7 +132,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
              std::vector<std::vector<float>>& notesBuffer) {
         mArcSpec.loadBuffer(&hpcpBuffer, ArcSpectrogram::SpecType::HPCP);
         mArcSpec.loadBuffer(&notesBuffer, ArcSpectrogram::SpecType::NOTES);
-        mPositionFinder.setPitches(&mPitchDetector.getPitches());
+        mProcessor.synth.setPitches(&mPitchDetector.getPitches());
         mIsProcessingComplete = true;
       };
 
@@ -148,39 +168,15 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
 
 void GRainbowAudioProcessorEditor::timerCallback() {
   if (mStartedPlayingTrig && mCurPitchClass != Utils::PitchClass::NONE) {
-    std::vector<GrainPositionFinder::GrainPosition> gPositions =
-        mPositionFinder.findPositions(PositionBox::MAX_POSITIONS,
-                                      mCurPitchClass);
-    std::vector<GrainPositionFinder::GrainPosition> gPosToPlay;
-    for (int i = 0; i < mPositionBoxes.size(); ++i) {
-      bool canPlay =
-          mPositionBoxes[i].getState() != PositionBox::BoxState::SOLO_WAIT;
-      bool shouldPlay =
-          mPositionBoxes[i].getActive() ||
-          (mPositionBoxes[i].getState() == PositionBox::BoxState::SOLO);
-      if (canPlay && shouldPlay && !mPositions.empty() &&
-          gPositions.size() >= NUM_BOXES) {
-        gPositions[mPositions[mCurPitchClass][i]].isActive = true;
-        gPosToPlay.push_back(gPositions[mPositions[mCurPitchClass][i]]);
-      } else {
-        // Push back an inactive position for the synth
-        gPosToPlay.push_back(
-            GrainPositionFinder::GrainPosition(PitchDetector::Pitch(), 1.0));
-      }
+    std::vector<int> boxPositions = mProcessor.synth.getBoxPositions();
+    int numFoundPositions = mProcessor.synth.getNumFoundPositions();
+    for (int i = 0; i < boxPositions.size(); ++i) {
+      mPositionBoxes[i].setPosition(boxPositions[i]);
+      mPositionBoxes[i].setNumPositions(numFoundPositions);
     }
-
-    if (!mPositions.empty()) {
-      std::vector<int> boxPositions = std::vector<int>(
-          mPositions[mCurPitchClass].begin(), mPositions[mCurPitchClass].end());
-      for (int i = 0; i < mPositionBoxes.size(); ++i) {
-        mPositionBoxes[i].setPositions(boxPositions);
-        mPositionBoxes[i].setNumPositions(gPositions.size());
-      }
-
-      mCurPositions = gPosToPlay;
-      mProcessor.synth.setNoteOn(mCurPitchClass, gPosToPlay);
-      mArcSpec.setNoteOn(mCurPitchClass, gPositions, boxPositions);
-    }
+    std::vector<GrainPositionFinder::GrainPosition> positions =
+        mProcessor.synth.getCurrentPositions();
+    mArcSpec.setNoteOn(mCurPitchClass, mProcessor.synth.getCurrentPositions());
     mStartedPlayingTrig = false;
     repaint();  // Update note display
   }
@@ -209,20 +205,20 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
   // Draw note display
   if (mCurPitchClass != Utils::PitchClass::NONE) {
+    std::vector<GrainPositionFinder::GrainPosition> positions =
+        mProcessor.synth.getCurrentPositions();
     // Draw position arrows
-    for (int i = 0; i < mCurPositions.size(); ++i) {
-      if (mCurPositions[i].isActive) {
-        g.setColour(juce::Colour(Utils::POSITION_COLOURS[i]));
-        auto middlePos = mCurPositions[i].pitch.posRatio +
-                         (mCurPositions[i].pitch.duration / 2.0f);
-        float angleRad = (juce::MathConstants<float>::pi * middlePos) -
-                         (juce::MathConstants<float>::pi / 2.0f);
-        juce::Point<float> startPoint = juce::Point<float>(
-            mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
-        juce::Point<float> endPoint = startPoint.getPointOnCircumference(
-            mArcSpec.getHeight() / 4.5f, angleRad);
-        g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
-      }
+    for (int i = 0; i < positions.size(); ++i) {
+      if (positions[i].pitch.pitchClass == Utils::PitchClass::NONE) continue;
+      g.setColour(juce::Colour(Utils::POSITION_COLOURS[i]));
+      auto middlePos = positions[i].pitch.posRatio + (positions[i].pitch.duration / 2.0f);
+      float angleRad = (juce::MathConstants<float>::pi * middlePos) -
+                       (juce::MathConstants<float>::pi / 2.0f);
+      juce::Point<float> startPoint = juce::Point<float>(
+          mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
+      juce::Point<float> endPoint = startPoint.getPointOnCircumference(
+          mArcSpec.getHeight() / 4.5f, angleRad);
+      g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
     }
     // Draw path to positions
     float noteX =
@@ -321,7 +317,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       resampler->process(ratio, inputs[c], outputs[c],
                          mFileBuffer.getNumSamples());
     }
-    resetPositions();
+    mProcessor.synth.resetPositions();
     mArcSpec.resetBuffers();
     stopThread(4000);
     startThread();  // process fft and pass to arc spec
@@ -329,14 +325,6 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     mPitchDetector.processBuffer(&mFileBuffer, mProcessor.getSampleRate());
     mProcessor.synth.setFileBuffer(&mFileBuffer, mProcessor.getSampleRate());
     mIsProcessingComplete = false;  // Reset processing flag
-  }
-}
-
-void GRainbowAudioProcessorEditor::resetPositions() {
-  for (int i = 0; i < mPositions.size(); ++i) {
-    for (int j = 0; j < mPositions[i].size(); ++j) {
-      mPositions[i][j] = j;
-    }
   }
 }
 
@@ -384,22 +372,4 @@ void GRainbowAudioProcessorEditor::stopRecording() {
                        juce::Colours::transparentBlack, recordOver, 1.0f,
                        juce::Colours::transparentBlack);
   repaint();
-}
-
-int GRainbowAudioProcessorEditor::findNextPosition(int boxNum, bool isRight) {
-  int curPos = mPositions[mCurPitchClass][boxNum];
-  for (int i = 1; i <= PositionBox::MAX_POSITIONS; ++i) {
-    int newPos = isRight ? curPos + i : curPos - i;
-    newPos = newPos % PositionBox::MAX_POSITIONS;
-    bool isValid = true;
-    for (int j = 0; j < mPositions[mCurPitchClass].size(); ++j) {
-      if (mPositions[mCurPitchClass][j] == newPos && boxNum != j) {
-        // Position already taken, move on
-        isValid = false;
-        break;
-      }
-    }
-    if (isValid) return newPos;
-  }
-  return curPos;
 }

@@ -235,33 +235,20 @@ void ArcSpectrogram::setTransients(
 }
 
 void ArcSpectrogram::setNoteOn(
-    int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions,
-    std::vector<int> boxPositions) {
+    int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions) {
   mIsPlayingNote = true;
   mGPositions = std::vector<GrainPositionFinder::GrainPosition>();
   mCurNote = midiNote;
   mGPositions = gPositions;
   mPositionMarkers.clear();
-  if (gPositions.size() >= NUM_TYPES) {
-    for (int i = 0; i < boxPositions.size(); ++i) {
-      GrainPositionFinder::GrainPosition pos = gPositions[boxPositions[i]];
-      mGPositions.push_back(pos);
-      auto newItem = new PositionMarker(pos, juce::Colour(MARKER_COLOURS[i]));
-      newItem->addListener(this);
-      mPositionMarkers.add(newItem);
-      addAndMakeVisible(newItem);
-    }
+  for (int i = 0; i < gPositions.size(); ++i) {
+    if (gPositions[i].pitch.pitchClass == Utils::PitchClass::NONE) continue;
+    mGPositions.push_back(gPositions[i]);
+    auto newItem =
+        new PositionMarker(gPositions[i], juce::Colour(MARKER_COLOURS[i]));
+    mPositionMarkers.add(newItem);
+    addAndMakeVisible(newItem);
   }
 
   resized();
-}
-
-void ArcSpectrogram::buttonClicked(juce::Button* btn) {
-  if (onPositionUpdated == nullptr) return;
-  for (int i = 0; i < mPositionMarkers.size(); ++i) {
-    if (btn == mPositionMarkers[i]) {
-      auto gPos = mGPositions[i];
-      onPositionUpdated(mCurNote, gPos);
-    }
-  }
 }

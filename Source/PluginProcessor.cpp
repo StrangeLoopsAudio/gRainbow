@@ -127,17 +127,23 @@ void GRainbowAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     buffer.clear(i, 0, buffer.getNumSamples());
 
   // fill a midi buffer with incoming messages from the midi input.
-  juce::MidiBuffer incomingMidi;
-  mKeyboardState.processNextMidiBuffer(incomingMidi, 0, buffer.getNumSamples(),
+  juce::MidiBuffer midiFromUi;
+  mKeyboardState.processNextMidiBuffer(midiFromUi, 0, buffer.getNumSamples(),
                                        true);
-  if (!incomingMidi.isEmpty()) {
-    for (juce::MidiMessageMetadata md : incomingMidi) {
+  if (!midiFromUi.isEmpty()) {
+    for (juce::MidiMessageMetadata md : midiFromUi) {
       if (md.getMessage().isNoteOn()) {
-        mCurPitchClass = (Utils::PitchClass)md.getMessage().getNoteNumber();
-        mStartedPlayingTrig = true;
+        if (onNoteChanged != nullptr) {
+          onNoteChanged((Utils::PitchClass)md.getMessage().getNoteNumber(),
+                        true);
+        }
+        synth.setNoteOn((Utils::PitchClass)md.getMessage().getNoteNumber());
       } else if (md.getMessage().isNoteOff()) {
-        mSynth.setNoteOff((Utils::PitchClass)md.getMessage().getNoteNumber());
-        mArcSpec.setNoteOff();
+        if (onNoteChanged != nullptr) {
+          onNoteChanged((Utils::PitchClass)md.getMessage().getNoteNumber(),
+                        false);
+        }
+        synth.setNoteOff((Utils::PitchClass)md.getMessage().getNoteNumber());
       }
     }
   }
