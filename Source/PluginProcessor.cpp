@@ -126,24 +126,24 @@ void GRainbowAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
     buffer.clear(i, 0, buffer.getNumSamples());
 
-  // fill a midi buffer with incoming messages from the midi input.
-  juce::MidiBuffer midiFromUi;
-  mKeyboardState.processNextMidiBuffer(midiFromUi, 0, buffer.getNumSamples(),
+  // Fill midi buffer with UI keyboard events
+  juce::MidiBuffer aggregatedMidiBuffer;
+  mKeyboardState.processNextMidiBuffer(aggregatedMidiBuffer, 0, buffer.getNumSamples(),
                                        true);
-  if (!midiFromUi.isEmpty()) {
-    for (juce::MidiMessageMetadata md : midiFromUi) {
+
+  // Add midi events from native buffer
+  aggregatedMidiBuffer.addEvents(midiMessages, 0, buffer.getNumSamples(), 0);
+  if (!aggregatedMidiBuffer.isEmpty()) {
+    for (juce::MidiMessageMetadata md : aggregatedMidiBuffer) {
+      // Trigger note on/off depending on event type
+      Utils::PitchClass pc = (Utils::PitchClass)(
+            md.getMessage().getNoteNumber() % Utils::PitchClass::COUNT);
       if (md.getMessage().isNoteOn()) {
-        if (onNoteChanged != nullptr) {
-          onNoteChanged((Utils::PitchClass)md.getMessage().getNoteNumber(),
-                        true);
-        }
-        synth.setNoteOn((Utils::PitchClass)md.getMessage().getNoteNumber());
+        if (onNoteChanged != nullptr) onNoteChanged(pc, true);
+        synth.setNoteOn(pc);
       } else if (md.getMessage().isNoteOff()) {
-        if (onNoteChanged != nullptr) {
-          onNoteChanged((Utils::PitchClass)md.getMessage().getNoteNumber(),
-                        false);
-        }
-        synth.setNoteOff((Utils::PitchClass)md.getMessage().getNoteNumber());
+        if (onNoteChanged != nullptr) onNoteChanged(pc, false);
+        synth.setNoteOff(pc);
       }
     }
   }
