@@ -24,11 +24,7 @@ class PositionBox : public juce::Component {
   PositionBox();
   ~PositionBox() override;
 
-  enum BoxState {
-    READY,
-    SOLO,
-    SOLO_WAIT
-  };
+  enum BoxState { READY, SOLO, SOLO_WAIT };
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -37,7 +33,7 @@ class PositionBox : public juce::Component {
   void setState(BoxState state);
   bool getActive() { return mIsActive; }
   void setActive(bool isActive);
-  void setPositions(std::vector<int> positions);
+  void setPosition(int position);
   void setNumPositions(int numPositions);
 
   void setColour(Utils::PositionColour colour);
@@ -48,7 +44,6 @@ class PositionBox : public juce::Component {
       onParameterChanged = nullptr;
 
   std::function<void(bool isRight)> onPositionChanged = nullptr;
-  static constexpr auto MAX_POSITIONS = 6;
 
  private:
   /* Params */

@@ -16,10 +16,12 @@
 class Utils {
  public:
   // Tetradic colours
-  enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_BOXES };
+  enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_POS };
   enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
+  static constexpr auto MAX_POSITIONS = 6;
   static constexpr juce::int64 POSITION_COLOURS[4] = {0xFF52C4FF, 0xFFE352FF,
                                                       0xFFFF8D52, 0xFF6EFF52};
+  
 
   static inline juce::Colour getRainbowColour(int value) {
     jassert(value >= 0 && value <= 6);

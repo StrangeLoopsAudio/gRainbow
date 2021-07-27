@@ -73,9 +73,9 @@ void PositionChanger::paint(juce::Graphics& g) {
   g.drawRect(titleRect, 2);
 
   /* Draw position text */
-  if (mGlobalPositions.size() > 0) {
+  if (mPosition >= 0) {
     juce::String posString =
-        juce::String(mGlobalPositions[mIndexInBoxes] + 1) + juce::String(" / ") + juce::String(mNumPositions);
+        juce::String(mPosition + 1) + juce::String(" / ") + juce::String(mNumPositions);
     g.setColour(bgColour);
     g.drawText(posString, titleRect, juce::Justification::centred);
   }
@@ -88,8 +88,7 @@ void PositionChanger::setActive(bool isActive) {
   repaint();
 }
 
-void PositionChanger::setColour(int indexInBoxes, juce::Colour colour) {
-  mIndexInBoxes = indexInBoxes;
+void PositionChanger::setColour(juce::Colour colour) {
   mColour = colour;
   repaint();
 }
@@ -155,8 +154,8 @@ void PositionChanger::positionChanged(bool isRight) {
   }
 }
 
-void PositionChanger::setGlobalPositions(std::vector<int> positions) {
-  mGlobalPositions = positions;
+void PositionChanger::setPosition(int position) {
+  mPosition = position;
   repaint();
 }
 

@@ -33,6 +33,7 @@ class GranularSynth : juce::Thread {
     RELEASE   // Position env release
   };
   typedef struct PositionParams {
+    bool  isActive;
     float shape;
     float rate;
     float duration;
@@ -42,9 +43,11 @@ class GranularSynth : juce::Thread {
     float sustain;
     float release;
     PositionParams() {}
-    PositionParams(float shape, float rate, float duration, float gain, float attack,
+    PositionParams(bool isActive, float shape, float rate,
+                   float duration, float gain, float attack,
                    float decay, float sustain, float release)
-        : shape(shape),
+        : isActive(isActive),
+          shape(shape),
           rate(rate),
           duration(duration),
           gain(gain),
@@ -58,11 +61,23 @@ class GranularSynth : juce::Thread {
   ~GranularSynth();
 
   void setFileBuffer(juce::AudioBuffer<float>* buffer, double sr);
+  void setPitches(juce::HashMap<Utils::PitchClass,
+                                std::vector<PitchDetector::Pitch>>* pitches);
+  std::vector<GrainPositionFinder::GrainPosition> getCurrentPositions() {
+    return mCurPositions;
+  }
+  std::vector<int> getBoxPositions();
+  int getNumFoundPositions() {
+    return mPositionFinder.findPositions(Utils::MAX_POSITIONS, mCurPitchClass)
+        .size();
+  }
+  void resetPositions();
+  int incrementPosition(int boxNum, bool lookRight);
 
-  void process(juce::AudioBuffer<float>* blockBuffer);
-  void setNoteOn(Utils::PitchClass pitchClass,
-                 std::vector<GrainPositionFinder::GrainPosition> gPositions);
+  void process(juce::AudioBuffer<float>& buffer);
+  void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff(Utils::PitchClass pitchClass);
+  void updatePositionStates(std::vector<bool> states);
   void updateParameters(Utils::PositionColour colour, PositionParams params);
   void updateParameter(Utils::PositionColour colour, ParameterType param,
                               float value);
@@ -106,10 +121,16 @@ class GranularSynth : juce::Thread {
   long mTotalSamps;
   juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
   double mSampleRate;
+  GrainPositionFinder mPositionFinder;
+  std::array<std::array<int, Utils::PositionColour::NUM_POS>,
+             Utils::PitchClass::COUNT>
+      mPositions;
+  std::vector<GrainPositionFinder::GrainPosition> mCurPositions;
+  Utils::PitchClass mCurPitchClass = Utils::PitchClass::NONE;
 
   /* Grain position parameters */
-  std::array<PositionParams, Utils::NUM_BOXES> mPositionSettings;
-  std::array<float, Utils::NUM_BOXES>
+  std::array<PositionParams, Utils::PositionColour::NUM_POS> mPositionSettings;
+  std::array<float, Utils::PositionColour::NUM_POS>
       mGrainTriggersMs;  // Keeps track of triggering grains from each position
   Utils::PositionColour mNextPositionToPlay = Utils::PositionColour::BLUE;
 
@@ -117,4 +138,5 @@ class GranularSynth : juce::Thread {
   std::vector<float> generateGrainEnvelope(float shape);
   // Returns maximum release time out of all positions in samples
   long getMaxReleaseTime();
+  void updateCurPositions();
 };

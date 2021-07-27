@@ -37,7 +37,7 @@ class PositionTabs : public juce::Component {
   static constexpr auto TOGGLE_SIZE = 16;
 
   /* UI Components */
-  std::array<juce::ToggleButton, Utils::PositionColour::NUM_BOXES> mBtnsEnabled;
+  std::array<juce::ToggleButton, Utils::PositionColour::NUM_POS> mBtnsEnabled;
 
   /* Bookkeeping */
   Utils::PositionColour mCurSelectedTab = Utils::PositionColour::BLUE;

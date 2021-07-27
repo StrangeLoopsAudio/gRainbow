@@ -13,6 +13,7 @@
 GranularSynth::GranularSynth() : juce::Thread("granular thread") {
   mTotalSamps = 0;
   mGrains.ensureStorageAllocated(MAX_GRAINS);
+  resetPositions();
 
   // Initialize grain triggering timestamps
   for (int i = 0; i < mGrainTriggersMs.size(); ++i) {
@@ -52,6 +53,7 @@ void GranularSynth::run() {
             (gPos.pitch.duration * mFileBuffer->getNumSamples()) - durSamples);
 
         float gain = gPos.ampEnvLevel * params.gain;
+        jassert(gPos.pbRate > 0.1f);
         auto grain = Grain(generateGrainEnvelope(params.shape), durSamples, gPos.pbRate,
                            posSamples + posOffset, mTotalSamps, gain);
         mGrains.add(grain);
@@ -127,12 +129,12 @@ void GranularSynth::run() {
   }
 }
 
-void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer) {
+void GranularSynth::process(juce::AudioBuffer<float>& buffer) {
   // Add contributions from each grain
   juce::Array<Grain> grains = mGrains; // Copy to avoid threading issues
-  for (int i = 0; i < blockBuffer->getNumSamples(); ++i) {
+  for (int i = 0; i < buffer.getNumSamples(); ++i) {
     for (int g = 0; g < grains.size(); ++g) {
-      grains[g].process(*mFileBuffer, *blockBuffer, mTotalSamps);
+      grains[g].process(*mFileBuffer, buffer, mTotalSamps);
     }
     mTotalSamps++;
   }
@@ -143,9 +145,9 @@ void GranularSynth::process(juce::AudioBuffer<float>* blockBuffer) {
   } else {
     // Normalize the block before sending onward
     // if grains is empty, don't want to divide by zero
-    for (int i = 0; i < blockBuffer->getNumSamples(); ++i) {
-      for (int ch = 0; ch < blockBuffer->getNumChannels(); ++ch) {
-        //float* channelBlock = blockBuffer->getWritePointer(ch);
+    for (int i = 0; i < buffer.getNumSamples(); ++i) {
+      for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+        //float* channelBlock = buffer->getWritePointer(ch);
         //channelBlock[i] /= mGrains.size();
       }
     }
@@ -166,20 +168,82 @@ void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, double sr) {
   mSampleRate = sr;
 }
 
-void GranularSynth::setNoteOn(
-    Utils::PitchClass pitchClass,
-    std::vector<GrainPositionFinder::GrainPosition> gPositions) {
+void GranularSynth::setPitches(
+    juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>*
+        pitches) {
+  mPositionFinder.setPitches(pitches);
+}
+
+void GranularSynth::updateCurPositions() {
+  if (mCurPitchClass == Utils::PitchClass::NONE || mFileBuffer == nullptr) return;
+  std::vector<GrainPositionFinder::GrainPosition> gPositions =
+      mPositionFinder.findPositions(Utils::MAX_POSITIONS, mCurPitchClass);
+  std::vector<GrainPositionFinder::GrainPosition> gPosToPlay;
+  for (int i = 0; i < Utils::PositionColour::NUM_POS; ++i) {
+    if (mPositionSettings[i].isActive &&
+        (gPositions.size() - 1) >= mPositions[mCurPitchClass][i]) {
+      gPositions[mPositions[mCurPitchClass][i]].isActive = true;
+      gPosToPlay.push_back(gPositions[mPositions[mCurPitchClass][i]]);
+    } else {
+      // Push back an inactive position for the synth
+      gPosToPlay.push_back(
+          GrainPositionFinder::GrainPosition(PitchDetector::Pitch(), 1.0));
+    }
+  }
+  mCurPositions = gPosToPlay;
+}
+
+std::vector<int> GranularSynth::getBoxPositions() {
+  if (mCurPitchClass == Utils::PitchClass::NONE) return std::vector<int>();
+  return std::vector<int>(mPositions[mCurPitchClass].begin(),
+                          mPositions[mCurPitchClass].end());
+}
+
+int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
+  int pos = mPositions[mCurPitchClass][boxNum];
+  for (int i = 1; i <= Utils::MAX_POSITIONS; ++i) {
+    int newPos = lookRight ? pos + i : pos - i;
+    newPos = newPos % Utils::MAX_POSITIONS;
+    bool isValid = true;
+    for (int j = 0; j < mPositions[mCurPitchClass].size(); ++j) {
+      if (mPositions[mCurPitchClass][j] == newPos && boxNum != j) {
+        // Position already taken, move on
+        isValid = false;
+        break;
+      }
+    }
+    if (isValid) {
+      pos = newPos;
+      break;
+    }
+  }
+  mPositions[mCurPitchClass][boxNum] = pos;
+  return pos;
+}
+
+void GranularSynth::resetPositions() {
+  mCurPositions.clear();
+  for (int i = 0; i < mPositions.size(); ++i) {
+    for (int j = 0; j < mPositions[i].size(); ++j) {
+      mPositions[i][j] = j;
+    }
+  }
+}
+
+void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
+  mCurPitchClass = pitchClass;
+  updateCurPositions();
   bool isPlayingAlready = false;
   for (GrainNote& gNote : mActiveNotes) {
     if (gNote.pitchClass == pitchClass) {
       isPlayingAlready = true;
-      gNote.positions = gPositions;
+      gNote.positions = mCurPositions;
       gNote.noteOnTs = mTotalSamps;
       gNote.noteOffTs = -1;
     }
   }
   if (!isPlayingAlready) {
-    mActiveNotes.add(GrainNote(pitchClass, gPositions, mTotalSamps));
+    mActiveNotes.add(GrainNote(pitchClass, mCurPositions, mTotalSamps));
   }
 }
 
@@ -193,6 +257,13 @@ void GranularSynth::setNoteOff(Utils::PitchClass pitchClass) {
       }
       break;
     }
+  }
+}
+
+void GranularSynth::updatePositionStates(
+    std::vector<bool> positionStates) {
+  for (int i = 0; i < positionStates.size(); ++i) {
+    mPositionSettings[i].isActive = positionStates[i];
   }
 }
 
