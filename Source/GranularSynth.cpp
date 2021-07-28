@@ -51,11 +51,15 @@ void GranularSynth::run() {
         float posOffset = juce::jmap(
             random.nextFloat(), 0.0f,
             (gPos.pitch.duration * mFileBuffer->getNumSamples()) - durSamples);
+        posOffset +=
+            (params.posAdjust - 0.5f) * MAX_POS_ADJUST * durSamples;
 
         float gain = gPos.ampEnvLevel * params.gain;
+        float pbRate =
+            gPos.pbRate + ((params.pitchAdjust - 0.5f) * MAX_PITCH_ADJUST);
         jassert(gPos.pbRate > 0.1f);
-        auto grain = Grain(generateGrainEnvelope(params.shape), durSamples, gPos.pbRate,
-                           posSamples + posOffset, mTotalSamps, gain);
+        auto grain = Grain(generateGrainEnvelope(params.shape), durSamples,
+                           pbRate, posSamples + posOffset, mTotalSamps, gain);
         mGrains.add(grain);
 
         // Update amplitude envelope for position that just played
@@ -200,6 +204,7 @@ std::vector<int> GranularSynth::getBoxPositions() {
 }
 
 int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
+  if (mCurPitchClass == Utils::PitchClass::NONE) return mPositions[0][boxNum];
   int pos = mPositions[mCurPitchClass][boxNum];
   for (int i = 1; i <= Utils::MAX_POSITIONS; ++i) {
     int newPos = lookRight ? pos + i : pos - i;
@@ -282,6 +287,12 @@ void GranularSynth::updateParameters(Utils::PositionColour colour,
 void GranularSynth::updateParameter(Utils::PositionColour colour,
                                     ParameterType param, float value) {
   switch (param) {
+    case ParameterType::PITCH_ADJUST:
+      mPositionSettings[colour].pitchAdjust = value;
+      break;
+    case ParameterType::POSITION_ADJUST:
+      mPositionSettings[colour].posAdjust = value;
+      break;
     case ParameterType::SHAPE:
       mPositionSettings[colour].shape = value;
       break;

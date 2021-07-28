@@ -54,7 +54,7 @@ void PositionTabs::paint(juce::Graphics& g) {
     g.drawRoundedRectangle(tabRect, 10.0f, 2.0f);
 
     g.setColour(juce::Colours::white);
-    g.drawText(juce::String(i + 1), tabRect.withHeight(getHeight() - 2.0f), juce::Justification::centred);
+    g.drawText(juce::String("g") + juce::String(i + 1), tabRect.withHeight(getHeight() - 2.0f), juce::Justification::centred);
     curStart += tabWidth + 2.0f;
   }
 }

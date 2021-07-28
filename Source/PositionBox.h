@@ -49,6 +49,8 @@ class PositionBox : public juce::Component {
   /* Params */
   static constexpr auto NUM_AMP_ENV_PARAMS = 4;
   static constexpr auto NUM_GRAIN_ENV_PARAMS = 4;
+  static constexpr auto PARAM_PITCH_DEFAULT = 0.5f;
+  static constexpr auto PARAM_POSITION_DEFAULT = 0.5f;
   static constexpr auto PARAM_SHAPE_DEFAULT = 0.5f;
   static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
   static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
@@ -59,11 +61,15 @@ class PositionBox : public juce::Component {
   static constexpr auto PARAM_RELEASE_DEFAULT = 0.5f;
 
   /* UI Layout */
-  static constexpr auto PADDING_SIZE = 5;
+  static constexpr auto PADDING_SIZE = 6;
+  static constexpr auto ADJUSTMENT_HEIGHT = 40;
   static constexpr auto TOGGLE_SIZE = 16;
-  static constexpr auto KNOB_HEIGHT = 40;
   static constexpr auto LABEL_HEIGHT = 20;
   static constexpr auto ENVELOPE_HEIGHT = 60;
+  static constexpr auto SECTION_TITLE_HEIGHT = 20;
+  static constexpr auto SECTION_AMP_ENV_TITLE = "amplitude envelope";
+  static constexpr auto SECTION_GRAIN_ENV_TITLE = "grain envelope";
+  static constexpr auto SECTION_ADJUST_TITLE = "generator adjustments";
 
   /* Bookkeeping */
   Utils::PositionColour mColour;
@@ -71,8 +77,14 @@ class PositionBox : public juce::Component {
   bool mIsActive = false;
 
   /* UI Components */
+  /* -- Generator Adjustments */
   PositionChanger mPositionChanger;
   juce::ToggleButton mBtnSolo;
+  juce::Slider mSliderPitch;
+  juce::Label mLabelPitch;
+  juce::Slider mSliderPosition;
+  juce::Label mLabelPosition;
+  /* -- Grain Env */
   juce::Slider mSliderShape;
   juce::Label mLabelShape;
   juce::Slider mSliderRate;
@@ -83,6 +95,7 @@ class PositionBox : public juce::Component {
   juce::Label mLabelGain;
   EnvelopeGrain mEnvelopeGrain;
   EnvelopeADSR mEnvelopeAmp;
+  /* -- ADSR Env */
   juce::Slider mSliderAttack;
   juce::Label mLabelAttack;
   juce::Slider mSliderDecay;

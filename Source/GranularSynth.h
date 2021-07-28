@@ -23,6 +23,8 @@ class GranularSynth : juce::Thread {
   enum ParameterType {
     ENABLED,  // If position is enabled and playing grains
     SOLO,     // If position is solo'd
+    PITCH_ADJUST,
+    POSITION_ADJUST,
     SHAPE,    // Grain curve shape
     RATE,     // Grain rate
     DURATION, // Grain duration
@@ -34,6 +36,8 @@ class GranularSynth : juce::Thread {
   };
   typedef struct PositionParams {
     bool  isActive;
+    float pitchAdjust;
+    float posAdjust;
     float shape;
     float rate;
     float duration;
@@ -43,9 +47,9 @@ class GranularSynth : juce::Thread {
     float sustain;
     float release;
     PositionParams() {}
-    PositionParams(bool isActive, float shape, float rate,
-                   float duration, float gain, float attack,
-                   float decay, float sustain, float release)
+    PositionParams(bool isActive, float pitchAdjust, float posAdjust,
+                   float shape, float rate, float duration, float gain,
+                   float attack, float decay, float sustain, float release)
         : isActive(isActive),
           shape(shape),
           rate(rate),
@@ -86,6 +90,8 @@ class GranularSynth : juce::Thread {
   void run() override;
 
  private:
+  static constexpr auto MAX_PITCH_ADJUST = 0.25; // In either direction, this equals one octave total
+  static constexpr auto MAX_POS_ADJUST = 0.5f; // Max position adjust in terms of pitch duration
   static constexpr auto MIN_RATE = 10.f;  // Grains per second
   static constexpr auto MAX_RATE = 20.f;
   static constexpr auto MIN_DURATION_MS = 60.0f;

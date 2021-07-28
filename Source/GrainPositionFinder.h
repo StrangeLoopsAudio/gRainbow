@@ -46,8 +46,6 @@ class GrainPositionFinder {
   void updatePosition(int midiNote, GrainPositionFinder::GrainPosition gPos);
 
  private:
-  static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
-
   juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>*
       mPitches = nullptr;
   juce::HashMap<int, std::vector<GrainPosition>> mGPositions;
