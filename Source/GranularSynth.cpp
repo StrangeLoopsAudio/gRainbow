@@ -200,6 +200,7 @@ std::vector<int> GranularSynth::getBoxPositions() {
 }
 
 int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
+  if (mCurPitchClass == Utils::PitchClass::NONE) return mPositions[0][boxNum];
   int pos = mPositions[mCurPitchClass][boxNum];
   for (int i = 1; i <= Utils::MAX_POSITIONS; ++i) {
     int newPos = lookRight ? pos + i : pos - i;

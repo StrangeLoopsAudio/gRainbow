@@ -46,7 +46,7 @@ class PositionChanger : public juce::Component {
   bool mIsActive = false;
   juce::Colour mColour;
   int mIndexInBoxes; // Index among other boxes on screen
-  int mPosition; // Position index
+  int mPosition = -1; // Position index
   int mNumPositions = 1;
   bool mIsClickingArrow = false;
   bool mIsOverLeftArrow = false;

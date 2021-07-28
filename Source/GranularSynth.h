@@ -23,6 +23,8 @@ class GranularSynth : juce::Thread {
   enum ParameterType {
     ENABLED,  // If position is enabled and playing grains
     SOLO,     // If position is solo'd
+    PITCH_ADJUST,
+    POSITION_ADJUST,
     SHAPE,    // Grain curve shape
     RATE,     // Grain rate
     DURATION, // Grain duration
@@ -34,6 +36,8 @@ class GranularSynth : juce::Thread {
   };
   typedef struct PositionParams {
     bool  isActive;
+    float pitchAdjust;
+    float posAdjust;
     float shape;
     float rate;
     float duration;
@@ -43,9 +47,9 @@ class GranularSynth : juce::Thread {
     float sustain;
     float release;
     PositionParams() {}
-    PositionParams(bool isActive, float shape, float rate,
-                   float duration, float gain, float attack,
-                   float decay, float sustain, float release)
+    PositionParams(bool isActive, float pitchAdjust, float posAdjust,
+                   float shape, float rate, float duration, float gain,
+                   float attack, float decay, float sustain, float release)
         : isActive(isActive),
           shape(shape),
           rate(rate),

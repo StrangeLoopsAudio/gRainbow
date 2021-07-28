@@ -66,7 +66,7 @@ void PositionChanger::paint(juce::Graphics& g) {
 
   /* Fill in title section to mask ellipses */
   g.setColour(juce::Colours::black);
-  g.fillRect(titleRect);
+  g.fillRect(titleRect.reduced(2, 0));
 
   /* Draw top/bottom borders */
   g.setColour(bgColour);
@@ -74,8 +74,9 @@ void PositionChanger::paint(juce::Graphics& g) {
 
   /* Draw position text */
   if (mPosition >= 0) {
-    juce::String posString =
-        juce::String(mPosition + 1) + juce::String(" / ") + juce::String(mNumPositions);
+    int posNum = (mPosition >= 0) ? mPosition + 1 : 0;
+    juce::String posString = juce::String(posNum) + juce::String(" / ") +
+                             juce::String(mNumPositions);
     g.setColour(bgColour);
     g.drawText(posString, titleRect, juce::Justification::centred);
   }
