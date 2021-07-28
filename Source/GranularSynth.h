@@ -90,6 +90,8 @@ class GranularSynth : juce::Thread {
   void run() override;
 
  private:
+  static constexpr auto MAX_PITCH_ADJUST = 0.25; // In either direction, this equals one octave total
+  static constexpr auto MAX_POS_ADJUST = 0.5f; // Max position adjust in terms of pitch duration
   static constexpr auto MIN_RATE = 10.f;  // Grains per second
   static constexpr auto MAX_RATE = 20.f;
   static constexpr auto MIN_DURATION_MS = 60.0f;

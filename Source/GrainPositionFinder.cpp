@@ -29,7 +29,7 @@ GrainPositionFinder::findPositions(int numPosToFind,
     // Check low note
     std::vector<PitchDetector::Pitch> &pitchVec =
         mPitches->getReference((Utils::PitchClass)(noteMin % 12));
-    float pbRate = std::pow(TIMESTRETCH_RATIO, numSearches);
+    float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
     for (int i = 0; i < pitchVec.size(); ++i) {
       grainPositions.push_back(GrainPosition(pitchVec[i], pbRate));
       if (grainPositions.size() >= numPosToFind) {
@@ -41,7 +41,7 @@ GrainPositionFinder::findPositions(int numPosToFind,
     if (!foundAll && numSearches > 0) {
       std::vector<PitchDetector::Pitch> &pitchVec =
           mPitches->getReference((Utils::PitchClass)(noteMax % 12));
-      float pbRate = std::pow(TIMESTRETCH_RATIO, -numSearches);
+      float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
       for (int i = 0; i < pitchVec.size(); ++i) {
         grainPositions.push_back(GrainPosition(pitchVec[i], pbRate));
         if (grainPositions.size() >= numPosToFind) {

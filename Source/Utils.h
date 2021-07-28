@@ -21,7 +21,8 @@ class Utils {
   static constexpr auto MAX_POSITIONS = 6;
   static constexpr juce::int64 POSITION_COLOURS[4] = {0xFF52C4FF, 0xFFE352FF,
                                                       0xFFFF8D52, 0xFF6EFF52};
-  
+  static constexpr auto TIMESTRETCH_RATIO =
+      1.0594f;  // Constant used for pitch shifting by semitones
 
   static inline juce::Colour getRainbowColour(int value) {
     jassert(value >= 0 && value <= 6);
