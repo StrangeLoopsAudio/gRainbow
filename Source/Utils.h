@@ -16,13 +16,44 @@
 class Utils {
  public:
   // Tetradic colours
-  enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_POS };
+  enum GeneratorColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_GEN };
   enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
   static constexpr auto MAX_POSITIONS = 6;
   static constexpr juce::int64 POSITION_COLOURS[4] = {0xFF52C4FF, 0xFFE352FF,
                                                       0xFFFF8D52, 0xFF6EFF52};
   static constexpr auto TIMESTRETCH_RATIO =
       1.0594f;  // Constant used for pitch shifting by semitones
+
+  typedef struct GeneratorParams {
+    bool  isActive;
+    int   position; // Position number to play
+    float pitchAdjust;
+    float posAdjust;
+    float shape;
+    float rate;
+    float duration;
+    float gain;
+    float attack;
+    float decay;
+    float sustain;
+    float release;
+    GeneratorParams() {}
+    GeneratorParams(bool isActive, int position, float pitchAdjust, float posAdjust,
+                   float shape, float rate, float duration, float gain,
+                   float attack, float decay, float sustain, float release)
+        : isActive(isActive),
+          position(position),
+          pitchAdjust(pitchAdjust),
+          posAdjust(posAdjust),
+          shape(shape),
+          rate(rate),
+          duration(duration),
+          gain(gain),
+          attack(attack),
+          decay(decay),
+          sustain(sustain),
+          release(release) {}
+  } GeneratorParams;
 
   static inline juce::Colour getRainbowColour(int value) {
     jassert(value >= 0 && value <= 6);

@@ -72,7 +72,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
   PositionTabs mPositionTabs;
-  std::array<PositionBox, Utils::PositionColour::NUM_POS> mPositionBoxes;
+  std::array<PositionBox, Utils::GeneratorColour::NUM_GEN> mPositionBoxes;
   juce::Rectangle<float> mNoteDisplayRect;
 
   /* Bookkeeping */

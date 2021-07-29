@@ -155,7 +155,7 @@ void PositionChanger::positionChanged(bool isRight) {
   }
 }
 
-void PositionChanger::setPosition(int position) {
+void PositionChanger::setPositionNumber(int position) {
   mPosition = position;
   repaint();
 }

@@ -105,7 +105,7 @@ void EnvelopeADSR::setRelease(float release) {
   repaint();
 }
 
-void EnvelopeADSR::setColour(Utils::PositionColour colour) {
+void EnvelopeADSR::setColour(Utils::GeneratorColour colour) {
   mColour = colour;
   repaint();
 }

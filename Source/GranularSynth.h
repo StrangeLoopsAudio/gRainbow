@@ -34,32 +34,6 @@ class GranularSynth : juce::Thread {
     SUSTAIN,  // Position env sustain
     RELEASE   // Position env release
   };
-  typedef struct PositionParams {
-    bool  isActive;
-    float pitchAdjust;
-    float posAdjust;
-    float shape;
-    float rate;
-    float duration;
-    float gain;
-    float attack;
-    float decay;
-    float sustain;
-    float release;
-    PositionParams() {}
-    PositionParams(bool isActive, float pitchAdjust, float posAdjust,
-                   float shape, float rate, float duration, float gain,
-                   float attack, float decay, float sustain, float release)
-        : isActive(isActive),
-          shape(shape),
-          rate(rate),
-          duration(duration),
-          gain(gain),
-          attack(attack),
-          decay(decay),
-          sustain(sustain),
-          release(release) {}
-  } PositionParams;
 
   GranularSynth();
   ~GranularSynth();
@@ -70,20 +44,19 @@ class GranularSynth : juce::Thread {
   std::vector<GrainPositionFinder::GrainPosition> getCurrentPositions() {
     return mCurPositions;
   }
-  std::vector<int> getBoxPositions();
+  Utils::GeneratorParams getGeneratorParams(Utils::GeneratorColour colour);
   int getNumFoundPositions() {
     return mPositionFinder.findPositions(Utils::MAX_POSITIONS, mCurPitchClass)
         .size();
   }
-  void resetPositions();
+  void resetParameters();
   int incrementPosition(int boxNum, bool lookRight);
 
   void process(juce::AudioBuffer<float>& buffer);
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff(Utils::PitchClass pitchClass);
-  void updatePositionStates(std::vector<bool> states);
-  void updateParameters(Utils::PositionColour colour, PositionParams params);
-  void updateParameter(Utils::PositionColour colour, ParameterType param,
+  void updateGeneratorStates(std::vector<bool> genStates);
+  void updateParameter(Utils::GeneratorColour colour, ParameterType param,
                               float value);
 
   //==============================================================================
@@ -105,6 +78,17 @@ class GranularSynth : juce::Thread {
   static constexpr auto MIN_RELEASE_SEC = 0.01f;
   static constexpr auto MAX_RELEASE_SEC = 1.0f;
   static constexpr auto MAX_GRAINS = 100; // Max grains active at once
+  // Param defaults
+  static constexpr auto PARAM_PITCH_DEFAULT = 0.5f;
+  static constexpr auto PARAM_POSITION_DEFAULT = 0.5f;
+  static constexpr auto PARAM_SHAPE_DEFAULT = 0.5f;
+  static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
+  static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
+  static constexpr auto PARAM_GAIN_DEFAULT = 0.8f;
+  static constexpr auto PARAM_ATTACK_DEFAULT = 0.2f;
+  static constexpr auto PARAM_DECAY_DEFAULT = 0.2f;
+  static constexpr auto PARAM_SUSTAIN_DEFAULT = 0.8f;
+  static constexpr auto PARAM_RELEASE_DEFAULT = 0.5f;
 
   typedef struct GrainNote {
     Utils::PitchClass pitchClass;
@@ -128,17 +112,16 @@ class GranularSynth : juce::Thread {
   juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
   double mSampleRate;
   GrainPositionFinder mPositionFinder;
-  std::array<std::array<int, Utils::PositionColour::NUM_POS>,
-             Utils::PitchClass::COUNT>
-      mPositions;
   std::vector<GrainPositionFinder::GrainPosition> mCurPositions;
-  Utils::PitchClass mCurPitchClass = Utils::PitchClass::NONE;
+  Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
 
   /* Grain position parameters */
-  std::array<PositionParams, Utils::PositionColour::NUM_POS> mPositionSettings;
-  std::array<float, Utils::PositionColour::NUM_POS>
+  std::array<std::array<Utils::GeneratorParams, Utils::GeneratorColour::NUM_GEN>,
+             Utils::PitchClass::COUNT>
+      mNoteSettings;
+  std::array<float, Utils::GeneratorColour::NUM_GEN>
       mGrainTriggersMs;  // Keeps track of triggering grains from each position
-  Utils::PositionColour mNextPositionToPlay = Utils::PositionColour::BLUE;
+  Utils::GeneratorColour mNextPositionToPlay = Utils::GeneratorColour::BLUE;
 
   // Generate gaussian envelope to be used for each grain
   std::vector<float> generateGrainEnvelope(float shape);

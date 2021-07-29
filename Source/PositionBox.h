@@ -33,12 +33,13 @@ class PositionBox : public juce::Component {
   void setState(BoxState state);
   bool getActive() { return mIsActive; }
   void setActive(bool isActive);
-  void setPosition(int position);
+  void setPositionNumber(int positionNumber);
+  void setParams(Utils::GeneratorParams params);
   void setNumPositions(int numPositions);
 
-  void setColour(Utils::PositionColour colour);
-  GranularSynth::PositionParams getParams();
-  std::function<void(Utils::PositionColour pos,
+  void setColour(Utils::GeneratorColour colour);
+  Utils::GeneratorParams getParams();
+  std::function<void(Utils::GeneratorColour pos,
                      GranularSynth::ParameterType param,
                      float value)>
       onParameterChanged = nullptr;
@@ -49,16 +50,6 @@ class PositionBox : public juce::Component {
   /* Params */
   static constexpr auto NUM_AMP_ENV_PARAMS = 4;
   static constexpr auto NUM_GRAIN_ENV_PARAMS = 4;
-  static constexpr auto PARAM_PITCH_DEFAULT = 0.5f;
-  static constexpr auto PARAM_POSITION_DEFAULT = 0.5f;
-  static constexpr auto PARAM_SHAPE_DEFAULT = 0.5f;
-  static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
-  static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
-  static constexpr auto PARAM_GAIN_DEFAULT = 0.8f;
-  static constexpr auto PARAM_ATTACK_DEFAULT = 0.2f;
-  static constexpr auto PARAM_DECAY_DEFAULT = 0.2f;
-  static constexpr auto PARAM_SUSTAIN_DEFAULT = 0.8f;
-  static constexpr auto PARAM_RELEASE_DEFAULT = 0.5f;
 
   /* UI Layout */
   static constexpr auto PADDING_SIZE = 6;
@@ -72,7 +63,7 @@ class PositionBox : public juce::Component {
   static constexpr auto SECTION_ADJUST_TITLE = "generator adjustments";
 
   /* Bookkeeping */
-  Utils::PositionColour mColour;
+  Utils::GeneratorColour mColour;
   BoxState mState = BoxState::READY;
   bool mIsActive = false;
 

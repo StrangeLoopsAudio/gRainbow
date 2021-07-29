@@ -27,8 +27,10 @@ class PositionTabs : public juce::Component {
   void mouseMove(const juce::MouseEvent& event) override;
   void mouseExit(const juce::MouseEvent& event) override;
   void mouseUp(const juce::MouseEvent& event) override;
+  
+  void setTabStates(std::vector<bool> tabStates);
 
-  std::function<void(Utils::PositionColour tab, bool isSelected,
+  std::function<void(Utils::GeneratorColour tab, bool isSelected,
                      bool isEnabled)>
       onTabChanged = nullptr;
 
@@ -37,13 +39,13 @@ class PositionTabs : public juce::Component {
   static constexpr auto TOGGLE_SIZE = 16;
 
   /* UI Components */
-  std::array<juce::ToggleButton, Utils::PositionColour::NUM_POS> mBtnsEnabled;
+  std::array<juce::ToggleButton, Utils::GeneratorColour::NUM_GEN> mBtnsEnabled;
 
   /* Bookkeeping */
-  Utils::PositionColour mCurSelectedTab = Utils::PositionColour::BLUE;
+  Utils::GeneratorColour mCurSelectedTab = Utils::GeneratorColour::BLUE;
   int mCurHoverTab = -1;
 
-  void tabChanged(Utils::PositionColour tab, bool isSelected, bool isEnabled);
+  void tabChanged(Utils::GeneratorColour tab, bool isSelected, bool isEnabled);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PositionTabs)
 };
