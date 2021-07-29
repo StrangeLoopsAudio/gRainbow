@@ -85,8 +85,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
   for (int i = 0; i < mPositionBoxes.size(); ++i) {
     mPositionBoxes[i].setColour((Utils::GeneratorColour)i);
     mPositionBoxes[i].setActive(i == 0);
-    mProcessor.synth.updateParameters((Utils::GeneratorColour)i,
-                            mPositionBoxes[i].getParams());
+    mPositionBoxes[i].setParams(
+        mProcessor.synth.getGeneratorParams((Utils::GeneratorColour)i));
     mPositionBoxes[i].onPositionChanged = [this, i](bool isRight) {
       int newPosition = mProcessor.synth.incrementPosition(i, isRight);
       mPositionBoxes[i].setPositionNumber(newPosition);
@@ -169,11 +169,16 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
 void GRainbowAudioProcessorEditor::timerCallback() {
   if (mStartedPlayingTrig && mCurPitchClass != Utils::PitchClass::NONE) {
     int numFoundPositions = mProcessor.synth.getNumFoundPositions();
+    std::vector<bool> tabStates;
     for (int i = 0; i < mPositionBoxes.size(); ++i) {
       mPositionBoxes[i].setParams(
           mProcessor.synth.getGeneratorParams((Utils::GeneratorColour)i));
       mPositionBoxes[i].setNumPositions(numFoundPositions);
+      tabStates.push_back(
+          mProcessor.synth.getGeneratorParams((Utils::GeneratorColour)i)
+              .isActive);
     }
+    mPositionTabs.setTabStates(tabStates);
     std::vector<GrainPositionFinder::GrainPosition> positions =
         mProcessor.synth.getCurrentPositions();
     mArcSpec.setNoteOn(mCurPitchClass, mProcessor.synth.getCurrentPositions());
@@ -317,7 +322,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       resampler->process(ratio, inputs[c], outputs[c],
                          mFileBuffer.getNumSamples());
     }
-    mProcessor.synth.resetPositions();
+    mProcessor.synth.resetParameters();
     mArcSpec.resetBuffers();
     stopThread(4000);
     startThread();  // process fft and pass to arc spec

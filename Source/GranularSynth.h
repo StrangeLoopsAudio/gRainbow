@@ -49,14 +49,13 @@ class GranularSynth : juce::Thread {
     return mPositionFinder.findPositions(Utils::MAX_POSITIONS, mCurPitchClass)
         .size();
   }
-  void resetPositions();
+  void resetParameters();
   int incrementPosition(int boxNum, bool lookRight);
 
   void process(juce::AudioBuffer<float>& buffer);
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff(Utils::PitchClass pitchClass);
   void updateGeneratorStates(std::vector<bool> genStates);
-  void updateParameters(Utils::GeneratorColour colour, Utils::GeneratorParams params);
   void updateParameter(Utils::GeneratorColour colour, ParameterType param,
                               float value);
 
@@ -79,6 +78,17 @@ class GranularSynth : juce::Thread {
   static constexpr auto MIN_RELEASE_SEC = 0.01f;
   static constexpr auto MAX_RELEASE_SEC = 1.0f;
   static constexpr auto MAX_GRAINS = 100; // Max grains active at once
+  // Param defaults
+  static constexpr auto PARAM_PITCH_DEFAULT = 0.5f;
+  static constexpr auto PARAM_POSITION_DEFAULT = 0.5f;
+  static constexpr auto PARAM_SHAPE_DEFAULT = 0.5f;
+  static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
+  static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
+  static constexpr auto PARAM_GAIN_DEFAULT = 0.8f;
+  static constexpr auto PARAM_ATTACK_DEFAULT = 0.2f;
+  static constexpr auto PARAM_DECAY_DEFAULT = 0.2f;
+  static constexpr auto PARAM_SUSTAIN_DEFAULT = 0.8f;
+  static constexpr auto PARAM_RELEASE_DEFAULT = 0.5f;
 
   typedef struct GrainNote {
     Utils::PitchClass pitchClass;

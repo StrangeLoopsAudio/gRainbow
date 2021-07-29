@@ -13,15 +13,8 @@
 GranularSynth::GranularSynth() : juce::Thread("granular thread") {
   mTotalSamps = 0;
   mGrains.ensureStorageAllocated(MAX_GRAINS);
-  resetPositions();
 
-  // Initialize grain triggering timestamps
-  for (int i = 0; i < mGrainTriggersMs.size(); ++i) {
-    float durMs = juce::jmap(mNoteSettings[mCurPitchClass][i].duration,
-                             MIN_DURATION_MS, MAX_DURATION_MS);
-    mGrainTriggersMs[i] = juce::jmap(
-        1.0f - mNoteSettings[mCurPitchClass][i].rate, durMs / 8, durMs / 2);
-  }
+  resetParameters();
 
   startThread();
 }
@@ -212,16 +205,6 @@ int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
   return newPos;
 }
 
-void GranularSynth::resetPositions() {
-  mCurPositions.clear();
-  // Reset to 1, 2, 3, 4
-  for (int i = 0; i < mNoteSettings.size(); ++i) {
-    for (int j = 0; j < mNoteSettings[i].size(); ++j) {
-      mNoteSettings[i][j].position = j;
-    }
-  }
-}
-
 void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
   mCurPitchClass = pitchClass;
   updateCurPositions();
@@ -258,18 +241,23 @@ void GranularSynth::updateGeneratorStates(std::vector<bool> genStates) {
   }
 }
 
-void GranularSynth::updateParameters(Utils::GeneratorColour colour,
-                                     Utils::GeneratorParams params) {
+void GranularSynth::resetParameters() {
   // Set same params for all notes
   for (int i = 0; i < mNoteSettings.size(); ++i) {
-    mNoteSettings[i][colour] = params;
-    // Initialize grain triggering timestamps
-    for (int j = 0; j < mGrainTriggersMs.size(); ++j) {
-      float durMs = juce::jmap(mNoteSettings[i][j].duration, MIN_DURATION_MS,
-                               MAX_DURATION_MS);
-      mGrainTriggersMs[j] =
-          juce::jmap(1.0f - mNoteSettings[i][j].rate, durMs / 8, durMs / 2);
+    for (int j = 0; j < mNoteSettings[i].size(); ++j) {
+      mNoteSettings[i][j] = Utils::GeneratorParams(
+          j == 0, j, PARAM_PITCH_DEFAULT, PARAM_POSITION_DEFAULT,
+          PARAM_SHAPE_DEFAULT, PARAM_RATE_DEFAULT, PARAM_DURATION_DEFAULT,
+          PARAM_GAIN_DEFAULT, PARAM_ATTACK_DEFAULT, PARAM_DECAY_DEFAULT,
+          PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT);
     }
+  }
+  // Initialize grain triggering timestamps
+  for (int j = 0; j < mGrainTriggersMs.size(); ++j) {
+    float durMs = juce::jmap(mNoteSettings[mCurPitchClass][j].duration,
+                             MIN_DURATION_MS, MAX_DURATION_MS);
+    mGrainTriggersMs[j] = juce::jmap(
+        1.0f - mNoteSettings[mCurPitchClass][j].rate, durMs / 8, durMs / 2);
   }
 }
 

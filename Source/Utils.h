@@ -43,6 +43,8 @@ class Utils {
                    float attack, float decay, float sustain, float release)
         : isActive(isActive),
           position(position),
+          pitchAdjust(pitchAdjust),
+          posAdjust(posAdjust),
           shape(shape),
           rate(rate),
           duration(duration),

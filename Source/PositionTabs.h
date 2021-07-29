@@ -27,6 +27,8 @@ class PositionTabs : public juce::Component {
   void mouseMove(const juce::MouseEvent& event) override;
   void mouseExit(const juce::MouseEvent& event) override;
   void mouseUp(const juce::MouseEvent& event) override;
+  
+  void setTabStates(std::vector<bool> tabStates);
 
   std::function<void(Utils::GeneratorColour tab, bool isSelected,
                      bool isEnabled)>

@@ -87,6 +87,18 @@ void PositionTabs::mouseUp(const juce::MouseEvent& event) {
   repaint();
 }
 
+void PositionTabs::setTabStates(std::vector<bool> tabStates) {
+  for (int i = 0; i < mBtnsEnabled.size(); ++i) {
+    mBtnsEnabled[i].setToggleState(tabStates[i], juce::dontSendNotification);
+    juce::Colour tabColour = tabStates[i]
+                                 ? juce::Colour(Utils::POSITION_COLOURS[i])
+                                 : juce::Colours::darkgrey;
+    mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
+                              tabColour);
+  }
+  repaint();
+}
+
 void PositionTabs::resized() {
   juce::Rectangle<int> r = getLocalBounds();
 

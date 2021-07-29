@@ -51,7 +51,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::PITCH_ADJUST,
                      mSliderPitch.getValue());
   };
-  mSliderPitch.setValue(PARAM_PITCH_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderPitch);
 
   mLabelPitch.setText("Pitch Adjust", juce::dontSendNotification);
@@ -67,7 +66,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::POSITION_ADJUST,
                      mSliderPosition.getValue());
   };
-  mSliderPosition.setValue(PARAM_POSITION_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderPosition);
 
   mLabelPosition.setText("Position Adjust", juce::dontSendNotification);
@@ -84,7 +82,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::SHAPE,
                      mSliderShape.getValue());
   };
-  mSliderShape.setValue(PARAM_SHAPE_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderShape);
 
   mLabelShape.setText("Shape", juce::dontSendNotification);
@@ -101,7 +98,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::RATE,
                      mSliderRate.getValue());
   };
-  mSliderRate.setValue(PARAM_RATE_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderRate);
 
   mLabelRate.setText("Rate", juce::dontSendNotification);
@@ -118,7 +114,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::DURATION,
                      mSliderDuration.getValue());
   };
-  mSliderDuration.setValue(PARAM_DURATION_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderDuration);
 
   mLabelDuration.setText("Duration", juce::dontSendNotification);
@@ -135,7 +130,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::GAIN,
                      mSliderGain.getValue());
   };
-  mSliderGain.setValue(PARAM_GAIN_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderGain);
 
   mLabelGain.setText("Gain", juce::dontSendNotification);
@@ -158,7 +152,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::ATTACK,
                      mSliderAttack.getValue());
   };
-  mSliderAttack.setValue(PARAM_ATTACK_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderAttack);
 
   mLabelAttack.setText("Attack", juce::dontSendNotification);
@@ -175,7 +168,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::DECAY,
                      mSliderDecay.getValue());
   };
-  mSliderDecay.setValue(PARAM_DECAY_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderDecay);
 
   mLabelDecay.setText("Decay", juce::dontSendNotification);
@@ -192,7 +184,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::SUSTAIN,
                      mSliderSustain.getValue());
   };
-  mSliderSustain.setValue(PARAM_SUSTAIN_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderSustain);
 
   mLabelSustain.setText("Sustain", juce::dontSendNotification);
@@ -209,7 +200,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::RELEASE,
                      mSliderRelease.getValue());
   };
-  mSliderRelease.setValue(PARAM_RELEASE_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderRelease);
 
   mLabelRelease.setText("Release", juce::dontSendNotification);
@@ -358,13 +348,21 @@ void PositionBox::setParams(Utils::GeneratorParams params) {
   mSliderPitch.setValue(params.pitchAdjust, juce::dontSendNotification);
   mSliderPosition.setValue(params.posAdjust, juce::dontSendNotification);
   mSliderShape.setValue(params.shape, juce::dontSendNotification);
+  mEnvelopeGrain.setShape(params.shape);
   mSliderRate.setValue(params.rate, juce::dontSendNotification);
+  mEnvelopeGrain.setRate(params.rate);
   mSliderDuration.setValue(params.duration, juce::dontSendNotification);
+  mEnvelopeGrain.setDuration(params.duration);
   mSliderGain.setValue(params.gain, juce::dontSendNotification);
+  mEnvelopeGrain.setGain(params.gain);
   mSliderAttack.setValue(params.attack, juce::dontSendNotification);
+  mEnvelopeAmp.setAttack(params.attack);
   mSliderDecay.setValue(params.decay, juce::dontSendNotification);
+  mEnvelopeAmp.setDecay(params.decay);
   mSliderSustain.setValue(params.sustain, juce::dontSendNotification);
+  mEnvelopeAmp.setSustain(params.sustain);
   mSliderRelease.setValue(params.release, juce::dontSendNotification);
+  mEnvelopeAmp.setRelease(params.release);
 }
 
 void PositionBox::setNumPositions(int numPositions) {
