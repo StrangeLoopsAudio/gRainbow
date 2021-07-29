@@ -229,12 +229,12 @@ void PositionBox::paint(juce::Graphics& g) {
   g.setColour(fillCol);
 
   // Lines to connect to tab
-  float tabWidth = getWidth() / Utils::PositionColour::NUM_POS;
+  float tabWidth = getWidth() / Utils::GeneratorColour::NUM_GEN;
   if (mColour > 0) {
     g.drawLine(1.0f, 0.0f, mColour * tabWidth + 2.0f, 0.0f,
                3.0f);
   }
-  if (mColour < Utils::PositionColour::NUM_POS - 1) {
+  if (mColour < Utils::GeneratorColour::NUM_GEN - 1) {
     g.drawLine((mColour + 1) * tabWidth - 2.0f, 0.0f, getWidth() - 1.0f, 0.0f,
                3.0f);
   }
@@ -348,8 +348,23 @@ void PositionBox::setActive(bool isActive) {
   setState(mState);
 }
 
-void PositionBox::setPosition(int position) {
-  mPositionChanger.setPosition(position);
+void PositionBox::setPositionNumber(int positionNumber) {
+  mPositionChanger.setPositionNumber(positionNumber);
+}
+
+void PositionBox::setParams(Utils::GeneratorParams params) {
+  setActive(params.isActive);
+  mPositionChanger.setPositionNumber(params.position);
+  mSliderPitch.setValue(params.pitchAdjust, juce::dontSendNotification);
+  mSliderPosition.setValue(params.posAdjust, juce::dontSendNotification);
+  mSliderShape.setValue(params.shape, juce::dontSendNotification);
+  mSliderRate.setValue(params.rate, juce::dontSendNotification);
+  mSliderDuration.setValue(params.duration, juce::dontSendNotification);
+  mSliderGain.setValue(params.gain, juce::dontSendNotification);
+  mSliderAttack.setValue(params.attack, juce::dontSendNotification);
+  mSliderDecay.setValue(params.decay, juce::dontSendNotification);
+  mSliderSustain.setValue(params.sustain, juce::dontSendNotification);
+  mSliderRelease.setValue(params.release, juce::dontSendNotification);
 }
 
 void PositionBox::setNumPositions(int numPositions) {
@@ -438,20 +453,22 @@ void PositionBox::setState(BoxState state) {
   repaint();
 }
 
-GranularSynth::PositionParams PositionBox::getParams() {
+Utils::GeneratorParams PositionBox::getParams() {
   bool canPlay =
       mState != PositionBox::BoxState::SOLO_WAIT;
   bool shouldPlay = mIsActive ||
       mState == PositionBox::BoxState::SOLO;
-  return GranularSynth::PositionParams(
-      canPlay && shouldPlay, mSliderPitch.getValue(),
+  return Utils::GeneratorParams(
+      canPlay && shouldPlay,
+      mPositionChanger.getPositionNumber(),
+      mSliderPitch.getValue(),
       mSliderPosition.getValue(), mSliderShape.getValue(),
       mSliderRate.getValue(), mSliderDuration.getValue(),
       mSliderGain.getValue(), mSliderAttack.getValue(), mSliderDecay.getValue(),
       mSliderSustain.getValue(), mSliderRelease.getValue());
 }
 
-void PositionBox::setColour(Utils::PositionColour colour) {
+void PositionBox::setColour(Utils::GeneratorColour colour) {
   mColour = colour;
   juce::Colour newColour = juce::Colour(Utils::POSITION_COLOURS[colour]);
   if (mState == BoxState::READY) {

@@ -22,7 +22,8 @@ PositionTabs::PositionTabs() {
     mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
                               tabColour);
     mBtnsEnabled[i].onClick = [this, i] {
-      tabChanged((Utils::PositionColour)i, mCurSelectedTab == i, mBtnsEnabled[i].getToggleState());
+      tabChanged((Utils::GeneratorColour)i, mCurSelectedTab == i,
+                 mBtnsEnabled[i].getToggleState());
       juce::Colour tabColour = mBtnsEnabled[i].getToggleState()
                                    ? juce::Colour(Utils::POSITION_COLOURS[i])
                                    : juce::Colours::darkgrey;
@@ -37,9 +38,9 @@ PositionTabs::PositionTabs() {
 PositionTabs::~PositionTabs() {}
 
 void PositionTabs::paint(juce::Graphics& g) {
-  float tabWidth = getWidth() / Utils::PositionColour::NUM_POS - 2.0f;
+  float tabWidth = getWidth() / Utils::GeneratorColour::NUM_GEN - 2.0f;
   float curStart = 1.0f;
-  for (int i = 0; i < Utils::PositionColour::NUM_POS; ++i) {
+  for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
     juce::Colour tabColour = mBtnsEnabled[i].getToggleState()
                                  ? juce::Colour(Utils::POSITION_COLOURS[i])
                                  : juce::Colours::darkgrey;
@@ -61,7 +62,7 @@ void PositionTabs::paint(juce::Graphics& g) {
 
 void PositionTabs::mouseMove(const juce::MouseEvent& event) {
   int tabHover = (event.getEventRelativeTo(this).getPosition().getX() / (float)getWidth()) *
-                 Utils::PositionColour::NUM_POS;
+                 Utils::GeneratorColour::NUM_GEN;
   mCurHoverTab = tabHover;
   repaint();
 }
@@ -75,14 +76,14 @@ void PositionTabs::mouseUp(const juce::MouseEvent& event) {
   if (event.eventComponent != this) return;
   int tabClick = (event.getEventRelativeTo(this).getPosition().getX() /
                   (float)getWidth()) *
-                 Utils::PositionColour::NUM_POS;
+                 Utils::GeneratorColour::NUM_GEN;
   if (tabClick != mCurSelectedTab) {
     tabChanged(mCurSelectedTab, false,
                mBtnsEnabled[mCurSelectedTab].getToggleState());
-    tabChanged((Utils::PositionColour)tabClick, true,
+    tabChanged((Utils::GeneratorColour)tabClick, true,
                mBtnsEnabled[tabClick].getToggleState());
   }
-  mCurSelectedTab = (Utils::PositionColour)tabClick;
+  mCurSelectedTab = (Utils::GeneratorColour)tabClick;
   repaint();
 }
 
@@ -91,7 +92,7 @@ void PositionTabs::resized() {
 
   // Enable/disable buttons
   juce::Rectangle<int> btnRect = juce::Rectangle<int>(TOGGLE_SIZE, TOGGLE_SIZE);
-  float tabWidth = getWidth() / Utils::PositionColour::NUM_POS - 2.0f;
+  float tabWidth = getWidth() / Utils::GeneratorColour::NUM_GEN - 2.0f;
   float curStart = 1.0f;
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
     mBtnsEnabled[i].setBounds(btnRect.withCentre(juce::Point<int>(curStart + (TOGGLE_SIZE / 2) + 5, getHeight() / 2)));
@@ -99,7 +100,8 @@ void PositionTabs::resized() {
   }
 }
 
-void PositionTabs::tabChanged(Utils::PositionColour tab, bool isSelected, bool isEnabled) {
+void PositionTabs::tabChanged(Utils::GeneratorColour tab, bool isSelected,
+                              bool isEnabled) {
   if (onTabChanged != nullptr) {
     onTabChanged(tab, isSelected, isEnabled);
   }

@@ -33,12 +33,13 @@ class PositionBox : public juce::Component {
   void setState(BoxState state);
   bool getActive() { return mIsActive; }
   void setActive(bool isActive);
-  void setPosition(int position);
+  void setPositionNumber(int positionNumber);
+  void setParams(Utils::GeneratorParams params);
   void setNumPositions(int numPositions);
 
-  void setColour(Utils::PositionColour colour);
-  GranularSynth::PositionParams getParams();
-  std::function<void(Utils::PositionColour pos,
+  void setColour(Utils::GeneratorColour colour);
+  Utils::GeneratorParams getParams();
+  std::function<void(Utils::GeneratorColour pos,
                      GranularSynth::ParameterType param,
                      float value)>
       onParameterChanged = nullptr;
@@ -72,7 +73,7 @@ class PositionBox : public juce::Component {
   static constexpr auto SECTION_ADJUST_TITLE = "generator adjustments";
 
   /* Bookkeeping */
-  Utils::PositionColour mColour;
+  Utils::GeneratorColour mColour;
   BoxState mState = BoxState::READY;
   bool mIsActive = false;
 
