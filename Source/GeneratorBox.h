@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    PositionBox.h
+    GeneratorBox.h
     Created: 27 Jun 2021 3:49:17pm
     Author:  brady
 
@@ -19,10 +19,10 @@
 //==============================================================================
 /*
  */
-class PositionBox : public juce::Component {
+class GeneratorBox : public juce::Component {
  public:
-  PositionBox();
-  ~PositionBox() override;
+  GeneratorBox();
+  ~GeneratorBox() override;
 
   enum BoxState { READY, SOLO, SOLO_WAIT };
 
@@ -98,5 +98,5 @@ class PositionBox : public juce::Component {
 
   void parameterChanged(GranularSynth::ParameterType type, float value);
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PositionBox)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorBox)
 };

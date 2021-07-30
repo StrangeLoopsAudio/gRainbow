@@ -1,19 +1,19 @@
 /*
   ==============================================================================
 
-    PositionBox.cpp
+    GeneratorBox.cpp
     Created: 27 Jun 2021 3:49:17pm
     Author:  brady
 
   ==============================================================================
 */
 
-#include "PositionBox.h"
+#include "GeneratorBox.h"
 #include "Utils.h"
 #include <JuceHeader.h>
 
 //==============================================================================
-PositionBox::PositionBox() {
+GeneratorBox::GeneratorBox() {
 
   mPositionChanger.onPositionChanged = [this](bool isRight) {
     if (onPositionChanged != nullptr) {
@@ -207,9 +207,9 @@ PositionBox::PositionBox() {
   addAndMakeVisible(mLabelRelease);
 }
 
-PositionBox::~PositionBox() {}
+GeneratorBox::~GeneratorBox() {}
 
-void PositionBox::paint(juce::Graphics& g) {
+void GeneratorBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
   bool borderLit = (mIsActive || mState == BoxState::SOLO);
@@ -264,7 +264,7 @@ void PositionBox::paint(juce::Graphics& g) {
   g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.0f), 10.0f, 2.0f);
 }
 
-void PositionBox::resized() {
+void GeneratorBox::resized() {
   auto r = getLocalBounds();
   // Add insets
   r.removeFromTop(PADDING_SIZE);
@@ -333,16 +333,16 @@ void PositionBox::resized() {
   mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
-void PositionBox::setActive(bool isActive) {
+void GeneratorBox::setActive(bool isActive) {
   mIsActive = isActive;
   setState(mState);
 }
 
-void PositionBox::setPositionNumber(int positionNumber) {
+void GeneratorBox::setPositionNumber(int positionNumber) {
   mPositionChanger.setPositionNumber(positionNumber);
 }
 
-void PositionBox::setParams(Utils::GeneratorParams params) {
+void GeneratorBox::setParams(Utils::GeneratorParams params) {
   setActive(params.isActive);
   mPositionChanger.setPositionNumber(params.position);
   mSliderPitch.setValue(params.pitchAdjust, juce::dontSendNotification);
@@ -365,11 +365,11 @@ void PositionBox::setParams(Utils::GeneratorParams params) {
   mEnvelopeAmp.setRelease(params.release);
 }
 
-void PositionBox::setNumPositions(int numPositions) {
+void GeneratorBox::setNumPositions(int numPositions) {
   mPositionChanger.setNumPositions(numPositions);
 }
 
-void PositionBox::setState(BoxState state) {
+void GeneratorBox::setState(BoxState state) {
   mState = state;
 
   if (state == BoxState::SOLO_WAIT) {
@@ -451,11 +451,11 @@ void PositionBox::setState(BoxState state) {
   repaint();
 }
 
-Utils::GeneratorParams PositionBox::getParams() {
+Utils::GeneratorParams GeneratorBox::getParams() {
   bool canPlay =
-      mState != PositionBox::BoxState::SOLO_WAIT;
+      mState != GeneratorBox::BoxState::SOLO_WAIT;
   bool shouldPlay = mIsActive ||
-      mState == PositionBox::BoxState::SOLO;
+      mState == GeneratorBox::BoxState::SOLO;
   return Utils::GeneratorParams(
       canPlay && shouldPlay,
       mPositionChanger.getPositionNumber(),
@@ -466,7 +466,7 @@ Utils::GeneratorParams PositionBox::getParams() {
       mSliderSustain.getValue(), mSliderRelease.getValue());
 }
 
-void PositionBox::setColour(Utils::GeneratorColour colour) {
+void GeneratorBox::setColour(Utils::GeneratorColour colour) {
   mColour = colour;
   juce::Colour newColour = juce::Colour(Utils::POSITION_COLOURS[colour]);
   if (mState == BoxState::READY) {
@@ -479,7 +479,7 @@ void PositionBox::setColour(Utils::GeneratorColour colour) {
   repaint();
 }
 
-void PositionBox::parameterChanged(GranularSynth::ParameterType type,
+void GeneratorBox::parameterChanged(GranularSynth::ParameterType type,
                                    float value) {
   if (onParameterChanged != nullptr) {
     onParameterChanged(mColour, type, value);

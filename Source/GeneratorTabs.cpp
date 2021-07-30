@@ -1,19 +1,19 @@
 /*
   ==============================================================================
 
-    PositionTabs.cpp
+    GeneratorTabs.cpp
     Created: 21 Jul 2021 6:22:07pm
     Author:  brady
 
   ==============================================================================
 */
 
-#include "PositionTabs.h"
+#include "GeneratorTabs.h"
 
 #include <JuceHeader.h>
 
 //==============================================================================
-PositionTabs::PositionTabs() {
+GeneratorTabs::GeneratorTabs() {
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
     mBtnsEnabled[i].setToggleState(mCurSelectedTab == i, juce::dontSendNotification);
     juce::Colour tabColour = mBtnsEnabled[i].getToggleState()
@@ -35,9 +35,9 @@ PositionTabs::PositionTabs() {
   }
 }
 
-PositionTabs::~PositionTabs() {}
+GeneratorTabs::~GeneratorTabs() {}
 
-void PositionTabs::paint(juce::Graphics& g) {
+void GeneratorTabs::paint(juce::Graphics& g) {
   float tabWidth = getWidth() / Utils::GeneratorColour::NUM_GEN - 2.0f;
   float curStart = 1.0f;
   for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
@@ -60,19 +60,19 @@ void PositionTabs::paint(juce::Graphics& g) {
   }
 }
 
-void PositionTabs::mouseMove(const juce::MouseEvent& event) {
+void GeneratorTabs::mouseMove(const juce::MouseEvent& event) {
   int tabHover = (event.getEventRelativeTo(this).getPosition().getX() / (float)getWidth()) *
                  Utils::GeneratorColour::NUM_GEN;
   mCurHoverTab = tabHover;
   repaint();
 }
 
-void PositionTabs::mouseExit(const juce::MouseEvent& event) {
+void GeneratorTabs::mouseExit(const juce::MouseEvent& event) {
   mCurHoverTab = -1;
   repaint();
 }
 
-void PositionTabs::mouseUp(const juce::MouseEvent& event) {
+void GeneratorTabs::mouseUp(const juce::MouseEvent& event) {
   if (event.eventComponent != this) return;
   int tabClick = (event.getEventRelativeTo(this).getPosition().getX() /
                   (float)getWidth()) *
@@ -87,7 +87,7 @@ void PositionTabs::mouseUp(const juce::MouseEvent& event) {
   repaint();
 }
 
-void PositionTabs::setTabStates(std::vector<bool> tabStates) {
+void GeneratorTabs::setTabStates(std::vector<bool> tabStates) {
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
     mBtnsEnabled[i].setToggleState(tabStates[i], juce::dontSendNotification);
     juce::Colour tabColour = tabStates[i]
@@ -99,7 +99,7 @@ void PositionTabs::setTabStates(std::vector<bool> tabStates) {
   repaint();
 }
 
-void PositionTabs::resized() {
+void GeneratorTabs::resized() {
   juce::Rectangle<int> r = getLocalBounds();
 
   // Enable/disable buttons
@@ -112,7 +112,7 @@ void PositionTabs::resized() {
   }
 }
 
-void PositionTabs::tabChanged(Utils::GeneratorColour tab, bool isSelected,
+void GeneratorTabs::tabChanged(Utils::GeneratorColour tab, bool isSelected,
                               bool isEnabled) {
   if (onTabChanged != nullptr) {
     onTabChanged(tab, isSelected, isEnabled);

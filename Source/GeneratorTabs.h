@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    PositionTabs.h
+    GeneratorTabs.h
     Created: 21 Jul 2021 6:22:07pm
     Author:  brady
 
@@ -16,10 +16,10 @@
 //==============================================================================
 /*
  */
-class PositionTabs : public juce::Component {
+class GeneratorTabs : public juce::Component {
  public:
-  PositionTabs();
-  ~PositionTabs() override;
+  GeneratorTabs();
+  ~GeneratorTabs() override;
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -47,5 +47,5 @@ class PositionTabs : public juce::Component {
 
   void tabChanged(Utils::GeneratorColour tab, bool isSelected, bool isEnabled);
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PositionTabs)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorTabs)
 };

@@ -13,11 +13,11 @@
 #include "ArcSpectrogram.h"
 #include "AudioRecorder.h"
 #include "Fft.h"
+#include "GeneratorBox.h"
+#include "GeneratorTabs.h"
 #include "GrainPositionFinder.h"
 #include "PitchDetector.h"
 #include "PluginProcessor.h"
-#include "PositionBox.h"
-#include "PositionTabs.h"
 #include "RainbowKeyboard.h"
 #include "RainbowLookAndFeel.h"
 #include "TransientDetector.h"
@@ -71,15 +71,14 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
-  PositionTabs mPositionTabs;
-  std::array<PositionBox, Utils::GeneratorColour::NUM_GEN> mPositionBoxes;
+  GeneratorTabs mGeneratorTabs;
+  std::array<GeneratorBox, Utils::GeneratorColour::NUM_GEN> mGeneratorBoxes;
   juce::Rectangle<float> mNoteDisplayRect;
 
   /* Bookkeeping */
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::NONE;
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
-  int mCurPositionTab = 0;
   double mLoadingProgress = 0.0;
   bool mIsProcessingComplete = false;
   bool mStartedPlayingTrig = false;

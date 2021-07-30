@@ -2,12 +2,14 @@
 
 <JUCERPROJECT id="eC9OsA" name="gRainbow" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
-              pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn">
+              pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
+              companyName="b-team">
   <MAINGROUP id="SNaS8k" name="gRainbow">
     <GROUP id="{595D4325-C686-1839-D048-A225A7FE150A}" name="Source">
       <GROUP id="{5E1AB70E-1865-A28B-6DCD-3168747A76FD}" name="Components">
-        <FILE id="h9GepA" name="PositionBox.cpp" compile="1" resource="0" file="Source/PositionBox.cpp"/>
-        <FILE id="rzErFn" name="PositionBox.h" compile="0" resource="0" file="Source/PositionBox.h"/>
+        <FILE id="h9GepA" name="GeneratorBox.cpp" compile="1" resource="0"
+              file="Source/GeneratorBox.cpp"/>
+        <FILE id="rzErFn" name="GeneratorBox.h" compile="0" resource="0" file="Source/GeneratorBox.h"/>
         <FILE id="EcGiwq" name="PositionChanger.cpp" compile="1" resource="0"
               file="Source/PositionChanger.cpp"/>
         <FILE id="HWBliz" name="PositionChanger.h" compile="0" resource="0"
@@ -16,9 +18,9 @@
               file="Source/PositionMarker.cpp"/>
         <FILE id="VcStbT" name="PositionMarker.h" compile="0" resource="0"
               file="Source/PositionMarker.h"/>
-        <FILE id="WZl1r6" name="PositionTabs.cpp" compile="1" resource="0"
-              file="Source/PositionTabs.cpp"/>
-        <FILE id="fBYUSZ" name="PositionTabs.h" compile="0" resource="0" file="Source/PositionTabs.h"/>
+        <FILE id="WZl1r6" name="GeneratorTabs.cpp" compile="1" resource="0"
+              file="Source/GeneratorTabs.cpp"/>
+        <FILE id="fBYUSZ" name="GeneratorTabs.h" compile="0" resource="0" file="Source/GeneratorTabs.h"/>
         <FILE id="z3F1iQ" name="RainbowKeyboard.cpp" compile="1" resource="0"
               file="Source/RainbowKeyboard.cpp"/>
         <FILE id="h6qcMW" name="RainbowKeyboard.h" compile="0" resource="0"
