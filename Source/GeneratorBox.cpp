@@ -475,7 +475,7 @@ void GeneratorBox::setColour(Utils::GeneratorColour colour) {
   }
   mPositionChanger.setColour(newColour);
   mEnvelopeGrain.setColour(newColour);
-  mEnvelopeAmp.setColour(colour);
+  mEnvelopeAmp.setColour(newColour);
   repaint();
 }
 

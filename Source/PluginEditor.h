@@ -15,6 +15,7 @@
 #include "Fft.h"
 #include "GeneratorBox.h"
 #include "GeneratorTabs.h"
+#include "GlobalParamBox.h"
 #include "GrainPositionFinder.h"
 #include "PitchDetector.h"
 #include "PluginProcessor.h"
@@ -72,6 +73,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
   GeneratorTabs mGeneratorTabs;
+  GlobalParamBox mGlobalParamBox;
   std::array<GeneratorBox, Utils::GeneratorColour::NUM_GEN> mGeneratorBoxes;
   juce::Rectangle<float> mNoteDisplayRect;
 

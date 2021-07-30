@@ -28,7 +28,7 @@ class GranularSynth : juce::Thread {
     SHAPE,    // Grain curve shape
     RATE,     // Grain rate
     DURATION, // Grain duration
-    GAIN,     // Grain max amplitude
+    GAIN,     // Max amplitude
     ATTACK,   // Position env attack
     DECAY,    // Position env decay
     SUSTAIN,  // Position env sustain
@@ -45,6 +45,7 @@ class GranularSynth : juce::Thread {
     return mCurPositions;
   }
   Utils::GeneratorParams getGeneratorParams(Utils::GeneratorColour colour);
+  Utils::GlobalParams getGlobalParams() { return mGlobalParams; }
   int getNumFoundPositions() {
     return mPositionFinder.findPositions(Utils::MAX_POSITIONS, mCurPitchClass)
         .size();
@@ -114,6 +115,9 @@ class GranularSynth : juce::Thread {
   GrainPositionFinder mPositionFinder;
   std::vector<GrainPositionFinder::GrainPosition> mCurPositions;
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
+
+  /* Global parameters */
+  Utils::GlobalParams mGlobalParams;
 
   /* Grain position parameters */
   std::array<std::array<Utils::GeneratorParams, Utils::GeneratorColour::NUM_GEN>,

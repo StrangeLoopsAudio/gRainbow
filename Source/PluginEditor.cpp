@@ -117,6 +117,10 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     if (i == 0) mGeneratorBoxes[i].setVisible(true);
   }
 
+  /* Global parameter box */
+  mGlobalParamBox.setParams(mProcessor.synth.getGlobalParams());
+  addAndMakeVisible(mGlobalParamBox);
+
   /* Arc spectrogram */
   addAndMakeVisible(mArcSpec);
 
@@ -247,16 +251,16 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
 void GRainbowAudioProcessorEditor::resized() {
   auto r = getLocalBounds();
 
-  // Position tabs
+  // Generator tabs
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
   mGeneratorTabs.setBounds(leftPanel.removeFromTop(TABS_HEIGHT));
-  // Position boxes
+  // Generator boxes
   for (int i = 0; i < mGeneratorBoxes.size(); ++i) {
     mGeneratorBoxes[i].setBounds(leftPanel);
   }
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
-  // TODO: global param box
+  mGlobalParamBox.setBounds(rightPanel);
 
   // Open and record buttons
   auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT + BTN_PADDING);

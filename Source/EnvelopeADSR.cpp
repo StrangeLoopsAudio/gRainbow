@@ -25,7 +25,7 @@ EnvelopeADSR::~EnvelopeADSR()
 
 void EnvelopeADSR::paint (juce::Graphics& g)
 {
-  juce::Colour envColour = mIsActive ? juce::Colour(Utils::POSITION_COLOURS[mColour]) : juce::Colours::darkgrey;
+  juce::Colour envColour = mIsActive ? mColour : juce::Colours::darkgrey;
   g.setFillType(
       juce::ColourGradient(envColour, getLocalBounds().getTopLeft().toFloat(),
                            envColour.withAlpha(0.4f),
@@ -105,7 +105,7 @@ void EnvelopeADSR::setRelease(float release) {
   repaint();
 }
 
-void EnvelopeADSR::setColour(Utils::GeneratorColour colour) {
+void EnvelopeADSR::setColour(juce::Colour colour) {
   mColour = colour;
   repaint();
 }

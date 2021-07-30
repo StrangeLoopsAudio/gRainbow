@@ -242,6 +242,9 @@ void GranularSynth::updateGeneratorStates(std::vector<bool> genStates) {
 }
 
 void GranularSynth::resetParameters() {
+  mGlobalParams = Utils::GlobalParams(
+      PARAM_GAIN_DEFAULT, PARAM_ATTACK_DEFAULT, PARAM_DECAY_DEFAULT,
+      PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT);
   // Set same params for all notes
   for (int i = 0; i < mNoteSettings.size(); ++i) {
     for (int j = 0; j < mNoteSettings[i].size(); ++j) {

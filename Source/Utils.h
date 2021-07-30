@@ -55,6 +55,22 @@ class Utils {
           release(release) {}
   } GeneratorParams;
 
+  typedef struct GlobalParams {
+    float gain;
+    float attack;
+    float decay;
+    float sustain;
+    float release;
+    GlobalParams() {}
+    GlobalParams(float gain, float attack, float decay, float sustain,
+                 float release)
+        : gain(gain),
+          attack(attack),
+          decay(decay),
+          sustain(sustain),
+          release(release) {}
+  } GlobalParams;
+
   static inline juce::Colour getRainbowColour(int value) {
     jassert(value >= 0 && value <= 6);
     float r = 0.0f;

@@ -85,7 +85,6 @@ class GeneratorBox : public juce::Component {
   juce::Slider mSliderGain;
   juce::Label mLabelGain;
   EnvelopeGrain mEnvelopeGrain;
-  EnvelopeADSR mEnvelopeAmp;
   /* -- ADSR Env */
   juce::Slider mSliderAttack;
   juce::Label mLabelAttack;
@@ -95,6 +94,7 @@ class GeneratorBox : public juce::Component {
   juce::Label mLabelSustain;
   juce::Slider mSliderRelease;
   juce::Label mLabelRelease;
+  EnvelopeADSR mEnvelopeAmp;
 
   void parameterChanged(GranularSynth::ParameterType type, float value);
 
