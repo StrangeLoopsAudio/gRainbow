@@ -57,7 +57,9 @@ class GranularSynth : juce::Thread {
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff(Utils::PitchClass pitchClass);
   void updateGeneratorStates(std::vector<bool> genStates);
-  void updateParameter(Utils::GeneratorColour colour, ParameterType param,
+  void updateGeneratorParameter(Utils::GeneratorColour colour, ParameterType param,
+                              float value);
+  void updateGlobalParameter(ParameterType param,
                               float value);
 
   //==============================================================================
@@ -94,6 +96,8 @@ class GranularSynth : juce::Thread {
   typedef struct GrainNote {
     Utils::PitchClass pitchClass;
     std::vector<GrainPositionFinder::GrainPosition> positions;
+    Utils::EnvelopeState envState = Utils::EnvelopeState::ATTACK;
+    float ampEnvLevel = 0.0f;  // Current amplitude envelope level
     long noteOnTs;
     long noteOffTs;
     GrainNote(Utils::PitchClass pitchClass,
@@ -132,4 +136,5 @@ class GranularSynth : juce::Thread {
   // Returns maximum release time out of all positions in samples
   long getMaxReleaseTime();
   void updateCurPositions();
+  void updateEnvelopeState(GrainNote& gNote);
 };

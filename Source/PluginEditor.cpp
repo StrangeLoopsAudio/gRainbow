@@ -66,7 +66,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
                                        bool isSelected, bool isEnabled) {
     mGeneratorBoxes[tab].setVisible(isSelected);
     mGeneratorBoxes[tab].setActive(isEnabled);
-    mProcessor.synth.updateParameter(tab, GranularSynth::ParameterType::ENABLED,
+    mProcessor.synth.updateGeneratorParameter(tab, GranularSynth::ParameterType::ENABLED,
                                      isEnabled);
     std::vector<bool> positionStates;
     for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
@@ -111,7 +111,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
             }
             mProcessor.synth.updateGeneratorStates(positionStates);
           }
-          mProcessor.synth.updateParameter(pos, param, value);
+          mProcessor.synth.updateGeneratorParameter(pos, param, value);
         };
     addChildComponent(mGeneratorBoxes[i]);
     if (i == 0) mGeneratorBoxes[i].setVisible(true);
@@ -119,6 +119,10 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
 
   /* Global parameter box */
   mGlobalParamBox.setParams(mProcessor.synth.getGlobalParams());
+  mGlobalParamBox.onParameterChanged =
+      [this](GranularSynth::ParameterType param, float value) {
+        mProcessor.synth.updateGlobalParameter(param, value);
+      };
   addAndMakeVisible(mGlobalParamBox);
 
   /* Arc spectrogram */
