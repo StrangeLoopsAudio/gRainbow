@@ -153,6 +153,13 @@ int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
   int newPos = lookRight ? pos + 1 : pos - 1;
   newPos = newPos % Utils::MAX_POSITIONS;
   mNoteSettings[mCurPitchClass][boxNum].position = newPos;
+  updateCurPositions();
+  // Find gNote corresponding to current note and update its positions
+  for (GrainNote& gNote : mActiveNotes) {
+    if (gNote.pitchClass == mCurPitchClass) {
+      gNote.positions = mCurPositions;
+    }
+  }
   return newPos;
 }
 
@@ -195,6 +202,13 @@ void GranularSynth::setNoteOff(Utils::PitchClass pitchClass) {
 void GranularSynth::updateGeneratorStates(std::vector<bool> genStates) {
   for (int i = 0; i < genStates.size(); ++i) {
     mNoteSettings[mCurPitchClass][i].isActive = genStates[i];
+  }
+  updateCurPositions();
+  // Find gNote corresponding to current note and update its positions
+  for (GrainNote& gNote : mActiveNotes) {
+    if (gNote.pitchClass == mCurPitchClass) {
+      gNote.positions = mCurPositions;
+    }
   }
 }
 
