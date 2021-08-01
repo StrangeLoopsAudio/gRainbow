@@ -22,63 +22,57 @@ GranularSynth::GranularSynth() : juce::Thread("granular thread") {
 GranularSynth::~GranularSynth() { stopThread(4000); }
 
 void GranularSynth::run() {
+  float waitMs = MIN_RATE_RATIO * MIN_DURATION_MS;
   while (!threadShouldExit()) {
-    // TODO: use current note to play instead of current pitch class
-    Utils::GeneratorParams params =
-        mNoteSettings[mCurPitchClass][mNextPositionToPlay];
-    float durMs = juce::jmap(params.duration, MIN_DURATION_MS, MAX_DURATION_MS);
-
     if (mFileBuffer != nullptr) {
       // Add one grain per active note
       for (GrainNote& gNote : mActiveNotes) {
-        // Skip if not enabled or full of grains
-        if (mGrains.size() >= MAX_GRAINS) continue;
-        if (!gNote.positions[mNextPositionToPlay].isActive) continue;
+        for (int i = 0; i < gNote.grainTriggersMs.size(); ++i) {
+          if (gNote.grainTriggersMs[i] <= 0) {
+            Utils::GeneratorParams params =
+                mNoteSettings[gNote.pitchClass][i];
+            float durMs =
+                juce::jmap(params.duration, MIN_DURATION_MS, MAX_DURATION_MS);
+            // Skip adding new grain if not enabled or full of grains
+            if (gNote.positions[i].isActive &&
+                mGrains.size() < MAX_GRAINS) {
+              juce::Random random;
+              GrainPositionFinder::GrainPosition& gPos =
+                  gNote.positions[i];
+              float durSamples =
+                  mSampleRate * (durMs / 1000) * (1.0f / gPos.pbRate);
+              float posSamples =
+                  gPos.pitch.posRatio * mFileBuffer->getNumSamples();
+              float posOffset = juce::jmap(
+                  random.nextFloat(), 0.0f,
+                  (gPos.pitch.duration * mFileBuffer->getNumSamples()) -
+                      durSamples);
+              posOffset +=
+                  (params.posAdjust - 0.5f) * MAX_POS_ADJUST * durSamples;
 
-        juce::Random random;
-        GrainPositionFinder::GrainPosition& gPos =
-            gNote.positions[mNextPositionToPlay];
-        float durSamples = mSampleRate * (durMs / 1000) * (1.0f / gPos.pbRate);
-        float posSamples = gPos.pitch.posRatio * mFileBuffer->getNumSamples();
-        float posOffset = juce::jmap(
-            random.nextFloat(), 0.0f,
-            (gPos.pitch.duration * mFileBuffer->getNumSamples()) - durSamples);
-        posOffset += (params.posAdjust - 0.5f) * MAX_POS_ADJUST * durSamples;
+              float gain = gNote.ampEnvLevel * gPos.ampEnvLevel * params.gain;
+              float pbRate = gPos.pbRate +
+                             ((params.pitchAdjust - 0.5f) * MAX_PITCH_ADJUST);
+              jassert(gPos.pbRate > 0.1f);
+              auto grain =
+                  Grain(generateGrainEnvelope(params.shape), durSamples, pbRate,
+                        posSamples + posOffset, mTotalSamps, gain);
+              mGrains.add(grain);
+            }
+            // Reset trigger ts
+            gNote.grainTriggersMs[i] += juce::jmap(1.0f - params.rate, durMs * MIN_RATE_RATIO,
+                           durMs * MAX_RATE_RATIO);
+          } else {
+            gNote.grainTriggersMs[i] -= waitMs;
+          }
+        }
 
-        float gain = gNote.ampEnvLevel * gPos.ampEnvLevel * params.gain;
-        float pbRate =
-            gPos.pbRate + ((params.pitchAdjust - 0.5f) * MAX_PITCH_ADJUST);
-        jassert(gPos.pbRate > 0.1f);
-        auto grain = Grain(generateGrainEnvelope(params.shape), durSamples,
-                           pbRate, posSamples + posOffset, mTotalSamps, gain);
-        mGrains.add(grain);
-
-        // Update amplitude envelope for position that just played
+        // Update amplitude envelope globally and for note
         updateEnvelopeState(gNote);
       }
     }
 
-    // Get next position to play
-    mGrainTriggersMs[mNextPositionToPlay] = juce::jmap(
-        1.0f - mNoteSettings[mCurPitchClass][mNextPositionToPlay].rate,
-        durMs * MIN_RATE_RATIO, durMs * MAX_RATE_RATIO);
-    auto nextGrainPosition = mNextPositionToPlay;
-    float nextGrainWaitTime = mGrainTriggersMs[mNextPositionToPlay];
-    for (int i = 0; i < mGrainTriggersMs.size(); ++i) {
-      if (mGrainTriggersMs[i] < nextGrainWaitTime) {
-        nextGrainWaitTime = mGrainTriggersMs[i];
-        nextGrainPosition = (Utils::GeneratorColour)i;
-      }
-    }
-
-    mNextPositionToPlay = nextGrainPosition;
-
-    // Subtract wait time from each trigger
-    for (int i = 0; i < mGrainTriggersMs.size(); ++i) {
-      mGrainTriggersMs[i] -= nextGrainWaitTime;
-    }
-
-    wait(juce::jmax(1.0f, nextGrainWaitTime));
+    wait(waitMs);
   }
 }
 
@@ -111,8 +105,8 @@ void GranularSynth::process(juce::AudioBuffer<float>& buffer) {
       [this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
 
   // Delete expired notes
-  long maxReleaseTime = getMaxReleaseTime();
-  mActiveNotes.removeIf([this, maxReleaseTime](GrainNote& gNote) {
+  mActiveNotes.removeIf([this](GrainNote& gNote) {
+    long maxReleaseTime = getMaxReleaseTime(gNote);
     return (mTotalSamps - gNote.noteOffTs) > maxReleaseTime &&
            gNote.noteOffTs > 0;
   });
@@ -176,7 +170,11 @@ void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
     }
   }
   if (!isPlayingAlready) {
-    mActiveNotes.add(GrainNote(pitchClass, mCurPositions, mTotalSamps));
+    mActiveNotes.add(GrainNote(
+        pitchClass,
+        std::vector<Utils::GeneratorParams>(mNoteSettings[pitchClass].begin(),
+                                            mNoteSettings[pitchClass].end()),
+        mCurPositions, mTotalSamps));
   }
 }
 
@@ -213,13 +211,6 @@ void GranularSynth::resetParameters() {
           PARAM_GAIN_DEFAULT, PARAM_ATTACK_DEFAULT, PARAM_DECAY_DEFAULT,
           PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT);
     }
-  }
-  // Initialize grain triggering timestamps
-  for (int j = 0; j < mGrainTriggersMs.size(); ++j) {
-    float durMs = juce::jmap(mNoteSettings[mCurPitchClass][j].duration,
-                             MIN_DURATION_MS, MAX_DURATION_MS);
-    mGrainTriggersMs[j] = juce::jmap(
-        1.0f - mNoteSettings[mCurPitchClass][j].rate, durMs / 8, durMs / 2);
   }
 }
 
@@ -347,59 +338,62 @@ void GranularSynth::updateEnvelopeState(GrainNote& gNote) {
     }
   }
 
-  // Update generator env state
-  GrainPositionFinder::GrainPosition& gPos =
-      gNote.positions[mNextPositionToPlay];
-  Utils::GeneratorParams genParams =
-      mNoteSettings[mCurPitchClass][mNextPositionToPlay];
-  attackSamples =
-      mSampleRate * juce::jmap(genParams.attack, MIN_ATTACK_SEC, MAX_ATTACK_SEC);
-  decaySamples =
-      mSampleRate * juce::jmap(genParams.decay, MIN_DECAY_SEC, MAX_DECAY_SEC);
-  switch (gPos.envState) {
-    case Utils::EnvelopeState::ATTACK: {
-      gPos.ampEnvLevel = juce::jlimit(
-          0.0f, 1.0f, (mTotalSamps - gNote.noteOnTs) / (float)attackSamples);
-      if (gPos.ampEnvLevel >= 1.0f) {
-        gPos.envState = Utils::EnvelopeState::DECAY;
+  for (int i = 0; i < gNote.positions.size(); ++i) {
+    // Update generator env state
+    GrainPositionFinder::GrainPosition& gPos =
+        gNote.positions[i];
+    Utils::GeneratorParams genParams =
+        mNoteSettings[gNote.pitchClass][i];
+    attackSamples = mSampleRate * juce::jmap(genParams.attack, MIN_ATTACK_SEC,
+                                             MAX_ATTACK_SEC);
+    decaySamples =
+        mSampleRate * juce::jmap(genParams.decay, MIN_DECAY_SEC, MAX_DECAY_SEC);
+    switch (gPos.envState) {
+      case Utils::EnvelopeState::ATTACK: {
+        gPos.ampEnvLevel = juce::jlimit(
+            0.0f, 1.0f, (mTotalSamps - gNote.noteOnTs) / (float)attackSamples);
+        if (gPos.ampEnvLevel >= 1.0f) {
+          gPos.envState = Utils::EnvelopeState::DECAY;
+        }
+        break;
       }
-      break;
-    }
-    case Utils::EnvelopeState::DECAY: {
-      gPos.ampEnvLevel =
-          juce::jlimit(genParams.sustain, 1.0f,
-                       1.0f - ((mTotalSamps - attackSamples - gNote.noteOnTs) /
-                               (float)(decaySamples)) *
-                                  (1.0f - genParams.sustain));
-      if (gPos.ampEnvLevel <= genParams.sustain) {
-        gPos.envState = Utils::EnvelopeState::SUSTAIN;
+      case Utils::EnvelopeState::DECAY: {
+        gPos.ampEnvLevel = juce::jlimit(
+            genParams.sustain, 1.0f,
+            1.0f - ((mTotalSamps - attackSamples - gNote.noteOnTs) /
+                    (float)(decaySamples)) *
+                       (1.0f - genParams.sustain));
+        if (gPos.ampEnvLevel <= genParams.sustain) {
+          gPos.envState = Utils::EnvelopeState::SUSTAIN;
+        }
+        break;
       }
-      break;
-    }
-    case Utils::EnvelopeState::SUSTAIN: {
-      gPos.ampEnvLevel = genParams.sustain;
-      // Note: setting note off sets state to release, we don't need to
-      // here
-      break;
-    }
-    case Utils::EnvelopeState::RELEASE: {
-      float releaseSamples =
-          mSampleRate *
-          juce::jmap(genParams.release, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
-      gPos.ampEnvLevel = juce::jlimit(
-          0.0f, genParams.sustain,
-          genParams.sustain *
-              (1.0f - (mTotalSamps - gNote.noteOffTs) / (float)releaseSamples));
-      break;
+      case Utils::EnvelopeState::SUSTAIN: {
+        gPos.ampEnvLevel = genParams.sustain;
+        // Note: setting note off sets state to release, we don't need to
+        // here
+        break;
+      }
+      case Utils::EnvelopeState::RELEASE: {
+        float releaseSamples =
+            mSampleRate *
+            juce::jmap(genParams.release, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
+        gPos.ampEnvLevel = juce::jlimit(
+            0.0f, genParams.sustain,
+            genParams.sustain * (1.0f - (mTotalSamps - gNote.noteOffTs) /
+                                            (float)releaseSamples));
+        break;
+      }
     }
   }
+  
 }
 
-long GranularSynth::getMaxReleaseTime() {
+long GranularSynth::getMaxReleaseTime(GrainNote& gNote) {
   int curMaxSamples = 0;
-  for (int i = 0; i < mNoteSettings[mCurPitchClass].size(); ++i) {
+  for (int i = 0; i < mNoteSettings[gNote.pitchClass].size(); ++i) {
     int releaseSamples =
-        mSampleRate * juce::jmap(mNoteSettings[mCurPitchClass][i].release,
+        mSampleRate * juce::jmap(mNoteSettings[gNote.pitchClass][i].release,
                                  MIN_RELEASE_SEC, MAX_RELEASE_SEC);
     if (releaseSamples > curMaxSamples) {
       curMaxSamples = releaseSamples;

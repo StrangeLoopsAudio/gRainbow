@@ -68,8 +68,6 @@ class GranularSynth : juce::Thread {
  private:
   static constexpr auto MAX_PITCH_ADJUST = 0.25; // In either direction, this equals one octave total
   static constexpr auto MAX_POS_ADJUST = 0.5f; // Max position adjust in terms of pitch duration
-  static constexpr auto MIN_RATE = 10.f;  // Grains per second
-  static constexpr auto MAX_RATE = 20.f;
   static constexpr auto MIN_DURATION_MS = 60.0f;
   static constexpr auto MAX_DURATION_MS = 300.0f;
   static constexpr auto MIN_RATE_RATIO = .125f;
@@ -100,19 +98,32 @@ class GranularSynth : juce::Thread {
     float ampEnvLevel = 0.0f;  // Current amplitude envelope level
     long noteOnTs;
     long noteOffTs;
+    std::vector<float>
+        grainTriggersMs;  // Keeps track of triggering grains from each
+                          // position
     GrainNote(Utils::PitchClass pitchClass,
+              std::vector<Utils::GeneratorParams> genParams,
               std::vector<GrainPositionFinder::GrainPosition> positions,
               long ts)
         : pitchClass(pitchClass),
           positions(positions),
           noteOnTs(ts),
-          noteOffTs(-1) {}
+          noteOffTs(-1) {
+      // Initialize grain triggering timestamps
+      for (int i = 0; i < genParams.size(); ++i) {
+        float durMs =
+            juce::jmap(genParams[i].duration, MIN_DURATION_MS, MAX_DURATION_MS);
+        grainTriggersMs.push_back(juce::jmap(1.0f - genParams[i].rate,
+                                             durMs * MIN_RATE_RATIO,
+                                             durMs * MAX_RATE_RATIO));
+      }
+    }
   } GrainNote;
 
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
 
   /* Grain control */
-  juce::Array<Grain> mGrains;
+  juce::Array<Grain> mGrains; // Active grains
   long mTotalSamps;
   juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
   double mSampleRate;
@@ -123,18 +134,15 @@ class GranularSynth : juce::Thread {
   /* Global parameters */
   Utils::GlobalParams mGlobalParams;
 
-  /* Grain position parameters */
+  /* Grain generator parameters */
   std::array<std::array<Utils::GeneratorParams, Utils::GeneratorColour::NUM_GEN>,
              Utils::PitchClass::COUNT>
       mNoteSettings;
-  std::array<float, Utils::GeneratorColour::NUM_GEN>
-      mGrainTriggersMs;  // Keeps track of triggering grains from each position
-  Utils::GeneratorColour mNextPositionToPlay = Utils::GeneratorColour::BLUE;
 
   // Generate gaussian envelope to be used for each grain
   std::vector<float> generateGrainEnvelope(float shape);
   // Returns maximum release time out of all positions in samples
-  long getMaxReleaseTime();
+  long getMaxReleaseTime(GrainNote& gNote);
   void updateCurPositions();
   void updateEnvelopeState(GrainNote& gNote);
 };
