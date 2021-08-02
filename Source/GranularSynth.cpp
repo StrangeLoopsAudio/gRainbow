@@ -315,7 +315,7 @@ Utils::GeneratorParams GranularSynth::getGeneratorParams(
 int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
   int pos = mNoteSettings[mCurPitchClass][boxNum].position;
   int newPos = lookRight ? pos + 1 : pos - 1;
-  newPos = newPos % Utils::MAX_POSITIONS;
+  newPos = juce::jmax(newPos % Utils::MAX_POSITIONS, 0);
   mNoteSettings[mCurPitchClass][boxNum].position = newPos;
   updateCurPositions();
   // Find gNote corresponding to current note and update its positions

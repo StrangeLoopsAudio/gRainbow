@@ -21,8 +21,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
 
   mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass,
                                     bool isNoteOn) {
-    mCurPitchClass = pitchClass;
     if (isNoteOn) {
+      mCurPitchClass = pitchClass;
       mStartedPlayingTrig = true;
     } else {
       mArcSpec.setNoteOff();
