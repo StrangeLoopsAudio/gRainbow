@@ -234,10 +234,24 @@ void ArcSpectrogram::setTransients(
   mTransients = transients;
 }
 
+void ArcSpectrogram::setPositions(
+  std::vector<GrainPositionFinder::GrainPosition> gPositions) {
+  mGPositions = gPositions;
+  mPositionMarkers.clear();
+  for (int i = 0; i < gPositions.size(); ++i) {
+    if (gPositions[i].pitch.pitchClass == Utils::PitchClass::NONE) continue;
+    mGPositions.push_back(gPositions[i]);
+    auto newItem =
+        new PositionMarker(gPositions[i], juce::Colour(MARKER_COLOURS[i]));
+    mPositionMarkers.add(newItem);
+    addAndMakeVisible(newItem);
+  }
+  resized();
+}
+
 void ArcSpectrogram::setNoteOn(
     int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions) {
   mIsPlayingNote = true;
-  mGPositions = std::vector<GrainPositionFinder::GrainPosition>();
   mCurNote = midiNote;
   mGPositions = gPositions;
   mPositionMarkers.clear();

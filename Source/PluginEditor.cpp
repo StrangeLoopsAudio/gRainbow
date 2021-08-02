@@ -78,7 +78,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
       positionStates.push_back(canPlay && shouldPlay);
     }
     mSynth.updateGeneratorStates(positionStates);
-    mArcSpec.setNoteOn(mCurPitchClass, mSynth.getCurrentPositions());
+    mArcSpec.setPositions(mSynth.getCurrentPositions());
   };
   addAndMakeVisible(mGeneratorTabs);
 
@@ -91,8 +91,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     mGeneratorBoxes[i].onPositionChanged = [this, i](bool isRight) {
       int newPosition = mSynth.incrementPosition(i, isRight);
       mGeneratorBoxes[i].setPositionNumber(newPosition);
-      mArcSpec.setNoteOn(mCurPitchClass,
-                         mSynth.getCurrentPositions());
+      mArcSpec.setPositions(mSynth.getCurrentPositions());
     };
     mGeneratorBoxes[i].onParameterChanged =
         [this](Utils::GeneratorColour pos, GranularSynth::ParameterType param,

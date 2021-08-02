@@ -169,12 +169,12 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
   } else {
     // Normalize the block before sending onward
     // if grains is empty, don't want to divide by zero
-    for (int i = 0; i < buffer.getNumSamples(); ++i) {
+    /*for (int i = 0; i < buffer.getNumSamples(); ++i) {
       for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
-        // float* channelBlock = buffer->getWritePointer(ch);
-        // channelBlock[i] /= mGrains.size();
+         float* channelBlock = buffer.getWritePointer(ch);
+         channelBlock[i] /= mGrains.size();
       }
-    }
+    } */
   }
 
   // Delete expired grains
@@ -248,7 +248,9 @@ void GranularSynth::run() {
               posOffset +=
                   (params.posAdjust - 0.5f) * MAX_POS_ADJUST * durSamples;
 
-              float gain = gNote.ampEnvLevel * gPos.ampEnvLevel * params.gain;
+              float rateGainFactor =
+                  juce::jmap(1.0f - params.rate, MIN_RATE_RATIO * 2.0f, MAX_RATE_RATIO);
+              float gain = gNote.ampEnvLevel * gPos.ampEnvLevel * params.gain * rateGainFactor;
               float pbRate = gPos.pbRate +
                              ((params.pitchAdjust - 0.5f) * MAX_PITCH_ADJUST);
               jassert(gPos.pbRate > 0.1f);

@@ -43,6 +43,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   void resetBuffers();
   void loadBuffer(std::vector<std::vector<float>> *buffer, SpecType type);
   void setTransients(std::vector<TransientDetector::Transient> *transients);
+  void setPositions(std::vector<GrainPositionFinder::GrainPosition> gPositions);
   void setNoteOn(int midiNote,
                  std::vector<GrainPositionFinder::GrainPosition> gPositions);
   void setNoteOff() { mIsPlayingNote = false; }
