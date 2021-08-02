@@ -10,16 +10,16 @@
 
 //==============================================================================
 GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
-    GRainbowAudioProcessor& p)
+    GranularSynth& p)
     : AudioProcessorEditor(&p),
-      mProcessor(p),
-      mKeyboard(mProcessor.getKeyboardState()),
+      mSynth(p),
+      mKeyboard(mSynth.getKeyboardState()),
       mFft(FFT_SIZE, HOP_SIZE),
       juce::Thread("main fft thread"),
       mProgressBar(mLoadingProgress) {
   mFormatManager.registerBasicFormats();
 
-  mProcessor.onNoteChanged = [this](Utils::PitchClass pitchClass,
+  mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass,
                                     bool isNoteOn) {
     mCurPitchClass = pitchClass;
     if (isNoteOn) {
@@ -66,7 +66,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
                                        bool isSelected, bool isEnabled) {
     mGeneratorBoxes[tab].setVisible(isSelected);
     mGeneratorBoxes[tab].setActive(isEnabled);
-    mProcessor.synth.updateGeneratorParameter(tab, GranularSynth::ParameterType::ENABLED,
+    mSynth.updateGeneratorParameter(tab, GranularSynth::ParameterType::ENABLED,
                                      isEnabled);
     std::vector<bool> positionStates;
     for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
@@ -77,8 +77,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
           mGeneratorBoxes[i].getState() == GeneratorBox::BoxState::SOLO;
       positionStates.push_back(canPlay && shouldPlay);
     }
-    mProcessor.synth.updateGeneratorStates(positionStates);
-    mArcSpec.setNoteOn(mCurPitchClass, mProcessor.synth.getCurrentPositions());
+    mSynth.updateGeneratorStates(positionStates);
+    mArcSpec.setNoteOn(mCurPitchClass, mSynth.getCurrentPositions());
   };
   addAndMakeVisible(mGeneratorTabs);
 
@@ -87,12 +87,12 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     mGeneratorBoxes[i].setColour((Utils::GeneratorColour)i);
     mGeneratorBoxes[i].setActive(i == 0);
     mGeneratorBoxes[i].setParams(
-        mProcessor.synth.getGeneratorParams((Utils::GeneratorColour)i));
+        mSynth.getGeneratorParams((Utils::GeneratorColour)i));
     mGeneratorBoxes[i].onPositionChanged = [this, i](bool isRight) {
-      int newPosition = mProcessor.synth.incrementPosition(i, isRight);
+      int newPosition = mSynth.incrementPosition(i, isRight);
       mGeneratorBoxes[i].setPositionNumber(newPosition);
       mArcSpec.setNoteOn(mCurPitchClass,
-                         mProcessor.synth.getCurrentPositions());
+                         mSynth.getCurrentPositions());
     };
     mGeneratorBoxes[i].onParameterChanged =
         [this](Utils::GeneratorColour pos, GranularSynth::ParameterType param,
@@ -112,19 +112,19 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
                   mGeneratorBoxes[i].getState() == GeneratorBox::BoxState::SOLO;
               positionStates.push_back(canPlay && shouldPlay);
             }
-            mProcessor.synth.updateGeneratorStates(positionStates);
+            mSynth.updateGeneratorStates(positionStates);
           }
-          mProcessor.synth.updateGeneratorParameter(pos, param, value);
+          mSynth.updateGeneratorParameter(pos, param, value);
         };
     addChildComponent(mGeneratorBoxes[i]);
     if (i == 0) mGeneratorBoxes[i].setVisible(true);
   }
 
   /* Global parameter box */
-  mGlobalParamBox.setParams(mProcessor.synth.getGlobalParams());
+  mGlobalParamBox.setParams(mSynth.getGlobalParams());
   mGlobalParamBox.onParameterChanged =
       [this](GranularSynth::ParameterType param, float value) {
-        mProcessor.synth.updateGlobalParameter(param, value);
+        mSynth.updateGlobalParameter(param, value);
       };
   addAndMakeVisible(mGlobalParamBox);
 
@@ -143,7 +143,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
              std::vector<std::vector<float>>& notesBuffer) {
         mArcSpec.loadBuffer(&hpcpBuffer, ArcSpectrogram::SpecType::HPCP);
         mArcSpec.loadBuffer(&notesBuffer, ArcSpectrogram::SpecType::NOTES);
-        mProcessor.synth.setPitches(&mPitchDetector.getPitches());
+        mSynth.setPitches(&mPitchDetector.getPitches());
         mIsProcessingComplete = true;
       };
 
@@ -179,20 +179,20 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
 
 void GRainbowAudioProcessorEditor::timerCallback() {
   if (mStartedPlayingTrig && mCurPitchClass != Utils::PitchClass::NONE) {
-    int numFoundPositions = mProcessor.synth.getNumFoundPositions();
+    int numFoundPositions = mSynth.getNumFoundPositions();
     std::vector<bool> tabStates;
     for (int i = 0; i < mGeneratorBoxes.size(); ++i) {
       mGeneratorBoxes[i].setParams(
-          mProcessor.synth.getGeneratorParams((Utils::GeneratorColour)i));
+          mSynth.getGeneratorParams((Utils::GeneratorColour)i));
       mGeneratorBoxes[i].setNumPositions(numFoundPositions);
       tabStates.push_back(
-          mProcessor.synth.getGeneratorParams((Utils::GeneratorColour)i)
+          mSynth.getGeneratorParams((Utils::GeneratorColour)i)
               .isActive);
     }
     mGeneratorTabs.setTabStates(tabStates);
     std::vector<GrainPositionFinder::GrainPosition> positions =
-        mProcessor.synth.getCurrentPositions();
-    mArcSpec.setNoteOn(mCurPitchClass, mProcessor.synth.getCurrentPositions());
+        mSynth.getCurrentPositions();
+    mArcSpec.setNoteOn(mCurPitchClass, mSynth.getCurrentPositions());
     mStartedPlayingTrig = false;
     repaint();  // Update note display
   }
@@ -222,7 +222,7 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
   // Draw note display
   if (mCurPitchClass != Utils::PitchClass::NONE) {
     std::vector<GrainPositionFinder::GrainPosition> positions =
-        mProcessor.synth.getCurrentPositions();
+        mSynth.getCurrentPositions();
     // Draw position arrows
     for (int i = 0; i < positions.size(); ++i) {
       if (positions[i].pitch.pitchClass == Utils::PitchClass::NONE) continue;
@@ -326,7 +326,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
     std::unique_ptr<juce::LagrangeInterpolator> resampler =
         std::make_unique<juce::LagrangeInterpolator>();
-    double ratio = reader->sampleRate / mProcessor.getSampleRate();
+    double ratio = reader->sampleRate / mSynth.getSampleRate();
     const float** inputs = tempBuffer.getArrayOfReadPointers();
     float** outputs = mFileBuffer.getArrayOfWritePointers();
     for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
@@ -334,13 +334,13 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       resampler->process(ratio, inputs[c], outputs[c],
                          mFileBuffer.getNumSamples());
     }
-    mProcessor.synth.resetParameters();
+    mSynth.resetParameters();
     mArcSpec.resetBuffers();
     stopThread(4000);
     startThread();  // process fft and pass to arc spec
     // mTransientDetector.processBuffer(&mFileBuffer);
-    mPitchDetector.processBuffer(&mFileBuffer, mProcessor.getSampleRate());
-    mProcessor.synth.setFileBuffer(&mFileBuffer, mProcessor.getSampleRate());
+    mPitchDetector.processBuffer(&mFileBuffer, mSynth.getSampleRate());
+    mSynth.setFileBuffer(&mFileBuffer, mSynth.getSampleRate());
     mIsProcessingComplete = false;  // Reset processing flag
   }
 }

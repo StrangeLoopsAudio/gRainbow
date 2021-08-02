@@ -9,8 +9,21 @@
 */
 
 #include "GranularSynth.h"
+#include "PluginEditor.h"
 
-GranularSynth::GranularSynth() : juce::Thread("granular thread") {
+GranularSynth::GranularSynth()
+#ifndef JucePlugin_PreferredChannelConfigurations
+    : AudioProcessor(
+          BusesProperties()
+#if !JucePlugin_IsMidiEffect
+#if !JucePlugin_IsSynth
+              .withInput("Input", juce::AudioChannelSet::stereo(), true)
+#endif
+              .withOutput("Output", juce::AudioChannelSet::stereo(), true)
+#endif
+              )
+#endif 
+  , juce::Thread("granular thread") {
   mTotalSamps = 0;
   mGrains.ensureStorageAllocated(MAX_GRAINS);
 
@@ -20,6 +33,191 @@ GranularSynth::GranularSynth() : juce::Thread("granular thread") {
 }
 
 GranularSynth::~GranularSynth() { stopThread(4000); }
+
+//==============================================================================
+const juce::String GranularSynth::getName() const {
+  return JucePlugin_Name;
+}
+
+bool GranularSynth::acceptsMidi() const {
+#if JucePlugin_WantsMidiInput
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool GranularSynth::producesMidi() const {
+#if JucePlugin_ProducesMidiOutput
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool GranularSynth::isMidiEffect() const {
+#if JucePlugin_IsMidiEffect
+  return true;
+#else
+  return false;
+#endif
+}
+
+double GranularSynth::getTailLengthSeconds() const { return 0.0; }
+
+int GranularSynth::getNumPrograms() {
+  return 1;  // NB: some hosts don't cope very well if you tell them there are 0
+             // programs, so this should be at least 1, even if you're not
+             // really implementing programs.
+}
+
+int GranularSynth::getCurrentProgram() { return 0; }
+
+void GranularSynth::setCurrentProgram(int index) {}
+
+const juce::String GranularSynth::getProgramName(int index) {
+  return {};
+}
+
+void GranularSynth::changeProgramName(int index,
+                                               const juce::String& newName) {}
+
+//==============================================================================
+void GranularSynth::prepareToPlay(double sampleRate,
+                                           int samplesPerBlock) {
+  mSampleRate = sampleRate;
+}
+
+void GranularSynth::releaseResources() {
+  // When playback stops, you can use this as an opportunity to free up any
+  // spare memory, etc.
+}
+
+#ifndef JucePlugin_PreferredChannelConfigurations
+bool GranularSynth::isBusesLayoutSupported(
+    const BusesLayout& layouts) const {
+#if JucePlugin_IsMidiEffect
+  juce::ignoreUnused(layouts);
+  return true;
+#else
+  // This is the place where you check if the layout is supported.
+  // In this template code we only support mono or stereo.
+  if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono() &&
+      layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
+    return false;
+
+    // This checks if the input layout matches the output layout
+#if !JucePlugin_IsSynth
+  if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
+    return false;
+#endif
+
+  return true;
+#endif
+}
+#endif
+
+void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
+                                          juce::MidiBuffer& midiMessages) {
+  juce::ScopedNoDenormals noDenormals;
+  auto totalNumInputChannels = getTotalNumInputChannels();
+  auto totalNumOutputChannels = getTotalNumOutputChannels();
+
+  // In case we have more outputs than inputs, this code clears any output
+  // channels that didn't contain input data, (because these aren't
+  // guaranteed to be empty - they may contain garbage).
+  // This is here to avoid people getting screaming feedback
+  // when they first compile a plugin, but obviously you don't need to keep
+  // this code if your algorithm always overwrites all the output channels.
+  for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+    buffer.clear(i, 0, buffer.getNumSamples());
+
+  // Fill midi buffer with UI keyboard events
+  juce::MidiBuffer aggregatedMidiBuffer;
+  mKeyboardState.processNextMidiBuffer(aggregatedMidiBuffer, 0,
+                                       buffer.getNumSamples(), true);
+
+  // Add midi events from native buffer
+  aggregatedMidiBuffer.addEvents(midiMessages, 0, buffer.getNumSamples(), 0);
+  if (!aggregatedMidiBuffer.isEmpty()) {
+    for (juce::MidiMessageMetadata md : aggregatedMidiBuffer) {
+      // Trigger note on/off depending on event type
+      Utils::PitchClass pc = (Utils::PitchClass)(
+          md.getMessage().getNoteNumber() % Utils::PitchClass::COUNT);
+      if (md.getMessage().isNoteOn()) {
+        if (onNoteChanged != nullptr) onNoteChanged(pc, true);
+        setNoteOn(pc);
+      } else if (md.getMessage().isNoteOff()) {
+        if (onNoteChanged != nullptr) onNoteChanged(pc, false);
+        setNoteOff(pc);
+      }
+    }
+  }
+
+  // Add contributions from each grain
+  juce::Array<Grain> grains = mGrains;  // Copy to avoid threading issues
+  for (int i = 0; i < buffer.getNumSamples(); ++i) {
+    for (int g = 0; g < grains.size(); ++g) {
+      grains[g].process(*mFileBuffer, buffer, mTotalSamps);
+    }
+    mTotalSamps++;
+  }
+
+  // Reset timestamps if no grains active to keep numbers low
+  if (mActiveNotes.isEmpty() && mGrains.isEmpty()) {
+    mTotalSamps = 0;
+  } else {
+    // Normalize the block before sending onward
+    // if grains is empty, don't want to divide by zero
+    for (int i = 0; i < buffer.getNumSamples(); ++i) {
+      for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+        // float* channelBlock = buffer->getWritePointer(ch);
+        // channelBlock[i] /= mGrains.size();
+      }
+    }
+  }
+
+  // Delete expired grains
+  mGrains.removeIf(
+      [this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
+
+  // Delete expired notes
+  mActiveNotes.removeIf([this](GrainNote& gNote) {
+    long maxReleaseTime = getMaxReleaseTime(gNote);
+    return (mTotalSamps - gNote.noteOffTs) > maxReleaseTime &&
+           gNote.noteOffTs > 0;
+  });
+}
+
+//==============================================================================
+bool GranularSynth::hasEditor() const {
+  return true;  // (change this to false if you choose to not supply an editor)
+}
+
+juce::AudioProcessorEditor* GranularSynth::createEditor() {
+  return new GRainbowAudioProcessorEditor(*this);
+}
+
+//==============================================================================
+void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
+  // You should use this method to store your parameters in the memory block.
+  // You could do that either as raw data, or use the XML or ValueTree classes
+  // as intermediaries to make it easy to save and load complex data.
+}
+
+void GranularSynth::setStateInformation(const void* data,
+                                                 int sizeInBytes) {
+  // You should use this method to restore your parameters from this memory
+  // block, whose contents will have been created by the getStateInformation()
+  // call.
+}
+
+//==============================================================================
+// This creates new instances of the plugin..
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
+  return new GranularSynth();
+}
+
 
 void GranularSynth::run() {
   float waitMs = MIN_RATE_RATIO * MIN_DURATION_MS;
@@ -74,42 +272,6 @@ void GranularSynth::run() {
 
     wait(waitMs);
   }
-}
-
-void GranularSynth::process(juce::AudioBuffer<float>& buffer) {
-  // Add contributions from each grain
-  juce::Array<Grain> grains = mGrains;  // Copy to avoid threading issues
-  for (int i = 0; i < buffer.getNumSamples(); ++i) {
-    for (int g = 0; g < grains.size(); ++g) {
-      grains[g].process(*mFileBuffer, buffer, mTotalSamps);
-    }
-    mTotalSamps++;
-  }
-
-  // Reset timestamps if no grains active to keep numbers low
-  if (mActiveNotes.isEmpty() && mGrains.isEmpty()) {
-    mTotalSamps = 0;
-  } else {
-    // Normalize the block before sending onward
-    // if grains is empty, don't want to divide by zero
-    for (int i = 0; i < buffer.getNumSamples(); ++i) {
-      for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
-        // float* channelBlock = buffer->getWritePointer(ch);
-        // channelBlock[i] /= mGrains.size();
-      }
-    }
-  }
-
-  // Delete expired grains
-  mGrains.removeIf(
-      [this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
-
-  // Delete expired notes
-  mActiveNotes.removeIf([this](GrainNote& gNote) {
-    long maxReleaseTime = getMaxReleaseTime(gNote);
-    return (mTotalSamps - gNote.noteOffTs) > maxReleaseTime &&
-           gNote.noteOffTs > 0;
-  });
 }
 
 void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, double sr) {

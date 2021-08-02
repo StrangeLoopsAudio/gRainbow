@@ -62,6 +62,7 @@ class GRainbowAudioProcessor : public juce::AudioProcessor {
 
   GranularSynth synth;
 
+
  private:
   double mSampleRate;
   juce::MidiKeyboardState mKeyboardState;

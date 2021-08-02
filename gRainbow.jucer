@@ -77,10 +77,6 @@
       <FILE id="duDEsZ" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="A5Kd8U" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
-      <FILE id="lDKOPO" name="PluginProcessor.cpp" compile="1" resource="0"
-            file="Source/PluginProcessor.cpp"/>
-      <FILE id="PY5aTM" name="PluginProcessor.h" compile="0" resource="0"
-            file="Source/PluginProcessor.h"/>
       <FILE id="XczhZw" name="RainbowLookAndFeel.h" compile="0" resource="0"
             file="Source/RainbowLookAndFeel.h"/>
       <FILE id="VcqOMO" name="Utils.h" compile="0" resource="0" file="Source/Utils.h"/>

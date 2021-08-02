@@ -18,7 +18,6 @@
 #include "GlobalParamBox.h"
 #include "GrainPositionFinder.h"
 #include "PitchDetector.h"
-#include "PluginProcessor.h"
 #include "RainbowKeyboard.h"
 #include "RainbowLookAndFeel.h"
 #include "TransientDetector.h"
@@ -31,7 +30,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
                                      public juce::Timer,
                                      public juce::Thread {
  public:
-  GRainbowAudioProcessorEditor(GRainbowAudioProcessor&);
+  GRainbowAudioProcessorEditor(GranularSynth&);
   ~GRainbowAudioProcessorEditor() override;
 
   //==============================================================================
@@ -60,7 +59,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   static constexpr auto NOTE_DISPLAY_HEIGHT = 20;
 
   /* DSP Modules */
-  GRainbowAudioProcessor& mProcessor;
+  GranularSynth& mSynth;
   TransientDetector mTransientDetector;
   PitchDetector mPitchDetector;
   AudioRecorder mRecorder;
