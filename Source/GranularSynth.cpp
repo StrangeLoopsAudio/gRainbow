@@ -295,7 +295,7 @@ void GranularSynth::updateCurPositions() {
   for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
     int position = mNoteSettings[mCurPitchClass][i].position;
     if (mNoteSettings[mCurPitchClass][i].isActive &&
-        (gPositions.size() - 1) >= position) {
+        gPositions.size() >= (position + 1)) {
       gPositions[position].isActive = true;
       gPosToPlay.push_back(gPositions[position]);
     } else {
