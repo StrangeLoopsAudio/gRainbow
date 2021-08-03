@@ -113,7 +113,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   startTimer(50);
 
-  setSize(1200, 565);
+  setSize(1200, 650);
 }
 
 GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
