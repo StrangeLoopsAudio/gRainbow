@@ -28,6 +28,7 @@ class FilterControl : public juce::Component {
 
  private:
   bool mIsActive = false;
+  
   Utils::GeneratorColour mColour;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterControl)
