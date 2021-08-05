@@ -162,6 +162,13 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
     }
     mTotalSamps++;
   }
+  
+  // Clip buffers to valid range
+  for (int i = 0; i < buffer.getNumChannels(); i++) {
+    juce::FloatVectorOperations::clip(buffer.getWritePointer(i),
+                                      buffer.getReadPointer(i), -1.0f, 1.0f,
+                                      buffer.getNumSamples());
+  }
 
   // Reset timestamps if no grains active to keep numbers low
   if (mActiveNotes.isEmpty() && mGrains.isEmpty()) {
@@ -176,17 +183,6 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
       }
     } */
   }
-
-  // Delete expired grains
-  mGrains.removeIf(
-      [this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
-
-  // Delete expired notes
-  mActiveNotes.removeIf([this](GrainNote& gNote) {
-    long maxReleaseTime = getMaxReleaseTime(gNote);
-    return (mTotalSamps - gNote.noteOffTs) > maxReleaseTime &&
-           gNote.noteOffTs > 0;
-  });
 }
 
 //==============================================================================
@@ -270,6 +266,19 @@ void GranularSynth::run() {
         // Update amplitude envelope globally and for note
         updateEnvelopeState(gNote);
       }
+
+      // Delete expired grains
+      mGrains.removeIf(
+          [this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
+
+      // Delete expired notes
+      long maxReleaseTime =
+          mSampleRate *
+          juce::jmap(mGlobalParams.release, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
+      mActiveNotes.removeIf([this, maxReleaseTime](GrainNote& gNote) {
+        return (mTotalSamps - gNote.noteOffTs) > maxReleaseTime &&
+               gNote.noteOffTs > 0;
+      });
     }
 
     wait(waitMs);
@@ -565,17 +574,4 @@ void GranularSynth::updateEnvelopeState(GrainNote& gNote) {
     }
   }
   
-}
-
-long GranularSynth::getMaxReleaseTime(GrainNote& gNote) {
-  int curMaxSamples = 0;
-  for (int i = 0; i < mNoteSettings[gNote.pitchClass].size(); ++i) {
-    int releaseSamples =
-        mSampleRate * juce::jmap(mNoteSettings[gNote.pitchClass][i].release,
-                                 MIN_RELEASE_SEC, MAX_RELEASE_SEC);
-    if (releaseSamples > curMaxSamples) {
-      curMaxSamples = releaseSamples;
-    }
-  }
-  return curMaxSamples;
 }

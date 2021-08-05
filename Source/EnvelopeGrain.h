@@ -32,7 +32,7 @@ class EnvelopeGrain : public juce::Component {
 
  private:
 
-  static constexpr auto MIN_RATE_RATIO = .125f;
+  static constexpr auto MIN_RATE_RATIO = .25f;
   static constexpr auto MAX_RATE_RATIO = 1.0f;
 
   /* Parameters */

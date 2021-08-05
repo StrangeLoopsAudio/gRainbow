@@ -105,7 +105,7 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   static constexpr auto MAX_POS_ADJUST = 0.5f; // Max position adjust in terms of pitch duration
   static constexpr auto MIN_DURATION_MS = 60.0f;
   static constexpr auto MAX_DURATION_MS = 300.0f;
-  static constexpr auto MIN_RATE_RATIO = .125f;
+  static constexpr auto MIN_RATE_RATIO = .25f;
   static constexpr auto MAX_RATE_RATIO = 1.0f;
   static constexpr auto MIN_ATTACK_SEC = 0.01f;
   static constexpr auto MAX_ATTACK_SEC = 1.0f;
@@ -178,7 +178,6 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   // Generate gaussian envelope to be used for each grain
   std::vector<float> generateGrainEnvelope(float shape);
   // Returns maximum release time out of all positions in samples
-  long getMaxReleaseTime(GrainNote& gNote);
   void updateCurPositions();
   void updateEnvelopeState(GrainNote& gNote);
 };
