@@ -23,20 +23,18 @@ void FilterControl::paint(juce::Graphics& g) {
   juce::Colour envColour = mIsActive
                                ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                                : juce::Colours::darkgrey;
-  g.fillAll(getLookAndFeel().findColour(
-      juce::ResizableWindow::backgroundColourId));  // clear the background
+ /* g.fillAll(getLookAndFeel().findColour(
+      juce::ResizableWindow::backgroundColourId));  // clear the background */
 
   g.setColour(juce::Colours::grey);
   g.drawRect(getLocalBounds(), 1);  // draw an outline around the component
 
   g.setColour(juce::Colours::white);
   g.setFont(14.0f);
-  g.drawText("FilterControl", getLocalBounds(), juce::Justification::centred,
-             true);  // draw some placeholder text
 
   // draw filter type rectangles
   float filterTypeHeight = 40;
-  float filterTypeWidth = getWidth() / 3;
+  float filterTypeWidth = getWidth() / 3 - 1.0f;
   float curStart = 1.0f;
   for (int i = 0; i < 3; i++) {
     juce::Colour tabColour = juce::Colours::darkgrey;
@@ -52,26 +50,27 @@ void FilterControl::paint(juce::Graphics& g) {
     g.drawRoundedRectangle(filterTypeRect, 10.0f, 2.0f);
 
     g.setColour(juce::Colours::white);
+
     switch (i) {
       case 0:
-        g.drawText(juce::String(Utils::FilterType::LOWPASS),
-          filterTypeRect.withHeight(getHeight() - 2.0f),
+        g.drawText(juce::String("Low-pass"),
+          filterTypeRect.withHeight(filterTypeHeight),
           juce::Justification::centred);
         break;
 
       case 1:
-        g.drawText(juce::String(Utils::FilterType::BANDPASS),
-          filterTypeRect.withHeight(getHeight() - 2.0f),
+        g.drawText(juce::String("Band-pass"),
+                   filterTypeRect.withHeight(filterTypeHeight),
           juce::Justification::centred);
         break;
 
       case 2:
-        g.drawText(juce::String(Utils::FilterType::HIGHPASS),
-          filterTypeRect.withHeight(getHeight() - 2.0f),
+        g.drawText(juce::String("High-pass"),
+                   filterTypeRect.withHeight(filterTypeHeight),
           juce::Justification::centred);
         break;
     }
-    curStart += filterTypeWidth + 2.0f;
+    curStart += filterTypeWidth + 1.0f;
   }
 }
 
