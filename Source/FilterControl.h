@@ -25,11 +25,18 @@ class FilterControl : public juce::Component {
   void resized() override;
 
   void setActive(bool isActive);
-
- private:
-  bool mIsActive = false;
+  void setCutoff(float cutoff);
+  void setStrength(float strength);
+  void setColour(juce::Colour colour);
   
-  Utils::GeneratorColour mColour;
+ private:
+
+   /* Parameters */
+  bool mIsActive = false;
+  float mCutoff = 0.5f;
+  float mStrength = 0.5f;
+
+  juce::Colour mColour;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterControl)
 };
