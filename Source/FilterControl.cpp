@@ -20,9 +20,8 @@ FilterControl::FilterControl() {
 FilterControl::~FilterControl() {}
 
 void FilterControl::paint(juce::Graphics& g) {
-  juce::Colour envColour = mIsActive
-                               ? juce::Colour(Utils::POSITION_COLOURS[mColour])
-                               : juce::Colours::darkgrey;
+  //mColour = juce::Colours::blue.brighter().brighter();
+  juce::Colour envColour = mIsActive ? mColour : juce::Colours::darkgrey;
  /* g.fillAll(getLookAndFeel().findColour(
       juce::ResizableWindow::backgroundColourId));  // clear the background */
 
@@ -60,26 +59,73 @@ void FilterControl::paint(juce::Graphics& g) {
 
       case 1:
         g.drawText(juce::String("Band-pass"),
-                   filterTypeRect.withHeight(filterTypeHeight),
+          filterTypeRect.withHeight(filterTypeHeight),
           juce::Justification::centred);
         break;
 
       case 2:
         g.drawText(juce::String("High-pass"),
-                   filterTypeRect.withHeight(filterTypeHeight),
+          filterTypeRect.withHeight(filterTypeHeight),
           juce::Justification::centred);
         break;
     }
     curStart += filterTypeWidth + 1.0f;
   }
+
+  g.setFillType(
+      juce::ColourGradient(envColour, getLocalBounds().getTopLeft().toFloat(),
+                           envColour.withAlpha(0.4f),
+                           getLocalBounds().getBottomLeft().toFloat(), false));
+  // Draw Filter path
+
+  juce::Path filterPath;
+
+  // low pass filter only for now
+  filterPath.startNewSubPath(juce::Point<float>(0, filterTypeHeight + 10));
+  filterPath.lineTo(
+      juce::Point<float>(getWidth() * mCutoff, filterTypeHeight + 10));
+  filterPath.lineTo(filterPath.getCurrentPosition()
+                      .translated((1.0 - mStrength) * 0.5f * getWidth(), 0.0f)
+                      .withY(getHeight()));
+  filterPath.lineTo(juce::Point<float>(0, getHeight()));
+  filterPath.lineTo(juce::Point<float>(0, 0));
+  filterPath.closeSubPath();
+  g.fillPath(filterPath);
+
+  // Draw highlights on top of path
+  float highlightWidth = 3.0f;
+
+  g.setColour(mIsActive ? envColour.brighter() : juce::Colours::darkgrey);
+  g.drawLine(juce::Line<float>(0, filterTypeHeight + 10, 
+                               mCutoff * getWidth(), filterTypeHeight + 10), 
+                               highlightWidth);
+
+  g.setColour(mIsActive ? envColour.brighter().brighter()
+                        : juce::Colours::darkgrey);
+  g.drawLine(juce::Line<float>(mCutoff * getWidth(), filterTypeHeight + 10,
+                               (getWidth() * mCutoff) + (1.0f - mStrength) * 0.5f * getWidth(), getHeight() * 1.0f),
+                               highlightWidth);
 }
 
 void FilterControl::resized() {
-  // This method is where you should set the bounds of any child
-  // components that your component contains..
 }
 
 void FilterControl::setActive(bool isActive) {
   mIsActive = isActive;
+  repaint();
+}
+
+void FilterControl::setCutoff(float cutoff) { 
+  mCutoff = cutoff; 
+  repaint();
+}
+
+void FilterControl::setStrength(float strength) {
+  mStrength = strength; 
+  repaint();
+}
+
+void FilterControl::setColour(juce::Colour colour) {
+  mColour = colour;
   repaint();
 }
