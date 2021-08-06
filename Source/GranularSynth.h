@@ -168,6 +168,7 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   Fft mFft;
 
   /* Bookkeeping */
+  juce::AudioProcessorValueTreeState apvts;
   juce::AudioBuffer<float> mFileBuffer;
   double mSampleRate;
   juce::MidiKeyboardState mKeyboardState;
@@ -196,4 +197,5 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   // Returns maximum release time out of all positions in samples
   void updateCurPositions();
   void updateEnvelopeState(GrainNote& gNote);
+  juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 };

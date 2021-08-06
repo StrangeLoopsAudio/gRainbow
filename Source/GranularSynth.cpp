@@ -25,7 +25,8 @@ GranularSynth::GranularSynth()
 #endif
       ,
       juce::Thread("granular thread"),
-      mFft(FFT_SIZE, HOP_SIZE) {
+      mFft(FFT_SIZE, HOP_SIZE),
+      apvts(*this, nullptr, "ScaleNavParams", createParameterLayout()) {
   mTotalSamps = 0;
   mGrains.ensureStorageAllocated(MAX_GRAINS);
   mFormatManager.registerBasicFormats();
@@ -218,21 +219,24 @@ bool GranularSynth::hasEditor() const {
 }
 
 juce::AudioProcessorEditor* GranularSynth::createEditor() {
-  return new GRainbowAudioProcessorEditor(*this);
+  return new GRainbowAudioProcessorEditor(*this, apvts);
 }
 
 //==============================================================================
 void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
-  // You should use this method to store your parameters in the memory block.
-  // You could do that either as raw data, or use the XML or ValueTree classes
-  // as intermediaries to make it easy to save and load complex data.
+  juce::ValueTree state = apvts.copyState();
+  std::unique_ptr<juce::XmlElement> xml(state.createXml());
+  copyXmlToBinary(*xml, destData);
 }
 
 void GranularSynth::setStateInformation(const void* data,
                                                  int sizeInBytes) {
-  // You should use this method to restore your parameters from this memory
-  // block, whose contents will have been created by the getStateInformation()
-  // call.
+  std::unique_ptr<juce::XmlElement> xmlState(
+      getXmlFromBinary(data, sizeInBytes));
+
+  if (xmlState.get() != nullptr)
+    if (xmlState->hasTagName(apvts.state.getType()))
+      apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
 
 //==============================================================================
@@ -616,5 +620,18 @@ void GranularSynth::updateEnvelopeState(GrainNote& gNote) {
       }
     }
   }
-  
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout
+GranularSynth::createParameterLayout() {
+  std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+
+  // Root combobox
+  /*params.push_back(std::make_unique<juce::AudioParameterChoice>(
+      "ROOT", "Root",
+      juce::StringArray("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A",
+                        "A#", "B"),
+      0)); */
+
+  return {params.begin(), params.end()};
 }

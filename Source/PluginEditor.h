@@ -29,7 +29,8 @@
 class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
                                      public juce::Timer {
  public:
-  GRainbowAudioProcessorEditor(GranularSynth&);
+  GRainbowAudioProcessorEditor(GranularSynth& synth,
+                               juce::AudioProcessorValueTreeState& apvts);
   ~GRainbowAudioProcessorEditor() override;
 
   //==============================================================================
@@ -56,6 +57,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   /* DSP Modules */
   GranularSynth& mSynth;
+  juce::AudioProcessorValueTreeState& apvts;
   AudioRecorder mRecorder;
 
   /* UI Components */
