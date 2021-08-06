@@ -27,8 +27,7 @@
 /**
  */
 class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                     public juce::Timer,
-                                     public juce::Thread {
+                                     public juce::Timer {
  public:
   GRainbowAudioProcessorEditor(GranularSynth&);
   ~GRainbowAudioProcessorEditor() override;
@@ -39,12 +38,9 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void resized() override;
 
   void timerCallback() override;
-  void run() override;
 
  private:
   /* Algorithm Constants */
-  static constexpr auto FFT_SIZE = 4096;
-  static constexpr auto HOP_SIZE = 2048;
   static constexpr auto RECORDING_FILE = "gRainbow_user_recording.wav";
 
   /* UI Layout */
@@ -60,8 +56,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   /* DSP Modules */
   GranularSynth& mSynth;
-  TransientDetector mTransientDetector;
-  PitchDetector mPitchDetector;
   AudioRecorder mRecorder;
 
   /* UI Components */
@@ -81,12 +75,8 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
   double mLoadingProgress = 0.0;
-  bool mIsProcessingComplete = false;
   bool mStartedPlayingTrig = false;
-  Fft mFft;
-  juce::AudioBuffer<float> mFileBuffer;
   RainbowLookAndFeel mRainbowLookAndFeel;
-  juce::AudioFormatManager mFormatManager;
 
   void openNewFile(const char* path = nullptr);
   void processFile(juce::File file);

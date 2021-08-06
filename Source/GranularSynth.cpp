@@ -22,10 +22,37 @@ GranularSynth::GranularSynth()
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
               )
-#endif 
-  , juce::Thread("granular thread") {
+#endif
+      ,
+      juce::Thread("granular thread"),
+      mFft(FFT_SIZE, HOP_SIZE) {
   mTotalSamps = 0;
   mGrains.ensureStorageAllocated(MAX_GRAINS);
+  mFormatManager.registerBasicFormats();
+
+  mFft.onProcessingComplete =
+      [this](std::vector<std::vector<float>>& spectrum) {
+        if (onBufferProcessed != nullptr) {
+          onBufferProcessed(&spectrum, Utils::SpecType::SPECTROGRAM);
+        }
+      };
+
+  mPitchDetector.onPitchesUpdated =
+      [this](std::vector<std::vector<float>>& hpcpBuffer,
+             std::vector<std::vector<float>>& notesBuffer) {
+        if (onBufferProcessed != nullptr) {
+          onBufferProcessed(&hpcpBuffer, Utils::SpecType::HPCP);
+          onBufferProcessed(&notesBuffer, Utils::SpecType::NOTES);
+        }
+        mPositionFinder.setPitches(&mPitchDetector.getPitches());
+        mIsProcessingComplete = true;
+      };
+
+  mPitchDetector.onProgressUpdated = [this](float progress) {
+    if (onProgressUpdated != nullptr) {
+      onProgressUpdated(progress);
+    }
+  };
 
   resetParameters();
 
@@ -158,7 +185,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
   juce::Array<Grain> grains = mGrains;  // Copy to avoid threading issues
   for (int i = 0; i < buffer.getNumSamples(); ++i) {
     for (int g = 0; g < grains.size(); ++g) {
-      grains[g].process(*mFileBuffer, buffer, mTotalSamps);
+      grains[g].process(mFileBuffer, buffer, mTotalSamps);
     }
     mTotalSamps++;
   }
@@ -218,7 +245,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
 void GranularSynth::run() {
   float waitMs = MIN_RATE_RATIO * MIN_DURATION_MS;
   while (!threadShouldExit()) {
-    if (mFileBuffer != nullptr) {
+    if (mIsProcessingComplete) {
       // Add one grain per active note
       for (GrainNote& gNote : mActiveNotes) {
         for (int i = 0; i < gNote.grainTriggersMs.size(); ++i) {
@@ -236,10 +263,10 @@ void GranularSynth::run() {
               float durSamples =
                   mSampleRate * (durMs / 1000) * (1.0f / gPos.pbRate);
               float posSamples =
-                  gPos.pitch.posRatio * mFileBuffer->getNumSamples();
+                  gPos.pitch.posRatio * mFileBuffer.getNumSamples();
               float posOffset = juce::jmap(
                   random.nextFloat(), 0.0f,
-                  (gPos.pitch.duration * mFileBuffer->getNumSamples()) -
+                  (gPos.pitch.duration * mFileBuffer.getNumSamples()) -
                       durSamples);
               posOffset +=
                   (params.posAdjust - 0.5f) * MAX_POS_ADJUST * durSamples;
@@ -285,19 +312,35 @@ void GranularSynth::run() {
   }
 }
 
-void GranularSynth::setFileBuffer(juce::AudioBuffer<float>* buffer, double sr) {
-  mFileBuffer = buffer;
-  mSampleRate = sr;
-}
+void GranularSynth::processFile(juce::File file) {
+  resetParameters();
+  mIsProcessingComplete = false;
+  std::unique_ptr<juce::AudioFormatReader> reader(
+      mFormatManager.createReaderFor(file));
 
-void GranularSynth::setPitches(
-    juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>*
-        pitches) {
-  mPositionFinder.setPitches(pitches);
+  if (reader.get() != nullptr) {
+    mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
+
+    juce::AudioBuffer<float> tempBuffer = juce::AudioBuffer<float>(
+        reader->numChannels, (int)reader->lengthInSamples);
+    reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
+    std::unique_ptr<juce::LagrangeInterpolator> resampler =
+        std::make_unique<juce::LagrangeInterpolator>();
+    double ratio = reader->sampleRate / mSampleRate;
+    const float** inputs = tempBuffer.getArrayOfReadPointers();
+    float** outputs = mFileBuffer.getArrayOfWritePointers();
+    for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
+      resampler->reset();
+      resampler->process(ratio, inputs[c], outputs[c],
+                         mFileBuffer.getNumSamples());
+    }
+  }
+  mFft.processBuffer(&mFileBuffer);
+  mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
 }
 
 void GranularSynth::updateCurPositions() {
-  if (mFileBuffer == nullptr) return;
+  if (!mIsProcessingComplete) return;
   std::vector<GrainPositionFinder::GrainPosition> gPositions =
       mPositionFinder.findPositions(Utils::MAX_POSITIONS, mCurPitchClass);
   std::vector<GrainPositionFinder::GrainPosition> gPosToPlay;

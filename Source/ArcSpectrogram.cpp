@@ -19,19 +19,19 @@ ArcSpectrogram::ArcSpectrogram() : juce::Thread("spectrogram thread") {
   setFramesPerSecond(10);
   mBuffers.fill(nullptr);
 
-  for (int i = 0; i < SpecType::NUM_TYPES; ++i) {
+  for (int i = 0; i < Utils::SpecType::NUM_TYPES; ++i) {
     mImages[i] = juce::Image(juce::Image::RGB, 512, 512, true);
   }
 
-  mImages[SpecType::LOGO] =
+  mImages[Utils::SpecType::LOGO] =
       juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize);
 
-  mSpecType.addItem("Spectrogram", (int)SpecType::SPECTROGRAM);
-  mSpecType.addItem("Harmonic Profile", (int)SpecType::HPCP);
-  mSpecType.addItem("Detected Pitches", (int)SpecType::NOTES);
+  mSpecType.addItem("Spectrogram", (int)Utils::SpecType::SPECTROGRAM);
+  mSpecType.addItem("Harmonic Profile", (int)Utils::SpecType::HPCP);
+  mSpecType.addItem("Detected Pitches", (int)Utils::SpecType::NOTES);
   mSpecType.setSelectedId(0, juce::dontSendNotification);
   mSpecType.onChange = [this](void) {
-    if (mSpecType.getSelectedId() != SpecType::LOGO) {
+    if (mSpecType.getSelectedId() != Utils::SpecType::LOGO) {
       mSpecType.setVisible(true);
     }
     repaint();
@@ -45,7 +45,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
   // Draw selected type
-  SpecType specType = (SpecType)(mSpecType.getSelectedId());
+  Utils::SpecType specType = (Utils::SpecType)(mSpecType.getSelectedId());
   juce::Point<float> centerPoint =
       juce::Point<float>(getWidth() / 2.0f, getHeight());
   int startRadius = getHeight() / 4.0f;
@@ -166,8 +166,9 @@ void ArcSpectrogram::run() {
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight() - POSITION_MARKER_HEIGHT;
   int bowWidth = endRadius - startRadius;
-  int maxRow =
-      (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size();
+  int maxRow = (mProcessType == Utils::SpecType::SPECTROGRAM)
+                   ? spec[0].size() / 8
+                   : spec[0].size();
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mImages[mProcessType] =
       juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
@@ -216,14 +217,15 @@ void ArcSpectrogram::resetBuffers() {
   }
 }
 
-void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer, SpecType type) {
+void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
+                                Utils::SpecType type) {
   if (buffer == nullptr) return;
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   mBuffers[type - 1] = buffer;
   mProcessType = type;
 
   const juce::MessageManagerLock lock;
-  if (type == SpecType::SPECTROGRAM || type == SpecType::HPCP) {
+  if (type == Utils::SpecType::SPECTROGRAM || type == Utils::SpecType::HPCP) {
     mSpecType.setSelectedId(mProcessType, juce::sendNotification);
   }
   startThread();

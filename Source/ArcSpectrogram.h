@@ -33,15 +33,13 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   ArcSpectrogram();
   ~ArcSpectrogram() override;
 
-  enum SpecType { LOGO, SPECTROGRAM, HPCP, NOTES, NUM_TYPES };
-
   void update() override{};
   void paint(juce::Graphics &) override;
   void resized() override;
 
   void setSampleRate(double sampleRate) { mSampleRate = sampleRate; }
   void resetBuffers();
-  void loadBuffer(std::vector<std::vector<float>> *buffer, SpecType type);
+  void loadBuffer(std::vector<std::vector<float>> *buffer, Utils::SpecType type);
   void setTransients(std::vector<TransientDetector::Transient> *transients);
   void setPositions(std::vector<GrainPositionFinder::GrainPosition> gPositions);
   void setNoteOn(int midiNote,
@@ -79,7 +77,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto MAX_VIBRATION_OFFSET =
       MAX_PIXEL_VIBRATION * MAX_PIXEL_VIBRATION;
 
-  std::array<std::vector<std::vector<float>> *, SpecType::NUM_TYPES - 1>
+  std::array<std::vector<std::vector<float>> *, Utils::SpecType::NUM_TYPES - 1>
       mBuffers;
   std::vector<GrainPositionFinder::GrainPosition> mGPositions;
   std::vector<TransientDetector::Transient> *mTransients = nullptr;
@@ -87,13 +85,13 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   int mCurNote = 0;
   bool mIsPlayingNote = false;
   double mSampleRate;
-  SpecType mProcessType = SpecType::LOGO;
+  Utils::SpecType mProcessType = Utils::SpecType::LOGO;
 
   std::random_device mRandomDevice{};
   std::mt19937 mGenRandom{mRandomDevice()};
   std::normal_distribution<> mNormalRand{0.0f, 0.4f};
 
-  std::array<juce::Image, SpecType::NUM_TYPES> mImages;
+  std::array<juce::Image, Utils::SpecType::NUM_TYPES> mImages;
   juce::ComboBox mSpecType;
   juce::OwnedArray<PositionMarker> mPositionMarkers;
 

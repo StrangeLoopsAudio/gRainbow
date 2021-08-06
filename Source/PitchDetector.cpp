@@ -16,24 +16,25 @@
 PitchDetector::PitchDetector()
     : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch detector thread") {
   initHarmonicWeights();
+  mFft.onProcessingComplete =
+      [this](std::vector<std::vector<float>>& spectrum) { 
+        stopThread(4000);
+        startThread();
+      };
 }
 
 PitchDetector::~PitchDetector() { stopThread(4000); }
 
 void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer,
                                   double sampleRate) {
-
-  stopThread(4000);
   mFileBuffer = fileBuffer;
   mSampleRate = sampleRate;
-  startThread();
+  mFft.processBuffer(fileBuffer);
 }
 
 void PitchDetector::run() {
   if (mFileBuffer == nullptr) return;
   updateProgress(0.0);
-  mFft.processBuffer(*mFileBuffer);
-  updateProgress(0.1);
   if (threadShouldExit()) return;
   computeHPCP();
   if (threadShouldExit()) return;

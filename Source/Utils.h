@@ -18,6 +18,7 @@ class Utils {
   // Tetradic colours
   enum GeneratorColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_GEN };
   enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
+  enum SpecType { LOGO, SPECTROGRAM, HPCP, NOTES, NUM_TYPES };
   // All util logic around the notes/pitchClasses
   enum PitchClass {
     NONE = -1,

@@ -14,10 +14,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     : AudioProcessorEditor(&p),
       mSynth(p),
       mKeyboard(mSynth.getKeyboardState()),
-      mFft(FFT_SIZE, HOP_SIZE),
-      juce::Thread("main fft thread"),
       mProgressBar(mLoadingProgress) {
-  mFormatManager.registerBasicFormats();
 
   mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass,
                                     bool isNoteOn) {
@@ -26,6 +23,21 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
       mStartedPlayingTrig = true;
     } else {
       mArcSpec.setNoteOff();
+    }
+  };
+
+  mSynth.onBufferProcessed = [this](std::vector<std::vector<float>>* buffer,
+                                    Utils::SpecType type) {
+    mArcSpec.loadBuffer(buffer, type);
+  };
+
+  mSynth.onProgressUpdated = [this](float progress) {
+    mLoadingProgress = progress;
+    juce::MessageManagerLock lock;
+    if (progress >= 1.0) {
+      mProgressBar.setVisible(false);
+    } else if (!mProgressBar.isVisible()) {
+      mProgressBar.setVisible(true);
     }
   };
 
@@ -132,30 +144,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
 
   addChildComponent(mProgressBar);
 
-  mTransientDetector.onTransientsUpdated =
-      [this](std::vector<TransientDetector::Transient>& transients) {
-        mArcSpec.setTransients(&transients);
-      };
-
-  mPitchDetector.onPitchesUpdated =
-      [this](std::vector<std::vector<float>>& hpcpBuffer,
-             std::vector<std::vector<float>>& notesBuffer) {
-        mArcSpec.loadBuffer(&hpcpBuffer, ArcSpectrogram::SpecType::HPCP);
-        mArcSpec.loadBuffer(&notesBuffer, ArcSpectrogram::SpecType::NOTES);
-        mSynth.setPitches(&mPitchDetector.getPitches());
-        mIsProcessingComplete = true;
-      };
-
-  mPitchDetector.onProgressUpdated = [this](float progress) {
-    mLoadingProgress = progress;
-    juce::MessageManagerLock lock;
-    if (progress >= 1.0) {
-      mProgressBar.setVisible(false);
-    } else if (!mProgressBar.isVisible()) {
-      mProgressBar.setVisible(true);
-    }
-  };
-
   addAndMakeVisible(mKeyboard);
 
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
@@ -173,7 +161,6 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   recordFile.deleteFile();
   mAudioDeviceManager.removeAudioCallback(&mRecorder);
   setLookAndFeel(nullptr);
-  stopThread(4000);
 }
 
 void GRainbowAudioProcessorEditor::timerCallback() {
@@ -195,12 +182,6 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     mStartedPlayingTrig = false;
     repaint();  // Update note display
   }
-}
-
-void GRainbowAudioProcessorEditor::run() {
-  mFft.processBuffer(mFileBuffer);
-  mArcSpec.loadBuffer(&mFft.getSpectrum(),
-                      ArcSpectrogram::SpecType::SPECTROGRAM);
 }
 
 //==============================================================================
@@ -314,34 +295,8 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
 }
 
 void GRainbowAudioProcessorEditor::processFile(juce::File file) {
-  std::unique_ptr<juce::AudioFormatReader> reader(
-      mFormatManager.createReaderFor(file));
-
-  if (reader.get() != nullptr) {
-    mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
-
-    juce::AudioBuffer<float> tempBuffer = juce::AudioBuffer<float>(
-        reader->numChannels, (int)reader->lengthInSamples);
-    reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
-    std::unique_ptr<juce::LagrangeInterpolator> resampler =
-        std::make_unique<juce::LagrangeInterpolator>();
-    double ratio = reader->sampleRate / mSynth.getSampleRate();
-    const float** inputs = tempBuffer.getArrayOfReadPointers();
-    float** outputs = mFileBuffer.getArrayOfWritePointers();
-    for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
-      resampler->reset();
-      resampler->process(ratio, inputs[c], outputs[c],
-                         mFileBuffer.getNumSamples());
-    }
-    mSynth.resetParameters();
-    mArcSpec.resetBuffers();
-    stopThread(4000);
-    startThread();  // process fft and pass to arc spec
-    // mTransientDetector.processBuffer(&mFileBuffer);
-    mPitchDetector.processBuffer(&mFileBuffer, mSynth.getSampleRate());
-    mSynth.setFileBuffer(&mFileBuffer, mSynth.getSampleRate());
-    mIsProcessingComplete = false;  // Reset processing flag
-  }
+  mSynth.processFile(file);  
+  mArcSpec.resetBuffers();
 }
 
 void GRainbowAudioProcessorEditor::startRecording() {

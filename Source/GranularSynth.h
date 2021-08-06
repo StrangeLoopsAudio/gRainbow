@@ -71,12 +71,16 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   double getSampleRate() { return mSampleRate; }
   juce::MidiKeyboardState& getKeyboardState() { return mKeyboardState; }
 
+  // Callback functions
   std::function<void(Utils::PitchClass pitchClass, bool isNoteOn)>
       onNoteChanged = nullptr;
+  std::function<void(std::vector<std::vector<float>>* buffer,
+                     Utils::SpecType type)>
+      onBufferProcessed = nullptr;
+  std::function<void(double progress)>
+      onProgressUpdated = nullptr;
 
-  void setFileBuffer(juce::AudioBuffer<float>* buffer, double sr);
-  void setPitches(juce::HashMap<Utils::PitchClass,
-                                std::vector<PitchDetector::Pitch>>* pitches);
+  void processFile(juce::File file);
   std::vector<GrainPositionFinder::GrainPosition> getCurrentPositions() {
     return mCurPositions;
   }
@@ -101,6 +105,10 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   void run() override;
 
  private:
+  // DSP constants
+  static constexpr auto FFT_SIZE = 4096;
+  static constexpr auto HOP_SIZE = 2048;
+  // Param bounds
   static constexpr auto MAX_PITCH_ADJUST = 0.25; // In either direction, this equals one octave total
   static constexpr auto MAX_POS_ADJUST = 0.5f; // Max position adjust in terms of pitch duration
   static constexpr auto MIN_DURATION_MS = 60.0f;
@@ -155,9 +163,17 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
     }
   } GrainNote;
 
-  juce::AudioBuffer<float>* mFileBuffer = nullptr;
+  /* DSP pre-processing */
+  PitchDetector mPitchDetector;
+  Fft mFft;
+
+  /* Bookkeeping */
+  juce::AudioBuffer<float> mFileBuffer;
   double mSampleRate;
   juce::MidiKeyboardState mKeyboardState;
+  bool mIsProcessingComplete = false;
+  double mLoadingProgress = 0.0;
+  juce::AudioFormatManager mFormatManager;
 
   /* Grain control */
   juce::Array<Grain> mGrains; // Active grains
