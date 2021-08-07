@@ -17,8 +17,8 @@ void Grain::process(juce::AudioBuffer<float>& fileBuffer,
   const float* fileBuf = fileBuffer.getReadPointer(0);
 
   float unStretchedDuration = duration * pbRate;
-  int lowSample = std::floor(timePerc * unStretchedDuration);
-  int highSample = std::ceil(timePerc * unStretchedDuration);
+  int lowSample = std::floor(juce::jmax(0.0f, timePerc * unStretchedDuration));
+  int highSample = std::ceil(juce::jmax(0.0f, timePerc * unStretchedDuration));
   float rem = (timePerc * unStretchedDuration) - lowSample;
   float sample = juce::jmap(
       rem, fileBuf[(startPos + lowSample) % fileBuffer.getNumSamples()],

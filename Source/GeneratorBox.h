@@ -47,7 +47,6 @@ class GeneratorBox : public juce::Component {
   void setNumPositions(int numPositions);
 
   void setColour(Utils::GeneratorColour colour);
-  Utils::GeneratorParams getParams();
   std::function<void(Utils::GeneratorColour pos,
                      GranularSynth::ParameterType param,
                      float value)>

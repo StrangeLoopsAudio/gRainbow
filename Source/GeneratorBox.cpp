@@ -424,21 +424,11 @@ void GeneratorBox::refreshState() {
       juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderGain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                         knobColour);
+  mLabelShape.setEnabled(componentsLit);
   mLabelRate.setEnabled(componentsLit);
   mLabelDuration.setEnabled(componentsLit);
   mLabelGain.setEnabled(componentsLit);
   repaint();
-}
-
-Utils::GeneratorParams GeneratorBox::getParams() {
-  return Utils::GeneratorParams(
-      mState,
-      mPositionChanger.getPositionNumber(),
-      mSliderPitch.getValue(),
-      mSliderPosition.getValue(), mSliderShape.getValue(),
-      mSliderRate.getValue(), mSliderDuration.getValue(),
-      mSliderGain.getValue(), mSliderAttack.getValue(), mSliderDecay.getValue(),
-      mSliderSustain.getValue(), mSliderRelease.getValue());
 }
 
 void GeneratorBox::setColour(Utils::GeneratorColour colour) {

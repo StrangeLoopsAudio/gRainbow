@@ -91,25 +91,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
   };
   addAndMakeVisible(mBtnRecord);
 
-  /* Position tabs */
-  mGeneratorTabs.onTabChanged = [this](Utils::GeneratorColour tab,
-                                       bool isSelected, bool isEnabled) {
-    mGeneratorBoxes[tab].setVisible(isSelected);
-    mGeneratorBoxes[tab].setGeneratorEnabled(isEnabled);
-    mSynth.updateGeneratorParameter(tab, GranularSynth::ParameterType::ENABLED,
-                                     isEnabled);
-    std::vector<Utils::GeneratorState> genStates;
-    for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
-      Utils::GeneratorState state = mGeneratorBoxes[i].getState();
-      genStates.push_back(state);
-    }
-    mSynth.updateGeneratorStates(genStates);
-    mGeneratorTabs.setStates(genStates);
-    mArcSpec.setPositions(mSynth.getCurrentPositions());
-  };
-  addAndMakeVisible(mGeneratorTabs);
-
-  /* Position boxes */
+  /* Generator boxes */
   for (int i = 0; i < mGeneratorBoxes.size(); ++i) {
     mGeneratorBoxes[i].setColour((Utils::GeneratorColour)i);
     mGeneratorBoxes[i].setGeneratorEnabled(i == 0);
@@ -140,6 +122,30 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     addChildComponent(mGeneratorBoxes[i]);
     if (i == 0) mGeneratorBoxes[i].setVisible(true);
   }
+
+  /* Generator tabs */
+  std::vector<Utils::GeneratorState> genStates;
+  for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
+    Utils::GeneratorState state = mGeneratorBoxes[i].getState();
+    genStates.push_back(state);
+  }
+  mGeneratorTabs.setStates(genStates);
+  mGeneratorTabs.onTabChanged = [this](Utils::GeneratorColour tab,
+                                       bool isSelected, bool isEnabled) {
+    mGeneratorBoxes[tab].setVisible(isSelected);
+    mGeneratorBoxes[tab].setGeneratorEnabled(isEnabled);
+    mSynth.updateGeneratorParameter(tab, GranularSynth::ParameterType::ENABLED,
+                                    isEnabled);
+    std::vector<Utils::GeneratorState> genStates;
+    for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
+      Utils::GeneratorState state = mGeneratorBoxes[i].getState();
+      genStates.push_back(state);
+    }
+    mSynth.updateGeneratorStates(genStates);
+    mGeneratorTabs.setStates(genStates);
+    mArcSpec.setPositions(mSynth.getCurrentPositions());
+  };
+  addAndMakeVisible(mGeneratorTabs);
 
   /* Global parameter box */
   mGlobalParamBox.setParams(mSynth.getGlobalParams());

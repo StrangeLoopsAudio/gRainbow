@@ -189,12 +189,13 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   Utils::GlobalParams mGlobalParams;
 
   /* Grain generator parameters */
-  std::array<std::array<Utils::GeneratorParams, Utils::GeneratorColour::NUM_GEN>,
-             Utils::PitchClass::COUNT>
+  std::array<
+      std::array<Utils::GeneratorParams, Utils::GeneratorColour::NUM_GEN>,
+      Utils::PitchClass::COUNT>
       mNoteSettings;
 
   // Generate gaussian envelope to be used for each grain
-  std::vector<float> generateGrainEnvelope(float shape);
+  std::vector<float> getGrainEnvelope(float shape);
   // Returns maximum release time out of all positions in samples
   void updateCurPositions();
   void updateEnvelopeState(GrainNote& gNote);

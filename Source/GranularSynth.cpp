@@ -289,7 +289,7 @@ void GranularSynth::run() {
                                ((params.pitchAdjust - 0.5f) * MAX_PITCH_ADJUST);
                 jassert(gPos.pbRate > 0.1f);
                 auto grain =
-                    Grain(generateGrainEnvelope(params.shape), durSamples,
+                    Grain(params.grainEnv, durSamples,
                           pbRate, posSamples + posOffset, mTotalSamps, gain);
                 mGrains.add(grain);
               }
@@ -481,7 +481,8 @@ void GranularSynth::resetParameters() {
           state, j, PARAM_PITCH_DEFAULT, PARAM_POSITION_DEFAULT,
           PARAM_SHAPE_DEFAULT, PARAM_RATE_DEFAULT, PARAM_DURATION_DEFAULT,
           PARAM_GAIN_DEFAULT, PARAM_ATTACK_DEFAULT, PARAM_DECAY_DEFAULT,
-          PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT);
+          PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT,
+          getGrainEnvelope(PARAM_SHAPE_DEFAULT));
     }
   }
 }
@@ -497,6 +498,7 @@ void GranularSynth::updateGeneratorParameter(Utils::GeneratorColour colour,
       break;
     case ParameterType::SHAPE:
       mNoteSettings[mCurPitchClass][colour].shape = value;
+      mNoteSettings[mCurPitchClass][colour].grainEnv = getGrainEnvelope(value);
       break;
     case ParameterType::RATE:
       mNoteSettings[mCurPitchClass][colour].rate = value;
@@ -546,7 +548,7 @@ void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
   }
 }
 
-std::vector<float> GranularSynth::generateGrainEnvelope(float shape) {
+std::vector<float> GranularSynth::getGrainEnvelope(float shape) {
   std::vector<float> grainEnv;
   // Each half: f(x) = 3nx(1-x)^2 + 3nx^2(1-x) + x^3
   for (int i = 0; i < 512; i++) {
@@ -558,7 +560,8 @@ std::vector<float> GranularSynth::generateGrainEnvelope(float shape) {
     } else {
       t = (1.0f - t) * 2.0f;
     }
-    grainEnv.push_back(3.0f * shape * t * std::pow(1.0f - t, 2.0f) +
+    grainEnv.push_back(
+        3.0f * shape * t * std::pow(1.0f - t, 2.0f) +
                        3.0f * shape * std::pow(t, 2.0f) * (1.0f - t) +
                        std::pow(t, 3.0f));
   }

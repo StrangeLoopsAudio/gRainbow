@@ -89,10 +89,12 @@ class Utils {
     float decay;
     float sustain;
     float release;
+    std::vector<float> grainEnv;
     GeneratorParams() {}
-    GeneratorParams(GeneratorState state, int position, float pitchAdjust, float posAdjust,
-                   float shape, float rate, float duration, float gain,
-                   float attack, float decay, float sustain, float release)
+    GeneratorParams(GeneratorState state, int position, float pitchAdjust,
+                    float posAdjust, float shape, float rate, float duration,
+                    float gain, float attack, float decay, float sustain,
+                    float release, std::vector<float> grainEnv)
         : state(state),
           position(position),
           pitchAdjust(pitchAdjust),
@@ -104,7 +106,8 @@ class Utils {
           attack(attack),
           decay(decay),
           sustain(sustain),
-          release(release) {}
+          release(release),
+          grainEnv(grainEnv) {}
   } GeneratorParams;
 
   typedef struct GlobalParams {
