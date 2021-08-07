@@ -66,36 +66,19 @@ void PositionChanger::paint(juce::Graphics& g) {
 
   /* Fill in title section to mask ellipses */
   g.setColour(juce::Colours::black);
-  g.fillRect(titleRect);
+  g.fillRect(titleRect.reduced(2, 0));
 
   /* Draw top/bottom borders */
   g.setColour(bgColour);
   g.drawRect(titleRect, 2);
 
-  /* Draw position bubbles */
-  if (mGlobalPositions.size() > 0) {
-    int totalWidth =
-        (BUBBLE_WIDTH * mNumPositions) + (BUBBLE_PADDING * (mNumPositions - 1));
-    int startX = (getWidth() / 2) - (totalWidth / 2);
-    for (int i = 0; i < mNumPositions; ++i) {
-      int bubbleStart = startX + i * (BUBBLE_WIDTH + BUBBLE_PADDING);
-      juce::Rectangle<float> bubbleRect =
-          juce::Rectangle<float>(BUBBLE_WIDTH, BUBBLE_WIDTH);
-      bubbleRect = bubbleRect.withCentre(juce::Point<float>(
-          bubbleStart + (BUBBLE_WIDTH / 2), getHeight() / 2));
-      
-      if (i == mGlobalPositions[mIndexInBoxes]) {
-        g.setColour(mColour);
-        g.fillEllipse(bubbleRect);
-      } else {
-        bool isTaken =
-            std::find(mGlobalPositions.begin(), mGlobalPositions.end(), i) !=
-            mGlobalPositions.end();
-        g.setColour(juce::Colours::darkgrey);
-        if (isTaken) g.fillEllipse(bubbleRect);
-        else g.drawEllipse(bubbleRect, 1);
-      }
-    }
+  /* Draw position text */
+  if (mPosition >= 0) {
+    int posNum = (mPosition >= 0) ? mPosition + 1 : 0;
+    juce::String posString = juce::String(posNum) + juce::String(" / ") +
+                             juce::String(mNumPositions);
+    g.setColour(bgColour);
+    g.drawText(posString, titleRect, juce::Justification::centred);
   }
 }
 
@@ -106,8 +89,7 @@ void PositionChanger::setActive(bool isActive) {
   repaint();
 }
 
-void PositionChanger::setColour(int indexInBoxes, juce::Colour colour) {
-  mIndexInBoxes = indexInBoxes;
+void PositionChanger::setColour(juce::Colour colour) {
   mColour = colour;
   repaint();
 }
@@ -173,8 +155,8 @@ void PositionChanger::positionChanged(bool isRight) {
   }
 }
 
-void PositionChanger::setGlobalPositions(std::vector<int> positions) {
-  mGlobalPositions = positions;
+void PositionChanger::setPositionNumber(int position) {
+  mPosition = position;
   repaint();
 }
 

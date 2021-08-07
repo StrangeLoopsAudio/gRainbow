@@ -11,7 +11,8 @@
 #include "GrainPositionFinder.h"
 
 std::vector<GrainPositionFinder::GrainPosition>
-GrainPositionFinder::findPositions(int numPosToFind, PitchDetector::PitchClass pitchClass) {
+GrainPositionFinder::findPositions(int numPosToFind,
+                                   Utils::PitchClass pitchClass) {
   std::vector<GrainPosition> grainPositions;
   if (mPitches == nullptr) return grainPositions;
 
@@ -27,8 +28,8 @@ GrainPositionFinder::findPositions(int numPosToFind, PitchDetector::PitchClass p
     int noteMax = pitchClass + numSearches;
     // Check low note
     std::vector<PitchDetector::Pitch> &pitchVec =
-        mPitches->getReference((PitchDetector::PitchClass)(noteMin % 12));
-    float pbRate = std::pow(TIMESTRETCH_RATIO, numSearches);
+        mPitches->getReference((Utils::PitchClass)(noteMin % 12));
+    float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
     for (int i = 0; i < pitchVec.size(); ++i) {
       grainPositions.push_back(GrainPosition(pitchVec[i], pbRate));
       if (grainPositions.size() >= numPosToFind) {
@@ -39,8 +40,8 @@ GrainPositionFinder::findPositions(int numPosToFind, PitchDetector::PitchClass p
     // Check high note if we haven't filled up the list yet
     if (!foundAll && numSearches > 0) {
       std::vector<PitchDetector::Pitch> &pitchVec =
-          mPitches->getReference((PitchDetector::PitchClass)(noteMax % 12));
-      float pbRate = std::pow(TIMESTRETCH_RATIO, -numSearches);
+          mPitches->getReference((Utils::PitchClass)(noteMax % 12));
+      float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
       for (int i = 0; i < pitchVec.size(); ++i) {
         grainPositions.push_back(GrainPosition(pitchVec[i], pbRate));
         if (grainPositions.size() >= numPosToFind) {
@@ -59,7 +60,7 @@ GrainPositionFinder::findPositions(int numPosToFind, PitchDetector::PitchClass p
 }
 
 void GrainPositionFinder::pushPositions(
-    PitchDetector::PitchClass pitchClass,
+    Utils::PitchClass pitchClass,
     std::vector<GrainPositionFinder::GrainPosition> gPositions) {
   if (mGPositions[pitchClass].size() == 0) {
     mGPositions.set(pitchClass, gPositions);

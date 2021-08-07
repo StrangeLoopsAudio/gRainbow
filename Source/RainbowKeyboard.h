@@ -12,6 +12,8 @@
 
 #include <JuceHeader.h>
 
+#include "Utils.h"
+
 //==============================================================================
 /*
  */
@@ -31,37 +33,24 @@ class RainbowKeyboard : public juce::Component {
 
   // Returns a value between 0.0-1.0 representing the note's x position on the
   // keyboard
-  float getPitchXRatio(int pitchClass);
+  float getPitchXRatio(Utils::PitchClass pitchClass);
 
  private:
-  static constexpr int NUM_KEYS = 12;
-  static constexpr int INVALID_NOTE = -1;
-  static constexpr float INVALID_VELOCITY = 0.0f;
   static constexpr float BLACK_NOTE_SIZE_RATIO = 0.7f;
   static constexpr int MIDI_CHANNEL = 1;
-  const int WHITE_KEY_INDICES[7] = {0, 2, 4, 5, 7, 9, 11};
-  const int BLACK_KEY_INDICES[5] = {1, 3, 6, 8, 10};
-
-  inline bool isBlackKey(int pitchClass) {
-    return ((1 << (pitchClass)) & 0x054a) != 0;
-  }
 
   juce::MidiKeyboardState& mState;
 
-  struct Note {
-    int pitch = INVALID_NOTE;
-    float velocity = INVALID_VELOCITY;
-  };
   // Since only one note can be pressed at once, only need on instance of Note
-  Note mCurrentNote;
+  Utils::Note mCurrentNote;
 
   // Notes rectangle are recreated on resize and then just become a LUT
-  juce::Rectangle<float> mNoteRectangleMap[NUM_KEYS];
+  juce::Rectangle<float> mNoteRectangleMap[Utils::PitchClass::COUNT];
   void fillNoteRectangleMap();
 
-  void drawKey(juce::Graphics& g, int pitchClass);
+  void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);
   void updateNoteOver(const juce::MouseEvent& e, bool isDown);
-  Note xyToNote(juce::Point<float> pos);
+  Utils::Note xyToNote(juce::Point<float> pos);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowKeyboard)
 };

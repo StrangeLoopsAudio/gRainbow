@@ -11,30 +11,30 @@
 #define _USE_MATH_DEFINES
 
 #include "PitchDetector.h"
-#include "Utils.h"
 #include <limits.h>
 
 PitchDetector::PitchDetector()
     : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch detector thread") {
   initHarmonicWeights();
+  mFft.onProcessingComplete =
+      [this](std::vector<std::vector<float>>& spectrum) { 
+        stopThread(4000);
+        startThread();
+      };
 }
 
 PitchDetector::~PitchDetector() { stopThread(4000); }
 
 void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer,
                                   double sampleRate) {
-
-  stopThread(4000);
   mFileBuffer = fileBuffer;
   mSampleRate = sampleRate;
-  startThread();
+  mFft.processBuffer(fileBuffer);
 }
 
 void PitchDetector::run() {
   if (mFileBuffer == nullptr) return;
   updateProgress(0.0);
-  mFft.processBuffer(*mFileBuffer);
-  updateProgress(0.1);
   if (threadShouldExit()) return;
   computeHPCP();
   if (threadShouldExit()) return;
@@ -59,8 +59,8 @@ void PitchDetector::getSegmentedPitchBuffer() {
   for (int frame = 0; frame < mHPCP.size(); ++frame) {
     mSegmentedPitches.push_back(std::vector<float>(mHPCP[frame].size(), 0.0f));
   }
-  for (int i = 0; i < PitchClass::NUM_PITCH_CLASSES; ++i) {
-    std::vector<Pitch>& pitchVec = mPitches.getReference((PitchClass)i);
+  for (Utils::PitchClass i : Utils::ALL_PITCH_CLASS) {
+    std::vector<Pitch>& pitchVec = mPitches.getReference(i);
     for (int j = 0; j < pitchVec.size(); ++j) {
       auto pitch = pitchVec[j];
       auto duration = pitch.duration * mHPCP.size();
@@ -193,7 +193,7 @@ void PitchDetector::segmentPitches() {
         // Check for segment expiration
         if (mSegments[i].idleFrame > 0 &&
             (frame - mSegments[i].idleFrame) > maxIdleFrames) {
-          PitchClass pc = getPitchClass(mSegments[i].binNum);
+          Utils::PitchClass pc = getPitchClass(mSegments[i].binNum);
           if (frame - mSegments[i].startFrame > minNoteFrames) {
             // Push to completed segments
             float confidence =
@@ -226,8 +226,8 @@ void PitchDetector::segmentPitches() {
   }
 
   // Normalize pitch saliences
-  for (int i = 0; i < PitchClass::NUM_PITCH_CLASSES; ++i) {
-    std::vector<Pitch>& pitchVec = mPitches.getReference((PitchClass)i);
+  for (Utils::PitchClass i : Utils::ALL_PITCH_CLASS) {
+    std::vector<Pitch>& pitchVec = mPitches.getReference(i);
     for (int j = 0; j < pitchVec.size(); ++j) {
       pitchVec[j].gain /= maxConfidence;
     }
@@ -252,10 +252,10 @@ bool PitchDetector::hasBetterCandidateAhead(int startFrame, float target, float 
   return false;
 }
 
-PitchDetector::PitchClass PitchDetector::getPitchClass(float binNum) {
+Utils::PitchClass PitchDetector::getPitchClass(float binNum) {
   int binsPerClass = NUM_HPCP_BINS / 12;
   int pc = (int)(binNum / binsPerClass) % 12;
-  return (PitchClass)pc;
+  return (Utils::PitchClass)pc;
 }
 
 PitchDetector::Peak PitchDetector::interpolatePeak(int frame, int bin) {

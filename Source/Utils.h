@@ -16,15 +16,102 @@
 class Utils {
  public:
   // Tetradic colours
-  enum PositionColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_BOXES };
+  enum GeneratorColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_GEN };
   enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
+  enum SpecType { LOGO, SPECTROGRAM, HPCP, NOTES, NUM_TYPES };
+  // All util logic around the notes/pitchClasses
+  enum PitchClass {
+    NONE = -1,
+    C = 0,
+    Cs,
+    D,
+    Ds,
+    E,
+    F,
+    Fs,
+    G,
+    Gs,
+    A,
+    As,
+    B,
+    COUNT
+  };
+  // Use initializer_list to do "for (PitchClass key : ALL_PITCH_CLASS)" logic
+  static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
+      PitchClass::C,  PitchClass::Cs, PitchClass::D,  PitchClass::Ds,
+      PitchClass::E,  PitchClass::F,  PitchClass::Fs, PitchClass::G,
+      PitchClass::Gs, PitchClass::A,  PitchClass::As, PitchClass::B};
+
+  static constexpr PitchClass WHITE_KEYS_PITCH_CLASS[7] = {
+      PitchClass::C, PitchClass::D, PitchClass::E, PitchClass::F,
+      PitchClass::G, PitchClass::A, PitchClass::B};
+  static constexpr PitchClass BLACK_KEYS_PITCH_CLASS[5] = {
+      PitchClass::Cs, PitchClass::Ds, PitchClass::Fs, PitchClass::Gs,
+      PitchClass::As};
+  static constexpr auto MAX_POSITIONS = 6;
   static constexpr juce::int64 POSITION_COLOURS[4] = {0xFF52C4FF, 0xFFE352FF,
                                                       0xFFFF8D52, 0xFF6EFF52};
-  static constexpr juce::int64 SECONDARY_POSITION_COLOURS[4][4] = {
-      {0xFF68CBFF, 0xFF7DD3FF, 0xFF93DAFF, 0xFFA9E2FF},
-      {0xFFE668FF, 0xFFEA7DFF, 0xFFED93FF, 0xFFF1A9FF},
-      {0xFFFF9A68, 0xFFFFA97D, 0xFFFFB793, 0xFFFFC6A9},
-      {0xFF81FF68, 0xFF93FF7D, 0xFFA5FF93, 0xFFB7FFA9}};
+  static constexpr auto TIMESTRETCH_RATIO =
+      1.0594f;  // Constant used for pitch shifting by semitones
+  static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
+  static constexpr auto FILE_SPECTROGRAM = "gRainbow_spec.png";
+  static constexpr auto FILE_HPCP = "gRainbow_hpcp.png";
+  static constexpr auto FILE_NOTES = "gRainbow_notes.png";
+  static constexpr float INVALID_VELOCITY = 0.0f;
+  struct Note {
+    PitchClass pitch;
+    float velocity;
+
+    Note() : pitch(PitchClass::NONE), velocity(INVALID_VELOCITY) {}
+    Note(PitchClass pitch, float velocity) : pitch(pitch), velocity(velocity) {}
+  };
+
+  typedef struct GeneratorParams {
+    bool  isActive;
+    int   position; // Position number to play
+    float pitchAdjust;
+    float posAdjust;
+    float shape;
+    float rate;
+    float duration;
+    float gain;
+    float attack;
+    float decay;
+    float sustain;
+    float release;
+    GeneratorParams() {}
+    GeneratorParams(bool isActive, int position, float pitchAdjust, float posAdjust,
+                   float shape, float rate, float duration, float gain,
+                   float attack, float decay, float sustain, float release)
+        : isActive(isActive),
+          position(position),
+          pitchAdjust(pitchAdjust),
+          posAdjust(posAdjust),
+          shape(shape),
+          rate(rate),
+          duration(duration),
+          gain(gain),
+          attack(attack),
+          decay(decay),
+          sustain(sustain),
+          release(release) {}
+  } GeneratorParams;
+
+  typedef struct GlobalParams {
+    float gain;
+    float attack;
+    float decay;
+    float sustain;
+    float release;
+    GlobalParams() {}
+    GlobalParams(float gain, float attack, float decay, float sustain,
+                 float release)
+        : gain(gain),
+          attack(attack),
+          decay(decay),
+          sustain(sustain),
+          release(release) {}
+  } GlobalParams;
 
   static inline juce::Colour getRainbowColour(int value) {
     jassert(value >= 0 && value <= 6);
@@ -214,4 +301,8 @@ class Utils {
       return (x - _xPoints[j]) * _slopes[j] + _yPoints[j];
     }
   };
-};
+
+  static inline bool isBlackKey(PitchClass pitchClass) {
+    return ((1 << (pitchClass)) & 0x054a) != 0;
+  }
+};  // Utils

@@ -10,24 +10,21 @@
 
 #include "Fft.h"
 
-void Fft::processBuffer(juce::AudioBuffer<float>& fileBuffer) {
-  mFileLength = fileBuffer.getNumSamples();
-
-  const float* pBuffer = fileBuffer.getReadPointer(0);
+void Fft::run() {
+  if (mFileBuffer == nullptr) return;
+  const float* pBuffer = mFileBuffer->getReadPointer(0);
   mFftFrame.clear();
   mFftFrame.resize(mWindowSize * 2, 0.0f);
   int curSample = 0;
-
-  bool hasData = fileBuffer.getNumSamples() > mFftFrame.size();
+  bool hasData = mFileBuffer->getNumSamples() > mFftFrame.size();
   float curMax = std::numeric_limits<float>::min();
-
   mFftData.clear();
 
-  while (hasData) {
+  while (hasData && !threadShouldExit()) {
     const float* startSample = &pBuffer[curSample];
     int numSamples = mFftFrame.size();
-    if (curSample + mFftFrame.size() > fileBuffer.getNumSamples()) {
-      numSamples = (fileBuffer.getNumSamples() - curSample);
+    if (curSample + mFftFrame.size() > mFileBuffer->getNumSamples()) {
+      numSamples = (mFileBuffer->getNumSamples() - curSample);
     }
     mFftFrame.clear();
     mFftFrame.resize(mWindowSize * 2, 0.0f);
@@ -39,8 +36,8 @@ void Fft::processBuffer(juce::AudioBuffer<float>& fileBuffer) {
     mForwardFFT.performFrequencyOnlyForwardTransform(mFftFrame.data());
 
     // Add fft data to our master array
-    std::vector<float> newFrame =
-        std::vector<float>(mFftFrame.begin(), mFftFrame.begin() + (mWindowSize / 2));
+    std::vector<float> newFrame = std::vector<float>(
+        mFftFrame.begin(), mFftFrame.begin() + (mWindowSize / 2));
     float frameMax = juce::FloatVectorOperations::findMaximum(mFftFrame.data(),
                                                               mFftFrame.size());
     if (frameMax > curMax) curMax = frameMax;
@@ -51,13 +48,16 @@ void Fft::processBuffer(juce::AudioBuffer<float>& fileBuffer) {
     }
 
     curSample += mHopSize;
-    if (curSample > fileBuffer.getNumSamples()) hasData = false;
+    if (curSample > mFileBuffer->getNumSamples()) hasData = false;
   }
 
-  /* Normalize fft values according to max value */
- /* for (int i = 0; i < mFftData.size(); ++i) {
-    for (int j = 0; j < mFftData[i].size(); ++j) {
-      mFftData[i][j] /= curMax;
-    }
-  } */
+  if (onProcessingComplete != nullptr) {
+    onProcessingComplete(mFftData);
+  }
+}
+
+void Fft::processBuffer(juce::AudioBuffer<float>* fileBuffer) {
+  stopThread(4000);
+  mFileBuffer = fileBuffer;
+  startThread(); 
 }

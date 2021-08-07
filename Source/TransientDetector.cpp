@@ -15,19 +15,23 @@
 #include <limits.h>
 
 TransientDetector::TransientDetector()
-    : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("transient thread") {}
+    : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("transient thread") {
+  mFft.onProcessingComplete =
+      [this](std::vector<std::vector<float>>& spectrum) {
+        stopThread(4000);
+        startThread();
+      };
+}
 
 TransientDetector::~TransientDetector() { stopThread(2000); }
 
 void TransientDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer) {
-  stopThread(2000);
+  mFft.processBuffer(fileBuffer);
   mFileBuffer = fileBuffer;
-  startThread();
 }
 
 void TransientDetector::run() {
   if (mFileBuffer == nullptr) return;
-  mFft.processBuffer(*mFileBuffer);
   retrieveTransients();
   if (onTransientsUpdated != nullptr && !threadShouldExit()) {
     onTransientsUpdated(mTransients);

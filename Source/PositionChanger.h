@@ -30,8 +30,9 @@ class PositionChanger : public juce::Component {
   void mouseExit(const juce::MouseEvent&) override;
 
   void setActive(bool isActive);
-  void setColour(int indexInBoxes, juce::Colour colour);
-  void setGlobalPositions(std::vector<int> positions);
+  void setColour(juce::Colour colour);
+  int  getPositionNumber() { return mPosition; }
+  void setPositionNumber(int position);
   void setNumPositions(int numPositions);
 
   std::function<void(bool isRight)> onPositionChanged = nullptr;
@@ -46,7 +47,7 @@ class PositionChanger : public juce::Component {
   bool mIsActive = false;
   juce::Colour mColour;
   int mIndexInBoxes; // Index among other boxes on screen
-  std::vector<int> mGlobalPositions; // Position indices for each box
+  int mPosition; // Position index
   int mNumPositions = 1;
   bool mIsClickingArrow = false;
   bool mIsOverLeftArrow = false;

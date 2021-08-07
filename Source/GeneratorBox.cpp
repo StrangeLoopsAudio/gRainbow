@@ -1,19 +1,19 @@
 /*
   ==============================================================================
 
-    PositionBox.cpp
+    GeneratorBox.cpp
     Created: 27 Jun 2021 3:49:17pm
     Author:  brady
 
   ==============================================================================
 */
 
-#include "PositionBox.h"
+#include "GeneratorBox.h"
 #include "Utils.h"
 #include <JuceHeader.h>
 
 //==============================================================================
-PositionBox::PositionBox() {
+GeneratorBox::GeneratorBox() {
 
   mPositionChanger.onPositionChanged = [this](bool isRight) {
     if (onPositionChanged != nullptr) {
@@ -21,14 +21,6 @@ PositionBox::PositionBox() {
     }
   };
   addAndMakeVisible(mPositionChanger);
-
-  mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::darkgrey);
-  mBtnEnabled.onClick = [this] {
-    mIsActive = !mIsActive;
-    setState(mState);
-    parameterChanged(GranularSynth::ParameterType::ENABLED, mBtnEnabled.getToggleState());
-  };
-  addAndMakeVisible(mBtnEnabled);
 
   mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                         juce::Colours::blue);
@@ -50,6 +42,36 @@ PositionBox::PositionBox() {
   mLabelDuration.setEnabled(mState == BoxState::READY);
   mLabelGain.setEnabled(mState == BoxState::READY);
 
+  /* Adjust pitch */
+  mSliderPitch.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderPitch.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderPitch.setRotaryParameters(rotaryParams);
+  mSliderPitch.setRange(0.0, 1.0, 0.01);
+  mSliderPitch.onValueChange = [this] {
+    parameterChanged(GranularSynth::ParameterType::PITCH_ADJUST,
+                     mSliderPitch.getValue());
+  };
+  addAndMakeVisible(mSliderPitch);
+
+  mLabelPitch.setText("Pitch Adjust", juce::dontSendNotification);
+  mLabelPitch.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelPitch);
+
+  /* Adjust position */
+  mSliderPosition.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderPosition.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderPosition.setRotaryParameters(rotaryParams);
+  mSliderPosition.setRange(0.0, 1.0, 0.01);
+  mSliderPosition.onValueChange = [this] {
+    parameterChanged(GranularSynth::ParameterType::POSITION_ADJUST,
+                     mSliderPosition.getValue());
+  };
+  addAndMakeVisible(mSliderPosition);
+
+  mLabelPosition.setText("Position Adjust", juce::dontSendNotification);
+  mLabelPosition.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelPosition);
+
   /* Shape */
   mSliderShape.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderShape.setSliderStyle(juce::Slider::SliderStyle::Rotary);
@@ -60,7 +82,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::SHAPE,
                      mSliderShape.getValue());
   };
-  mSliderShape.setValue(PARAM_SHAPE_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderShape);
 
   mLabelShape.setText("Shape", juce::dontSendNotification);
@@ -77,7 +98,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::RATE,
                      mSliderRate.getValue());
   };
-  mSliderRate.setValue(PARAM_RATE_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderRate);
 
   mLabelRate.setText("Rate", juce::dontSendNotification);
@@ -94,7 +114,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::DURATION,
                      mSliderDuration.getValue());
   };
-  mSliderDuration.setValue(PARAM_DURATION_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderDuration);
 
   mLabelDuration.setText("Duration", juce::dontSendNotification);
@@ -111,7 +130,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::GAIN,
                      mSliderGain.getValue());
   };
-  mSliderGain.setValue(PARAM_GAIN_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderGain);
 
   mLabelGain.setText("Gain", juce::dontSendNotification);
@@ -134,7 +152,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::ATTACK,
                      mSliderAttack.getValue());
   };
-  mSliderAttack.setValue(PARAM_ATTACK_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderAttack);
 
   mLabelAttack.setText("Attack", juce::dontSendNotification);
@@ -151,7 +168,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::DECAY,
                      mSliderDecay.getValue());
   };
-  mSliderDecay.setValue(PARAM_DECAY_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderDecay);
 
   mLabelDecay.setText("Decay", juce::dontSendNotification);
@@ -168,7 +184,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::SUSTAIN,
                      mSliderSustain.getValue());
   };
-  mSliderSustain.setValue(PARAM_SUSTAIN_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderSustain);
 
   mLabelSustain.setText("Sustain", juce::dontSendNotification);
@@ -185,7 +200,6 @@ PositionBox::PositionBox() {
     parameterChanged(GranularSynth::ParameterType::RELEASE,
                      mSliderRelease.getValue());
   };
-  mSliderRelease.setValue(PARAM_RELEASE_DEFAULT, juce::sendNotification);
   addAndMakeVisible(mSliderRelease);
 
   mLabelRelease.setText("Release", juce::dontSendNotification);
@@ -193,18 +207,64 @@ PositionBox::PositionBox() {
   addAndMakeVisible(mLabelRelease);
 }
 
-PositionBox::~PositionBox() {}
+GeneratorBox::~GeneratorBox() {}
 
-void PositionBox::paint(juce::Graphics& g) {
+void GeneratorBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
   bool borderLit = (mIsActive || mState == BoxState::SOLO);
-  g.setColour(borderLit ? juce::Colour(Utils::POSITION_COLOURS[mColour])
-                        : juce::Colours::darkgrey);
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1), 10.0f, 2.0f);
+  juce::Colour fillCol = borderLit
+                             ? juce::Colour(Utils::POSITION_COLOURS[mColour])
+                             : juce::Colours::darkgrey;
+  g.setColour(fillCol);
+
+  // Lines to connect to tab
+  float tabWidth = getWidth() / Utils::GeneratorColour::NUM_GEN;
+  if (mColour > 0) {
+    g.drawLine(1.0f, 0.0f, mColour * tabWidth + 2.0f, 0.0f,
+               3.0f);
+  }
+  if (mColour < Utils::GeneratorColour::NUM_GEN - 1) {
+    g.drawLine((mColour + 1) * tabWidth - 2.0f, 0.0f, getWidth() - 1.0f, 0.0f,
+               3.0f);
+  }
+
+  // Adjustments section title
+  juce::Rectangle<int> adjustTitleRect = juce::Rectangle<int>(
+      0, PADDING_SIZE / 2, getWidth(), SECTION_TITLE_HEIGHT).reduced(PADDING_SIZE, PADDING_SIZE / 2);
+  g.setColour(fillCol);
+  g.fillRect(adjustTitleRect);
+  g.setColour(juce::Colours::black);
+  g.drawText(juce::String(SECTION_ADJUST_TITLE), adjustTitleRect,
+             juce::Justification::centred);
+
+  // Amp env section title
+  juce::Rectangle<int> ampEnvTitleRect = juce::Rectangle<int>(
+      0, mEnvelopeAmp.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f),
+          getWidth(), SECTION_TITLE_HEIGHT)
+          .reduced(PADDING_SIZE, PADDING_SIZE / 2);
+  g.setColour(fillCol);
+  g.fillRect(ampEnvTitleRect);
+  g.setColour(juce::Colours::black);
+  g.drawText(juce::String(SECTION_AMP_ENV_TITLE), ampEnvTitleRect,
+             juce::Justification::centred);
+
+  // Grain env section title
+  juce::Rectangle<int> grainEnvTitleRect = juce::Rectangle<int>(
+      0, mEnvelopeGrain.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f),
+          getWidth(), SECTION_TITLE_HEIGHT)
+          .reduced(PADDING_SIZE, PADDING_SIZE / 2);
+  g.setColour(fillCol);
+  g.fillRect(grainEnvTitleRect);
+  g.setColour(juce::Colours::black);
+  g.drawText(juce::String(SECTION_GRAIN_ENV_TITLE), grainEnvTitleRect,
+             juce::Justification::centred);
+
+  g.setColour(fillCol);
+  g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.0f), 10.0f, 2.0f);
 }
 
-void PositionBox::resized() {
+void GeneratorBox::resized() {
   auto r = getLocalBounds();
   // Add insets
   r.removeFromTop(PADDING_SIZE);
@@ -213,15 +273,27 @@ void PositionBox::resized() {
   r.removeFromBottom(PADDING_SIZE);
 
   // Enable and solo buttons
-  auto btnPanel = r.removeFromTop(TOGGLE_SIZE);
-  mBtnEnabled.setBounds(btnPanel.removeFromLeft(TOGGLE_SIZE));
-  mBtnSolo.setBounds(btnPanel.removeFromRight(TOGGLE_SIZE));
-  mPositionChanger.setBounds(btnPanel.withSizeKeepingCentre(
-      btnPanel.getWidth() * 0.7, btnPanel.getHeight()));
+  r.removeFromTop(SECTION_TITLE_HEIGHT);
+  auto adjustmentsPanel = r.removeFromTop(ADJUSTMENT_HEIGHT + LABEL_HEIGHT);
+  mBtnSolo.setBounds(
+      adjustmentsPanel.withLeft(adjustmentsPanel.getRight() - TOGGLE_SIZE)
+          .withHeight(TOGGLE_SIZE));
+  int adjustKnobWidth = adjustmentsPanel.getWidth() / 3;
+  auto pitchKnobPanel = adjustmentsPanel.removeFromLeft(adjustKnobWidth);
+  mLabelPitch.setBounds(pitchKnobPanel.removeFromBottom(LABEL_HEIGHT));
+  mSliderPitch.setBounds(pitchKnobPanel.withSizeKeepingCentre(
+      pitchKnobPanel.getHeight() * 2, pitchKnobPanel.getHeight()));
+  auto posKnobPanel = adjustmentsPanel.removeFromRight(adjustKnobWidth);
+  mLabelPosition.setBounds(posKnobPanel.removeFromBottom(LABEL_HEIGHT));
+  mSliderPosition.setBounds(posKnobPanel.withSizeKeepingCentre(
+      posKnobPanel.getHeight() * 2, posKnobPanel.getHeight()));
+  mPositionChanger.setBounds(adjustmentsPanel.withSizeKeepingCentre(
+      adjustmentsPanel.getWidth(), adjustmentsPanel.getHeight() / 2));
 
   r.removeFromTop(PADDING_SIZE);
-  
+
   // Amp envelope
+  r.removeFromTop(SECTION_TITLE_HEIGHT);
   mEnvelopeAmp.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
   r.removeFromTop(PADDING_SIZE);
 
@@ -239,7 +311,10 @@ void PositionBox::resized() {
   mLabelSustain.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelRelease.setBounds(labelPanel.removeFromLeft(knobWidth));
 
+  r.removeFromTop(PADDING_SIZE);
+
   // Grain envelopes
+  r.removeFromTop(SECTION_TITLE_HEIGHT);
   mEnvelopeGrain.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
   r.removeFromTop(PADDING_SIZE);
 
@@ -258,41 +333,71 @@ void PositionBox::resized() {
   mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
-void PositionBox::setActive(bool isActive) {
+void GeneratorBox::setActive(bool isActive) {
   mIsActive = isActive;
-  mBtnEnabled.setToggleState(isActive, juce::dontSendNotification);
   setState(mState);
 }
 
-void PositionBox::setPositions(std::vector<int> positions) {
-  mPositionChanger.setGlobalPositions(positions);
+void GeneratorBox::setPositionNumber(int positionNumber) {
+  mPositionChanger.setPositionNumber(positionNumber);
 }
 
-void PositionBox::setNumPositions(int numPositions) {
+void GeneratorBox::setParams(Utils::GeneratorParams params) {
+  setActive(params.isActive);
+  mPositionChanger.setPositionNumber(params.position);
+  mSliderPitch.setValue(params.pitchAdjust, juce::dontSendNotification);
+  mSliderPosition.setValue(params.posAdjust, juce::dontSendNotification);
+  mSliderShape.setValue(params.shape, juce::dontSendNotification);
+  mEnvelopeGrain.setShape(params.shape);
+  mSliderRate.setValue(params.rate, juce::dontSendNotification);
+  mEnvelopeGrain.setRate(params.rate);
+  mSliderDuration.setValue(params.duration, juce::dontSendNotification);
+  mEnvelopeGrain.setDuration(params.duration);
+  mSliderGain.setValue(params.gain, juce::dontSendNotification);
+  mEnvelopeGrain.setGain(params.gain);
+  mSliderAttack.setValue(params.attack, juce::dontSendNotification);
+  mEnvelopeAmp.setAttack(params.attack);
+  mSliderDecay.setValue(params.decay, juce::dontSendNotification);
+  mEnvelopeAmp.setDecay(params.decay);
+  mSliderSustain.setValue(params.sustain, juce::dontSendNotification);
+  mEnvelopeAmp.setSustain(params.sustain);
+  mSliderRelease.setValue(params.release, juce::dontSendNotification);
+  mEnvelopeAmp.setRelease(params.release);
+}
+
+void GeneratorBox::setNumPositions(int numPositions) {
   mPositionChanger.setNumPositions(numPositions);
 }
 
-void PositionBox::setState(BoxState state) {
+void GeneratorBox::setState(BoxState state) {
   mState = state;
 
   if (state == BoxState::SOLO_WAIT) {
     mBtnSolo.setToggleState(false, juce::dontSendNotification);
   }
 
-  juce::Colour enabledColour = (state != BoxState::SOLO_WAIT)
-          ? juce::Colour(Utils::POSITION_COLOURS[mColour])
-                                     : juce::Colours::darkgrey;
-  mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                        enabledColour);
   juce::Colour soloColour = (state != BoxState::SOLO_WAIT)
                                    ? juce::Colours::blue
                                    : juce::Colours::darkgrey;
   mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId, soloColour);
 
-  bool componentsLit = (mIsActive && state == BoxState::READY || state == BoxState::SOLO);
+  bool componentsLit = (mIsActive && state == BoxState::READY ||
+                        state == BoxState::SOLO);
   juce::Colour knobColour = componentsLit
                                 ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                                 : juce::Colours::darkgrey;
+  mSliderPitch.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                          knobColour);
+  mSliderPitch.setColour(
+      juce::Slider::ColourIds::rotarySliderOutlineColourId,
+      componentsLit ? knobColour.brighter() : juce::Colours::darkgrey);
+  mLabelPitch.setEnabled(componentsLit);
+  mSliderPosition.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                          knobColour);
+  mSliderPosition.setColour(
+      juce::Slider::ColourIds::rotarySliderOutlineColourId,
+      componentsLit ? knobColour.brighter() : juce::Colours::darkgrey);
+  mLabelPosition.setEnabled(componentsLit);
   mPositionChanger.setActive(componentsLit);
 
   mEnvelopeAmp.setActive(componentsLit);
@@ -306,24 +411,18 @@ void PositionBox::setState(BoxState state) {
                            knobColour);
   mSliderAttack.setColour(
       juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][0])
-          : juce::Colours::darkgrey);
-  mSliderDecay.setColour(
-      juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][1])
-          : juce::Colours::darkgrey);
-  mSliderSustain.setColour(
-      juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][2])
-          : juce::Colours::darkgrey);
+      componentsLit ? knobColour.brighter() : juce::Colours::darkgrey);
+  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                         componentsLit ? knobColour.brighter().brighter()
+                                       : juce::Colours::darkgrey);
+  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                           componentsLit
+                               ? knobColour.brighter().brighter().brighter()
+                               : juce::Colours::darkgrey);
   mSliderRelease.setColour(
       juce::Slider::ColourIds::rotarySliderOutlineColourId,
-      componentsLit
-          ? juce::Colour(Utils::SECONDARY_POSITION_COLOURS[mColour][3])
-          : juce::Colours::darkgrey);
+      componentsLit ? knobColour.brighter().brighter().brighter().brighter()
+                    : juce::Colours::darkgrey);
   mLabelAttack.setEnabled(componentsLit);
   mLabelDecay.setEnabled(componentsLit);
   mLabelSustain.setEnabled(componentsLit);
@@ -352,30 +451,35 @@ void PositionBox::setState(BoxState state) {
   repaint();
 }
 
-GranularSynth::PositionParams PositionBox::getParams() {
-  return GranularSynth::PositionParams(
-      mSliderShape.getValue(), mSliderRate.getValue(),
-      mSliderDuration.getValue(), mSliderGain.getValue(),
-      mSliderAttack.getValue(), mSliderDecay.getValue(),
+Utils::GeneratorParams GeneratorBox::getParams() {
+  bool canPlay =
+      mState != GeneratorBox::BoxState::SOLO_WAIT;
+  bool shouldPlay = mIsActive ||
+      mState == GeneratorBox::BoxState::SOLO;
+  return Utils::GeneratorParams(
+      canPlay && shouldPlay,
+      mPositionChanger.getPositionNumber(),
+      mSliderPitch.getValue(),
+      mSliderPosition.getValue(), mSliderShape.getValue(),
+      mSliderRate.getValue(), mSliderDuration.getValue(),
+      mSliderGain.getValue(), mSliderAttack.getValue(), mSliderDecay.getValue(),
       mSliderSustain.getValue(), mSliderRelease.getValue());
 }
 
-void PositionBox::setColour(Utils::PositionColour colour) {
+void GeneratorBox::setColour(Utils::GeneratorColour colour) {
   mColour = colour;
   juce::Colour newColour = juce::Colour(Utils::POSITION_COLOURS[colour]);
   if (mState == BoxState::READY) {
-    mBtnEnabled.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                          newColour);
     mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
                        juce::Colours::blue);
   }
-  mPositionChanger.setColour(colour, newColour);
+  mPositionChanger.setColour(newColour);
   mEnvelopeGrain.setColour(newColour);
-  mEnvelopeAmp.setColour(colour);
+  mEnvelopeAmp.setColour(newColour);
   repaint();
 }
 
-void PositionBox::parameterChanged(GranularSynth::ParameterType type,
+void GeneratorBox::parameterChanged(GranularSynth::ParameterType type,
                                    float value) {
   if (onParameterChanged != nullptr) {
     onParameterChanged(mColour, type, value);

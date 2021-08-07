@@ -1,138 +1,150 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="elJz2W" name="gRainbow" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
-  <MAINGROUP id="ba9WAI" name="gRainbow">
-    <GROUP id="{3D076030-E8B1-BD35-63A3-8EC3578EB076}" name="Resources">
-      <FILE id="pRRPGl" name="logo.png" compile="0" resource="1" file="Source/Resources/logo.png"/>
-      <FILE id="t2HgFS" name="appicon.png" compile="0" resource="1" file="Source/Resources/appicon.png"/>
-      <FILE id="sUPYzB" name="microphone.png" compile="0" resource="1" file="Source/Resources/microphone.png"/>
-      <FILE id="aoVA5U" name="microphoneOver.png" compile="0" resource="1"
-            file="Source/Resources/microphoneOver.png"/>
-      <FILE id="FtKTl3" name="openFileNormal.png" compile="0" resource="1"
-            file="Source/Resources/openFileNormal.png"/>
-      <FILE id="Anmb9x" name="openFileOver.png" compile="0" resource="1"
-            file="Source/Resources/openFileOver.png"/>
-    </GROUP>
-    <GROUP id="{60D4D942-21D3-C19F-F50C-B527C5EBF681}" name="Source">
-      <GROUP id="{2B54AF71-8109-B401-8064-8E1A69683930}" name="DSP">
-        <FILE id="BnwVFw" name="AudioRecorder.cpp" compile="1" resource="0"
+<JUCERPROJECT id="eC9OsA" name="gRainbow" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
+              companyName="b-team">
+  <MAINGROUP id="SNaS8k" name="gRainbow">
+    <GROUP id="{595D4325-C686-1839-D048-A225A7FE150A}" name="Source">
+      <GROUP id="{5E1AB70E-1865-A28B-6DCD-3168747A76FD}" name="Components">
+        <FILE id="KGvt5z" name="GlobalParamBox.cpp" compile="1" resource="0"
+              file="Source/GlobalParamBox.cpp"/>
+        <FILE id="B9m0eJ" name="GlobalParamBox.h" compile="0" resource="0"
+              file="Source/GlobalParamBox.h"/>
+        <FILE id="h9GepA" name="GeneratorBox.cpp" compile="1" resource="0"
+              file="Source/GeneratorBox.cpp"/>
+        <FILE id="rzErFn" name="GeneratorBox.h" compile="0" resource="0" file="Source/GeneratorBox.h"/>
+        <FILE id="EcGiwq" name="PositionChanger.cpp" compile="1" resource="0"
+              file="Source/PositionChanger.cpp"/>
+        <FILE id="HWBliz" name="PositionChanger.h" compile="0" resource="0"
+              file="Source/PositionChanger.h"/>
+        <FILE id="hqlpBh" name="PositionMarker.cpp" compile="1" resource="0"
+              file="Source/PositionMarker.cpp"/>
+        <FILE id="VcStbT" name="PositionMarker.h" compile="0" resource="0"
+              file="Source/PositionMarker.h"/>
+        <FILE id="WZl1r6" name="GeneratorTabs.cpp" compile="1" resource="0"
+              file="Source/GeneratorTabs.cpp"/>
+        <FILE id="fBYUSZ" name="GeneratorTabs.h" compile="0" resource="0" file="Source/GeneratorTabs.h"/>
+        <FILE id="z3F1iQ" name="RainbowKeyboard.cpp" compile="1" resource="0"
+              file="Source/RainbowKeyboard.cpp"/>
+        <FILE id="h6qcMW" name="RainbowKeyboard.h" compile="0" resource="0"
+              file="Source/RainbowKeyboard.h"/>
+        <FILE id="U3RA3l" name="ArcSpectrogram.cpp" compile="1" resource="0"
+              file="Source/ArcSpectrogram.cpp"/>
+        <FILE id="FxXYcK" name="ArcSpectrogram.h" compile="0" resource="0"
+              file="Source/ArcSpectrogram.h"/>
+        <FILE id="NyVZ3J" name="EnvelopeADSR.cpp" compile="1" resource="0"
+              file="Source/EnvelopeADSR.cpp"/>
+        <FILE id="X1IEXi" name="EnvelopeADSR.h" compile="0" resource="0" file="Source/EnvelopeADSR.h"/>
+        <FILE id="kkPTHZ" name="EnvelopeGrain.cpp" compile="1" resource="0"
+              file="Source/EnvelopeGrain.cpp"/>
+        <FILE id="dkXBmp" name="EnvelopeGrain.h" compile="0" resource="0" file="Source/EnvelopeGrain.h"/>
+      </GROUP>
+      <GROUP id="{815336C9-3A77-691D-E8CC-E2B9A088B5B6}" name="DSP">
+        <FILE id="ni5qfe" name="AudioRecorder.cpp" compile="1" resource="0"
               file="Source/AudioRecorder.cpp"/>
-        <FILE id="tkSMr8" name="AudioRecorder.h" compile="0" resource="0" file="Source/AudioRecorder.h"/>
-        <FILE id="g4q8Bs" name="GranularSynth.cpp" compile="1" resource="0"
+        <FILE id="EnaaDK" name="AudioRecorder.h" compile="0" resource="0" file="Source/AudioRecorder.h"/>
+        <FILE id="iPQcXj" name="Fft.cpp" compile="1" resource="0" file="Source/Fft.cpp"/>
+        <FILE id="qkwj0M" name="Fft.h" compile="0" resource="0" file="Source/Fft.h"/>
+        <FILE id="S4XXw9" name="Grain.cpp" compile="1" resource="0" file="Source/Grain.cpp"/>
+        <FILE id="G0hDZN" name="Grain.h" compile="0" resource="0" file="Source/Grain.h"/>
+        <FILE id="yFDMhJ" name="GranularSynth.cpp" compile="1" resource="0"
               file="Source/GranularSynth.cpp"/>
-        <FILE id="OVr1gc" name="GranularSynth.h" compile="0" resource="0" file="Source/GranularSynth.h"/>
-        <FILE id="YlAALv" name="Grain.cpp" compile="1" resource="0" file="Source/Grain.cpp"/>
-        <FILE id="Amycig" name="Grain.h" compile="0" resource="0" file="Source/Grain.h"/>
-        <FILE id="lYxqsk" name="Fft.cpp" compile="1" resource="0" file="Source/Fft.cpp"/>
-        <FILE id="jAt6H4" name="Fft.h" compile="0" resource="0" file="Source/Fft.h"/>
-        <FILE id="URxYU2" name="PitchDetector.cpp" compile="1" resource="0"
+        <FILE id="PKer4S" name="GranularSynth.h" compile="0" resource="0" file="Source/GranularSynth.h"/>
+        <FILE id="jJouL1" name="PitchDetector.cpp" compile="1" resource="0"
               file="Source/PitchDetector.cpp"/>
-        <FILE id="Rl1t0c" name="PitchDetector.h" compile="0" resource="0" file="Source/PitchDetector.h"/>
-        <FILE id="CxYa4W" name="TransientDetector.cpp" compile="1" resource="0"
+        <FILE id="wy5VgL" name="PitchDetector.h" compile="0" resource="0" file="Source/PitchDetector.h"/>
+        <FILE id="WRXak8" name="TransientDetector.cpp" compile="1" resource="0"
               file="Source/TransientDetector.cpp"/>
-        <FILE id="ji8OPt" name="TransientDetector.h" compile="0" resource="0"
+        <FILE id="k0y5GL" name="TransientDetector.h" compile="0" resource="0"
               file="Source/TransientDetector.h"/>
       </GROUP>
-      <GROUP id="{32B46666-89F3-1953-7D07-B92E6B19F9CC}" name="Components">
-        <FILE id="Kneijy" name="EnvelopeADSR.cpp" compile="1" resource="0"
-              file="Source/EnvelopeADSR.cpp"/>
-        <FILE id="S0aoQH" name="EnvelopeADSR.h" compile="0" resource="0" file="Source/EnvelopeADSR.h"/>
-        <FILE id="pUL1nX" name="PositionChanger.cpp" compile="1" resource="0"
-              file="Source/PositionChanger.cpp"/>
-        <FILE id="aiE1ou" name="PositionChanger.h" compile="0" resource="0"
-              file="Source/PositionChanger.h"/>
-        <FILE id="ZdXIcB" name="PositionBox.cpp" compile="1" resource="0" file="Source/PositionBox.cpp"/>
-        <FILE id="GJ2blE" name="PositionBox.h" compile="0" resource="0" file="Source/PositionBox.h"/>
-        <FILE id="l4WuPd" name="EnvelopeGrain.cpp" compile="1" resource="0"
-              file="Source/EnvelopeGrain.cpp"/>
-        <FILE id="BuwWMv" name="EnvelopeGrain.h" compile="0" resource="0" file="Source/EnvelopeGrain.h"/>
-        <FILE id="hxCpOe" name="RainbowKeyboard.cpp" compile="1" resource="0"
-              file="Source/RainbowKeyboard.cpp"/>
-        <FILE id="fxVnvT" name="RainbowKeyboard.h" compile="0" resource="0"
-              file="Source/RainbowKeyboard.h"/>
-        <FILE id="c1zyfP" name="PositionMarker.cpp" compile="1" resource="0"
-              file="Source/PositionMarker.cpp"/>
-        <FILE id="aJYlgQ" name="PositionMarker.h" compile="0" resource="0"
-              file="Source/PositionMarker.h"/>
-        <FILE id="ev5uXx" name="RainbowLookAndFeel.h" compile="0" resource="0"
-              file="Source/RainbowLookAndFeel.h"/>
-        <FILE id="K8OlZe" name="ArcSpectrogram.cpp" compile="1" resource="0"
-              file="Source/ArcSpectrogram.cpp"/>
-        <FILE id="UgcHFo" name="ArcSpectrogram.h" compile="0" resource="0"
-              file="Source/ArcSpectrogram.h"/>
+      <GROUP id="{686FB61F-2127-074F-B6C7-E25843969006}" name="Resources">
+        <FILE id="deOQaC" name="appicon.png" compile="0" resource="1" file="Source/Resources/appicon.png"/>
+        <FILE id="FIxQc8" name="logo.png" compile="0" resource="1" file="Source/Resources/logo.png"/>
+        <FILE id="CzGiew" name="microphone.png" compile="0" resource="1" file="Source/Resources/microphone.png"/>
+        <FILE id="SKC6ix" name="microphoneOver.png" compile="0" resource="1"
+              file="Source/Resources/microphoneOver.png"/>
+        <FILE id="oLfVft" name="openFileNormal.png" compile="0" resource="1"
+              file="Source/Resources/openFileNormal.png"/>
+        <FILE id="AKnPf2" name="openFileOver.png" compile="0" resource="1"
+              file="Source/Resources/openFileOver.png"/>
       </GROUP>
-      <FILE id="RCqU3B" name="GrainPositionFinder.cpp" compile="1" resource="0"
+      <FILE id="kVYLPK" name="GrainPositionFinder.cpp" compile="1" resource="0"
             file="Source/GrainPositionFinder.cpp"/>
-      <FILE id="Dh7Ak3" name="GrainPositionFinder.h" compile="0" resource="0"
+      <FILE id="fOHW40" name="GrainPositionFinder.h" compile="0" resource="0"
             file="Source/GrainPositionFinder.h"/>
-      <FILE id="blwWJN" name="Utils.h" compile="0" resource="0" file="Source/Utils.h"/>
-      <FILE id="c3ijfy" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
-      <FILE id="qJPNlx" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
-      <FILE id="PJ9e2E" name="MainComponent.cpp" compile="1" resource="0"
-            file="Source/MainComponent.cpp"/>
+      <FILE id="duDEsZ" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="A5Kd8U" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="XczhZw" name="RainbowLookAndFeel.h" compile="0" resource="0"
+            file="Source/RainbowLookAndFeel.h"/>
+      <FILE id="VcqOMO" name="Utils.h" compile="0" resource="0" file="Source/Utils.h"/>
     </GROUP>
   </MAINGROUP>
-  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_USE_MP3AUDIOFORMAT="1"/>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <VS2019 targetFolder="Builds/VisualStudio2019" smallIcon="t2HgFS" bigIcon="t2HgFS">
+    <LINUX_MAKE targetFolder="Builds/LinuxMakefile">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
-        <MODULEPATH id="juce_audio_basics" path="../../../../../JUCE/modules"/>
-        <MODULEPATH id="juce_audio_devices" path="../../../../../JUCE/modules"/>
-        <MODULEPATH id="juce_audio_formats" path="../../../../../JUCE/modules"/>
-        <MODULEPATH id="juce_audio_processors" path="../../../../../JUCE/modules"/>
-        <MODULEPATH id="juce_audio_utils" path="../../../../../JUCE/modules"/>
-        <MODULEPATH id="juce_core" path="../../../../../JUCE/modules"/>
-        <MODULEPATH id="juce_data_structures" path="../../../../../JUCE/modules"/>
-        <MODULEPATH id="juce_events" path="../../../../../JUCE/modules"/>
-        <MODULEPATH id="juce_graphics" path="../../../../../JUCE/modules"/>
-        <MODULEPATH id="juce_gui_basics" path="../../../../../JUCE/modules"/>
-        <MODULEPATH id="juce_gui_extra" path="../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="../../../../../JUCE/modules"/>
+      </MODULEPATHS>
+    </LINUX_MAKE>
+    <VS2019 targetFolder="Builds/VisualStudio2019">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../../../../JUCE/modules"/>
         <MODULEPATH id="juce_dsp" path="../../../../../JUCE/modules"/>
       </MODULEPATHS>
     </VS2019>
-    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" smallIcon="t2HgFS" bigIcon="t2HgFS">
+    <XCODE_MAC targetFolder="Builds/MacOSX">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow_debug"/>
-        <CONFIGURATION isDebug="0" name="Release"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
-        <MODULEPATH id="juce_gui_extra" path="../../juce"/>
-        <MODULEPATH id="juce_gui_basics" path="../../juce"/>
-        <MODULEPATH id="juce_graphics" path="../../juce"/>
-        <MODULEPATH id="juce_events" path="../../juce"/>
-        <MODULEPATH id="juce_dsp" path="../../juce"/>
-        <MODULEPATH id="juce_data_structures" path="../../juce"/>
-        <MODULEPATH id="juce_core" path="../../juce"/>
-        <MODULEPATH id="juce_audio_utils" path="../../juce"/>
-        <MODULEPATH id="juce_audio_processors" path="../../juce"/>
-        <MODULEPATH id="juce_audio_formats" path="../../juce"/>
-        <MODULEPATH id="juce_audio_devices" path="../../juce"/>
-        <MODULEPATH id="juce_audio_basics" path="../../juce"/>
-      </MODULEPATHS>
-    </LINUX_MAKE>
-    <XCODE_MAC targetFolder="Builds/MacOSX" smallIcon="t2HgFS" bigIcon="t2HgFS">
-      <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug"/>
-        <CONFIGURATION isDebug="0" name="Release"/>
-      </CONFIGURATIONS>
-      <MODULEPATHS>
-        <MODULEPATH id="juce_gui_extra" path="../../juce"/>
-        <MODULEPATH id="juce_gui_basics" path="../../juce"/>
-        <MODULEPATH id="juce_graphics" path="../../juce"/>
-        <MODULEPATH id="juce_events" path="../../juce"/>
-        <MODULEPATH id="juce_dsp" path="../../juce"/>
-        <MODULEPATH id="juce_data_structures" path="../../juce"/>
-        <MODULEPATH id="juce_core" path="../../juce"/>
-        <MODULEPATH id="juce_audio_utils" path="../../juce"/>
-        <MODULEPATH id="juce_audio_processors" path="../../juce"/>
-        <MODULEPATH id="juce_audio_formats" path="../../juce"/>
-        <MODULEPATH id="juce_audio_devices" path="../../juce"/>
-        <MODULEPATH id="juce_audio_basics" path="../../juce"/>
+        <MODULEPATH id="juce_audio_basics" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../../../../JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="../../../../../JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
   </EXPORTFORMATS>
@@ -140,6 +152,8 @@
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
     <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
@@ -152,7 +166,5 @@
   </MODULES>
   <LIVE_SETTINGS>
     <WINDOWS/>
-    <LINUX/>
-    <OSX/>
   </LIVE_SETTINGS>
 </JUCERPROJECT>
