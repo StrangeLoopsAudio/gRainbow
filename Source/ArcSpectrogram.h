@@ -20,7 +20,6 @@
 
 #include "Fft.h"
 #include "GranularSynth.h"
-#include "PositionMarker.h"
 #include "TransientDetector.h"
 #include "Utils.h"
 
@@ -55,21 +54,11 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto BUFFER_PROCESS_TIMEOUT = 10000;
 
   // UI variables
-  static constexpr auto POSITION_MARKER_WIDTH = 10;
-  static constexpr auto POSITION_MARKER_HEIGHT = 15;
   static constexpr auto SPEC_TYPE_HEIGHT = 50;
   static constexpr auto SPEC_TYPE_WIDTH = 130;
   static constexpr auto NUM_COLS = 600;
-  static constexpr auto SUN_RAY_WIDTH = 0.005;
   // Colours
   static constexpr auto COLOUR_MULTIPLIER = 20.0f;
-  static constexpr auto COLOUR_SUN_CENTER = 0xFFFFFF74;
-  static constexpr auto COLOUR_SUN_REGULAR_RAYS = 0x33FFFF74;
-  static constexpr auto COLOUR_SUN_END = 0xffffffce;
-  static constexpr auto COLOUR_RAYS_END = 0x00ffffce;
-  static constexpr auto MAX_MARKERS = 4;
-  static constexpr juce::int64 MARKER_COLOURS[MAX_MARKERS] = {
-      0xFF52C4FF, 0xFFE352FF, 0xFFFF8D52, 0xFF6EFF52};
 
   // Pixel vibration
   static constexpr auto PIXEL_VIBRATION_SIZE = 2;

@@ -266,32 +266,33 @@ void GranularSynth::run() {
             float durMs =
                 juce::jmap(params.duration, MIN_DURATION_MS, MAX_DURATION_MS);
             // Skip adding new grain if not enabled or full of grains
-            if (gNote.positions[i].isActive &&
-                mGrains.size() < MAX_GRAINS) {
-              juce::Random random;
-              GrainPositionFinder::GrainPosition& gPos =
-                  gNote.positions[i];
-              float durSamples =
-                  mSampleRate * (durMs / 1000) * (1.0f / gPos.pbRate);
-              float posSamples =
-                  gPos.pitch.posRatio * mFileBuffer.getNumSamples();
-              float posOffset = juce::jmap(
-                  random.nextFloat(), 0.0f,
-                  (gPos.pitch.duration * mFileBuffer.getNumSamples()) -
-                      durSamples);
-              posOffset +=
-                  (params.posAdjust - 0.5f) * MAX_POS_ADJUST * durSamples;
+            if (i < gNote.positions.size()) {
+              if (gNote.positions[i].isActive && mGrains.size() < MAX_GRAINS) {
+                juce::Random random;
+                GrainPositionFinder::GrainPosition& gPos = gNote.positions[i];
+                float durSamples =
+                    mSampleRate * (durMs / 1000) * (1.0f / gPos.pbRate);
+                float posSamples =
+                    gPos.pitch.posRatio * mFileBuffer.getNumSamples();
+                float posOffset = juce::jmap(
+                    random.nextFloat(), 0.0f,
+                    (gPos.pitch.duration * mFileBuffer.getNumSamples()) -
+                        durSamples);
+                posOffset +=
+                    (params.posAdjust - 0.5f) * MAX_POS_ADJUST * durSamples;
 
-              float rateGainFactor =
-                  juce::jmap(1.0f - params.rate, MIN_RATE_RATIO * 2.0f, MAX_RATE_RATIO);
-              float gain = gNote.ampEnvLevel * gPos.ampEnvLevel * params.gain * rateGainFactor;
-              float pbRate = gPos.pbRate +
-                             ((params.pitchAdjust - 0.5f) * MAX_PITCH_ADJUST);
-              jassert(gPos.pbRate > 0.1f);
-              auto grain =
-                  Grain(generateGrainEnvelope(params.shape), durSamples, pbRate,
-                        posSamples + posOffset, mTotalSamps, gain);
-              mGrains.add(grain);
+                float rateGainFactor = juce::jmap(
+                    1.0f - params.rate, MIN_RATE_RATIO * 2.0f, MAX_RATE_RATIO);
+                float gain = gNote.ampEnvLevel * gPos.ampEnvLevel *
+                             params.gain * rateGainFactor;
+                float pbRate = gPos.pbRate +
+                               ((params.pitchAdjust - 0.5f) * MAX_PITCH_ADJUST);
+                jassert(gPos.pbRate > 0.1f);
+                auto grain =
+                    Grain(generateGrainEnvelope(params.shape), durSamples,
+                          pbRate, posSamples + posOffset, mTotalSamps, gain);
+                mGrains.add(grain);
+              }
             }
             // Reset trigger ts
             gNote.grainTriggersMs[i] += juce::jmap(1.0f - params.rate, durMs * MIN_RATE_RATIO,

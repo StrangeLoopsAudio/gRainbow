@@ -182,7 +182,7 @@ void ArcSpectrogram::run() {
 
   // Initialize rainbow parameters
   int startRadius = getHeight() / 4.0f;
-  int endRadius = getHeight() - POSITION_MARKER_HEIGHT;
+  int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
   int maxRow = (mProcessType == Utils::SpecType::SPECTROGRAM)
                    ? spec[0].size() / 8
@@ -272,8 +272,5 @@ void ArcSpectrogram::setNoteOn(
   for (int i = 0; i < gPositions.size(); ++i) {
     if (gPositions[i].pitch.pitchClass == Utils::PitchClass::NONE) continue;
     mGPositions.push_back(gPositions[i]);
-    auto newItem =
-        new PositionMarker(gPositions[i], juce::Colour(MARKER_COLOURS[i]));
-    addAndMakeVisible(newItem);
   }
 }
