@@ -17,6 +17,23 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
       mKeyboard(mSynth.getKeyboardState()),
       mProgressBar(mLoadingProgress) {
 
+  // Load buffers into arc spec if they exist
+  auto buffers = mSynth.getSpecBuffers();
+  for (int i = 0; i < buffers.size(); ++i) {
+    switch (i) {
+      case Utils::SpecType::LOGO: {
+        break;
+      }
+      case Utils::SpecType::SPECTROGRAM:
+      case Utils::SpecType::HPCP:
+      case Utils::SpecType::NOTES: {
+        if (buffers[i] != nullptr)
+          mArcSpec.loadBuffer(buffers[i], (Utils::SpecType)i);
+        break;
+      }
+    }
+  }
+
   mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass,
                                     bool isNoteOn) {
     if (isNoteOn) {
@@ -158,7 +175,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
 
 GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  auto recordFile = parentDir.getChildFile(RECORDING_FILE);
+  auto recordFile = parentDir.getChildFile(Utils::FILE_RECORDING);
   recordFile.deleteFile();
   mAudioDeviceManager.removeAudioCallback(&mRecorder);
   setLookAndFeel(nullptr);
@@ -314,8 +331,8 @@ void GRainbowAudioProcessorEditor::startRecording() {
   }
 
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  parentDir.getChildFile(RECORDING_FILE).deleteFile();
-  mRecordedFile = parentDir.getChildFile(RECORDING_FILE);
+  parentDir.getChildFile(Utils::FILE_RECORDING).deleteFile();
+  mRecordedFile = parentDir.getChildFile(Utils::FILE_RECORDING);
 
   mRecorder.startRecording(mRecordedFile);
 

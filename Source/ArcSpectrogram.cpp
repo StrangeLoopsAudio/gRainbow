@@ -19,12 +19,24 @@ ArcSpectrogram::ArcSpectrogram() : juce::Thread("spectrogram thread") {
   setFramesPerSecond(10);
   mBuffers.fill(nullptr);
 
-  for (int i = 0; i < Utils::SpecType::NUM_TYPES; ++i) {
-    mImages[i] = juce::Image(juce::Image::RGB, 512, 512, true);
+  mImages[Utils::SpecType::LOGO] = juce::PNGImageFormat::loadFrom(
+     BinaryData::logo_png, BinaryData::logo_pngSize);
+  auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
+  juce::File imageFile = parentDir.getChildFile(Utils::FILE_SPECTROGRAM);
+  if (imageFile.existsAsFile()) {
+    mImages[Utils::SpecType::SPECTROGRAM] =
+        juce::PNGImageFormat::loadFrom(imageFile);
   }
-
-  mImages[Utils::SpecType::LOGO] =
-      juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize);
+  imageFile = parentDir.getChildFile(Utils::FILE_HPCP);
+  if (imageFile.existsAsFile()) {
+    mImages[Utils::SpecType::HPCP] =
+        juce::PNGImageFormat::loadFrom(imageFile);
+  }
+  imageFile = parentDir.getChildFile(Utils::FILE_NOTES);
+  if (imageFile.existsAsFile()) {
+    mImages[Utils::SpecType::NOTES] =
+        juce::PNGImageFormat::loadFrom(imageFile);
+  } 
 
   mSpecType.addItem("Spectrogram", (int)Utils::SpecType::SPECTROGRAM);
   mSpecType.addItem("Harmonic Profile", (int)Utils::SpecType::HPCP);
@@ -39,7 +51,30 @@ ArcSpectrogram::ArcSpectrogram() : juce::Thread("spectrogram thread") {
   addChildComponent(mSpecType);
 }
 
-ArcSpectrogram::~ArcSpectrogram() { stopThread(4000); }
+ArcSpectrogram::~ArcSpectrogram() {
+  stopThread(4000);
+  // Save image files
+  juce::PNGImageFormat pngWriter;
+  auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
+  if (mImages[Utils::SpecType::SPECTROGRAM].isValid()) {
+    parentDir.getChildFile(Utils::FILE_SPECTROGRAM).deleteFile();
+    juce::FileOutputStream imageStream(parentDir.getChildFile(Utils::FILE_SPECTROGRAM));
+    pngWriter.writeImageToStream(mImages[Utils::SpecType::SPECTROGRAM],
+                                 imageStream);
+  }
+  if (mImages[Utils::SpecType::HPCP].isValid()) {
+    parentDir.getChildFile(Utils::FILE_HPCP).deleteFile();
+    juce::FileOutputStream imageStream(parentDir.getChildFile(Utils::FILE_HPCP));
+    pngWriter.writeImageToStream(mImages[Utils::SpecType::HPCP],
+                                 imageStream);
+  }
+  if (mImages[Utils::SpecType::NOTES].isValid()) {
+    parentDir.getChildFile(Utils::FILE_NOTES).deleteFile();
+    juce::FileOutputStream imageStream(parentDir.getChildFile(Utils::FILE_NOTES));
+    pngWriter.writeImageToStream(mImages[Utils::SpecType::NOTES],
+                                 imageStream);
+  }
+}
 
 void ArcSpectrogram::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
@@ -58,8 +93,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     juce::Image vibratingImage = juce::Image(curImage);
     vibratingImage.duplicateIfShared();
 
-    for (PositionMarker* marker : mPositionMarkers) {
-      auto gPos = marker->getGrainPosition();
+    for (GrainPositionFinder::GrainPosition& gPos : mGPositions) {
       if (!gPos.isActive) continue;
       auto sweepPos = gPos.pitch.posRatio +
                     ((gPos.pitch.duration / 2) * (mNormalRand(mGenRandom) + 1));
@@ -140,22 +174,6 @@ void ArcSpectrogram::resized() {
   // Spec type combobox
   mSpecType.setBounds(
       r.removeFromRight(SPEC_TYPE_WIDTH).removeFromTop(SPEC_TYPE_HEIGHT));
-
-  // Position markers around rainbow
-  juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
-  for (int i = 0; i < mPositionMarkers.size(); ++i) {
-    auto gPos = mPositionMarkers[i]->getGrainPosition();
-    if (!gPos.isActive) continue;
-    auto middlePos = gPos.pitch.posRatio + (gPos.pitch.duration / 2);
-    float angleRad = (juce::MathConstants<float>::pi * middlePos) -
-                     (juce::MathConstants<float>::pi / 2.0f);
-    juce::Point<float> p =
-        startPoint.getPointOnCircumference(getHeight() - 10, getHeight() - 10, angleRad);
-    mPositionMarkers[i]->setSize(POSITION_MARKER_WIDTH, POSITION_MARKER_HEIGHT);
-    mPositionMarkers[i]->setCentrePosition(0, 0);
-    mPositionMarkers[i]->setTransform(
-        juce::AffineTransform::rotation(angleRad).translated(p));
-  }
 }
 
 void ArcSpectrogram::run() {
@@ -228,7 +246,8 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
   if (type == Utils::SpecType::SPECTROGRAM || type == Utils::SpecType::HPCP) {
     mSpecType.setSelectedId(mProcessType, juce::sendNotification);
   }
-  startThread();
+  // Only make image if component size has been set
+  if (getWidth() > 0 && getHeight() > 0) startThread();
 }
 
 void ArcSpectrogram::setTransients(
@@ -239,16 +258,10 @@ void ArcSpectrogram::setTransients(
 void ArcSpectrogram::setPositions(
   std::vector<GrainPositionFinder::GrainPosition> gPositions) {
   mGPositions = gPositions;
-  mPositionMarkers.clear();
   for (int i = 0; i < gPositions.size(); ++i) {
     if (gPositions[i].pitch.pitchClass == Utils::PitchClass::NONE) continue;
     mGPositions.push_back(gPositions[i]);
-    auto newItem =
-        new PositionMarker(gPositions[i], juce::Colour(MARKER_COLOURS[i]));
-    mPositionMarkers.add(newItem);
-    addAndMakeVisible(newItem);
   }
-  resized();
 }
 
 void ArcSpectrogram::setNoteOn(
@@ -256,15 +269,11 @@ void ArcSpectrogram::setNoteOn(
   mIsPlayingNote = true;
   mCurNote = midiNote;
   mGPositions = gPositions;
-  mPositionMarkers.clear();
   for (int i = 0; i < gPositions.size(); ++i) {
     if (gPositions[i].pitch.pitchClass == Utils::PitchClass::NONE) continue;
     mGPositions.push_back(gPositions[i]);
     auto newItem =
         new PositionMarker(gPositions[i], juce::Colour(MARKER_COLOURS[i]));
-    mPositionMarkers.add(newItem);
     addAndMakeVisible(newItem);
   }
-
-  resized();
 }

@@ -60,7 +60,14 @@ GranularSynth::GranularSynth()
   startThread();
 }
 
-GranularSynth::~GranularSynth() { stopThread(4000); }
+GranularSynth::~GranularSynth() { 
+  stopThread(4000);
+  // Get rid of image files
+  auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
+  parentDir.getChildFile(Utils::FILE_SPECTROGRAM).deleteFile();
+  parentDir.getChildFile(Utils::FILE_HPCP).deleteFile();
+  parentDir.getChildFile(Utils::FILE_NOTES).deleteFile();
+}
 
 //==============================================================================
 const juce::String GranularSynth::getName() const {
@@ -314,6 +321,35 @@ void GranularSynth::run() {
 
     wait(waitMs);
   }
+}
+
+std::vector<std::vector<std::vector<float>>*> GranularSynth::getSpecBuffers() {
+  std::vector<std::vector<std::vector<float>>*> buffers;
+  for (int i = 0; i < Utils::SpecType::NUM_TYPES; ++i) {
+    switch (i) { 
+      case Utils::SpecType::LOGO: {
+        buffers.push_back(nullptr);
+        break;
+      }
+      case Utils::SpecType::SPECTROGRAM: {
+        buffers.push_back(mFft.getSpectrum().empty() ? nullptr : &mFft.getSpectrum());
+        break;
+      }
+      case Utils::SpecType::HPCP: {
+        buffers.push_back(mPitchDetector.getHPCP().empty()
+                              ? nullptr
+                              : &mPitchDetector.getHPCP());
+        break;
+      }
+      case Utils::SpecType::NOTES: {
+        buffers.push_back(mPitchDetector.getNotes().empty()
+                              ? nullptr
+                              : &mPitchDetector.getNotes());
+        break;
+      }
+    }
+  }
+  return buffers;
 }
 
 void GranularSynth::processFile(juce::File file) {

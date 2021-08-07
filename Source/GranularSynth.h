@@ -80,6 +80,7 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   std::function<void(double progress)>
       onProgressUpdated = nullptr;
 
+  std::vector<std::vector<std::vector<float>>*> getSpecBuffers();
   void processFile(juce::File file);
   std::vector<GrainPositionFinder::GrainPosition> getCurrentPositions() {
     return mCurPositions;

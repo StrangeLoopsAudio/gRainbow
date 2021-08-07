@@ -41,9 +41,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void timerCallback() override;
 
  private:
-  /* Algorithm Constants */
-  static constexpr auto RECORDING_FILE = "gRainbow_user_recording.wav";
-
   /* UI Layout */
   static constexpr auto BTN_PANEL_HEIGHT = 50;
   static constexpr auto BTN_PADDING = 5;

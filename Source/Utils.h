@@ -53,6 +53,10 @@ class Utils {
                                                       0xFFFF8D52, 0xFF6EFF52};
   static constexpr auto TIMESTRETCH_RATIO =
       1.0594f;  // Constant used for pitch shifting by semitones
+  static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
+  static constexpr auto FILE_SPECTROGRAM = "gRainbow_spec.png";
+  static constexpr auto FILE_HPCP = "gRainbow_hpcp.png";
+  static constexpr auto FILE_NOTES = "gRainbow_notes.png";
   static constexpr float INVALID_VELOCITY = 0.0f;
   struct Note {
     PitchClass pitch;

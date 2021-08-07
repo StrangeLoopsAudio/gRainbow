@@ -93,7 +93,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
 
   std::array<juce::Image, Utils::SpecType::NUM_TYPES> mImages;
   juce::ComboBox mSpecType;
-  juce::OwnedArray<PositionMarker> mPositionMarkers;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
 };
