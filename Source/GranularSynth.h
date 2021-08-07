@@ -96,7 +96,7 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
 
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff(Utils::PitchClass pitchClass);
-  void updateGeneratorStates(std::vector<bool> genStates);
+  void updateGeneratorStates(std::vector<Utils::GeneratorState> genStates);
   void updateGeneratorParameter(Utils::GeneratorColour colour, ParameterType param,
                               float value);
   void updateGlobalParameter(ParameterType param,

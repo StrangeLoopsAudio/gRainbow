@@ -9,7 +9,6 @@
 */
 
 #include "GeneratorBox.h"
-#include "Utils.h"
 #include <JuceHeader.h>
 
 //==============================================================================
@@ -20,16 +19,13 @@ GeneratorBox::GeneratorBox() {
       onPositionChanged(isRight);
     }
   };
-  addAndMakeVisible(mPositionChanger);
-
-  mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                        juce::Colours::blue);
-  mBtnSolo.onClick = [this] {
-    setState(mBtnSolo.getToggleState() ? BoxState::SOLO : BoxState::READY);
+  mPositionChanger.onSoloChanged = [this](bool isSolo) {
+    mState.isSolo = isSolo;
+    refreshState();
     parameterChanged(GranularSynth::ParameterType::SOLO,
-                     mBtnSolo.getToggleState());
+                     isSolo);
   };
-  addAndMakeVisible(mBtnSolo);
+  addAndMakeVisible(mPositionChanger);
 
   /* Knob params */
   auto rotaryParams = juce::Slider::RotaryParameters();
@@ -37,10 +33,10 @@ GeneratorBox::GeneratorBox() {
   rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi; 
   rotaryParams.stopAtEnd = true; 
 
-  mLabelShape.setEnabled(mState == BoxState::READY);
-  mLabelRate.setEnabled(mState == BoxState::READY);
-  mLabelDuration.setEnabled(mState == BoxState::READY);
-  mLabelGain.setEnabled(mState == BoxState::READY);
+  mLabelShape.setEnabled(mState.isEnabled);
+  mLabelRate.setEnabled(mState.isEnabled);
+  mLabelDuration.setEnabled(mState.isEnabled);
+  mLabelGain.setEnabled(mState.isEnabled);
 
   /* Adjust pitch */
   mSliderPitch.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
@@ -212,7 +208,7 @@ GeneratorBox::~GeneratorBox() {}
 void GeneratorBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
-  bool borderLit = (mIsActive || mState == BoxState::SOLO);
+  bool borderLit = mState.shouldPlay();
   juce::Colour fillCol = borderLit
                              ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                              : juce::Colours::darkgrey;
@@ -275,9 +271,6 @@ void GeneratorBox::resized() {
   // Enable and solo buttons
   r.removeFromTop(SECTION_TITLE_HEIGHT);
   auto adjustmentsPanel = r.removeFromTop(ADJUSTMENT_HEIGHT + LABEL_HEIGHT);
-  mBtnSolo.setBounds(
-      adjustmentsPanel.withLeft(adjustmentsPanel.getRight() - TOGGLE_SIZE)
-          .withHeight(TOGGLE_SIZE));
   int adjustKnobWidth = adjustmentsPanel.getWidth() / 3;
   auto pitchKnobPanel = adjustmentsPanel.removeFromLeft(adjustKnobWidth);
   mLabelPitch.setBounds(pitchKnobPanel.removeFromBottom(LABEL_HEIGHT));
@@ -288,7 +281,7 @@ void GeneratorBox::resized() {
   mSliderPosition.setBounds(posKnobPanel.withSizeKeepingCentre(
       posKnobPanel.getHeight() * 2, posKnobPanel.getHeight()));
   mPositionChanger.setBounds(adjustmentsPanel.withSizeKeepingCentre(
-      adjustmentsPanel.getWidth(), adjustmentsPanel.getHeight() / 2));
+      adjustmentsPanel.getWidth(), adjustmentsPanel.getHeight() / 1.5f));
 
   r.removeFromTop(PADDING_SIZE);
 
@@ -333,17 +326,13 @@ void GeneratorBox::resized() {
   mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
-void GeneratorBox::setActive(bool isActive) {
-  mIsActive = isActive;
-  setState(mState);
-}
-
 void GeneratorBox::setPositionNumber(int positionNumber) {
   mPositionChanger.setPositionNumber(positionNumber);
 }
 
 void GeneratorBox::setParams(Utils::GeneratorParams params) {
-  setActive(params.isActive);
+  mState = params.state;
+  refreshState();
   mPositionChanger.setPositionNumber(params.position);
   mSliderPitch.setValue(params.pitchAdjust, juce::dontSendNotification);
   mSliderPosition.setValue(params.posAdjust, juce::dontSendNotification);
@@ -369,20 +358,10 @@ void GeneratorBox::setNumPositions(int numPositions) {
   mPositionChanger.setNumPositions(numPositions);
 }
 
-void GeneratorBox::setState(BoxState state) {
-  mState = state;
+void GeneratorBox::refreshState() {
+  mPositionChanger.setSolo(mState.isSolo);
 
-  if (state == BoxState::SOLO_WAIT) {
-    mBtnSolo.setToggleState(false, juce::dontSendNotification);
-  }
-
-  juce::Colour soloColour = (state != BoxState::SOLO_WAIT)
-                                   ? juce::Colours::blue
-                                   : juce::Colours::darkgrey;
-  mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId, soloColour);
-
-  bool componentsLit = (mIsActive && state == BoxState::READY ||
-                        state == BoxState::SOLO);
+  bool componentsLit = mState.shouldPlay();
   juce::Colour knobColour = componentsLit
                                 ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                                 : juce::Colours::darkgrey;
@@ -452,12 +431,8 @@ void GeneratorBox::setState(BoxState state) {
 }
 
 Utils::GeneratorParams GeneratorBox::getParams() {
-  bool canPlay =
-      mState != GeneratorBox::BoxState::SOLO_WAIT;
-  bool shouldPlay = mIsActive ||
-      mState == GeneratorBox::BoxState::SOLO;
   return Utils::GeneratorParams(
-      canPlay && shouldPlay,
+      mState,
       mPositionChanger.getPositionNumber(),
       mSliderPitch.getValue(),
       mSliderPosition.getValue(), mSliderShape.getValue(),
@@ -469,10 +444,6 @@ Utils::GeneratorParams GeneratorBox::getParams() {
 void GeneratorBox::setColour(Utils::GeneratorColour colour) {
   mColour = colour;
   juce::Colour newColour = juce::Colour(Utils::POSITION_COLOURS[colour]);
-  if (mState == BoxState::READY) {
-    mBtnSolo.setColour(juce::ToggleButton::ColourIds::tickColourId,
-                       juce::Colours::blue);
-  }
   mPositionChanger.setColour(newColour);
   mEnvelopeGrain.setColour(newColour);
   mEnvelopeAmp.setColour(newColour);

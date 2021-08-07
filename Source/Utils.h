@@ -66,8 +66,18 @@ class Utils {
     Note(PitchClass pitch, float velocity) : pitch(pitch), velocity(velocity) {}
   };
 
+  typedef struct GeneratorState {
+    bool isEnabled = false;
+    bool isSolo = false;
+    bool isWaiting = false; // Waiting for other gen to unsolo
+    GeneratorState() {}
+    GeneratorState(bool isEnabled, bool isSolo)
+        : isEnabled(isEnabled), isSolo(isSolo) {}
+    bool shouldPlay() { return (isEnabled && !isWaiting) || isSolo; }
+  } GeneratorState;
+
   typedef struct GeneratorParams {
-    bool  isActive;
+    GeneratorState state;
     int   position; // Position number to play
     float pitchAdjust;
     float posAdjust;
@@ -80,10 +90,10 @@ class Utils {
     float sustain;
     float release;
     GeneratorParams() {}
-    GeneratorParams(bool isActive, int position, float pitchAdjust, float posAdjust,
+    GeneratorParams(GeneratorState state, int position, float pitchAdjust, float posAdjust,
                    float shape, float rate, float duration, float gain,
                    float attack, float decay, float sustain, float release)
-        : isActive(isActive),
+        : state(state),
           position(position),
           pitchAdjust(pitchAdjust),
           posAdjust(posAdjust),

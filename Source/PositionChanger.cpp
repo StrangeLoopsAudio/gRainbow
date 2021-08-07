@@ -14,8 +14,7 @@
 
 //==============================================================================
 PositionChanger::PositionChanger() {
-  // In your constructor, you should add any child components, and
-  // initialise any special settings that your component needs.
+
 }
 
 PositionChanger::~PositionChanger() {}
@@ -25,9 +24,11 @@ void PositionChanger::paint(juce::Graphics& g) {
   juce::Colour bgColour = mIsActive ? mColour : juce::Colours::darkgrey;
 
   int arrowWidth = getWidth() * ARROW_PERC;
+  float soloHeight = getHeight() * SOLO_HEIGHT_PERC;
+  float selectorHeight = getHeight() - soloHeight;
   /* Draw left arrow */
   juce::Path leftPath;
-  leftPath.addEllipse(1, 1, (arrowWidth * 2) - 1, getHeight() - 2);
+  leftPath.addEllipse(1, 1, (arrowWidth * 2) - 1, selectorHeight - 2);
   if (mIsOverLeftArrow) {
     juce::Colour fillColour =
         mIsClickingArrow ? bgColour
@@ -38,15 +39,15 @@ void PositionChanger::paint(juce::Graphics& g) {
   g.setColour(bgColour);
   g.strokePath(leftPath, juce::PathStrokeType(2));
   g.drawArrow(
-      juce::Line<float>(arrowWidth - (arrowWidth * 0.1), getHeight() / 2,
-                        (arrowWidth * 0.3), getHeight() / 2),
+      juce::Line<float>(arrowWidth - (arrowWidth * 0.1), selectorHeight / 2,
+                        (arrowWidth * 0.3), selectorHeight / 2),
       2, 6, 6);
 
   /* Draw right arrow */
   int rightStart = getWidth() * (ARROW_PERC + TITLE_PERC);
   juce::Path rightPath;
   rightPath.addEllipse(rightStart - arrowWidth, 1, (arrowWidth * 2) - 1,
-                       getHeight() - 2);
+                       selectorHeight - 2);
   if (mIsOverRightArrow) {
     juce::Colour fillColour =
         mIsClickingArrow ? bgColour
@@ -57,12 +58,12 @@ void PositionChanger::paint(juce::Graphics& g) {
   g.setColour(bgColour);
   g.strokePath(rightPath, juce::PathStrokeType(2));
   g.drawArrow(
-      juce::Line<float>(rightStart + (arrowWidth * 0.1), getHeight() / 2,
-                        getWidth() - (arrowWidth * 0.3), getHeight() / 2),
+      juce::Line<float>(rightStart + (arrowWidth * 0.1), selectorHeight / 2,
+                        getWidth() - (arrowWidth * 0.3), selectorHeight / 2),
       2, 6, 6);
 
-  juce::Rectangle<int> titleRect = getLocalBounds().withSizeKeepingCentre(
-      getWidth() * TITLE_PERC, getHeight());
+  juce::Rectangle<int> titleRect = getLocalBounds().withHeight(selectorHeight).withSizeKeepingCentre(
+      getWidth() * TITLE_PERC, selectorHeight);
 
   /* Fill in title section to mask ellipses */
   g.setColour(juce::Colours::black);
@@ -80,12 +81,31 @@ void PositionChanger::paint(juce::Graphics& g) {
     g.setColour(bgColour);
     g.drawText(posString, titleRect, juce::Justification::centred);
   }
+
+  /* Solo button */
+  mSoloRect = titleRect.translated(0, selectorHeight)
+                  .withHeight(soloHeight - 2)
+                  .toFloat();
+  if (mIsOverSolo || mIsSolo) {
+    g.setColour(mIsSolo ? juce::Colours::blue
+                        : juce::Colours::blue.withAlpha(0.3f));
+    g.fillRect(mSoloRect);
+  }
+  g.setColour(juce::Colours::blue);
+  g.drawRect(mSoloRect, 2.0f);
+  g.setColour(juce::Colours::white);
+  g.drawFittedText("solo", mSoloRect.reduced(4).toNearestInt(), juce::Justification::centred, 1);
 }
 
 void PositionChanger::resized() {}
 
 void PositionChanger::setActive(bool isActive) {
   mIsActive = isActive;
+  repaint();
+}
+
+void PositionChanger::setSolo(bool isSolo) {
+  mIsSolo = isSolo;
   repaint();
 }
 
@@ -134,18 +154,31 @@ void PositionChanger::updateMouseOver(const juce::MouseEvent& e, bool isDown) {
     mIsOverRightArrow = false;
   }
   mIsClickingArrow = isDown;
+  if (mSoloRect.contains(pos)) {
+    mIsOverSolo = true;
+    if (isDown) {
+      mIsSolo = !mIsSolo;
+      if (onSoloChanged != nullptr) onSoloChanged(mIsSolo);
+    } 
+  } else {
+    mIsOverSolo = false;
+  }
   repaint();
 }
 
 bool PositionChanger::isLeftArrow(juce::Point<float> point) {
   juce::Rectangle<int> arrowRect =
-      getLocalBounds().removeFromLeft(getWidth() * ARROW_PERC);
+      getLocalBounds()
+          .removeFromLeft(getWidth() * ARROW_PERC)
+          .withHeight(getHeight() * (1.0f - SOLO_HEIGHT_PERC));
   return arrowRect.contains(point.toInt());
 }
 
 bool PositionChanger::isRightArrow(juce::Point<float> point) {
   juce::Rectangle<int> arrowRect =
-      getLocalBounds().removeFromRight(getWidth() * ARROW_PERC);
+      getLocalBounds()
+          .removeFromRight(getWidth() * ARROW_PERC)
+          .withHeight(getHeight() * (1.0f - SOLO_HEIGHT_PERC));
   return arrowRect.contains(point.toInt());
 }
 

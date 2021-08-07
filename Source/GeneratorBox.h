@@ -15,6 +15,7 @@
 #include "EnvelopeGrain.h"
 #include "EnvelopeADSR.h"
 #include "PositionChanger.h"
+#include "Utils.h"
 
 //==============================================================================
 /*
@@ -24,15 +25,23 @@ class GeneratorBox : public juce::Component {
   GeneratorBox();
   ~GeneratorBox() override;
 
-  enum BoxState { READY, SOLO, SOLO_WAIT };
-
   void paint(juce::Graphics&) override;
   void resized() override;
 
-  BoxState getState() { return mState; };
-  void setState(BoxState state);
-  bool getActive() { return mIsActive; }
-  void setActive(bool isActive);
+  Utils::GeneratorState getState() { return mState; }
+  void setGeneratorEnabled(bool isEnabled) {
+    mState.isEnabled = isEnabled;
+    refreshState();
+  }
+  void setGeneratorSolo(bool isSolo) {
+    mState.isSolo = isSolo;
+    refreshState();
+  }
+  void setWaiting(bool isWaiting) {
+    mState.isWaiting = isWaiting;
+    refreshState();
+  }
+
   void setPositionNumber(int positionNumber);
   void setParams(Utils::GeneratorParams params);
   void setNumPositions(int numPositions);
@@ -64,13 +73,11 @@ class GeneratorBox : public juce::Component {
 
   /* Bookkeeping */
   Utils::GeneratorColour mColour;
-  BoxState mState = BoxState::READY;
-  bool mIsActive = false;
+  Utils::GeneratorState mState;
 
   /* UI Components */
   /* -- Generator Adjustments */
   PositionChanger mPositionChanger;
-  juce::ToggleButton mBtnSolo;
   juce::Slider mSliderPitch;
   juce::Label mLabelPitch;
   juce::Slider mSliderPosition;
@@ -97,6 +104,7 @@ class GeneratorBox : public juce::Component {
   EnvelopeADSR mEnvelopeAmp;
 
   void parameterChanged(GranularSynth::ParameterType type, float value);
+  void refreshState();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorBox)
 };

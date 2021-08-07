@@ -387,7 +387,7 @@ void GranularSynth::updateCurPositions() {
   std::vector<GrainPositionFinder::GrainPosition> gPosToPlay;
   for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
     int position = mNoteSettings[mCurPitchClass][i].position;
-    if (mNoteSettings[mCurPitchClass][i].isActive &&
+    if (mNoteSettings[mCurPitchClass][i].state.shouldPlay() &&
         gPositions.size() >= (position + 1)) {
       gPositions[position].isActive = true;
       gPosToPlay.push_back(gPositions[position]);
@@ -456,9 +456,9 @@ void GranularSynth::setNoteOff(Utils::PitchClass pitchClass) {
   }
 }
 
-void GranularSynth::updateGeneratorStates(std::vector<bool> genStates) {
+void GranularSynth::updateGeneratorStates(std::vector<Utils::GeneratorState> genStates) {
   for (int i = 0; i < genStates.size(); ++i) {
-    mNoteSettings[mCurPitchClass][i].isActive = genStates[i];
+    mNoteSettings[mCurPitchClass][i].state = genStates[i];
   }
   updateCurPositions();
   // Find gNote corresponding to current note and update its positions
@@ -476,8 +476,9 @@ void GranularSynth::resetParameters() {
   // Set same params for all notes
   for (int i = 0; i < mNoteSettings.size(); ++i) {
     for (int j = 0; j < mNoteSettings[i].size(); ++j) {
+      Utils::GeneratorState state = Utils::GeneratorState(j == 0, false);
       mNoteSettings[i][j] = Utils::GeneratorParams(
-          j == 0, j, PARAM_PITCH_DEFAULT, PARAM_POSITION_DEFAULT,
+          state, j, PARAM_PITCH_DEFAULT, PARAM_POSITION_DEFAULT,
           PARAM_SHAPE_DEFAULT, PARAM_RATE_DEFAULT, PARAM_DURATION_DEFAULT,
           PARAM_GAIN_DEFAULT, PARAM_ATTACK_DEFAULT, PARAM_DECAY_DEFAULT,
           PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT);

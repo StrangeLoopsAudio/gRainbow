@@ -15,20 +15,23 @@
 //==============================================================================
 GeneratorTabs::GeneratorTabs() {
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
-    mBtnsEnabled[i].setToggleState(mCurSelectedTab == i, juce::dontSendNotification);
-    juce::Colour tabColour = mBtnsEnabled[i].getToggleState()
+    mStates.push_back(Utils::GeneratorState(i == 0, false));
+  }
+  for (int i = 0; i < mBtnsEnabled.size(); ++i) {
+    mBtnsEnabled[i].setToggleState(mStates[i].isEnabled, juce::dontSendNotification);
+    juce::Colour tabColour = mStates[i].isEnabled
                                  ? juce::Colour(Utils::POSITION_COLOURS[i])
                                  : juce::Colours::darkgrey;
     mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
                               tabColour);
     mBtnsEnabled[i].onClick = [this, i] {
-      tabChanged((Utils::GeneratorColour)i, mCurSelectedTab == i,
-                 mBtnsEnabled[i].getToggleState());
-      juce::Colour tabColour = mBtnsEnabled[i].getToggleState()
-                                   ? juce::Colour(Utils::POSITION_COLOURS[i])
-                                   : juce::Colours::darkgrey;
-      mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
-                                tabColour);
+      if (!mStates[i].isEnabled) {
+        tabChanged(mCurSelectedTab, false, mStates[mCurSelectedTab].isEnabled);
+        mCurSelectedTab = (Utils::GeneratorColour)i;
+        tabChanged(mCurSelectedTab, true, true);
+      } else {
+        tabChanged((Utils::GeneratorColour)i, mCurSelectedTab == i, false);
+      }
     };
     mBtnsEnabled[i].addMouseListener(this, false);
     addAndMakeVisible(mBtnsEnabled[i]);
@@ -41,10 +44,11 @@ void GeneratorTabs::paint(juce::Graphics& g) {
   float tabWidth = getWidth() / Utils::GeneratorColour::NUM_GEN - 2.0f;
   float curStart = 1.0f;
   for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
-    juce::Colour tabColour = mBtnsEnabled[i].getToggleState()
+    juce::Colour tabColour = (mStates[i].shouldPlay())
                                  ? juce::Colour(Utils::POSITION_COLOURS[i])
                                  : juce::Colours::darkgrey;
-    float tabHeight = (mCurSelectedTab == i) ? getHeight() + 20.0f : getHeight() - 2.0f;
+    float tabHeight =
+        (mCurSelectedTab == i) ? getHeight() + 20.0f : getHeight() - 2.0f;
     juce::Rectangle<float> tabRect =
         juce::Rectangle<float>(curStart, 1.0f, tabWidth, tabHeight);
     if (mCurHoverTab == i && mCurSelectedTab != i) {
@@ -54,8 +58,16 @@ void GeneratorTabs::paint(juce::Graphics& g) {
     g.setColour(tabColour);
     g.drawRoundedRectangle(tabRect, 10.0f, 2.0f);
 
+    juce::Rectangle<int> textRect =
+        juce::Rectangle<int>(mBtnsEnabled[i].getRight(), 0,
+                             tabRect.getRight() - mBtnsEnabled[i].getRight() - 6, getHeight());
+    if (mStates[i].isSolo) {
+      g.setColour(juce::Colours::blue);
+      g.fillRect(textRect.withSizeKeepingCentre(textRect.getWidth() / 2.0f, textRect.getHeight() / 2.0f));
+    }
     g.setColour(juce::Colours::white);
-    g.drawText(juce::String("g") + juce::String(i + 1), tabRect.withHeight(getHeight() - 2.0f), juce::Justification::centred);
+    g.drawFittedText(juce::String("g") + juce::String(i + 1), textRect,
+                     juce::Justification::centred, 1);
     curStart += tabWidth + 2.0f;
   }
 }
@@ -79,22 +91,24 @@ void GeneratorTabs::mouseUp(const juce::MouseEvent& event) {
                  Utils::GeneratorColour::NUM_GEN;
   if (tabClick != mCurSelectedTab) {
     tabChanged(mCurSelectedTab, false,
-               mBtnsEnabled[mCurSelectedTab].getToggleState());
+               mStates[mCurSelectedTab].isEnabled);
     tabChanged((Utils::GeneratorColour)tabClick, true,
-               mBtnsEnabled[tabClick].getToggleState());
+               mStates[tabClick].isEnabled);
   }
   mCurSelectedTab = (Utils::GeneratorColour)tabClick;
   repaint();
 }
 
-void GeneratorTabs::setTabStates(std::vector<bool> tabStates) {
+void GeneratorTabs::setStates(std::vector<Utils::GeneratorState> states) {
+  mStates = states;
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
-    mBtnsEnabled[i].setToggleState(tabStates[i], juce::dontSendNotification);
-    juce::Colour tabColour = tabStates[i]
+    mBtnsEnabled[i].setToggleState(mStates[i].isEnabled,
+                                   juce::dontSendNotification);
+    juce::Colour btnColour = (mStates[i].isEnabled)
                                  ? juce::Colour(Utils::POSITION_COLOURS[i])
                                  : juce::Colours::darkgrey;
     mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
-                              tabColour);
+                              btnColour);
   }
   repaint();
 }

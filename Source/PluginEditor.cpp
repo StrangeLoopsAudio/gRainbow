@@ -95,19 +95,16 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
   mGeneratorTabs.onTabChanged = [this](Utils::GeneratorColour tab,
                                        bool isSelected, bool isEnabled) {
     mGeneratorBoxes[tab].setVisible(isSelected);
-    mGeneratorBoxes[tab].setActive(isEnabled);
+    mGeneratorBoxes[tab].setGeneratorEnabled(isEnabled);
     mSynth.updateGeneratorParameter(tab, GranularSynth::ParameterType::ENABLED,
                                      isEnabled);
-    std::vector<bool> positionStates;
+    std::vector<Utils::GeneratorState> genStates;
     for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
-      bool canPlay =
-          mGeneratorBoxes[i].getState() != GeneratorBox::BoxState::SOLO_WAIT;
-      bool shouldPlay =
-          mGeneratorBoxes[i].getActive() ||
-          mGeneratorBoxes[i].getState() == GeneratorBox::BoxState::SOLO;
-      positionStates.push_back(canPlay && shouldPlay);
+      Utils::GeneratorState state = mGeneratorBoxes[i].getState();
+      genStates.push_back(state);
     }
-    mSynth.updateGeneratorStates(positionStates);
+    mSynth.updateGeneratorStates(genStates);
+    mGeneratorTabs.setStates(genStates);
     mArcSpec.setPositions(mSynth.getCurrentPositions());
   };
   addAndMakeVisible(mGeneratorTabs);
@@ -115,7 +112,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
   /* Position boxes */
   for (int i = 0; i < mGeneratorBoxes.size(); ++i) {
     mGeneratorBoxes[i].setColour((Utils::GeneratorColour)i);
-    mGeneratorBoxes[i].setActive(i == 0);
+    mGeneratorBoxes[i].setGeneratorEnabled(i == 0);
     mGeneratorBoxes[i].setParams(
         mSynth.getGeneratorParams((Utils::GeneratorColour)i));
     mGeneratorBoxes[i].onPositionChanged = [this, i](bool isRight) {
@@ -127,21 +124,16 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
         [this](Utils::GeneratorColour pos, GranularSynth::ParameterType param,
                float value) {
           if (param == GranularSynth::ParameterType::SOLO) {
-            std::vector<bool> positionStates;
+            std::vector<Utils::GeneratorState> genStates;
             for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
               if (i != pos) {
-                mGeneratorBoxes[i].setState(
-                    (value == true) ? GeneratorBox::BoxState::SOLO_WAIT
-                                    : GeneratorBox::BoxState::READY);
+                mGeneratorBoxes[i].setGeneratorSolo(false);
+                mGeneratorBoxes[i].setWaiting(value == true);
               }
-              bool canPlay = mGeneratorBoxes[i].getState() !=
-                             GeneratorBox::BoxState::SOLO_WAIT;
-              bool shouldPlay =
-                  mGeneratorBoxes[i].getActive() ||
-                  mGeneratorBoxes[i].getState() == GeneratorBox::BoxState::SOLO;
-              positionStates.push_back(canPlay && shouldPlay);
+              genStates.push_back(mGeneratorBoxes[i].getState());
             }
-            mSynth.updateGeneratorStates(positionStates);
+            mSynth.updateGeneratorStates(genStates);
+            mGeneratorTabs.setStates(genStates);
           }
           mSynth.updateGeneratorParameter(pos, param, value);
         };
@@ -184,16 +176,15 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
 void GRainbowAudioProcessorEditor::timerCallback() {
   if (mStartedPlayingTrig && mCurPitchClass != Utils::PitchClass::NONE) {
     int numFoundPositions = mSynth.getNumFoundPositions();
-    std::vector<bool> tabStates;
+    std::vector<Utils::GeneratorState> genStates;
     for (int i = 0; i < mGeneratorBoxes.size(); ++i) {
       mGeneratorBoxes[i].setParams(
           mSynth.getGeneratorParams((Utils::GeneratorColour)i));
       mGeneratorBoxes[i].setNumPositions(numFoundPositions);
-      tabStates.push_back(
-          mSynth.getGeneratorParams((Utils::GeneratorColour)i)
-              .isActive);
+      genStates.push_back(
+          mSynth.getGeneratorParams((Utils::GeneratorColour)i).state);
     }
-    mGeneratorTabs.setTabStates(tabStates);
+    mGeneratorTabs.setStates(genStates);
     std::vector<GrainPositionFinder::GrainPosition> positions =
         mSynth.getCurrentPositions();
     mArcSpec.setNoteOn(mCurPitchClass, mSynth.getCurrentPositions());

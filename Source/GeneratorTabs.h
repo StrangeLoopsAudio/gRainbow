@@ -28,7 +28,7 @@ class GeneratorTabs : public juce::Component {
   void mouseExit(const juce::MouseEvent& event) override;
   void mouseUp(const juce::MouseEvent& event) override;
   
-  void setTabStates(std::vector<bool> tabStates);
+  void setStates(std::vector<Utils::GeneratorState> states);
 
   std::function<void(Utils::GeneratorColour tab, bool isSelected,
                      bool isEnabled)>
@@ -43,6 +43,7 @@ class GeneratorTabs : public juce::Component {
 
   /* Bookkeeping */
   Utils::GeneratorColour mCurSelectedTab = Utils::GeneratorColour::BLUE;
+  std::vector<Utils::GeneratorState> mStates;
   int mCurHoverTab = -1;
 
   void tabChanged(Utils::GeneratorColour tab, bool isSelected, bool isEnabled);
