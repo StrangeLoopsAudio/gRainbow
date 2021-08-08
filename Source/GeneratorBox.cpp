@@ -34,6 +34,7 @@ GeneratorBox::GeneratorBox() {
   rotaryParams.stopAtEnd = true; 
 
   mLabelShape.setEnabled(mState.isEnabled);
+  mLabelTilt.setEnabled(mState.isEnabled);
   mLabelRate.setEnabled(mState.isEnabled);
   mLabelDuration.setEnabled(mState.isEnabled);
   mLabelGain.setEnabled(mState.isEnabled);
@@ -83,6 +84,22 @@ GeneratorBox::GeneratorBox() {
   mLabelShape.setText("Shape", juce::dontSendNotification);
   mLabelShape.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelShape);
+
+  /* Tilt */
+  mSliderTilt.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderTilt.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderTilt.setRotaryParameters(rotaryParams);
+  mSliderTilt.setRange(0.0, 1.0, 0.01);
+  mSliderTilt.onValueChange = [this] {
+    mEnvelopeGrain.setTilt(mSliderTilt.getValue());
+    parameterChanged(GranularSynth::ParameterType::TILT,
+                     mSliderTilt.getValue());
+  };
+  addAndMakeVisible(mSliderTilt);
+
+  mLabelTilt.setText("Tilt", juce::dontSendNotification);
+  mLabelTilt.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelTilt);
 
   /* Rate */
   mSliderRate.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
@@ -315,12 +332,14 @@ void GeneratorBox::resized() {
   knobWidth = r.getWidth() / NUM_GRAIN_ENV_PARAMS;
   knobPanel = r.removeFromTop(knobWidth / 2);
   mSliderShape.setBounds(knobPanel.removeFromLeft(knobWidth));
+  mSliderTilt.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderDuration.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderGain.setBounds(knobPanel.removeFromLeft(knobWidth));
 
   labelPanel = r.removeFromTop(LABEL_HEIGHT);
   mLabelShape.setBounds(labelPanel.removeFromLeft(knobWidth));
+  mLabelTilt.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelRate.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelDuration.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
@@ -337,7 +356,9 @@ void GeneratorBox::setParams(Utils::GeneratorParams params) {
   mSliderPitch.setValue(params.pitchAdjust, juce::dontSendNotification);
   mSliderPosition.setValue(params.posAdjust, juce::dontSendNotification);
   mSliderShape.setValue(params.shape, juce::dontSendNotification);
+  mSliderTilt.setValue(params.tilt, juce::dontSendNotification);
   mEnvelopeGrain.setShape(params.shape);
+  mEnvelopeGrain.setTilt(params.tilt);
   mSliderRate.setValue(params.rate, juce::dontSendNotification);
   mEnvelopeGrain.setRate(params.rate);
   mSliderDuration.setValue(params.duration, juce::dontSendNotification);
@@ -410,6 +431,8 @@ void GeneratorBox::refreshState() {
   mEnvelopeGrain.setActive(componentsLit);
   mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                          knobColour);
+  mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                         knobColour);
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                         knobColour);
   mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
@@ -418,6 +441,8 @@ void GeneratorBox::refreshState() {
                         knobColour);
   mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                          knobColour);
+  mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                         knobColour);
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                         knobColour);
   mSliderDuration.setColour(
@@ -425,6 +450,7 @@ void GeneratorBox::refreshState() {
   mSliderGain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                         knobColour);
   mLabelShape.setEnabled(componentsLit);
+  mLabelTilt.setEnabled(componentsLit);
   mLabelRate.setEnabled(componentsLit);
   mLabelDuration.setEnabled(componentsLit);
   mLabelGain.setEnabled(componentsLit);

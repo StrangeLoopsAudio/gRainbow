@@ -57,7 +57,7 @@ class GeneratorBox : public juce::Component {
  private:
   /* Params */
   static constexpr auto NUM_AMP_ENV_PARAMS = 4;
-  static constexpr auto NUM_GRAIN_ENV_PARAMS = 4;
+  static constexpr auto NUM_GRAIN_ENV_PARAMS = 5;
 
   /* UI Layout */
   static constexpr auto PADDING_SIZE = 6;
@@ -84,6 +84,8 @@ class GeneratorBox : public juce::Component {
   /* -- Grain Env */
   juce::Slider mSliderShape;
   juce::Label mLabelShape;
+  juce::Slider mSliderTilt;
+  juce::Label mLabelTilt;
   juce::Slider mSliderRate;
   juce::Label mLabelRate;
   juce::Slider mSliderDuration;

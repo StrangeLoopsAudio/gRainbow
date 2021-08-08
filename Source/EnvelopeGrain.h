@@ -28,6 +28,7 @@ class EnvelopeGrain : public juce::Component {
   void setDuration(float duration);
   void setGain(float gain);
   void setShape(float shape);
+  void setTilt(float tilt);
   void setColour(juce::Colour colour);
 
  private:
@@ -37,6 +38,7 @@ class EnvelopeGrain : public juce::Component {
 
   /* Parameters */
   float mShape = 0.5f;
+  float mTilt = 0.5f;
   float mRate = 0.5f;
   float mDuration = 0.5f;
   float mGain = 0.8f;

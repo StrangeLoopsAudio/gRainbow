@@ -479,10 +479,10 @@ void GranularSynth::resetParameters() {
       Utils::GeneratorState state = Utils::GeneratorState(j == 0, false);
       mNoteSettings[i][j] = Utils::GeneratorParams(
           state, j, PARAM_PITCH_DEFAULT, PARAM_POSITION_DEFAULT,
-          PARAM_SHAPE_DEFAULT, PARAM_RATE_DEFAULT, PARAM_DURATION_DEFAULT,
+          PARAM_SHAPE_DEFAULT, PARAM_TILT_DEFAULT, PARAM_RATE_DEFAULT, PARAM_DURATION_DEFAULT,
           PARAM_GAIN_DEFAULT, PARAM_ATTACK_DEFAULT, PARAM_DECAY_DEFAULT,
           PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT,
-          getGrainEnvelope(PARAM_SHAPE_DEFAULT));
+          getGrainEnvelope(PARAM_SHAPE_DEFAULT, PARAM_TILT_DEFAULT));
     }
   }
 }
@@ -498,7 +498,13 @@ void GranularSynth::updateGeneratorParameter(Utils::GeneratorColour colour,
       break;
     case ParameterType::SHAPE:
       mNoteSettings[mCurPitchClass][colour].shape = value;
-      mNoteSettings[mCurPitchClass][colour].grainEnv = getGrainEnvelope(value);
+      mNoteSettings[mCurPitchClass][colour].grainEnv =
+          getGrainEnvelope(value, mNoteSettings[mCurPitchClass][colour].tilt);
+      break;
+    case ParameterType::TILT:
+      mNoteSettings[mCurPitchClass][colour].tilt = value;
+      mNoteSettings[mCurPitchClass][colour].grainEnv =
+          getGrainEnvelope(mNoteSettings[mCurPitchClass][colour].shape, value);
       break;
     case ParameterType::RATE:
       mNoteSettings[mCurPitchClass][colour].rate = value;
@@ -548,7 +554,7 @@ void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
   }
 }
 
-std::vector<float> GranularSynth::getGrainEnvelope(float shape) {
+std::vector<float> GranularSynth::getGrainEnvelope(float shape, float tilt) {
   std::vector<float> grainEnv;
   // Each half: f(x) = 3nx(1-x)^2 + 3nx^2(1-x) + x^3
   for (int i = 0; i < 512; i++) {

@@ -25,7 +25,8 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
     SOLO,     // If position is solo'd
     PITCH_ADJUST,
     POSITION_ADJUST,
-    SHAPE,    // Grain curve shape
+    SHAPE,    // Grain env ramp width
+    TILT,    // Grain env center tilt
     RATE,     // Grain rate
     DURATION, // Grain duration
     GAIN,     // Max amplitude
@@ -127,7 +128,8 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   static constexpr auto PARAM_PITCH_DEFAULT = 0.5f;
   static constexpr auto PARAM_POSITION_DEFAULT = 0.5f;
   static constexpr auto PARAM_SHAPE_DEFAULT = 0.5f;
-  static constexpr auto PARAM_RATE_DEFAULT = 0.5f;
+  static constexpr auto PARAM_TILT_DEFAULT = 0.5f;
+  static constexpr auto PARAM_RATE_DEFAULT = 0.25f;
   static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
   static constexpr auto PARAM_GAIN_DEFAULT = 0.8f;
   static constexpr auto PARAM_ATTACK_DEFAULT = 0.2f;
@@ -195,7 +197,7 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
       mNoteSettings;
 
   // Generate gaussian envelope to be used for each grain
-  std::vector<float> getGrainEnvelope(float shape);
+  std::vector<float> getGrainEnvelope(float shape, float tilt);
   // Returns maximum release time out of all positions in samples
   void updateCurPositions();
   void updateEnvelopeState(GrainNote& gNote);

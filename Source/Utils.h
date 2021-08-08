@@ -82,6 +82,7 @@ class Utils {
     float pitchAdjust;
     float posAdjust;
     float shape;
+    float tilt;
     float rate;
     float duration;
     float gain;
@@ -92,14 +93,15 @@ class Utils {
     std::vector<float> grainEnv;
     GeneratorParams() {}
     GeneratorParams(GeneratorState state, int position, float pitchAdjust,
-                    float posAdjust, float shape, float rate, float duration,
-                    float gain, float attack, float decay, float sustain,
-                    float release, std::vector<float> grainEnv)
+                    float posAdjust, float shape, float tilt, float rate,
+                    float duration, float gain, float attack, float decay,
+                    float sustain, float release, std::vector<float> grainEnv)
         : state(state),
           position(position),
           pitchAdjust(pitchAdjust),
           posAdjust(posAdjust),
           shape(shape),
+          tilt(tilt),
           rate(rate),
           duration(duration),
           gain(gain),
