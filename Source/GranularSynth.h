@@ -110,6 +110,7 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   // DSP constants
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 2048;
+  static constexpr auto GRAIN_ENV_SIZE = 256;
   // Param bounds
   static constexpr auto MAX_PITCH_ADJUST = 0.25; // In either direction, this equals one octave total
   static constexpr auto MAX_POS_ADJUST = 0.5f; // Max position adjust in terms of pitch duration

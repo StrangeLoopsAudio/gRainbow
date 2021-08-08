@@ -556,21 +556,22 @@ void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
 
 std::vector<float> GranularSynth::getGrainEnvelope(float shape, float tilt) {
   std::vector<float> grainEnv;
-  // Each half: f(x) = 3nx(1-x)^2 + 3nx^2(1-x) + x^3
-  for (int i = 0; i < 512; i++) {
-    float x = (float)i / 512;
-    float t = 3.0f * shape * x * std::pow(1.0f - x, 2.0f) +
-              3.0f * shape * std::pow(x, 2.0f) * (1.0f - x) + std::pow(x, 3.0f);
-    if (t <= 0.5f) {
-      t *= 2.0f;
+  float scaledShape = (shape * GRAIN_ENV_SIZE) / 2.0f;
+  float scaledTilt = tilt * GRAIN_ENV_SIZE;
+  int rampUpEndSample = juce::jmax(0.0f, scaledTilt - scaledShape);
+  int rampDownStartSample = juce::jmin((float)GRAIN_ENV_SIZE, scaledTilt + scaledShape);
+  for (int i = 0; i < GRAIN_ENV_SIZE; i++) {
+    if (i < rampUpEndSample) {
+      grainEnv.push_back((float)i / rampUpEndSample);
+    } else if (i > rampDownStartSample) {
+      grainEnv.push_back(1.0f - (float)(i - rampDownStartSample) /
+                         (GRAIN_ENV_SIZE - rampDownStartSample));
     } else {
-      t = (1.0f - t) * 2.0f;
+      grainEnv.push_back(1.0f);
     }
-    grainEnv.push_back(
-        3.0f * shape * t * std::pow(1.0f - t, 2.0f) +
-                       3.0f * shape * std::pow(t, 2.0f) * (1.0f - t) +
-                       std::pow(t, 3.0f));
   }
+  juce::FloatVectorOperations::clip(grainEnv.data(), grainEnv.data(), 0.0f,
+                                    1.0f, grainEnv.size());
   return grainEnv;
 }
 
