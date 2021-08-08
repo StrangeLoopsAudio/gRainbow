@@ -1,6 +1,10 @@
 # gRainbow
 
+A synthesizer that uses pitch detection to choose candidates for granular synthesis or sampling.
+
 ## Windows
+
+Use the Visual Studio 2019 exporter, or create your own exporter for your IDE in the Projucer
 
 ## Linux
 
