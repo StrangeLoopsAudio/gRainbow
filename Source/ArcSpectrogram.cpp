@@ -41,7 +41,8 @@ ArcSpectrogram::ArcSpectrogram() : juce::Thread("spectrogram thread") {
   mSpecType.addItem("Spectrogram", (int)Utils::SpecType::SPECTROGRAM);
   mSpecType.addItem("Harmonic Profile", (int)Utils::SpecType::HPCP);
   mSpecType.addItem("Detected Pitches", (int)Utils::SpecType::NOTES);
-  mSpecType.setSelectedId(0, juce::dontSendNotification);
+  // TODO: save currently selected image in apvts and restore
+  mSpecType.setSelectedId(imageFile.existsAsFile() ? 1 : 0, juce::dontSendNotification);
   mSpecType.onChange = [this](void) {
     if (mSpecType.getSelectedId() != Utils::SpecType::LOGO) {
       mSpecType.setVisible(true);
@@ -49,6 +50,7 @@ ArcSpectrogram::ArcSpectrogram() : juce::Thread("spectrogram thread") {
     repaint();
   };
   addChildComponent(mSpecType);
+  mSpecType.setVisible(imageFile.existsAsFile());
 }
 
 ArcSpectrogram::~ArcSpectrogram() {

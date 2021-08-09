@@ -17,7 +17,6 @@
 #include <JuceHeader.h>
 
 #include <random>
-
 #include "Fft.h"
 #include "GranularSynth.h"
 #include "TransientDetector.h"
