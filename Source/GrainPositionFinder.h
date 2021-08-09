@@ -20,8 +20,7 @@ class GrainPositionFinder {
     PitchDetector::Pitch pitch;
     float pbRate;  // timestretching ratio based on frequency offset from target
     bool isActive = false;
-    Utils::EnvelopeState envState = Utils::EnvelopeState::ATTACK;
-    float ampEnvLevel = 0.0f;  // Current amplitude envelope level for the pos
+    Utils::EnvelopeADSR ampEnv;
     GrainPosition() : pbRate(1.0f) {}
     GrainPosition(PitchDetector::Pitch pitch, float pbRate)
         : pitch(pitch), pbRate(pbRate) {}

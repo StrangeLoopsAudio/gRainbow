@@ -24,11 +24,9 @@ GranularSynth::GranularSynth()
               )
 #endif
       ,
-      juce::Thread("granular thread"),
       mFft(FFT_SIZE, HOP_SIZE),
       apvts(*this, nullptr, "ScaleNavParams", createParameterLayout()) {
   mTotalSamps = 0;
-  mGrains.ensureStorageAllocated(MAX_GRAINS);
   mFormatManager.registerBasicFormats();
 
   mFft.onProcessingComplete =
@@ -56,12 +54,9 @@ GranularSynth::GranularSynth()
   };
 
   resetParameters();
-
-  startThread();
 }
 
 GranularSynth::~GranularSynth() { 
-  stopThread(4000);
   // Get rid of image files
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   parentDir.getChildFile(Utils::FILE_SPECTROGRAM).deleteFile();
@@ -189,11 +184,16 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
     }
   }
 
-  // Add contributions from each grain
-  juce::Array<Grain> grains = mGrains;  // Copy to avoid threading issues
+  // Add contributions from each note
   for (int i = 0; i < buffer.getNumSamples(); ++i) {
-    for (int g = 0; g < grains.size(); ++g) {
-      grains[g].process(mFileBuffer, buffer, mTotalSamps);
+    for (GrainNote& gNote : mActiveNotes) {
+      float noteGain = gNote.ampEnv.getAmplitude(mTotalSamps);
+      // Add contributions from each grain
+      for (Grain& grain : gNote.grains) {
+        float genGain =
+            gNote.positions[grain.generator].ampEnv.getAmplitude(mTotalSamps);
+        grain.process(mFileBuffer, buffer, noteGain, genGain, mTotalSamps);
+      }
     }
     mTotalSamps++;
   }
@@ -205,8 +205,10 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
                                       buffer.getNumSamples());
   }
 
+  handleGrainAddRemove(buffer.getNumSamples());
+
   // Reset timestamps if no grains active to keep numbers low
-  if (mActiveNotes.isEmpty() && mGrains.isEmpty()) {
+  if (mActiveNotes.isEmpty()) {
     mTotalSamps = 0;
   } else {
     // Normalize the block before sending onward
@@ -252,105 +254,66 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
   return new GranularSynth();
 }
 
+void GranularSynth::handleGrainAddRemove(int blockSize) {
+  if (mIsProcessingComplete) {
+    // Add one grain per active note
+    for (GrainNote& gNote : mActiveNotes) {
+      for (int i = 0; i < gNote.grainTriggers.size(); ++i) {
+        if (gNote.grainTriggers[i] <= 0) {
+          Utils::GeneratorParams params = mNoteSettings[gNote.pitchClass][i];
+          float durMs =
+              juce::jmap(params.duration, MIN_DURATION_MS, MAX_DURATION_MS);
+          // Skip adding new grain if not enabled or full of grains
+          if (i < gNote.positions.size()) {
+            if (gNote.positions[i].isActive &&
+                gNote.grains.size() < MAX_GRAINS) {
+              juce::Random random;
+              GrainPositionFinder::GrainPosition& gPos = gNote.positions[i];
+              float durSamples =
+                  mSampleRate * (durMs / 1000) * (1.0f / gPos.pbRate);
+              float posSamples =
+                  gPos.pitch.posRatio * mFileBuffer.getNumSamples();
+              float posOffset = juce::jmap(
+                  random.nextFloat(), 0.0f,
+                  (gPos.pitch.duration * mFileBuffer.getNumSamples()) -
+                      durSamples);
+              posOffset +=
+                  (params.posAdjust - 0.5f) * MAX_POS_ADJUST * durSamples;
 
-void GranularSynth::run() {
-  float waitMs = MIN_RATE_RATIO * MIN_DURATION_MS;
-  while (!threadShouldExit()) {
-    if (mIsProcessingComplete) {
-      // Add one grain per active note
-      for (GrainNote& gNote : mActiveNotes) {
-        for (int i = 0; i < gNote.grainTriggersMs.size(); ++i) {
-          if (gNote.grainTriggersMs[i] <= 0) {
-            Utils::GeneratorParams params =
-                mNoteSettings[gNote.pitchClass][i];
-            float durMs =
-                juce::jmap(params.duration, MIN_DURATION_MS, MAX_DURATION_MS);
-            // Skip adding new grain if not enabled or full of grains
-            if (i < gNote.positions.size()) {
-              if (gNote.positions[i].isActive && mGrains.size() < MAX_GRAINS) {
-                juce::Random random;
-                GrainPositionFinder::GrainPosition& gPos = gNote.positions[i];
-                float durSamples =
-                    mSampleRate * (durMs / 1000) * (1.0f / gPos.pbRate);
-                float posSamples =
-                    gPos.pitch.posRatio * mFileBuffer.getNumSamples();
-                float posOffset = juce::jmap(
-                    random.nextFloat(), 0.0f,
-                    (gPos.pitch.duration * mFileBuffer.getNumSamples()) -
-                        durSamples);
-                posOffset +=
-                    (params.posAdjust - 0.5f) * MAX_POS_ADJUST * durSamples;
-
-                float rateGainFactor = juce::jmap(
-                    1.0f - params.rate, MIN_RATE_RATIO * 2.0f, MAX_RATE_RATIO);
-                float gain = gNote.ampEnvLevel * gPos.ampEnvLevel *
-                             params.gain * rateGainFactor;
-                float pbRate = gPos.pbRate +
-                               ((params.pitchAdjust - 0.5f) * MAX_PITCH_ADJUST);
-                jassert(gPos.pbRate > 0.1f);
-                auto grain =
-                    Grain(params.grainEnv, durSamples,
-                          pbRate, posSamples + posOffset, mTotalSamps, gain);
-                mGrains.add(grain);
-              }
+              // TODO: normalize with this or something
+              float rateGainFactor = juce::jmap(
+                  1.0f - params.rate, MIN_RATE_RATIO * 2.0f, MAX_RATE_RATIO);
+              float gain = params.gain;
+              float pbRate = gPos.pbRate +
+                             ((params.pitchAdjust - 0.5f) * MAX_PITCH_ADJUST);
+              jassert(gPos.pbRate > 0.1f);
+              auto grain =
+                  Grain((Utils::GeneratorColour)i, params.grainEnv, durSamples,
+                        pbRate, posSamples + posOffset, mTotalSamps, gain);
+              gNote.grains.add(grain);
             }
-            // Reset trigger ts
-            gNote.grainTriggersMs[i] += juce::jmap(1.0f - params.rate, durMs * MIN_RATE_RATIO,
-                           durMs * MAX_RATE_RATIO);
-          } else {
-            gNote.grainTriggersMs[i] -= waitMs;
           }
+          // Reset trigger ts
+          gNote.grainTriggers[i] +=
+              mSampleRate / 1000 *
+              juce::jmap(1.0f - params.rate, durMs * MIN_RATE_RATIO,
+                         durMs * MAX_RATE_RATIO);
+        } else {
+          gNote.grainTriggers[i] -= blockSize;
         }
-
-        // Update amplitude envelope globally and for note
-        updateEnvelopeState(gNote);
-      }
-
-      // Delete expired grains
-      mGrains.removeIf(
-          [this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
-
-      // Delete expired notes
-      long maxReleaseTime =
-          mSampleRate *
-          juce::jmap(mGlobalParams.release, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
-      mActiveNotes.removeIf([this, maxReleaseTime](GrainNote& gNote) {
-        return (mTotalSamps - gNote.noteOffTs) > maxReleaseTime &&
-               gNote.noteOffTs > 0;
-      });
-    }
-
-    wait(waitMs);
-  }
-}
-
-std::vector<std::vector<std::vector<float>>*> GranularSynth::getSpecBuffers() {
-  std::vector<std::vector<std::vector<float>>*> buffers;
-  for (int i = 0; i < Utils::SpecType::NUM_TYPES; ++i) {
-    switch (i) { 
-      case Utils::SpecType::LOGO: {
-        buffers.push_back(nullptr);
-        break;
-      }
-      case Utils::SpecType::SPECTROGRAM: {
-        buffers.push_back(mFft.getSpectrum().empty() ? nullptr : &mFft.getSpectrum());
-        break;
-      }
-      case Utils::SpecType::HPCP: {
-        buffers.push_back(mPitchDetector.getHPCP().empty()
-                              ? nullptr
-                              : &mPitchDetector.getHPCP());
-        break;
-      }
-      case Utils::SpecType::NOTES: {
-        buffers.push_back(mPitchDetector.getNotes().empty()
-                              ? nullptr
-                              : &mPitchDetector.getNotes());
-        break;
       }
     }
   }
-  return buffers;
+  // Delete expired grains
+  for (GrainNote& gNote : mActiveNotes) {
+    gNote.grains.removeIf(
+        [this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
+  }
+
+  // Delete expired notes
+  mActiveNotes.removeIf([this](GrainNote& gNote) {
+    return (gNote.ampEnv.noteOnTs < 0 && gNote.ampEnv.noteOffTs < 0);
+  });
 }
 
 void GranularSynth::processFile(juce::File file) {
@@ -381,15 +344,27 @@ void GranularSynth::processFile(juce::File file) {
 }
 
 void GranularSynth::updateCurPositions() {
-  if (!mIsProcessingComplete) return;
   std::vector<GrainPositionFinder::GrainPosition> gPositions =
       mPositionFinder.findPositions(Utils::MAX_POSITIONS, mCurPitchClass);
   std::vector<GrainPositionFinder::GrainPosition> gPosToPlay;
   for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
-    int position = mNoteSettings[mCurPitchClass][i].position;
+    Utils::GeneratorParams& params = mNoteSettings[mCurPitchClass][i];
+    int position = params.position;
     if (mNoteSettings[mCurPitchClass][i].state.shouldPlay() &&
-        gPositions.size() >= (position + 1)) {
+        position < gPositions.size() && mIsProcessingComplete) {
       gPositions[position].isActive = true;
+      // Copy amp env over to new position
+      if (i < mCurPositions.size())
+        gPositions[position].ampEnv = mCurPositions[i].ampEnv;
+      gPositions[position].ampEnv.attack =
+          mSampleRate *
+          juce::jmap(params.attack, MIN_ATTACK_SEC, MAX_ATTACK_SEC);
+      gPositions[position].ampEnv.decay =
+          mSampleRate * juce::jmap(params.decay, MIN_DECAY_SEC, MAX_DECAY_SEC);
+      gPositions[position].ampEnv.sustain = params.sustain;
+      gPositions[position].ampEnv.release =
+          mSampleRate *
+          juce::jmap(params.release, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
       gPosToPlay.push_back(gPositions[position]);
     } else {
       // Push back an inactive position for the synth
@@ -427,10 +402,13 @@ void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
   for (GrainNote& gNote : mActiveNotes) {
     if (gNote.pitchClass == pitchClass) {
       isPlayingAlready = true;
-      gNote.envState = Utils::EnvelopeState::ATTACK;
+      // Start envelope over
+      gNote.ampEnv.noteOn(mTotalSamps);
       gNote.positions = mCurPositions;
-      gNote.noteOnTs = mTotalSamps;
-      gNote.noteOffTs = -1;
+      // Start position envs over as well
+      for (GrainPositionFinder::GrainPosition& gPos : gNote.positions) {
+        gPos.ampEnv.noteOn(mTotalSamps);
+      }
     }
   }
   if (!isPlayingAlready) {
@@ -438,7 +416,16 @@ void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
         pitchClass,
         std::vector<Utils::GeneratorParams>(mNoteSettings[pitchClass].begin(),
                                             mNoteSettings[pitchClass].end()),
-        mCurPositions, mTotalSamps));
+        mCurPositions,
+        Utils::EnvelopeADSR(
+            mTotalSamps,
+            mSampleRate * juce::jmap(mGlobalParams.attack, MIN_ATTACK_SEC,
+                                     MAX_ATTACK_SEC),
+            mSampleRate *
+                juce::jmap(mGlobalParams.decay, MIN_DECAY_SEC, MAX_DECAY_SEC),
+            mGlobalParams.sustain,
+            mSampleRate * juce::jmap(mGlobalParams.release, MIN_RELEASE_SEC,
+                                     MAX_RELEASE_SEC))));
   }
 }
 
@@ -446,10 +433,9 @@ void GranularSynth::setNoteOff(Utils::PitchClass pitchClass) {
   for (GrainNote& gNote : mActiveNotes) {
     if (gNote.pitchClass == pitchClass) {
       // Set note off timestamp and set env state to release for each pos
-      gNote.noteOffTs = mTotalSamps;
-      gNote.envState = Utils::EnvelopeState::RELEASE;
-      for (int i = 0; i < gNote.positions.size(); ++i) {
-        gNote.positions[i].envState = Utils::EnvelopeState::RELEASE;
+      gNote.ampEnv.noteOff(mTotalSamps);
+      for (GrainPositionFinder::GrainPosition& gPos : gNote.positions) {
+        gPos.ampEnv.noteOff(mTotalSamps);
       }
       break;
     }
@@ -517,15 +503,34 @@ void GranularSynth::updateGeneratorParameter(Utils::GeneratorColour colour,
       break;
     case ParameterType::ATTACK:
       mNoteSettings[mCurPitchClass][colour].attack = value;
+      for (GrainNote& gNote : mActiveNotes) {
+        if (gNote.pitchClass != mCurPitchClass) continue;
+        gNote.positions[colour].ampEnv.attack =
+            mSampleRate * juce::jmap(value, MIN_ATTACK_SEC, MAX_ATTACK_SEC);
+      }
       break;
     case ParameterType::DECAY:
       mNoteSettings[mCurPitchClass][colour].decay = value;
+      for (GrainNote& gNote : mActiveNotes) {
+        if (gNote.pitchClass != mCurPitchClass) continue;
+        gNote.positions[colour].ampEnv.decay =
+            mSampleRate * juce::jmap(value, MIN_DECAY_SEC, MAX_DECAY_SEC);
+      }
       break;
     case ParameterType::SUSTAIN:
       mNoteSettings[mCurPitchClass][colour].sustain = value;
+      for (GrainNote& gNote : mActiveNotes) {
+        if (gNote.pitchClass != mCurPitchClass) continue;
+        gNote.positions[colour].ampEnv.sustain = value;
+      }
       break;
     case ParameterType::RELEASE:
       mNoteSettings[mCurPitchClass][colour].release = value;
+      for (GrainNote& gNote : mActiveNotes) {
+        if (gNote.pitchClass != mCurPitchClass) continue;
+        gNote.positions[colour].ampEnv.release =
+            mSampleRate * juce::jmap(value, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
+      }
       break;
     default:
       break;
@@ -539,15 +544,30 @@ void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
       break;
     case ParameterType::ATTACK:
       mGlobalParams.attack = value;
+      for (GrainNote& gNote : mActiveNotes) {
+        gNote.ampEnv.attack =
+            mSampleRate * juce::jmap(value, MIN_ATTACK_SEC, MAX_ATTACK_SEC);
+      }
       break;
     case ParameterType::DECAY:
       mGlobalParams.decay = value;
+      for (GrainNote& gNote : mActiveNotes) {
+        gNote.ampEnv.decay =
+            mSampleRate * juce::jmap(value, MIN_DECAY_SEC, MAX_DECAY_SEC);
+      }
       break;
     case ParameterType::SUSTAIN:
       mGlobalParams.sustain = value;
+      for (GrainNote& gNote : mActiveNotes) {
+        gNote.ampEnv.sustain = value;
+      }
       break;
     case ParameterType::RELEASE:
       mGlobalParams.release = value;
+      for (GrainNote& gNote : mActiveNotes) {
+        gNote.ampEnv.release =
+            mSampleRate * juce::jmap(value, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
+      }
       break;
     default:
       break;
@@ -575,104 +595,11 @@ std::vector<float> GranularSynth::getGrainEnvelope(float shape, float tilt) {
   return grainEnv;
 }
 
-void GranularSynth::updateEnvelopeState(GrainNote& gNote) {
-  // Update global env state
-  float attackSamples =
-      mSampleRate *
-      juce::jmap(mGlobalParams.attack, MIN_ATTACK_SEC, MAX_ATTACK_SEC);
-  float decaySamples = mSampleRate * juce::jmap(mGlobalParams.decay,
-                                                MIN_DECAY_SEC, MAX_DECAY_SEC);
-  switch (gNote.envState) {
-    case Utils::EnvelopeState::ATTACK: {
-      gNote.ampEnvLevel = juce::jlimit(
-          0.0f, 1.0f, (mTotalSamps - gNote.noteOnTs) / (float)attackSamples);
-      if (gNote.ampEnvLevel >= 1.0f) {
-        gNote.envState = Utils::EnvelopeState::DECAY;
-      }
-      break;
-    }
-    case Utils::EnvelopeState::DECAY: {
-      gNote.ampEnvLevel =
-          juce::jlimit(mGlobalParams.sustain, 1.0f,
-                       1.0f - ((mTotalSamps - attackSamples - gNote.noteOnTs) /
-                               (float)(decaySamples)) *
-                                  (1.0f - mGlobalParams.sustain));
-      if (gNote.ampEnvLevel <= mGlobalParams.sustain) {
-        gNote.envState = Utils::EnvelopeState::SUSTAIN;
-      }
-      break;
-    }
-    case Utils::EnvelopeState::SUSTAIN: {
-      gNote.ampEnvLevel = mGlobalParams.sustain;
-      // Note: setting note off sets state to release, we don't need to
-      // here
-      break;
-    }
-    case Utils::EnvelopeState::RELEASE: {
-      float releaseSamples =
-          mSampleRate *
-          juce::jmap(mGlobalParams.release, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
-      gNote.ampEnvLevel = juce::jlimit(
-          0.0f, mGlobalParams.sustain,
-          mGlobalParams.sustain *
-              (1.0f - (mTotalSamps - gNote.noteOffTs) / (float)releaseSamples));
-      break;
-    }
-  }
-
-  for (int i = 0; i < gNote.positions.size(); ++i) {
-    // Update generator env state
-    GrainPositionFinder::GrainPosition& gPos =
-        gNote.positions[i];
-    Utils::GeneratorParams genParams =
-        mNoteSettings[gNote.pitchClass][i];
-    attackSamples = mSampleRate * juce::jmap(genParams.attack, MIN_ATTACK_SEC,
-                                             MAX_ATTACK_SEC);
-    decaySamples =
-        mSampleRate * juce::jmap(genParams.decay, MIN_DECAY_SEC, MAX_DECAY_SEC);
-    switch (gPos.envState) {
-      case Utils::EnvelopeState::ATTACK: {
-        gPos.ampEnvLevel = juce::jlimit(
-            0.0f, 1.0f, (mTotalSamps - gNote.noteOnTs) / (float)attackSamples);
-        if (gPos.ampEnvLevel >= 1.0f) {
-          gPos.envState = Utils::EnvelopeState::DECAY;
-        }
-        break;
-      }
-      case Utils::EnvelopeState::DECAY: {
-        gPos.ampEnvLevel = juce::jlimit(
-            genParams.sustain, 1.0f,
-            1.0f - ((mTotalSamps - attackSamples - gNote.noteOnTs) /
-                    (float)(decaySamples)) *
-                       (1.0f - genParams.sustain));
-        if (gPos.ampEnvLevel <= genParams.sustain) {
-          gPos.envState = Utils::EnvelopeState::SUSTAIN;
-        }
-        break;
-      }
-      case Utils::EnvelopeState::SUSTAIN: {
-        gPos.ampEnvLevel = genParams.sustain;
-        // Note: setting note off sets state to release, we don't need to
-        // here
-        break;
-      }
-      case Utils::EnvelopeState::RELEASE: {
-        float releaseSamples =
-            mSampleRate *
-            juce::jmap(genParams.release, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
-        gPos.ampEnvLevel = juce::jlimit(
-            0.0f, genParams.sustain,
-            genParams.sustain * (1.0f - (mTotalSamps - gNote.noteOffTs) /
-                                            (float)releaseSamples));
-        break;
-      }
-    }
-  }
-}
-
 juce::AudioProcessorValueTreeState::ParameterLayout
 GranularSynth::createParameterLayout() {
   std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+
+  // TODO: BIG TODO: populate all params for apvts
 
   // Root combobox
   /*params.push_back(std::make_unique<juce::AudioParameterChoice>(

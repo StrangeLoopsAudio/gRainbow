@@ -66,6 +66,76 @@ class Utils {
     Note(PitchClass pitch, float velocity) : pitch(pitch), velocity(velocity) {}
   };
 
+  typedef struct EnvelopeADSR {
+    // All adsr params are in samples (except for sustain amp)
+    int attack = 0; 
+    int decay = 0;
+    float sustain = 0.0f;
+    int release = 0;
+    EnvelopeState state = EnvelopeState::ATTACK;
+    float amplitude = 0.0f;
+    float noteOffAmplitude = 0.0f;
+    int noteOnTs = -1;
+    int noteOffTs = -1;
+    EnvelopeADSR() {}
+    EnvelopeADSR(int ts, int attack, int decay, float sustain, int release)
+    : attack(attack), decay(decay), sustain(sustain), release(release) {
+      noteOn(ts);
+    }
+    void noteOn(int ts) { 
+      noteOnTs = ts;
+      noteOffTs = -1;
+      state = EnvelopeState::ATTACK;
+      amplitude = 0.0f;
+      noteOffAmplitude = 0.0f;
+    }
+    void noteOff(int ts) {
+      noteOnTs = -1;
+      noteOffTs = ts;
+      noteOffAmplitude = amplitude;
+      state = EnvelopeState::RELEASE;
+    }
+    float getAmplitude(int curTs) {
+      float newAmp = 0.0f;
+      switch (state) {
+        case Utils::EnvelopeState::ATTACK: {
+          if (noteOnTs < 0) return 0.0f;
+          newAmp = (curTs - noteOnTs) / (float)attack;
+          if ((curTs - noteOnTs) >= attack) {
+            state = Utils::EnvelopeState::DECAY;
+          }
+          break;
+        }
+        case Utils::EnvelopeState::DECAY: {
+          if (noteOnTs < 0) return 0.0f;
+          newAmp = 1.0f - ((curTs - noteOnTs - attack) / (float)decay) *
+                              (1.0f - sustain);
+          if (curTs - noteOnTs - attack >= decay) {
+            state = Utils::EnvelopeState::SUSTAIN;
+          }
+          break;
+        }
+        case Utils::EnvelopeState::SUSTAIN: {
+          newAmp = sustain;
+          // Note: setting note off sets state to release, we don't need to
+          // here
+          break;
+        }
+        case Utils::EnvelopeState::RELEASE: {
+          if (noteOffTs < 0) return 0.0f;
+          newAmp = noteOffAmplitude - (((curTs - noteOffTs) / (float)release) *
+                                       noteOffAmplitude);
+          if ((curTs - noteOffTs) > release) {
+            noteOffTs = -1;
+          }
+          break;
+        }
+      }
+      amplitude = juce::jlimit(0.0f, 1.0f, newAmp);
+      return amplitude;
+    }
+  } EnvelopeADSR;
+
   typedef struct GeneratorState {
     bool isEnabled = false;
     bool isSolo = false;

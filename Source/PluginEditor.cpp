@@ -17,23 +17,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
       mKeyboard(mSynth.getKeyboardState()),
       mProgressBar(mLoadingProgress) {
 
-  // Load buffers into arc spec if they exist
-  auto buffers = mSynth.getSpecBuffers();
-  for (int i = 0; i < buffers.size(); ++i) {
-    switch (i) {
-      case Utils::SpecType::LOGO: {
-        break;
-      }
-      case Utils::SpecType::SPECTROGRAM:
-      case Utils::SpecType::HPCP:
-      case Utils::SpecType::NOTES: {
-        if (buffers[i] != nullptr)
-          mArcSpec.loadBuffer(buffers[i], (Utils::SpecType)i);
-        break;
-      }
-    }
-  }
-
   mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass,
                                     bool isNoteOn) {
     if (isNoteOn) {

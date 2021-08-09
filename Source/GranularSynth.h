@@ -17,7 +17,7 @@
 #include "PitchDetector.h"
 #include "Utils.h"
 
-class GranularSynth : public juce::AudioProcessor, juce::Thread {
+class GranularSynth : public juce::AudioProcessor {
  public:
 
   enum ParameterType {
@@ -81,7 +81,6 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   std::function<void(double progress)>
       onProgressUpdated = nullptr;
 
-  std::vector<std::vector<std::vector<float>>*> getSpecBuffers();
   void processFile(juce::File file);
   std::vector<GrainPositionFinder::GrainPosition> getCurrentPositions() {
     return mCurPositions;
@@ -103,9 +102,6 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   void updateGlobalParameter(ParameterType param,
                               float value);
 
-  //==============================================================================
-  void run() override;
-
  private:
   // DSP constants
   static constexpr auto FFT_SIZE = 4096;
@@ -124,7 +120,7 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   static constexpr auto MAX_DECAY_SEC = 1.0f;
   static constexpr auto MIN_RELEASE_SEC = 0.01f;
   static constexpr auto MAX_RELEASE_SEC = 1.0f;
-  static constexpr auto MAX_GRAINS = 100; // Max grains active at once
+  static constexpr auto MAX_GRAINS = 20; // Max grains active at once
   // Param defaults
   static constexpr auto PARAM_PITCH_DEFAULT = 0.5f;
   static constexpr auto PARAM_POSITION_DEFAULT = 0.5f;
@@ -141,28 +137,24 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   typedef struct GrainNote {
     Utils::PitchClass pitchClass;
     std::vector<GrainPositionFinder::GrainPosition> positions;
-    Utils::EnvelopeState envState = Utils::EnvelopeState::ATTACK;
-    float ampEnvLevel = 0.0f;  // Current amplitude envelope level
-    long noteOnTs;
-    long noteOffTs;
+    Utils::EnvelopeADSR ampEnv;
+    juce::Array<Grain> grains; // Active grains for note
     std::vector<float>
-        grainTriggersMs;  // Keeps track of triggering grains from each
-                          // position
+        grainTriggers;  // Keeps track of triggering grains from each
+                          // generator
     GrainNote(Utils::PitchClass pitchClass,
               std::vector<Utils::GeneratorParams> genParams,
               std::vector<GrainPositionFinder::GrainPosition> positions,
-              long ts)
+              Utils::EnvelopeADSR ampEnv)
         : pitchClass(pitchClass),
           positions(positions),
-          noteOnTs(ts),
-          noteOffTs(-1) {
+          ampEnv(ampEnv) {
+      grains.ensureStorageAllocated(MAX_GRAINS);
       // Initialize grain triggering timestamps
+      jassert(genParams.size() == positions.size());
       for (int i = 0; i < genParams.size(); ++i) {
-        float durMs =
-            juce::jmap(genParams[i].duration, MIN_DURATION_MS, MAX_DURATION_MS);
-        grainTriggersMs.push_back(juce::jmap(1.0f - genParams[i].rate,
-                                             durMs * MIN_RATE_RATIO,
-                                             durMs * MAX_RATE_RATIO));
+        grainTriggers.push_back(-1); // Trigger first set of grains right away
+        this->positions[i].ampEnv.noteOn(ampEnv.noteOnTs); // Set note on for each position as well
       }
     }
   } GrainNote;
@@ -181,7 +173,6 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
   juce::AudioFormatManager mFormatManager;
 
   /* Grain control */
-  juce::Array<Grain> mGrains; // Active grains
   long mTotalSamps;
   juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
   GrainPositionFinder mPositionFinder;
@@ -199,8 +190,8 @@ class GranularSynth : public juce::AudioProcessor, juce::Thread {
 
   // Generate gaussian envelope to be used for each grain
   std::vector<float> getGrainEnvelope(float shape, float tilt);
-  // Returns maximum release time out of all positions in samples
   void updateCurPositions();
   void updateEnvelopeState(GrainNote& gNote);
+  void handleGrainAddRemove(int blockSize);
   juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 };

@@ -11,9 +11,10 @@
 #include "Grain.h"
 
 void Grain::process(juce::AudioBuffer<float>& fileBuffer,
-                    juce::AudioBuffer<float>& blockBuffer, int time) {
+                    juce::AudioBuffer<float>& blockBuffer, float noteGain,
+                    float genGain, int time) {
   float timePerc = (time - trigTs) / (float)duration;
-  float totalGain = gain * getAmplitude(timePerc);
+  float totalGain = noteGain * genGain * gain * getAmplitude(timePerc);
   const float* fileBuf = fileBuffer.getReadPointer(0);
 
   float unStretchedDuration = duration * pbRate;
