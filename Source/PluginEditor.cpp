@@ -13,6 +13,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
+      mGlobalParamBox(synth.getGlobalParams()),
       mKeyboard(mSynth.getKeyboardState()),
       mProgressBar(mLoadingProgress) {
 
@@ -130,11 +131,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
   addAndMakeVisible(mGeneratorTabs);
 
   /* Global parameter box */
-  mGlobalParamBox.setParams(mSynth.getGlobalParams());
-  mGlobalParamBox.onParameterChanged =
-      [this](GranularSynth::ParameterType param, float value) {
-        mSynth.updateGlobalParameter(param, value);
-      };
   addAndMakeVisible(mGlobalParamBox);
 
   /* Arc spectrogram */

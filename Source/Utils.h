@@ -182,21 +182,24 @@ class Utils {
           grainEnv(grainEnv) {}
   } GeneratorParams;
 
-  typedef struct GlobalParams {
-    float gain;
-    float attack;
-    float decay;
-    float sustain;
-    float release;
-    GlobalParams() {}
-    GlobalParams(float gain, float attack, float decay, float sustain,
-                 float release)
-        : gain(gain),
-          attack(attack),
-          decay(decay),
-          sustain(sustain),
-          release(release) {}
-  } GlobalParams;
+  template <typename CompType, typename CompAttachment>
+  class AttachedComponent {
+   public:
+    AttachedComponent<CompType, CompAttachment>(
+        juce::RangedAudioParameter& param, juce::Component& parent,
+        std::function<void(CompType&)> init = nullptr) {
+      attachment.reset(new CompAttachment(param, component));
+      parent.addAndMakeVisible(component);
+      if (init != nullptr) init(component);
+      attachment->sendInitialUpdate();
+    }
+    CompType component;
+
+   private:
+    std::unique_ptr<CompAttachment> attachment;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AttachedComponent)
+  };
 
   static inline juce::Colour getRainbowColour(int value) {
     jassert(value >= 0 && value <= 6);

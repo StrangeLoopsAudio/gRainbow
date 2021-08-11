@@ -87,7 +87,7 @@ class GranularSynth : public juce::AudioProcessor {
     return mCurPositions;
   }
   Utils::GeneratorParams getGeneratorParams(Utils::GeneratorColour colour);
-  Utils::GlobalParams getGlobalParams() { return mGlobalParams; }
+  GlobalParams& getGlobalParams() { return mGlobalParams; }
   int getNumFoundPositions() {
     return mPositionFinder.findPositions(Utils::MAX_POSITIONS, mCurPitchClass)
         .size();
@@ -99,8 +99,6 @@ class GranularSynth : public juce::AudioProcessor {
   void setNoteOff(Utils::PitchClass pitchClass);
   void updateGeneratorStates(std::vector<Utils::GeneratorState> genStates);
   void updateGeneratorParameter(Utils::GeneratorColour colour, ParameterType param,
-                              float value);
-  void updateGlobalParameter(ParameterType param,
                               float value);
 
  private:
@@ -165,7 +163,6 @@ class GranularSynth : public juce::AudioProcessor {
   Fft mFft;
 
   /* Bookkeeping */
-  NoteParams mNoteParams;
   juce::AudioBuffer<float> mFileBuffer;
   double mSampleRate;
   juce::MidiKeyboardState mKeyboardState;
@@ -180,8 +177,9 @@ class GranularSynth : public juce::AudioProcessor {
   std::vector<GrainPositionFinder::GrainPosition> mCurPositions;
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
 
-  /* Global parameters */
-  Utils::GlobalParams mGlobalParams;
+  /* Parameters */
+  NoteParams mNoteParams;
+  GlobalParams mGlobalParams;
 
   /* Grain generator parameters */
   std::array<

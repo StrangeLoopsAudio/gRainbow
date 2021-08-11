@@ -13,7 +13,7 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-GlobalParamBox::GlobalParamBox() {
+GlobalParamBox::GlobalParamBox(GlobalParams& globalParams) : mGlobalParams(globalParams) {
 
   juce::Colour mainColour = juce::Colours::white;
   /* Amp envelope viz */
@@ -27,82 +27,88 @@ GlobalParamBox::GlobalParamBox() {
   rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi;
   rotaryParams.stopAtEnd = true; 
 
-  /* Attack */
-  mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
-                          mainColour);
-  mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
-                         mainColour);
-  mSliderAttack.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderAttack.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderAttack.setRotaryParameters(rotaryParams);
-  mSliderAttack.setRange(0.0, 1.0, 0.01);
-  mSliderAttack.onValueChange = [this] {
-    mEnvelopeAmp.setAttack(mSliderAttack.getValue());
-    parameterChanged(GranularSynth::ParameterType::ATTACK,
-                     mSliderAttack.getValue());
-  };
-  addAndMakeVisible(mSliderAttack);
+  
 
+  /* Attack */
+  mSliderAttack = std::make_unique<
+      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
+      *mGlobalParams.attack, *this,
+      [mainColour, rotaryParams](juce::Slider& slider) {
+        slider.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                         mainColour);
+        slider.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                         mainColour);
+        slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+        slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+        slider.setRotaryParameters(rotaryParams);
+        slider.setRange(0.0, 1.0, 0.01);
+      });
+  mSliderAttack->component.onValueChange = [this] {
+    mEnvelopeAmp.setAttack(mSliderAttack->component.getValue());
+  };
   mLabelAttack.setText("Attack", juce::dontSendNotification);
   mLabelAttack.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelAttack);
+  addAndMakeVisible(mLabelAttack); 
 
   /* Decay */
-  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
-                          mainColour);
-  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
-                           mainColour);
-  mSliderDecay.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderDecay.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderDecay.setRotaryParameters(rotaryParams);
-  mSliderDecay.setRange(0.0, 1.0, 0.01);
-  mSliderDecay.onValueChange = [this] {
-    mEnvelopeAmp.setDecay(mSliderDecay.getValue());
-    parameterChanged(GranularSynth::ParameterType::DECAY,
-                     mSliderDecay.getValue());
+  mSliderDecay = std::make_unique<
+      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
+      *mGlobalParams.decay, *this,
+      [mainColour, rotaryParams](juce::Slider& slider) {
+        slider.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                         mainColour);
+        slider.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                         mainColour);
+        slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+        slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+        slider.setRotaryParameters(rotaryParams);
+        slider.setRange(0.0, 1.0, 0.01);
+      });
+  mSliderDecay->component.onValueChange = [this] {
+    mEnvelopeAmp.setDecay(mSliderDecay->component.getValue());
   };
-  addAndMakeVisible(mSliderDecay);
-
   mLabelDecay.setText("Decay", juce::dontSendNotification);
   mLabelDecay.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelDecay);
 
   /* Sustain */
-  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+  mSliderSustain = std::make_unique<
+      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
+      *mGlobalParams.sustain, *this,
+      [mainColour, rotaryParams](juce::Slider& slider) {
+        slider.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                          mainColour);
-  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
-                           mainColour);
-  mSliderSustain.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderSustain.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderSustain.setRotaryParameters(rotaryParams);
-  mSliderSustain.setRange(0.0, 1.0, 0.01);
-  mSliderSustain.onValueChange = [this] {
-    mEnvelopeAmp.setSustain(mSliderSustain.getValue());
-    parameterChanged(GranularSynth::ParameterType::SUSTAIN,
-                     mSliderSustain.getValue());
+        slider.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                         mainColour);
+        slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+        slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+        slider.setRotaryParameters(rotaryParams);
+        slider.setRange(0.0, 1.0, 0.01);
+      });
+  mSliderSustain->component.onValueChange = [this] {
+    mEnvelopeAmp.setSustain(mSliderSustain->component.getValue());
   };
-  addAndMakeVisible(mSliderSustain);
-
   mLabelSustain.setText("Sustain", juce::dontSendNotification);
   mLabelSustain.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelSustain);
 
   /* Release */
-  mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
-                           mainColour);
-  mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
-                           mainColour);
-  mSliderRelease.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderRelease.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderRelease.setRotaryParameters(rotaryParams);
-  mSliderRelease.setRange(0.0, 1.0, 0.01);
-  mSliderRelease.onValueChange = [this] {
-    mEnvelopeAmp.setRelease(mSliderRelease.getValue());
-    parameterChanged(GranularSynth::ParameterType::RELEASE,
-                     mSliderRelease.getValue());
+  mSliderRelease = std::make_unique<
+      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
+      *mGlobalParams.release, *this,
+      [mainColour, rotaryParams](juce::Slider& slider) {
+        slider.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
+                         mainColour);
+        slider.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+                         mainColour);
+        slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+        slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+        slider.setRotaryParameters(rotaryParams);
+        slider.setRange(0.0, 1.0, 0.01);
+      });
+  mSliderRelease->component.onValueChange = [this] {
+    mEnvelopeAmp.setRelease(mSliderRelease->component.getValue());
   };
-  addAndMakeVisible(mSliderRelease);
-
   mLabelRelease.setText("Release", juce::dontSendNotification);
   mLabelRelease.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRelease);
@@ -161,32 +167,14 @@ void GlobalParamBox::resized() {
   // Amp env knobs
   auto knobWidth = r.getWidth() / NUM_AMP_ENV_PARAMS;
   auto knobPanel = r.removeFromTop(knobWidth / 2);
-  mSliderAttack.setBounds(knobPanel.removeFromLeft(knobWidth));
-  mSliderDecay.setBounds(knobPanel.removeFromLeft(knobWidth));
-  mSliderSustain.setBounds(knobPanel.removeFromLeft(knobWidth));
-  mSliderRelease.setBounds(knobPanel.removeFromLeft(knobWidth));
+  mSliderAttack->component.setBounds(knobPanel.removeFromLeft(knobWidth));
+  mSliderDecay->component.setBounds(knobPanel.removeFromLeft(knobWidth));
+  mSliderSustain->component.setBounds(knobPanel.removeFromLeft(knobWidth));
+  mSliderRelease->component.setBounds(knobPanel.removeFromLeft(knobWidth));
 
   auto labelPanel = r.removeFromTop(LABEL_HEIGHT);
   mLabelAttack.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelDecay.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelSustain.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelRelease.setBounds(labelPanel.removeFromLeft(knobWidth));
-}
-
-void GlobalParamBox::setParams(Utils::GlobalParams params) {
-  mSliderAttack.setValue(params.attack, juce::dontSendNotification);
-  mEnvelopeAmp.setAttack(params.attack);
-  mSliderDecay.setValue(params.decay, juce::dontSendNotification);
-  mEnvelopeAmp.setDecay(params.decay);
-  mSliderSustain.setValue(params.sustain, juce::dontSendNotification);
-  mEnvelopeAmp.setSustain(params.sustain);
-  mSliderRelease.setValue(params.release, juce::dontSendNotification);
-  mEnvelopeAmp.setRelease(params.release);
-}
-
-void GlobalParamBox::parameterChanged(GranularSynth::ParameterType type,
-                                    float value) {
-  if (onParameterChanged != nullptr) {
-    onParameterChanged(type, value);
-  }
 }

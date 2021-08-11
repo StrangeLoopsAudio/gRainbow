@@ -26,6 +26,7 @@ GranularSynth::GranularSynth()
       ,
       mFft(FFT_SIZE, HOP_SIZE) {
   mNoteParams.addParams(*this);
+  mGlobalParams.addParams(*this);
 
   mTotalSamps = 0;
   mFormatManager.registerBasicFormats();
@@ -431,12 +432,12 @@ void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
         mCurPositions,
         Utils::EnvelopeADSR(
             mTotalSamps,
-            mSampleRate * juce::jmap(mGlobalParams.attack, MIN_ATTACK_SEC,
+            mSampleRate * juce::jmap(mGlobalParams.attack->get(), MIN_ATTACK_SEC,
                                      MAX_ATTACK_SEC),
             mSampleRate *
-                juce::jmap(mGlobalParams.decay, MIN_DECAY_SEC, MAX_DECAY_SEC),
-            mGlobalParams.sustain,
-            mSampleRate * juce::jmap(mGlobalParams.release, MIN_RELEASE_SEC,
+                juce::jmap(mGlobalParams.decay->get(), MIN_DECAY_SEC, MAX_DECAY_SEC),
+            mGlobalParams.sustain->get(),
+            mSampleRate * juce::jmap(mGlobalParams.release->get(), MIN_RELEASE_SEC,
                                      MAX_RELEASE_SEC))));
   }
 }
@@ -468,9 +469,8 @@ void GranularSynth::updateGeneratorStates(std::vector<Utils::GeneratorState> gen
 }
 
 void GranularSynth::resetParameters() {
-  mGlobalParams = Utils::GlobalParams(
-      PARAM_GAIN_DEFAULT, PARAM_ATTACK_DEFAULT, PARAM_DECAY_DEFAULT,
-      PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT);
+  // TODO: reset global parameter values using setValueNotifyingHost
+
   // Set same params for all notes
   for (int i = 0; i < mNoteSettings.size(); ++i) {
     for (int j = 0; j < mNoteSettings[i].size(); ++j) {
@@ -549,7 +549,8 @@ void GranularSynth::updateGeneratorParameter(Utils::GeneratorColour colour,
   }
 }
 
-void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
+// TODO: add listeners to update note info from these changes like below
+/*void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
   switch (param) {
     case ParameterType::GAIN:
       mGlobalParams.gain = value;
@@ -584,7 +585,7 @@ void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
     default:
       break;
   }
-}
+} */
 
 std::vector<float> GranularSynth::getGrainEnvelope(float shape, float tilt) {
   std::vector<float> grainEnv;
