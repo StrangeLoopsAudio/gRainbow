@@ -164,7 +164,6 @@ class GranularSynth : public juce::AudioProcessor {
   Fft mFft;
 
   /* Bookkeeping */
-  juce::AudioProcessorValueTreeState apvts;
   juce::AudioBuffer<float> mFileBuffer;
   double mSampleRate;
   juce::MidiKeyboardState mKeyboardState;
@@ -193,5 +192,4 @@ class GranularSynth : public juce::AudioProcessor {
   void updateCurPositions();
   void updateEnvelopeState(GrainNote& gNote);
   void handleGrainAddRemove(int blockSize);
-  juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 };

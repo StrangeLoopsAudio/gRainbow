@@ -10,10 +10,9 @@
 
 //==============================================================================
 GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
-    GranularSynth& synth, juce::AudioProcessorValueTreeState& apvts)
+    GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
-      apvts(apvts),
       mKeyboard(mSynth.getKeyboardState()),
       mProgressBar(mLoadingProgress) {
 

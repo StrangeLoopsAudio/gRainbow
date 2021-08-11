@@ -24,8 +24,7 @@ GranularSynth::GranularSynth()
               )
 #endif
       ,
-      mFft(FFT_SIZE, HOP_SIZE),
-      apvts(*this, nullptr, "ScaleNavParams", createParameterLayout()) {
+      mFft(FFT_SIZE, HOP_SIZE) {
   mTotalSamps = 0;
   mFormatManager.registerBasicFormats();
 
@@ -228,24 +227,17 @@ bool GranularSynth::hasEditor() const {
 }
 
 juce::AudioProcessorEditor* GranularSynth::createEditor() {
-  return new GRainbowAudioProcessorEditor(*this, apvts);
+  return new GRainbowAudioProcessorEditor(*this);
 }
 
 //==============================================================================
 void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
-  juce::ValueTree state = apvts.copyState();
-  std::unique_ptr<juce::XmlElement> xml(state.createXml());
-  copyXmlToBinary(*xml, destData);
+  
 }
 
 void GranularSynth::setStateInformation(const void* data,
                                                  int sizeInBytes) {
-  std::unique_ptr<juce::XmlElement> xmlState(
-      getXmlFromBinary(data, sizeInBytes));
-
-  if (xmlState.get() != nullptr)
-    if (xmlState->hasTagName(apvts.state.getType()))
-      apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
+  
 }
 
 //==============================================================================
@@ -593,20 +585,4 @@ std::vector<float> GranularSynth::getGrainEnvelope(float shape, float tilt) {
   juce::FloatVectorOperations::clip(grainEnv.data(), grainEnv.data(), 0.0f,
                                     1.0f, grainEnv.size());
   return grainEnv;
-}
-
-juce::AudioProcessorValueTreeState::ParameterLayout
-GranularSynth::createParameterLayout() {
-  std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
-
-  // TODO: BIG TODO: populate all params for apvts
-
-  // Root combobox
-  /*params.push_back(std::make_unique<juce::AudioParameterChoice>(
-      "ROOT", "Root",
-      juce::StringArray("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A",
-                        "A#", "B"),
-      0)); */
-
-  return {params.begin(), params.end()};
 }
