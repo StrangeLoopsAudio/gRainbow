@@ -25,6 +25,8 @@ GranularSynth::GranularSynth()
 #endif
       ,
       mFft(FFT_SIZE, HOP_SIZE) {
+  mNoteParams.addParams(*this);
+
   mTotalSamps = 0;
   mFormatManager.registerBasicFormats();
 
@@ -232,12 +234,30 @@ juce::AudioProcessorEditor* GranularSynth::createEditor() {
 
 //==============================================================================
 void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
-  
+  juce::XmlElement xml("PluginState");
+
+  juce::XmlElement* params = new juce::XmlElement("Params");
+  for (auto& param : getParameters())
+    params->setAttribute(ParamHelper::getParamID(param), param->getValue());
+
+  xml.addChildElement(params);
+
+  copyXmlToBinary(xml, destData);
 }
 
 void GranularSynth::setStateInformation(const void* data,
                                                  int sizeInBytes) {
-  
+  auto xml = getXmlFromBinary(data, sizeInBytes);
+
+  if (xml != nullptr) {
+    auto params = xml->getChildByName("Params");
+    if (params != nullptr) {
+      for (auto& param : getParameters())
+        param->setValueNotifyingHost(params->getDoubleAttribute(
+            ParamHelper::getParamID(param), param->getValue()));
+    }
+
+  }
 }
 
 //==============================================================================

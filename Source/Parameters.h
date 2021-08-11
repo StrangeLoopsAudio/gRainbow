@@ -14,26 +14,36 @@
 
 namespace ParamIDs {
 // Generator params
-static juce::String genEnable{"_gen_enable_"};
-static juce::String genSolo{"_gen_solo_"};
-static juce::String genCandidate{"_gen_candidate_"};
-static juce::String genPitchAdjust{"_gen_pitch_adjust_"};
-static juce::String genPositionAdjust{"_gen_position_adjust_"};
-static juce::String genGrainShape{"_gen_grain_shape_"};
-static juce::String genGrainTilt{"_gen_grain_tilt_"};
-static juce::String genGrainRate{"_gen_grain_rate_"};
-static juce::String genGrainDuration{"_gen_grain_duration_"};
-static juce::String genGrainGain{"_gen_grain_gain_"};
-static juce::String genAttack{"_gen_attack_"};
-static juce::String genDecay{"_gen_decay_"};
-static juce::String genSustain{"_gen_sustain_"};
-static juce::String genRelease{"_gen_release_"};
+static juce::String genEnable{"gen_enable_"};
+static juce::String genSolo{"gen_solo_"};
+static juce::String genCandidate{"gen_candidate_"};
+static juce::String genPitchAdjust{"gen_pitch_adjust_"};
+static juce::String genPositionAdjust{"gen_position_adjust_"};
+static juce::String genGrainShape{"gen_grain_shape_"};
+static juce::String genGrainTilt{"gen_grain_tilt_"};
+static juce::String genGrainRate{"gen_grain_rate_"};
+static juce::String genGrainDuration{"gen_grain_duration_"};
+static juce::String genGrainGain{"gen_grain_gain_"};
+static juce::String genAttack{"gen_attack_"};
+static juce::String genDecay{"gen_decay_"};
+static juce::String genSustain{"gen_sustain_"};
+static juce::String genRelease{"gen_release_"};
 // Global params
 static juce::String globalAttack{"global_attack"};
 static juce::String globalDecay{"global_decay"};
 static juce::String globalSustain{"global_sustain"};
 static juce::String globalRelease{"global_release"};
 }  // namespace ParamIDs
+
+struct ParamHelper {
+  static juce::String getParamID(juce::AudioProcessorParameter* param) {
+    if (auto paramWithID =
+            dynamic_cast<juce::AudioProcessorParameterWithID*>(param))
+      return paramWithID->paramID;
+
+    return param->getName(50);
+  }
+};
 
 static constexpr auto MAX_CANDIDATES = 6;
 static constexpr auto NUM_NOTES = 12;

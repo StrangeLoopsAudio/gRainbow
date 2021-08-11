@@ -16,6 +16,7 @@
 #include "GrainPositionFinder.h"
 #include "PitchDetector.h"
 #include "Utils.h"
+#include "Parameters.h"
 
 class GranularSynth : public juce::AudioProcessor {
  public:
@@ -164,6 +165,7 @@ class GranularSynth : public juce::AudioProcessor {
   Fft mFft;
 
   /* Bookkeeping */
+  NoteParams mNoteParams;
   juce::AudioBuffer<float> mFileBuffer;
   double mSampleRate;
   juce::MidiKeyboardState mKeyboardState;
