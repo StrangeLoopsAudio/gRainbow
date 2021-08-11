@@ -25,6 +25,33 @@ void GlobalParams::addParams(juce::AudioProcessor& p) {
                      juce::NormalisableRange<float>(0.01f, 1.0f), 0.5f));
 }
 
+void CandidateParams::addParams(juce::AudioProcessor& p) {
+  p.addParameter(valid = new juce::AudioParameterBool(
+                     ParamIDs::candidateValid + juce::String(noteIdx) +
+                         juce::String("_") + juce::String(candidateIdx),
+                     "Valid", false));
+  p.addParameter(posRatio = new juce::AudioParameterFloat(
+                     ParamIDs::candidatePosRatio + juce::String(noteIdx) +
+                         juce::String("_") + juce::String(candidateIdx),
+                     "Pos Ratio", juce::NormalisableRange<float>(0.0f, 1.0f),
+                     0.0f));
+  p.addParameter(pbRate = new juce::AudioParameterFloat(
+                     ParamIDs::candidatePbRate + juce::String(noteIdx) +
+                         juce::String("_") + juce::String(candidateIdx),
+                     "Playback Rate",
+                     juce::NormalisableRange<float>(0.01f, 2.0f), 1.0f));
+  p.addParameter(duration = new juce::AudioParameterFloat(
+                     ParamIDs::candidateDuration + juce::String(noteIdx) +
+                         juce::String("_") + juce::String(candidateIdx),
+                     "Duration", juce::NormalisableRange<float>(0.0f, 1.0f),
+                     0.0f));
+  p.addParameter(salience = new juce::AudioParameterFloat(
+                     ParamIDs::candidateDuration + juce::String(noteIdx) +
+                         juce::String("_") + juce::String(candidateIdx),
+                     "Salience", juce::NormalisableRange<float>(0.0f, 1.0f),
+                     0.0f));
+}
+
 void GeneratorParams::addParams(juce::AudioProcessor& p) {
   p.addParameter(enable = new juce::AudioParameterBool(
                      ParamIDs::genEnable + juce::String(genIdx) +
@@ -34,6 +61,10 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
                      ParamIDs::genSolo + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Solo", false));
+  p.addParameter(waiting = new juce::AudioParameterBool(
+                     ParamIDs::genWaiting + juce::String(genIdx) +
+                         juce::String("_") + juce::String(noteIdx),
+                     "Gen Waiting", false));
   p.addParameter(candidate = new juce::AudioParameterInt(
                      ParamIDs::genCandidate + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
@@ -42,7 +73,7 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
                      ParamIDs::genPitchAdjust + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Pitch Adjust",
-                     juce::NormalisableRange<float>(-0.5f, 0.5f), 0.0f));
+                     juce::NormalisableRange<float>(-0.25f, 0.25f), 0.0f));
   p.addParameter(positionAdjust = new juce::AudioParameterFloat(
                      ParamIDs::genPositionAdjust + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
@@ -96,9 +127,33 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
                      0.5f));
 }
 
+void GeneratorParams::updateGrainEnvelope() {
+  grainEnv.clear();
+  float scaledShape = (grainShape->get() * ENV_LUT_SIZE) / 2.0f;
+  float scaledTilt = grainTilt->get() * ENV_LUT_SIZE;
+  int rampUpEndSample = juce::jmax(0.0f, scaledTilt - scaledShape);
+  int rampDownStartSample =
+      juce::jmin((float)ENV_LUT_SIZE, scaledTilt + scaledShape);
+  for (int i = 0; i < ENV_LUT_SIZE; i++) {
+    if (i < rampUpEndSample) {
+      grainEnv.push_back((float)i / rampUpEndSample);
+    } else if (i > rampDownStartSample) {
+      grainEnv.push_back(1.0f - (float)(i - rampDownStartSample) /
+                                    (ENV_LUT_SIZE - rampDownStartSample));
+    } else {
+      grainEnv.push_back(1.0f);
+    }
+  }
+  juce::FloatVectorOperations::clip(grainEnv.data(), grainEnv.data(), 0.0f,
+                                    1.0f, grainEnv.size());
+}
+
 void NoteParam::addParams(juce::AudioProcessor& p) {
   for (auto& generator : generators) {
     generator->addParams(p);
+  }
+  for (auto& candidate : candidates) {
+    candidate->addParams(p);
   }
 }
 

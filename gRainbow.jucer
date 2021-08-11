@@ -70,10 +70,6 @@
         <FILE id="AKnPf2" name="openFileOver.png" compile="0" resource="1"
               file="Source/Resources/openFileOver.png"/>
       </GROUP>
-      <FILE id="kVYLPK" name="GrainPositionFinder.cpp" compile="1" resource="0"
-            file="Source/GrainPositionFinder.cpp"/>
-      <FILE id="fOHW40" name="GrainPositionFinder.h" compile="0" resource="0"
-            file="Source/GrainPositionFinder.h"/>
       <FILE id="KSuUMg" name="Parameters.cpp" compile="1" resource="0" file="Source/Parameters.cpp"/>
       <FILE id="XcFpdr" name="Parameters.h" compile="0" resource="0" file="Source/Parameters.h"/>
       <FILE id="duDEsZ" name="PluginEditor.cpp" compile="1" resource="0"

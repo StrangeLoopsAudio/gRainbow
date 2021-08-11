@@ -22,37 +22,13 @@
  */
 class GeneratorBox : public juce::Component {
  public:
-  GeneratorBox();
+  GeneratorBox(NoteParams& noteParams);
   ~GeneratorBox() override;
 
   void paint(juce::Graphics&) override;
   void resized() override;
 
-  Utils::GeneratorState getState() { return mState; }
-  void setGeneratorEnabled(bool isEnabled) {
-    mState.isEnabled = isEnabled;
-    refreshState();
-  }
-  void setGeneratorSolo(bool isSolo) {
-    mState.isSolo = isSolo;
-    refreshState();
-  }
-  void setWaiting(bool isWaiting) {
-    mState.isWaiting = isWaiting;
-    refreshState();
-  }
-
-  void setPositionNumber(int positionNumber);
-  void setParams(Utils::GeneratorParams params);
-  void setNumPositions(int numPositions);
-
-  void setColour(Utils::GeneratorColour colour);
-  std::function<void(Utils::GeneratorColour pos,
-                     GranularSynth::ParameterType param,
-                     float value)>
-      onParameterChanged = nullptr;
-
-  std::function<void(bool isRight)> onPositionChanged = nullptr;
+  std::function<void(int gen, bool isRight)> onPositionChanged = nullptr;
 
  private:
   /* Params */
@@ -70,9 +46,13 @@ class GeneratorBox : public juce::Component {
   static constexpr auto SECTION_GRAIN_ENV_TITLE = "grain envelope";
   static constexpr auto SECTION_ADJUST_TITLE = "generator adjustments";
 
+  /* Parameters */
+  NoteParams& mNoteParams;
+
   /* Bookkeeping */
   Utils::GeneratorColour mColour;
-  Utils::GeneratorState mState;
+  Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
+  Utils::GeneratorColour mCurSelectedTab = Utils::GeneratorColour::BLUE;
 
   /* UI Components */
   /* -- Generator Adjustments */
@@ -104,7 +84,6 @@ class GeneratorBox : public juce::Component {
   juce::Label mLabelRelease;
   EnvelopeADSR mEnvelopeAmp;
 
-  void parameterChanged(GranularSynth::ParameterType type, float value);
   void refreshState();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorBox)

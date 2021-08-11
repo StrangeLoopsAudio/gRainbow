@@ -12,13 +12,14 @@
 
 #include <JuceHeader.h>
 #include "Utils.h"
+#include "Parameters.h"
 
 //==============================================================================
 /*
  */
 class GeneratorTabs : public juce::Component {
  public:
-  GeneratorTabs();
+  GeneratorTabs(NoteParams& noteParams);
   ~GeneratorTabs() override;
 
   void paint(juce::Graphics&) override;
@@ -28,8 +29,6 @@ class GeneratorTabs : public juce::Component {
   void mouseExit(const juce::MouseEvent& event) override;
   void mouseUp(const juce::MouseEvent& event) override;
   
-  void setStates(std::vector<Utils::GeneratorState> states);
-
   std::function<void(Utils::GeneratorColour tab, bool isSelected,
                      bool isEnabled)>
       onTabChanged = nullptr;
@@ -38,12 +37,15 @@ class GeneratorTabs : public juce::Component {
  private:
   static constexpr auto TOGGLE_SIZE = 16;
 
+  /* Parameters */
+  NoteParams& mNoteParams;
+
   /* UI Components */
   std::array<juce::ToggleButton, Utils::GeneratorColour::NUM_GEN> mBtnsEnabled;
 
   /* Bookkeeping */
+  Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
   Utils::GeneratorColour mCurSelectedTab = Utils::GeneratorColour::BLUE;
-  std::vector<Utils::GeneratorState> mStates;
   int mCurHoverTab = -1;
 
   void tabChanged(Utils::GeneratorColour tab, bool isSelected, bool isEnabled);

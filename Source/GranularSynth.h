@@ -13,7 +13,6 @@
 #include <JuceHeader.h>
 
 #include "Grain.h"
-#include "GrainPositionFinder.h"
 #include "PitchDetector.h"
 #include "Utils.h"
 #include "Parameters.h"
@@ -83,29 +82,18 @@ class GranularSynth : public juce::AudioProcessor {
       onProgressUpdated = nullptr;
 
   void processFile(juce::File file);
-  std::vector<GrainPositionFinder::GrainPosition> getCurrentPositions() {
-    return mCurPositions;
-  }
-  Utils::GeneratorParams getGeneratorParams(Utils::GeneratorColour colour);
+  NoteParams& getNoteParams() { return mNoteParams; }
   GlobalParams& getGlobalParams() { return mGlobalParams; }
-  int getNumFoundPositions() {
-    return mPositionFinder.findPositions(Utils::MAX_POSITIONS, mCurPitchClass)
-        .size();
-  }
   void resetParameters();
   int incrementPosition(int boxNum, bool lookRight);
 
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff(Utils::PitchClass pitchClass);
-  void updateGeneratorStates(std::vector<Utils::GeneratorState> genStates);
-  void updateGeneratorParameter(Utils::GeneratorColour colour, ParameterType param,
-                              float value);
 
  private:
   // DSP constants
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 2048;
-  static constexpr auto GRAIN_ENV_SIZE = 256;
   // Param bounds
   static constexpr auto MAX_PITCH_ADJUST = 0.25; // In either direction, this equals one octave total
   static constexpr auto MAX_POS_ADJUST = 0.5f; // Max position adjust in terms of pitch duration
@@ -113,47 +101,25 @@ class GranularSynth : public juce::AudioProcessor {
   static constexpr auto MAX_DURATION_MS = 300.0f;
   static constexpr auto MIN_RATE_RATIO = .25f;
   static constexpr auto MAX_RATE_RATIO = 1.0f;
-  static constexpr auto MIN_ATTACK_SEC = 0.01f;
-  static constexpr auto MAX_ATTACK_SEC = 1.0f;
-  static constexpr auto MIN_DECAY_SEC = 0.01f;
-  static constexpr auto MAX_DECAY_SEC = 1.0f;
-  static constexpr auto MIN_RELEASE_SEC = 0.01f;
-  static constexpr auto MAX_RELEASE_SEC = 1.0f;
   static constexpr auto MAX_GRAINS = 20; // Max grains active at once
-  // Param defaults
-  static constexpr auto PARAM_PITCH_DEFAULT = 0.5f;
-  static constexpr auto PARAM_POSITION_DEFAULT = 0.5f;
-  static constexpr auto PARAM_SHAPE_DEFAULT = 0.5f;
-  static constexpr auto PARAM_TILT_DEFAULT = 0.5f;
-  static constexpr auto PARAM_RATE_DEFAULT = 0.25f;
-  static constexpr auto PARAM_DURATION_DEFAULT = 0.5f;
-  static constexpr auto PARAM_GAIN_DEFAULT = 0.8f;
-  static constexpr auto PARAM_ATTACK_DEFAULT = 0.2f;
-  static constexpr auto PARAM_DECAY_DEFAULT = 0.2f;
-  static constexpr auto PARAM_SUSTAIN_DEFAULT = 0.8f;
-  static constexpr auto PARAM_RELEASE_DEFAULT = 0.5f;
 
   typedef struct GrainNote {
     Utils::PitchClass pitchClass;
-    std::vector<GrainPositionFinder::GrainPosition> positions;
     Utils::EnvelopeADSR ampEnv;
+    std::array<Utils::EnvelopeADSR, NUM_GENERATORS> genAmpEnvs;
     juce::Array<Grain> grains; // Active grains for note
     std::vector<float>
         grainTriggers;  // Keeps track of triggering grains from each
                           // generator
     GrainNote(Utils::PitchClass pitchClass,
-              std::vector<Utils::GeneratorParams> genParams,
-              std::vector<GrainPositionFinder::GrainPosition> positions,
               Utils::EnvelopeADSR ampEnv)
         : pitchClass(pitchClass),
-          positions(positions),
           ampEnv(ampEnv) {
       grains.ensureStorageAllocated(MAX_GRAINS);
       // Initialize grain triggering timestamps
-      jassert(genParams.size() == positions.size());
-      for (int i = 0; i < genParams.size(); ++i) {
+      for (int i = 0; i < NUM_GENERATORS; ++i) {
         grainTriggers.push_back(-1); // Trigger first set of grains right away
-        this->positions[i].ampEnv.noteOn(ampEnv.noteOnTs); // Set note on for each position as well
+        genAmpEnvs[i].noteOn(ampEnv.noteOnTs); // Set note on for each position as well
       }
     }
   } GrainNote;
@@ -173,23 +139,14 @@ class GranularSynth : public juce::AudioProcessor {
   /* Grain control */
   long mTotalSamps;
   juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
-  GrainPositionFinder mPositionFinder;
-  std::vector<GrainPositionFinder::GrainPosition> mCurPositions;
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
 
   /* Parameters */
   NoteParams mNoteParams;
   GlobalParams mGlobalParams;
 
-  /* Grain generator parameters */
-  std::array<
-      std::array<Utils::GeneratorParams, Utils::GeneratorColour::NUM_GEN>,
-      Utils::PitchClass::COUNT>
-      mNoteSettings;
-
-  // Generate gaussian envelope to be used for each grain
-  std::vector<float> getGrainEnvelope(float shape, float tilt);
-  void updateCurPositions();
-  void updateEnvelopeState(GrainNote& gNote);
   void handleGrainAddRemove(int blockSize);
+  void createCandidates(
+      juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>&
+          detectedPitches);
 };

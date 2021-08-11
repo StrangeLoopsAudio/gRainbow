@@ -16,8 +16,6 @@
 #include "GeneratorBox.h"
 #include "GeneratorTabs.h"
 #include "GlobalParamBox.h"
-#include "GrainPositionFinder.h"
-#include "PitchDetector.h"
 #include "RainbowKeyboard.h"
 #include "RainbowLookAndFeel.h"
 #include "TransientDetector.h"
@@ -62,9 +60,8 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
-  GeneratorTabs mGeneratorTabs;
   GlobalParamBox mGlobalParamBox;
-  std::array<GeneratorBox, Utils::GeneratorColour::NUM_GEN> mGeneratorBoxes;
+  GeneratorBox mGeneratorBox;
   juce::Rectangle<float> mNoteDisplayRect;
 
   /* Bookkeeping */

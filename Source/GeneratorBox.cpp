@@ -12,18 +12,17 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-GeneratorBox::GeneratorBox() {
-
+GeneratorBox::GeneratorBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mPositionChanger.onPositionChanged = [this](bool isRight) {
     if (onPositionChanged != nullptr) {
-      onPositionChanged(isRight);
+      onPositionChanged(mCurSelectedTab, isRight);
     }
   };
   mPositionChanger.onSoloChanged = [this](bool isSolo) {
-    mState.isSolo = isSolo;
+    mNoteParams.notes[mCurPitchClass]
+        ->generators[mCurSelectedTab]
+        ->solo->setValueNotifyingHost(isSolo);
     refreshState();
-    parameterChanged(GranularSynth::ParameterType::SOLO,
-                     isSolo);
   };
   addAndMakeVisible(mPositionChanger);
 
@@ -33,11 +32,14 @@ GeneratorBox::GeneratorBox() {
   rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi; 
   rotaryParams.stopAtEnd = true; 
 
-  mLabelShape.setEnabled(mState.isEnabled);
-  mLabelTilt.setEnabled(mState.isEnabled);
-  mLabelRate.setEnabled(mState.isEnabled);
-  mLabelDuration.setEnabled(mState.isEnabled);
-  mLabelGain.setEnabled(mState.isEnabled);
+  bool enabled = mNoteParams.notes[mCurPitchClass]
+                     ->generators[mCurSelectedTab]
+                     ->enable->get();
+  mLabelShape.setEnabled(enabled);
+  mLabelTilt.setEnabled(enabled);
+  mLabelRate.setEnabled(enabled);
+  mLabelDuration.setEnabled(enabled);
+  mLabelGain.setEnabled(enabled);
 
   /* Adjust pitch */
   mSliderPitch.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
@@ -45,8 +47,7 @@ GeneratorBox::GeneratorBox() {
   mSliderPitch.setRotaryParameters(rotaryParams);
   mSliderPitch.setRange(0.0, 1.0, 0.01);
   mSliderPitch.onValueChange = [this] {
-    parameterChanged(GranularSynth::ParameterType::PITCH_ADJUST,
-                     mSliderPitch.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderPitch);
 
@@ -60,8 +61,7 @@ GeneratorBox::GeneratorBox() {
   mSliderPosition.setRotaryParameters(rotaryParams);
   mSliderPosition.setRange(0.0, 1.0, 0.01);
   mSliderPosition.onValueChange = [this] {
-    parameterChanged(GranularSynth::ParameterType::POSITION_ADJUST,
-                     mSliderPosition.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderPosition);
 
@@ -76,8 +76,7 @@ GeneratorBox::GeneratorBox() {
   mSliderShape.setRange(0.0, 1.0, 0.01);
   mSliderShape.onValueChange = [this] {
     mEnvelopeGrain.setShape(mSliderShape.getValue());
-    parameterChanged(GranularSynth::ParameterType::SHAPE,
-                     mSliderShape.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderShape);
 
@@ -92,8 +91,7 @@ GeneratorBox::GeneratorBox() {
   mSliderTilt.setRange(0.0, 1.0, 0.01);
   mSliderTilt.onValueChange = [this] {
     mEnvelopeGrain.setTilt(mSliderTilt.getValue());
-    parameterChanged(GranularSynth::ParameterType::TILT,
-                     mSliderTilt.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderTilt);
 
@@ -108,8 +106,7 @@ GeneratorBox::GeneratorBox() {
   mSliderRate.setRange(0.0, 1.0, 0.01);
   mSliderRate.onValueChange = [this] {
     mEnvelopeGrain.setRate(mSliderRate.getValue());
-    parameterChanged(GranularSynth::ParameterType::RATE,
-                     mSliderRate.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderRate);
 
@@ -124,8 +121,7 @@ GeneratorBox::GeneratorBox() {
   mSliderDuration.setRange(0.0, 1.0, 0.01);
   mSliderDuration.onValueChange = [this] {
     mEnvelopeGrain.setDuration(mSliderDuration.getValue());
-    parameterChanged(GranularSynth::ParameterType::DURATION,
-                     mSliderDuration.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderDuration);
 
@@ -140,8 +136,7 @@ GeneratorBox::GeneratorBox() {
   mSliderGain.setRange(0.0, 1.0, 0.01);
   mSliderGain.onValueChange = [this] {
     mEnvelopeGrain.setGain(mSliderGain.getValue());
-    parameterChanged(GranularSynth::ParameterType::GAIN,
-                     mSliderGain.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderGain);
 
@@ -162,8 +157,7 @@ GeneratorBox::GeneratorBox() {
   mSliderAttack.setRange(0.0, 1.0, 0.01);
   mSliderAttack.onValueChange = [this] {
     mEnvelopeAmp.setAttack(mSliderAttack.getValue());
-    parameterChanged(GranularSynth::ParameterType::ATTACK,
-                     mSliderAttack.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderAttack);
 
@@ -178,8 +172,7 @@ GeneratorBox::GeneratorBox() {
   mSliderDecay.setRange(0.0, 1.0, 0.01);
   mSliderDecay.onValueChange = [this] {
     mEnvelopeAmp.setDecay(mSliderDecay.getValue());
-    parameterChanged(GranularSynth::ParameterType::DECAY,
-                     mSliderDecay.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderDecay);
 
@@ -194,8 +187,7 @@ GeneratorBox::GeneratorBox() {
   mSliderSustain.setRange(0.0, 1.0, 0.01);
   mSliderSustain.onValueChange = [this] {
     mEnvelopeAmp.setSustain(mSliderSustain.getValue());
-    parameterChanged(GranularSynth::ParameterType::SUSTAIN,
-                     mSliderSustain.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderSustain);
 
@@ -210,8 +202,7 @@ GeneratorBox::GeneratorBox() {
   mSliderRelease.setRange(0.0, 1.0, 0.01);
   mSliderRelease.onValueChange = [this] {
     mEnvelopeAmp.setRelease(mSliderRelease.getValue());
-    parameterChanged(GranularSynth::ParameterType::RELEASE,
-                     mSliderRelease.getValue());
+    // TODO: set param
   };
   addAndMakeVisible(mSliderRelease);
 
@@ -225,7 +216,9 @@ GeneratorBox::~GeneratorBox() {}
 void GeneratorBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
-  bool borderLit = mState.shouldPlay();
+  GeneratorParams* gen =
+      mNoteParams.notes[mCurPitchClass]->generators[mCurSelectedTab].get();
+  bool borderLit = Utils::shouldPlay(gen->enable->get(), gen->solo->get(), gen->waiting->get());
   juce::Colour fillCol = borderLit
                              ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                              : juce::Colours::darkgrey;
@@ -345,44 +338,19 @@ void GeneratorBox::resized() {
   mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
-void GeneratorBox::setPositionNumber(int positionNumber) {
-  mPositionChanger.setPositionNumber(positionNumber);
-}
-
-void GeneratorBox::setParams(Utils::GeneratorParams params) {
-  mState = params.state;
-  refreshState();
-  mPositionChanger.setPositionNumber(params.position);
-  mSliderPitch.setValue(params.pitchAdjust, juce::dontSendNotification);
-  mSliderPosition.setValue(params.posAdjust, juce::dontSendNotification);
-  mSliderShape.setValue(params.shape, juce::dontSendNotification);
-  mSliderTilt.setValue(params.tilt, juce::dontSendNotification);
-  mEnvelopeGrain.setShape(params.shape);
-  mEnvelopeGrain.setTilt(params.tilt);
-  mSliderRate.setValue(params.rate, juce::dontSendNotification);
-  mEnvelopeGrain.setRate(params.rate);
-  mSliderDuration.setValue(params.duration, juce::dontSendNotification);
-  mEnvelopeGrain.setDuration(params.duration);
-  mSliderGain.setValue(params.gain, juce::dontSendNotification);
-  mEnvelopeGrain.setGain(params.gain);
-  mSliderAttack.setValue(params.attack, juce::dontSendNotification);
-  mEnvelopeAmp.setAttack(params.attack);
-  mSliderDecay.setValue(params.decay, juce::dontSendNotification);
-  mEnvelopeAmp.setDecay(params.decay);
-  mSliderSustain.setValue(params.sustain, juce::dontSendNotification);
-  mEnvelopeAmp.setSustain(params.sustain);
-  mSliderRelease.setValue(params.release, juce::dontSendNotification);
-  mEnvelopeAmp.setRelease(params.release);
-}
-
-void GeneratorBox::setNumPositions(int numPositions) {
-  mPositionChanger.setNumPositions(numPositions);
-}
-
 void GeneratorBox::refreshState() {
-  mPositionChanger.setSolo(mState.isSolo);
+  GeneratorParams* gen =
+      mNoteParams.notes[mCurPitchClass]->generators[mCurSelectedTab].get();
+  mPositionChanger.setSolo(gen->solo->get());
 
-  bool componentsLit = mState.shouldPlay();
+  mColour = mCurSelectedTab;
+  juce::Colour newColour =
+      juce::Colour(Utils::POSITION_COLOURS[mCurSelectedTab]);
+  mPositionChanger.setColour(newColour);
+  mEnvelopeGrain.setColour(newColour);
+  mEnvelopeAmp.setColour(newColour);
+
+  bool componentsLit = Utils::shouldPlay(gen->enable->get(), gen->solo->get(), gen->waiting->get());
   juce::Colour knobColour = componentsLit
                                 ? juce::Colour(Utils::POSITION_COLOURS[mColour])
                                 : juce::Colours::darkgrey;
@@ -455,20 +423,4 @@ void GeneratorBox::refreshState() {
   mLabelDuration.setEnabled(componentsLit);
   mLabelGain.setEnabled(componentsLit);
   repaint();
-}
-
-void GeneratorBox::setColour(Utils::GeneratorColour colour) {
-  mColour = colour;
-  juce::Colour newColour = juce::Colour(Utils::POSITION_COLOURS[colour]);
-  mPositionChanger.setColour(newColour);
-  mEnvelopeGrain.setColour(newColour);
-  mEnvelopeAmp.setColour(newColour);
-  repaint();
-}
-
-void GeneratorBox::parameterChanged(GranularSynth::ParameterType type,
-                                   float value) {
-  if (onParameterChanged != nullptr) {
-    onParameterChanged(mColour, type, value);
-  }
 }
