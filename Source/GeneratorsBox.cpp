@@ -30,7 +30,8 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
       }
       mNoteParams.notes[mCurPitchClass]
           ->generators[i]
-          ->enable->setValueNotifyingHost(mBtnsEnabled[i].getToggleState());
+          ->enable->setValueNotifyingHost(
+              !mNoteParams.notes[mCurPitchClass]->generators[i]->enable->get());
       refreshState();
     };
     mBtnsEnabled[i].addMouseListener(this, false);
@@ -46,7 +47,21 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedTab]
         ->solo->setValueNotifyingHost(isSolo);
-
+    if (isSolo) {
+      mNoteParams.notes[mCurPitchClass]
+          ->generators[mCurSelectedTab]
+          ->waiting->setValueNotifyingHost(false);
+    }
+    for (int i = 0; i < NUM_GENERATORS; ++i) {
+      if (i != mCurSelectedTab) {
+        mNoteParams.notes[mCurPitchClass]
+            ->generators[i]
+            ->solo->setValueNotifyingHost(false);
+        mNoteParams.notes[mCurPitchClass]
+            ->generators[i]
+            ->waiting->setValueNotifyingHost(isSolo);
+      }
+    }
     refreshState();
   };
   addAndMakeVisible(mPositionChanger);
@@ -234,6 +249,8 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mLabelRelease.setText("Release", juce::dontSendNotification);
   mLabelRelease.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRelease);
+
+  refreshState();
 }
 
 GeneratorsBox::~GeneratorsBox() {}
@@ -427,11 +444,14 @@ void GeneratorsBox::resized() {
 }
 
 void GeneratorsBox::mouseMove(const juce::MouseEvent& event) {
-  if (event.y > TABS_HEIGHT) return;
-  int tabHover = (event.getEventRelativeTo(this).getPosition().getX() /
-                  (float)getWidth()) *
-                 Utils::GeneratorColour::NUM_GEN;
-  mCurHoverTab = tabHover;
+  if (event.y > TABS_HEIGHT) {
+    mCurHoverTab = -1;
+  } else {
+    int tabHover = (event.getEventRelativeTo(this).getPosition().getX() /
+                    (float)getWidth()) *
+                   Utils::GeneratorColour::NUM_GEN;
+    mCurHoverTab = tabHover;
+  }
   repaint();
 }
 
