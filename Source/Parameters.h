@@ -42,6 +42,26 @@ static juce::String globalSustain{"global_sustain"};
 static juce::String globalRelease{"global_release"};
 }  // namespace ParamIDs
 
+namespace ParamRanges {
+static juce::NormalisableRange<float> PITCH_ADJUST(-0.25f, 0.25f);
+static juce::NormalisableRange<float> POSITION_ADJUST(-0.5f, 0.5f);
+static juce::NormalisableRange<float> GRAIN_RATE(0.25f, 1.0f);
+static juce::NormalisableRange<float> GRAIN_DURATION(60.0f, 300.0f);
+static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
+static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
+static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
+} // namespace ParamRanges
+
+namespace ParamDefaults {
+static float GRAIN_RATE_DEFAULT = 0.5f;
+static float GRAIN_DURATION_DEFAULT_MS = 100.f;
+static float GRAIN_GAIN_DEFAULT = 0.8f;
+static float ATTACK_DEFAULT_SEC = 0.2f;
+static float DECAY_DEFAULT_SEC = 0.2f;
+static float SUSTAIN_DEFAULT = 0.8f;
+static float RELEASE_DEFAULT_SEC = 0.2f;
+} // namespace ParamDefaults
+
 struct ParamHelper {
   static juce::String getParamID(juce::AudioProcessorParameter* param) {
     if (auto paramWithID =

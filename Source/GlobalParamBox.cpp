@@ -13,8 +13,8 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-GlobalParamBox::GlobalParamBox(GlobalParams& globalParams) : mGlobalParams(globalParams) {
-
+GlobalParamBox::GlobalParamBox(GlobalParams& globalParams)
+    : mGlobalParams(globalParams) {
   juce::Colour mainColour = juce::Colours::white;
   /* Amp envelope viz */
   mEnvelopeAmp.setActive(true);
@@ -25,9 +25,7 @@ GlobalParamBox::GlobalParamBox(GlobalParams& globalParams) : mGlobalParams(globa
   auto rotaryParams = juce::Slider::RotaryParameters();
   rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
   rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi;
-  rotaryParams.stopAtEnd = true; 
-
-  
+  rotaryParams.stopAtEnd = true;
 
   /* Attack */
   mSliderAttack = std::make_unique<
@@ -41,14 +39,15 @@ GlobalParamBox::GlobalParamBox(GlobalParams& globalParams) : mGlobalParams(globa
         slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         slider.setRotaryParameters(rotaryParams);
-        slider.setRange(0.0, 1.0, 0.01);
+        slider.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end,
+                        0.01);
       });
   mSliderAttack->component.onValueChange = [this] {
-    mEnvelopeAmp.setAttack(mSliderAttack->component.getValue());
+    mEnvelopeAmp.setAttack(ParamRanges::ATTACK.convertTo0to1(mSliderAttack->component.getValue()));
   };
   mLabelAttack.setText("Attack", juce::dontSendNotification);
   mLabelAttack.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelAttack); 
+  addAndMakeVisible(mLabelAttack);
 
   /* Decay */
   mSliderDecay = std::make_unique<
@@ -62,10 +61,10 @@ GlobalParamBox::GlobalParamBox(GlobalParams& globalParams) : mGlobalParams(globa
         slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         slider.setRotaryParameters(rotaryParams);
-        slider.setRange(0.0, 1.0, 0.01);
+        slider.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
       });
   mSliderDecay->component.onValueChange = [this] {
-    mEnvelopeAmp.setDecay(mSliderDecay->component.getValue());
+    mEnvelopeAmp.setDecay(ParamRanges::DECAY.convertTo0to1(mSliderDecay->component.getValue()));
   };
   mLabelDecay.setText("Decay", juce::dontSendNotification);
   mLabelDecay.setJustificationType(juce::Justification::centredTop);
@@ -104,10 +103,11 @@ GlobalParamBox::GlobalParamBox(GlobalParams& globalParams) : mGlobalParams(globa
         slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         slider.setRotaryParameters(rotaryParams);
-        slider.setRange(0.0, 1.0, 0.01);
+        slider.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end,
+                        0.01);
       });
   mSliderRelease->component.onValueChange = [this] {
-    mEnvelopeAmp.setRelease(mSliderRelease->component.getValue());
+    mEnvelopeAmp.setRelease(ParamRanges::RELEASE.convertTo0to1(mSliderRelease->component.getValue()));
   };
   mLabelRelease.setText("Release", juce::dontSendNotification);
   mLabelRelease.setJustificationType(juce::Justification::centredTop);
@@ -120,7 +120,7 @@ void GlobalParamBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
   juce::Colour mainColour = juce::Colours::white;
-  
+
   // Global param title
   juce::Rectangle<float> titleRect =
       juce::Rectangle<float>(0.0f, 0.0f, getWidth(), MAIN_TITLE_HEIGHT)

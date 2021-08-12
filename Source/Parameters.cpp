@@ -13,16 +13,17 @@
 void GlobalParams::addParams(juce::AudioProcessor& p) {
   p.addParameter(attack = new juce::AudioParameterFloat(
                      ParamIDs::globalAttack, "Master Attack",
-                     juce::NormalisableRange<float>(0.01f, 1.0f), 0.2f));
+                     ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
   p.addParameter(decay = new juce::AudioParameterFloat(
-                     ParamIDs::globalDecay, "Master Decay",
-                     juce::NormalisableRange<float>(0.01f, 1.0f), 0.2f));
+                     ParamIDs::globalDecay, "Master Decay", ParamRanges::DECAY,
+                     ParamDefaults::DECAY_DEFAULT_SEC));
   p.addParameter(sustain = new juce::AudioParameterFloat(
                      ParamIDs::globalSustain, "Master Sustain",
-                     juce::NormalisableRange<float>(0.0f, 1.0f), 0.8f));
+                     juce::NormalisableRange<float>(0.0f, 1.0f),
+                     ParamDefaults::SUSTAIN_DEFAULT));
   p.addParameter(release = new juce::AudioParameterFloat(
                      ParamIDs::globalRelease, "Master Release",
-                     juce::NormalisableRange<float>(0.01f, 1.0f), 0.5f));
+                     ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
 }
 
 void CandidateParams::addParams(juce::AudioProcessor& p) {
@@ -72,13 +73,12 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
   p.addParameter(pitchAdjust = new juce::AudioParameterFloat(
                      ParamIDs::genPitchAdjust + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
-                     "Gen Pitch Adjust",
-                     juce::NormalisableRange<float>(-0.25f, 0.25f), 0.0f));
+                     "Gen Pitch Adjust", ParamRanges::PITCH_ADJUST, 0.0f));
   p.addParameter(positionAdjust = new juce::AudioParameterFloat(
                      ParamIDs::genPositionAdjust + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
-                     "Gen Position Adjust",
-                     juce::NormalisableRange<float>(-0.5f, 0.5f), 0.0f));
+                     "Gen Position Adjust", ParamRanges::POSITION_ADJUST,
+                     0.0f));
 
   p.addParameter(grainShape = new juce::AudioParameterFloat(
                      ParamIDs::genGrainShape + juce::String(genIdx) +
@@ -95,40 +95,39 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
   p.addParameter(grainRate = new juce::AudioParameterFloat(
                      ParamIDs::genGrainRate + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
-                     "Gen Grain Rate",
-                     juce::NormalisableRange<float>(0.25f, 1.0f), 0.5f));
+                     "Gen Grain Rate", ParamRanges::GRAIN_RATE,
+                     ParamDefaults::GRAIN_RATE_DEFAULT));
   p.addParameter(grainDuration = new juce::AudioParameterFloat(
                      ParamIDs::genGrainDuration + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
-                     "Gen Grain Duration",
-                     juce::NormalisableRange<float>(60.0f, 300.0f), 100.0f));
+                     "Gen Grain Duration", ParamRanges::GRAIN_DURATION,
+                     ParamDefaults::GRAIN_DURATION_DEFAULT_MS));
   p.addParameter(grainGain = new juce::AudioParameterFloat(
                      ParamIDs::genGrainGain + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Grain Gain",
-                     juce::NormalisableRange<float>(0.0f, 1.0f), 0.8f));
+                     juce::NormalisableRange<float>(0.0f, 1.0f),
+                     ParamDefaults::GRAIN_GAIN_DEFAULT));
   p.addParameter(attack = new juce::AudioParameterFloat(
                      ParamIDs::genAttack + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
-                     "Gen Attack", juce::NormalisableRange<float>(0.01f, 1.0f),
-                     0.2f));
+                     "Gen Attack", ParamRanges::ATTACK,
+                     ParamDefaults::ATTACK_DEFAULT_SEC));
   p.addParameter(decay = new juce::AudioParameterFloat(
                      ParamIDs::genDecay + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
-                     "Gen Decay", juce::NormalisableRange<float>(0.01f, 1.0f),
-                     0.2f));
+                     "Gen Decay", ParamRanges::DECAY,
+                     ParamDefaults::DECAY_DEFAULT_SEC));
   p.addParameter(sustain = new juce::AudioParameterFloat(
                      ParamIDs::genSustain + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Sustain", juce::NormalisableRange<float>(0.0f, 1.0f),
-                     0.8f));
+                     ParamDefaults::SUSTAIN_DEFAULT));
   p.addParameter(release = new juce::AudioParameterFloat(
                      ParamIDs::genRelease + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
-                     "Gen Release", juce::NormalisableRange<float>(0.01f, 1.0f),
-                     0.5f));
-  
-  
+                     "Gen Release", ParamRanges::RELEASE,
+                     ParamDefaults::RELEASE_DEFAULT_SEC));
 }
 
 void GeneratorParams::addListener(

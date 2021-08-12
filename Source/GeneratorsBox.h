@@ -97,6 +97,7 @@ class GeneratorsBox : public juce::Component,
 
   void changeTab(Utils::GeneratorColour newTab);
   void refreshState();
+  void updateParameter(int idx, float value);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorsBox)
 };

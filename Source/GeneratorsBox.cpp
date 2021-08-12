@@ -69,7 +69,8 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderPitch.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderPitch.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderPitch.setRotaryParameters(rotaryParams);
-  mSliderPitch.setRange(0.0, 1.0, 0.01);
+  mSliderPitch.setRange(ParamRanges::PITCH_ADJUST.start,
+                        ParamRanges::PITCH_ADJUST.end, 0.01);
   mSliderPitch.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedTab]
@@ -85,7 +86,8 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderPosition.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderPosition.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderPosition.setRotaryParameters(rotaryParams);
-  mSliderPosition.setRange(0.0, 1.0, 0.01);
+  mSliderPosition.setRange(ParamRanges::POSITION_ADJUST.start,
+                           ParamRanges::POSITION_ADJUST.end, 0.01);
   mSliderPosition.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedTab]
@@ -133,7 +135,8 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderRate.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderRate.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderRate.setRotaryParameters(rotaryParams);
-  mSliderRate.setRange(0.0, 1.0, 0.01);
+  mSliderRate.setRange(ParamRanges::GRAIN_RATE.start,
+                       ParamRanges::GRAIN_RATE.end, 0.01);
   mSliderRate.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedTab]
@@ -149,7 +152,9 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderDuration.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderDuration.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderDuration.setRotaryParameters(rotaryParams);
-  mSliderDuration.setRange(0.0, 1.0, 0.01);
+  mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start,
+                           ParamRanges::GRAIN_DURATION.end,
+                           0.01);
   mSliderDuration.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedTab]
@@ -187,7 +192,8 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderAttack.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderAttack.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderAttack.setRotaryParameters(rotaryParams);
-  mSliderAttack.setRange(0.0, 1.0, 0.01);
+  mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end,
+                         0.01);
   mSliderAttack.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedTab]
@@ -203,7 +209,7 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderDecay.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderDecay.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderDecay.setRotaryParameters(rotaryParams);
-  mSliderDecay.setRange(0.0, 1.0, 0.01);
+  mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
   mSliderDecay.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedTab]
@@ -235,7 +241,7 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderRelease.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderRelease.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderRelease.setRotaryParameters(rotaryParams);
-  mSliderRelease.setRange(0.0, 1.0, 0.01);
+  mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
   mSliderRelease.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedTab]
@@ -468,11 +474,20 @@ void GeneratorsBox::mouseUp(const juce::MouseEvent& event) {
 }
 
 void GeneratorsBox::parameterValueChanged(int idx, float value) {
+  juce::MessageManager::callAsync(
+      [auto sp = GeneratorsBox::SafePointer<GeneratorsBox>(this), idx, value] {
+        if (sp == nullptr) return;
+        sp->updateParameter(idx, value);
+      });
+}
+
+void GeneratorsBox::updateParameter(int idx, float value) {
   GeneratorParams* gen =
       mNoteParams.notes[mCurPitchClass]->generators[mCurSelectedTab].get();
 
   if (idx == gen->enable->getParameterIndex()) {
-    mBtnsEnabled[mCurSelectedTab].setToggleState(value, juce::dontSendNotification);
+    mBtnsEnabled[mCurSelectedTab].setToggleState(value,
+                                                 juce::dontSendNotification);
     refreshState();
   } else if (idx == gen->solo->getParameterIndex()) {
     mPositionChanger.setSolo(value);
@@ -507,25 +522,26 @@ void GeneratorsBox::parameterValueChanged(int idx, float value) {
     mEnvelopeGrain.setTilt(value);
   } else if (idx == gen->grainRate->getParameterIndex()) {
     mSliderRate.setValue(value, juce::dontSendNotification);
-    mEnvelopeGrain.setRate(value);
+    mEnvelopeGrain.setRate(ParamRanges::GRAIN_RATE.convertTo0to1(value));
   } else if (idx == gen->grainDuration->getParameterIndex()) {
     mSliderDuration.setValue(value, juce::dontSendNotification);
-    mEnvelopeGrain.setDuration(value);
+    mEnvelopeGrain.setDuration(
+        ParamRanges::GRAIN_DURATION.convertTo0to1(value));
   } else if (idx == gen->grainGain->getParameterIndex()) {
     mSliderGain.setValue(value, juce::dontSendNotification);
     mEnvelopeGrain.setGain(value);
   } else if (idx == gen->attack->getParameterIndex()) {
     mSliderAttack.setValue(value, juce::dontSendNotification);
-    mEnvelopeAmp.setAttack(value);
+    mEnvelopeAmp.setAttack(ParamRanges::ATTACK.convertTo0to1(value));
   } else if (idx == gen->decay->getParameterIndex()) {
     mSliderDecay.setValue(value, juce::dontSendNotification);
-    mEnvelopeAmp.setDecay(value);
+    mEnvelopeAmp.setDecay(ParamRanges::DECAY.convertTo0to1(value));
   } else if (idx == gen->sustain->getParameterIndex()) {
     mSliderSustain.setValue(value, juce::dontSendNotification);
     mEnvelopeAmp.setSustain(value);
   } else if (idx == gen->release->getParameterIndex()) {
     mSliderRelease.setValue(value, juce::dontSendNotification);
-    mEnvelopeAmp.setRelease(value);
+    mEnvelopeAmp.setRelease(ParamRanges::RELEASE.convertTo0to1(value));
   }
 }
 
