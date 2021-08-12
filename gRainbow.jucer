@@ -11,20 +11,13 @@
               file="Source/GlobalParamBox.cpp"/>
         <FILE id="B9m0eJ" name="GlobalParamBox.h" compile="0" resource="0"
               file="Source/GlobalParamBox.h"/>
-        <FILE id="h9GepA" name="GeneratorBox.cpp" compile="1" resource="0"
-              file="Source/GeneratorBox.cpp"/>
-        <FILE id="rzErFn" name="GeneratorBox.h" compile="0" resource="0" file="Source/GeneratorBox.h"/>
+        <FILE id="h9GepA" name="GeneratorsBox.cpp" compile="1" resource="0"
+              file="Source/GeneratorsBox.cpp"/>
+        <FILE id="rzErFn" name="GeneratorsBox.h" compile="0" resource="0" file="Source/GeneratorsBox.h"/>
         <FILE id="EcGiwq" name="PositionChanger.cpp" compile="1" resource="0"
               file="Source/PositionChanger.cpp"/>
         <FILE id="HWBliz" name="PositionChanger.h" compile="0" resource="0"
               file="Source/PositionChanger.h"/>
-        <FILE id="hqlpBh" name="PositionMarker.cpp" compile="1" resource="0"
-              file="Source/PositionMarker.cpp"/>
-        <FILE id="VcStbT" name="PositionMarker.h" compile="0" resource="0"
-              file="Source/PositionMarker.h"/>
-        <FILE id="WZl1r6" name="GeneratorTabs.cpp" compile="1" resource="0"
-              file="Source/GeneratorTabs.cpp"/>
-        <FILE id="fBYUSZ" name="GeneratorTabs.h" compile="0" resource="0" file="Source/GeneratorTabs.h"/>
         <FILE id="z3F1iQ" name="RainbowKeyboard.cpp" compile="1" resource="0"
               file="Source/RainbowKeyboard.cpp"/>
         <FILE id="h6qcMW" name="RainbowKeyboard.h" compile="0" resource="0"

@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    GeneratorBox.h
+    GeneratorsBox.h
     Created: 27 Jun 2021 3:49:17pm
     Author:  brady
 
@@ -20,13 +20,17 @@
 //==============================================================================
 /*
  */
-class GeneratorBox : public juce::Component {
+class GeneratorsBox : public juce::Component {
  public:
-  GeneratorBox(NoteParams& noteParams);
-  ~GeneratorBox() override;
+  GeneratorsBox(NoteParams& noteParams);
+  ~GeneratorsBox() override;
 
   void paint(juce::Graphics&) override;
   void resized() override;
+
+  void mouseMove(const juce::MouseEvent& event) override;
+  void mouseExit(const juce::MouseEvent& event) override;
+  void mouseUp(const juce::MouseEvent& event) override;
 
   std::function<void(int gen, bool isRight)> onPositionChanged = nullptr;
 
@@ -36,6 +40,7 @@ class GeneratorBox : public juce::Component {
   static constexpr auto NUM_GRAIN_ENV_PARAMS = 5;
 
   /* UI Layout */
+  static constexpr auto TABS_HEIGHT = 30;
   static constexpr auto PADDING_SIZE = 6;
   static constexpr auto ADJUSTMENT_HEIGHT = 40;
   static constexpr auto TOGGLE_SIZE = 16;
@@ -50,11 +55,13 @@ class GeneratorBox : public juce::Component {
   NoteParams& mNoteParams;
 
   /* Bookkeeping */
-  Utils::GeneratorColour mColour;
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
   Utils::GeneratorColour mCurSelectedTab = Utils::GeneratorColour::BLUE;
+  int mCurHoverTab = -1;
 
   /* UI Components */
+  /* -- Generator Tabs*/
+  std::array<juce::ToggleButton, Utils::GeneratorColour::NUM_GEN> mBtnsEnabled;
   /* -- Generator Adjustments */
   PositionChanger mPositionChanger;
   juce::Slider mSliderPitch;
@@ -86,5 +93,5 @@ class GeneratorBox : public juce::Component {
 
   void refreshState();
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorBox)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorsBox)
 };

@@ -13,8 +13,7 @@
 #include "ArcSpectrogram.h"
 #include "AudioRecorder.h"
 #include "Fft.h"
-#include "GeneratorBox.h"
-#include "GeneratorTabs.h"
+#include "GeneratorsBox.h"
 #include "GlobalParamBox.h"
 #include "RainbowKeyboard.h"
 #include "RainbowLookAndFeel.h"
@@ -61,7 +60,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
   GlobalParamBox mGlobalParamBox;
-  GeneratorBox mGeneratorBox;
+  GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
 
   /* Bookkeeping */

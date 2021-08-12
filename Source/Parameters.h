@@ -75,10 +75,7 @@ struct CandidateParams {
 };
 
 struct GeneratorParams : juce::AudioProcessorParameter::Listener {
-  GeneratorParams(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {
-    grainShape->addListener(this);
-    grainTilt->addListener(this);
-  }
+  GeneratorParams(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {}
   ~GeneratorParams() {
     grainShape->removeListener(this);
     grainTilt->removeListener(this);

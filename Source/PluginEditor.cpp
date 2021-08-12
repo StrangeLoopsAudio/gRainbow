@@ -14,7 +14,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     : AudioProcessorEditor(&synth),
       mSynth(synth),
       mGlobalParamBox(synth.getGlobalParams()),
-      mGeneratorTabs(synth.getNoteParams()),
+      mGeneratorsBox(synth.getNoteParams()),
       mKeyboard(mSynth.getKeyboardState()),
       mProgressBar(mLoadingProgress) {
 
@@ -24,7 +24,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
       mCurPitchClass = pitchClass;
       mStartedPlayingTrig = true;
     } else {
-      mArcSpec.setNoteOff();
+      //mArcSpec.setNoteOff();
     }
   };
 
@@ -76,10 +76,10 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
   addAndMakeVisible(mBtnRecord);
 
   /* Generators box */
-  mGeneratorBox.onPositionChanged = [this](int gen, bool isRight) {
+  mGeneratorsBox.onPositionChanged = [this](int gen, bool isRight) {
     mSynth.incrementPosition(gen, isRight);
   };
-  addAndMakeVisible(mGeneratorBox);
+  addAndMakeVisible(mGeneratorsBox);
 
   /* Global parameter box */
   addAndMakeVisible(mGlobalParamBox);
@@ -172,7 +172,7 @@ void GRainbowAudioProcessorEditor::resized() {
 
   // Generators box
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
-  mGeneratorBox.setBounds(leftPanel);
+  mGeneratorsBox.setBounds(leftPanel);
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
   mGlobalParamBox.setBounds(rightPanel);

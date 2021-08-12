@@ -46,7 +46,7 @@ void CandidateParams::addParams(juce::AudioProcessor& p) {
                      "Duration", juce::NormalisableRange<float>(0.0f, 1.0f),
                      0.0f));
   p.addParameter(salience = new juce::AudioParameterFloat(
-                     ParamIDs::candidateDuration + juce::String(noteIdx) +
+                     ParamIDs::candidateSalience + juce::String(noteIdx) +
                          juce::String("_") + juce::String(candidateIdx),
                      "Salience", juce::NormalisableRange<float>(0.0f, 1.0f),
                      0.0f));
@@ -56,7 +56,7 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
   p.addParameter(enable = new juce::AudioParameterBool(
                      ParamIDs::genEnable + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
-                     "Gen Enable", false));
+                     "Gen Enable", genIdx == 0));
   p.addParameter(solo = new juce::AudioParameterBool(
                      ParamIDs::genSolo + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
@@ -85,11 +85,13 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Grain Shape",
                      juce::NormalisableRange<float>(0.0f, 1.0f), 0.5f));
+  grainShape->addListener(this);
   p.addParameter(grainTilt = new juce::AudioParameterFloat(
                      ParamIDs::genGrainTilt + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Grain Tilt",
                      juce::NormalisableRange<float>(0.0f, 1.0f), 0.5f));
+  grainTilt->addListener(this);
   p.addParameter(grainRate = new juce::AudioParameterFloat(
                      ParamIDs::genGrainRate + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
@@ -125,6 +127,8 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Release", juce::NormalisableRange<float>(0.01f, 1.0f),
                      0.5f));
+  
+  
 }
 
 void GeneratorParams::updateGrainEnvelope() {

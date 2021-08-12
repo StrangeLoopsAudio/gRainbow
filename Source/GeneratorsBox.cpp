@@ -1,18 +1,42 @@
 /*
   ==============================================================================
 
-    GeneratorBox.cpp
+    GeneratorsBox.cpp
     Created: 27 Jun 2021 3:49:17pm
     Author:  brady
 
   ==============================================================================
 */
 
-#include "GeneratorBox.h"
+#include "GeneratorsBox.h"
 #include <JuceHeader.h>
 
 //==============================================================================
-GeneratorBox::GeneratorBox(NoteParams& noteParams) : mNoteParams(noteParams) {
+GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
+
+  for (int i = 0; i < mBtnsEnabled.size(); ++i) {
+    GeneratorParams* gen =
+        mNoteParams.notes[mCurPitchClass]->generators[i].get();
+    mBtnsEnabled[i].setToggleState(gen->enable->get(),
+                                   juce::dontSendNotification);
+    juce::Colour tabColour = gen->enable->get()
+                                 ? juce::Colour(Utils::POSITION_COLOURS[i])
+                                 : juce::Colours::darkgrey;
+    mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
+                              tabColour);
+    mBtnsEnabled[i].onClick = [this, i] {
+      if (!mNoteParams.notes[mCurPitchClass]->generators[i]->enable->get()) {
+        mCurSelectedTab = (Utils::GeneratorColour)i;
+      }
+      mNoteParams.notes[mCurPitchClass]
+          ->generators[i]
+          ->enable->setValueNotifyingHost(mBtnsEnabled[i].getToggleState());
+      refreshState();
+    };
+    mBtnsEnabled[i].addMouseListener(this, false);
+    addAndMakeVisible(mBtnsEnabled[i]);
+  }
+
   mPositionChanger.onPositionChanged = [this](bool isRight) {
     if (onPositionChanged != nullptr) {
       onPositionChanged(mCurSelectedTab, isRight);
@@ -22,6 +46,7 @@ GeneratorBox::GeneratorBox(NoteParams& noteParams) : mNoteParams(noteParams) {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedTab]
         ->solo->setValueNotifyingHost(isSolo);
+
     refreshState();
   };
   addAndMakeVisible(mPositionChanger);
@@ -211,33 +236,87 @@ GeneratorBox::GeneratorBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   addAndMakeVisible(mLabelRelease);
 }
 
-GeneratorBox::~GeneratorBox() {}
+GeneratorsBox::~GeneratorsBox() {}
 
-void GeneratorBox::paint(juce::Graphics& g) {
+void GeneratorsBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
   GeneratorParams* gen =
       mNoteParams.notes[mCurPitchClass]->generators[mCurSelectedTab].get();
-  bool borderLit = Utils::shouldPlay(gen->enable->get(), gen->solo->get(), gen->waiting->get());
-  juce::Colour fillCol = borderLit
-                             ? juce::Colour(Utils::POSITION_COLOURS[mColour])
-                             : juce::Colours::darkgrey;
+  bool borderLit = Utils::shouldPlay(gen->enable->get(), gen->solo->get(),
+                                     gen->waiting->get());
+  juce::Colour fillCol =
+      borderLit ? juce::Colour(Utils::POSITION_COLOURS[mCurSelectedTab])
+                : juce::Colours::darkgrey;
   g.setColour(fillCol);
+  g.drawRoundedRectangle(getLocalBounds()
+                             .withHeight(getHeight() + 10)
+                             .translated(0, -11)
+                             .toFloat()
+                             .reduced(1.0f),
+                         10.0f, 2.0f);
 
-  // Lines to connect to tab
+  g.setColour(juce::Colours::black);
+  g.fillRect(0, 0, getWidth(), TABS_HEIGHT);
+
   float tabWidth = getWidth() / Utils::GeneratorColour::NUM_GEN;
-  if (mColour > 0) {
-    g.drawLine(1.0f, 0.0f, mColour * tabWidth + 2.0f, 0.0f,
-               3.0f);
+  float curStart = 1.0f;
+  for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
+    GeneratorParams* gen =
+        mNoteParams.notes[mCurPitchClass]->generators[i].get();
+    juce::Colour tabColour =
+        Utils::shouldPlay(gen->enable->get(), gen->solo->get(),
+                          gen->waiting->get())
+            ? juce::Colour(Utils::POSITION_COLOURS[i])
+            : juce::Colours::darkgrey;
+    float tabHeight =
+        (mCurSelectedTab == i) ? TABS_HEIGHT + 20.0f : TABS_HEIGHT - 2.0f;
+    juce::Rectangle<float> tabRect =
+        juce::Rectangle<float>(curStart, 1.0f, tabWidth - 2.0f, tabHeight);
+    if (mCurHoverTab == i && mCurSelectedTab != i) {
+      g.setColour(tabColour.withAlpha(0.3f));
+      g.fillRoundedRectangle(tabRect, 10.0f);
+    }
+    g.setColour(tabColour);
+    g.drawRoundedRectangle(tabRect, 10.0f, 2.0f);
+
+    juce::Rectangle<int> textRect = juce::Rectangle<int>(
+        mBtnsEnabled[i].getRight(), 0,
+        tabRect.getRight() - mBtnsEnabled[i].getRight() - 6, TABS_HEIGHT);
+    if (gen->solo->get()) {
+      g.setColour(juce::Colours::blue);
+      g.fillRect(textRect.withSizeKeepingCentre(textRect.getWidth() / 2.0f,
+                                                textRect.getHeight() / 2.0f));
+    }
+    g.setColour(juce::Colours::white);
+    g.drawFittedText(juce::String("g") + juce::String(i + 1), textRect,
+                     juce::Justification::centred, 1);
+    curStart += tabWidth;
   }
-  if (mColour < Utils::GeneratorColour::NUM_GEN - 1) {
-    g.drawLine((mColour + 1) * tabWidth - 2.0f, 0.0f, getWidth() - 1.0f, 0.0f,
-               3.0f);
+
+  // Black out extended tabs with black rect
+  g.setColour(juce::Colours::black);
+  g.fillRect(2.0f, (float)TABS_HEIGHT, (float)getWidth() - 4.0f, 20.0f);
+
+  
+  // Lines to connect to tab
+  g.setColour(fillCol);
+  if (mCurSelectedTab > 0) {
+    g.drawLine(1.0f, TABS_HEIGHT, mCurSelectedTab * tabWidth + 2.0f,
+               TABS_HEIGHT,
+               2.0f);
+  }
+  if (mCurSelectedTab < Utils::GeneratorColour::NUM_GEN - 1) {
+    g.drawLine((mCurSelectedTab + 1) * tabWidth - 2.0f, TABS_HEIGHT,
+               getWidth(), TABS_HEIGHT,
+               2.0f);
   }
 
   // Adjustments section title
   juce::Rectangle<int> adjustTitleRect = juce::Rectangle<int>(
-      0, PADDING_SIZE / 2, getWidth(), SECTION_TITLE_HEIGHT).reduced(PADDING_SIZE, PADDING_SIZE / 2);
+          0, mPositionChanger.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2),
+          getWidth(), SECTION_TITLE_HEIGHT)
+          .reduced(PADDING_SIZE, PADDING_SIZE / 2);
   g.setColour(fillCol);
   g.fillRect(adjustTitleRect);
   g.setColour(juce::Colours::black);
@@ -265,13 +344,22 @@ void GeneratorBox::paint(juce::Graphics& g) {
   g.setColour(juce::Colours::black);
   g.drawText(juce::String(SECTION_GRAIN_ENV_TITLE), grainEnvTitleRect,
              juce::Justification::centred);
-
-  g.setColour(fillCol);
-  g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.0f), 10.0f, 2.0f);
 }
 
-void GeneratorBox::resized() {
+void GeneratorsBox::resized() {
   auto r = getLocalBounds();
+
+  // Enable/disable buttons
+  juce::Rectangle<int> btnRect = juce::Rectangle<int>(TOGGLE_SIZE, TOGGLE_SIZE);
+  float tabWidth = getWidth() / Utils::GeneratorColour::NUM_GEN - 2.0f;
+  float curStart = 1.0f;
+  for (int i = 0; i < mBtnsEnabled.size(); ++i) {
+    mBtnsEnabled[i].setBounds(btnRect.withCentre(
+        juce::Point<int>(curStart + (TOGGLE_SIZE / 2) + 5, TABS_HEIGHT / 2)));
+    curStart += tabWidth + 2.0f;
+  }
+  r.removeFromTop(TABS_HEIGHT);
+
   // Add insets
   r.removeFromTop(PADDING_SIZE);
   r.removeFromLeft(PADDING_SIZE);
@@ -338,21 +426,55 @@ void GeneratorBox::resized() {
   mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
-void GeneratorBox::refreshState() {
+void GeneratorsBox::mouseMove(const juce::MouseEvent& event) {
+  if (event.y > TABS_HEIGHT) return;
+  int tabHover = (event.getEventRelativeTo(this).getPosition().getX() /
+                  (float)getWidth()) *
+                 Utils::GeneratorColour::NUM_GEN;
+  mCurHoverTab = tabHover;
+  repaint();
+}
+
+void GeneratorsBox::mouseExit(const juce::MouseEvent& event) {
+  if (event.y > TABS_HEIGHT) return;
+  mCurHoverTab = -1;
+  repaint();
+}
+
+void GeneratorsBox::mouseUp(const juce::MouseEvent& event) {
+  if (event.y > TABS_HEIGHT) return;
+  if (event.eventComponent != this) return;
+  int tabClick = (event.getEventRelativeTo(this).getPosition().getX() /
+                  (float)getWidth()) *
+                 Utils::GeneratorColour::NUM_GEN;
+  mCurSelectedTab = (Utils::GeneratorColour)tabClick;
+  refreshState();
+  repaint();
+}
+
+void GeneratorsBox::refreshState() {
   GeneratorParams* gen =
       mNoteParams.notes[mCurPitchClass]->generators[mCurSelectedTab].get();
   mPositionChanger.setSolo(gen->solo->get());
 
-  mColour = mCurSelectedTab;
   juce::Colour newColour =
       juce::Colour(Utils::POSITION_COLOURS[mCurSelectedTab]);
   mPositionChanger.setColour(newColour);
   mEnvelopeGrain.setColour(newColour);
   mEnvelopeAmp.setColour(newColour);
 
+  for (int i = 0; i < mBtnsEnabled.size(); ++i) {
+    juce::Colour tabColour =
+        mNoteParams.notes[mCurPitchClass]->generators[i]->enable->get()
+            ? juce::Colour(Utils::POSITION_COLOURS[i])
+            : juce::Colours::darkgrey;
+    mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
+                              tabColour);
+  }
+
   bool componentsLit = Utils::shouldPlay(gen->enable->get(), gen->solo->get(), gen->waiting->get());
   juce::Colour knobColour = componentsLit
-                                ? juce::Colour(Utils::POSITION_COLOURS[mColour])
+                                ? juce::Colour(Utils::POSITION_COLOURS[mCurSelectedTab])
                                 : juce::Colours::darkgrey;
   mSliderPitch.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                           knobColour);

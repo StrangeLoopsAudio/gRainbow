@@ -370,6 +370,19 @@ int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
   return newPos;
 }
 
+std::vector<CandidateParams*> GranularSynth::getActiveCandidates() {
+  std::vector<CandidateParams*> candidates;
+  for (auto&& gen : mNoteParams.notes[mCurPitchClass]->generators) {
+    if (Utils::shouldPlay(gen->enable->get(), gen->solo->get(),
+                          gen->waiting->get())) {
+      candidates.push_back(mNoteParams.notes[mCurPitchClass]
+                               ->candidates[gen->candidate->get()]
+                               .get());
+    }
+  }
+  return candidates;
+}
+
 void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
   mCurPitchClass = pitchClass;
   bool isPlayingAlready = false;

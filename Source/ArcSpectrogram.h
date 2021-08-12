@@ -39,10 +39,10 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   void resetBuffers();
   void loadBuffer(std::vector<std::vector<float>> *buffer, Utils::SpecType type);
   void setTransients(std::vector<TransientDetector::Transient> *transients);
-  void setPositions(std::vector<GrainPositionFinder::GrainPosition> gPositions);
-  void setNoteOn(int midiNote,
-                 std::vector<GrainPositionFinder::GrainPosition> gPositions);
-  void setNoteOff() { mIsPlayingNote = false; }
+  //void setPositions(std::vector<GrainPositionFinder::GrainPosition> gPositions);
+  //void setNoteOn(int midiNote,
+  //               std::vector<GrainPositionFinder::GrainPosition> gPositions);
+  //void setNoteOff() { mIsPlayingNote = false; }
 
   //============================================================================
   void run() override;
@@ -67,7 +67,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
 
   std::array<std::vector<std::vector<float>> *, Utils::SpecType::NUM_TYPES - 1>
       mBuffers;
-  std::vector<GrainPositionFinder::GrainPosition> mGPositions;
+  //std::vector<GrainPositionFinder::GrainPosition> mGPositions;
   std::vector<TransientDetector::Transient> *mTransients = nullptr;
 
   int mCurNote = 0;

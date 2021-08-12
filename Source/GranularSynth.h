@@ -86,6 +86,7 @@ class GranularSynth : public juce::AudioProcessor {
   GlobalParams& getGlobalParams() { return mGlobalParams; }
   void resetParameters();
   int incrementPosition(int boxNum, bool lookRight);
+  std::vector<CandidateParams*> getActiveCandidates();
 
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff(Utils::PitchClass pitchClass);
