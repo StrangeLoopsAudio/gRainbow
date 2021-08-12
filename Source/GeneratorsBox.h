@@ -60,8 +60,8 @@ class GeneratorsBox : public juce::Component,
 
   /* Bookkeeping */
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
-  Utils::GeneratorColour mCurSelectedTab = Utils::GeneratorColour::BLUE;
-  int mCurHoverTab = -1;
+  Utils::GeneratorColour mCurSelectedGenerator = Utils::GeneratorColour::BLUE;
+  int mCurHoverGenerator = -1;
 
   /* UI Components */
   /* -- Generator Tabs*/
@@ -95,7 +95,7 @@ class GeneratorsBox : public juce::Component,
   juce::Label mLabelRelease;
   EnvelopeADSR mEnvelopeAmp;
 
-  void changeTab(Utils::GeneratorColour newTab);
+  void changeGenerator(Utils::GeneratorColour newGenerator);
   void refreshState();
   void updateParameter(int idx, float value);
 
