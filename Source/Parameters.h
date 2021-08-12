@@ -81,9 +81,12 @@ struct GeneratorParams : juce::AudioProcessorParameter::Listener {
     grainTilt->removeListener(this);
   }
 
-  void addParams(juce::AudioProcessor& p);
   void parameterValueChanged(int, float) override { updateGrainEnvelope(); };
   void parameterGestureChanged(int, bool) override {}
+
+  void addParams(juce::AudioProcessor& p);
+  void addListener(juce::AudioProcessorParameter::Listener* listener);
+  void removeListener(juce::AudioProcessorParameter::Listener* listener);
   void updateGrainEnvelope();
 
   int noteIdx;

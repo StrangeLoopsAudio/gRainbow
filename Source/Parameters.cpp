@@ -131,6 +131,44 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
   
 }
 
+void GeneratorParams::addListener(
+    juce::AudioProcessorParameter::Listener* listener) {
+  enable->addListener(listener);
+  solo->addListener(listener);
+  waiting->addListener(listener);
+  candidate->addListener(listener);
+  pitchAdjust->addListener(listener);
+  positionAdjust->addListener(listener);
+  grainShape->addListener(listener);
+  grainTilt->addListener(listener);
+  grainRate->addListener(listener);
+  grainDuration->addListener(listener);
+  grainGain->addListener(listener);
+  attack->addListener(listener);
+  decay->addListener(listener);
+  sustain->addListener(listener);
+  release->addListener(listener);
+}
+
+void GeneratorParams::removeListener(
+    juce::AudioProcessorParameter::Listener* listener) {
+  enable->removeListener(listener);
+  solo->removeListener(listener);
+  waiting->removeListener(listener);
+  candidate->removeListener(listener);
+  pitchAdjust->removeListener(listener);
+  positionAdjust->removeListener(listener);
+  grainShape->removeListener(listener);
+  grainTilt->removeListener(listener);
+  grainRate->removeListener(listener);
+  grainDuration->removeListener(listener);
+  grainGain->removeListener(listener);
+  attack->removeListener(listener);
+  decay->removeListener(listener);
+  sustain->removeListener(listener);
+  release->removeListener(listener);
+}
+
 void GeneratorParams::updateGrainEnvelope() {
   grainEnv.clear();
   float scaledShape = (grainShape->get() * ENV_LUT_SIZE) / 2.0f;

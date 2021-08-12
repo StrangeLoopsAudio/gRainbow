@@ -96,10 +96,6 @@ class GranularSynth : public juce::AudioProcessor {
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 2048;
   // Param bounds
-  static constexpr auto MAX_PITCH_ADJUST = 0.25; // In either direction, this equals one octave total
-  static constexpr auto MAX_POS_ADJUST = 0.5f; // Max position adjust in terms of pitch duration
-  static constexpr auto MIN_DURATION_MS = 60.0f;
-  static constexpr auto MAX_DURATION_MS = 300.0f;
   static constexpr auto MIN_RATE_RATIO = .25f;
   static constexpr auto MAX_RATE_RATIO = 1.0f;
   static constexpr auto MAX_GRAINS = 20; // Max grains active at once

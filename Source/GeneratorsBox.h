@@ -20,7 +20,8 @@
 //==============================================================================
 /*
  */
-class GeneratorsBox : public juce::Component {
+class GeneratorsBox : public juce::Component,
+                      juce::AudioProcessorParameter::Listener {
  public:
   GeneratorsBox(NoteParams& noteParams);
   ~GeneratorsBox() override;
@@ -31,6 +32,9 @@ class GeneratorsBox : public juce::Component {
   void mouseMove(const juce::MouseEvent& event) override;
   void mouseExit(const juce::MouseEvent& event) override;
   void mouseUp(const juce::MouseEvent& event) override;
+
+  void parameterValueChanged(int idx, float value) override;
+  void parameterGestureChanged(int, bool) override {}
 
   std::function<void(int gen, bool isRight)> onPositionChanged = nullptr;
 
@@ -91,6 +95,7 @@ class GeneratorsBox : public juce::Component {
   juce::Label mLabelRelease;
   EnvelopeADSR mEnvelopeAmp;
 
+  void changeTab(Utils::GeneratorColour newTab);
   void refreshState();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorsBox)
