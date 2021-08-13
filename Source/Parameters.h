@@ -76,6 +76,9 @@ struct ParamHelper {
   static void setParam(juce::AudioParameterInt* param, int newValue) {
     *param = newValue;
   }
+  static void setParam(juce::AudioParameterBool* param, bool newValue) {
+    *param = newValue;
+  }
 };
 
 static constexpr auto MAX_CANDIDATES = 6;

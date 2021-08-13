@@ -373,9 +373,9 @@ int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
   int pos = mNoteParams.notes[mCurPitchClass]->generators[boxNum]->candidate->get();
   int newPos = lookRight ? pos + 1 : pos - 1;
   newPos = (newPos + Utils::MAX_POSITIONS) % Utils::MAX_POSITIONS;
-  mNoteParams.notes[mCurPitchClass]
+  ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
       ->generators[boxNum]
-      ->candidate->setValueNotifyingHost(newPos);
+      ->candidate, newPos);
   return newPos;
 }
 
@@ -504,14 +504,14 @@ void GranularSynth::createCandidates(
           detectedPitches.getReference((Utils::PitchClass)(noteMin % 12));
       float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
       for (int i = 0; i < pitchVec.size(); ++i) {
-        note->candidates[numFound]->valid->setValueNotifyingHost(true);
-        note->candidates[numFound]->posRatio->setValueNotifyingHost(
-            pitchVec[i].posRatio);
-        note->candidates[numFound]->pbRate->setValueNotifyingHost(pbRate);
-        note->candidates[numFound]->duration->setValueNotifyingHost(
-            pitchVec[i].duration);
-        note->candidates[numFound]->salience->setValueNotifyingHost(
-            pitchVec[i].gain);
+        ParamHelper::setParam(note->candidates[numFound]->valid, true);
+        ParamHelper::setParam(note->candidates[numFound]->posRatio,
+                              pitchVec[i].posRatio);
+        ParamHelper::setParam(note->candidates[numFound]->pbRate, pbRate);
+        ParamHelper::setParam(note->candidates[numFound]->duration,
+                              pitchVec[i].duration);
+        ParamHelper::setParam(note->candidates[numFound]->salience,
+                              pitchVec[i].gain);
         numFound++;
         if (numFound >= MAX_CANDIDATES) {
           foundAll = true;
@@ -524,12 +524,11 @@ void GranularSynth::createCandidates(
             detectedPitches.getReference((Utils::PitchClass)(noteMax % 12));
         float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
         for (int i = 0; i < pitchVec.size(); ++i) {
-          note->candidates[numFound]->valid->setValueNotifyingHost(true);
-          note->candidates[numFound]->posRatio->setValueNotifyingHost(
-              pitchVec[i].posRatio);
-          note->candidates[numFound]->pbRate->setValueNotifyingHost(pbRate);
-          note->candidates[numFound]->duration->setValueNotifyingHost(pitchVec[i].duration);
-          note->candidates[numFound]->salience->setValueNotifyingHost(pitchVec[i].gain);
+          ParamHelper::setParam(note->candidates[numFound]->valid, true);
+          ParamHelper::setParam(note->candidates[numFound]->posRatio, pitchVec[i].posRatio);
+          ParamHelper::setParam(note->candidates[numFound]->pbRate, pbRate);
+          ParamHelper::setParam(note->candidates[numFound]->duration, pitchVec[i].duration);
+          ParamHelper::setParam(note->candidates[numFound]->salience, pitchVec[i].gain);
           numFound++;
           if (numFound >= MAX_CANDIDATES) {
             foundAll = true;
