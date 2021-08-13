@@ -41,25 +41,32 @@ class RainbowKeyboard : public juce::Component {
 
   juce::MidiKeyboardState& mState;
 
+  enum class InputType { NONE, MOUSE, KEYBOARD, MIDI, PLUGIN };
   struct Note {
     Utils::PitchClass pitch;
     float velocity;
+    InputType input;  // prevents other inputs from stepping on each other
 
-    Note() : pitch(Utils::PitchClass::NONE), velocity(0.0f) {}
-    Note(Utils::PitchClass pitch, float velocity)
-        : pitch(pitch), velocity(velocity) {}
+    Note()
+        : pitch(Utils::PitchClass::NONE),
+          velocity(0.0f),
+          input(InputType::NONE) {}
+    Note(Utils::PitchClass pitch, float velocity, InputType input)
+        : pitch(pitch), velocity(velocity), input(input) {}
   };
 
   // Since only one note can be pressed at once, only need on instance of Note
   RainbowKeyboard::Note mCurrentNote;
+  // Note being currently hovered by the mouse
+  RainbowKeyboard::Note mHoverNote;
 
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectangleMap[Utils::PitchClass::COUNT];
   void fillNoteRectangleMap();
 
   void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);
-  void updateNoteOver(const juce::MouseEvent& e, bool isDown);
-  RainbowKeyboard::Note xyToNote(juce::Point<float> pos);
+  void updateMouseState(const juce::MouseEvent& e, bool isDown);
+  RainbowKeyboard::Note xyMouseToNote(juce::Point<float> pos);
 
   // if a key is black or white is only a keyboard UI issue
   Utils::PitchClass WHITE_KEYS_PITCH_CLASS[7] = {

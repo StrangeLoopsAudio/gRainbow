@@ -82,12 +82,16 @@ void RainbowKeyboard::fillNoteRectangleMap() {
 }
 
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
-  bool isOver = pitchClass == mCurrentNote.pitch;
-  bool isDown = isOver && (mCurrentNote.pitch != Utils::PitchClass::NONE);
   auto keyColor = Utils::getRainbow12Colour(pitchClass);
-  if (isOver) keyColor = keyColor.darker();
-  // Will make 2nd level darker on press
-  if (isDown) keyColor = keyColor.darker();
+  bool isDown = pitchClass == mCurrentNote.pitch;
+
+  // if down, extra dark
+  // if no note is down, lightly darken if mouse is hovering it
+  if (isDown) {
+    keyColor = keyColor.darker().darker();
+  } else if (pitchClass == mHoverNote.pitch) {
+    keyColor = keyColor.darker();
+  }
 
   juce::Rectangle<float> area = mNoteRectangleMap[pitchClass];
   g.setColour(keyColor);
@@ -109,37 +113,43 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
 
 void RainbowKeyboard::mouseMove(const juce::MouseEvent& e) {
-  updateNoteOver(e, false);
+  updateMouseState(e, false);
 }
 
 void RainbowKeyboard::mouseDrag(const juce::MouseEvent& e) {
-  updateNoteOver(e, true);
+  updateMouseState(e, true);
 }
 
 void RainbowKeyboard::mouseDown(const juce::MouseEvent& e) {
-  updateNoteOver(e, true);
+  updateMouseState(e, true);
 }
 
 void RainbowKeyboard::mouseUp(const juce::MouseEvent& e) {
-  updateNoteOver(e, false);
+  updateMouseState(e, false);
 }
 
 void RainbowKeyboard::mouseEnter(const juce::MouseEvent& e) {
   // This is NOT called if mouseDrag() is still happening
-  updateNoteOver(e, false);
+  updateMouseState(e, false);
 }
 
 void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
   // This is NOT called if mouseDrag() is still happening
-  updateNoteOver(e, false);
+  updateMouseState(e, false);
 }
 
-void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
+void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown) {
   auto pos = e.getEventRelativeTo(this).position;
-  RainbowKeyboard::Note newNote = xyToNote(pos);
+  mHoverNote = xyMouseToNote(pos);
+
+  if (mCurrentNote.input != InputType::MOUSE &&
+      mCurrentNote.input != InputType::NONE) {
+    return;
+  }
+
   // Will be invalid if mouse is dragged outside of keyboard
-  bool isValidNote = newNote.pitch != Utils::PitchClass::NONE;
-  if (newNote.pitch != mCurrentNote.pitch) {
+  bool isValidNote = mHoverNote.pitch != Utils::PitchClass::NONE;
+  if (mHoverNote.pitch != mCurrentNote.pitch) {
     // Hovering over new note, send note off for old note if necessary
     // Will turn off also if mouse exit keyboard
     if (mCurrentNote.pitch != Utils::PitchClass::NONE) {
@@ -147,28 +157,28 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
       mCurrentNote = RainbowKeyboard::Note();
     }
     if (isDown && isValidNote) {
-      mState.noteOn(MIDI_CHANNEL, newNote.pitch, newNote.velocity);
-      mCurrentNote = newNote;
+      mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch, mHoverNote.velocity);
+      mCurrentNote = mHoverNote;
     }
   } else {
     if (isDown && (mCurrentNote.pitch == Utils::PitchClass::NONE) &&
         isValidNote) {
       // Note on if pressing current note
-      mState.noteOn(MIDI_CHANNEL, newNote.pitch, newNote.velocity);
-      mCurrentNote = newNote;
+      mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch, mHoverNote.velocity);
+      mCurrentNote = mHoverNote;
     } else if ((mCurrentNote.pitch != Utils::PitchClass::NONE) && !isDown) {
       // Note off if released current note
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
       mCurrentNote = RainbowKeyboard::Note();
     } else {
       // still update state
-      mCurrentNote = newNote;
+      mCurrentNote = mHoverNote;
     }
   }
   repaint();
 }
 
-RainbowKeyboard::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
+RainbowKeyboard::Note RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
   if (!reallyContains(pos.toInt(), false)) return RainbowKeyboard::Note();
   // Since the Juce canvas is all in float, keep in float to prevent strange
   // int-vs-float rounding errors selecting the wrong key
@@ -180,7 +190,8 @@ RainbowKeyboard::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
     for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
       if (mNoteRectangleMap[pitchClass].contains(pos)) {
         return RainbowKeyboard::Note(pitchClass,
-                                     juce::jmax(0.0f, pos.y / blackNoteLength));
+                                     juce::jmax(0.0f, pos.y / blackNoteLength),
+                                     InputType::MOUSE);
       }
     }
   }
@@ -188,7 +199,8 @@ RainbowKeyboard::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
   for (Utils::PitchClass pitchClass : WHITE_KEYS_PITCH_CLASS) {
     if (mNoteRectangleMap[pitchClass].contains(pos)) {
       return RainbowKeyboard::Note(pitchClass,
-                                   juce::jmax(0.0f, pos.y / componentHeight));
+                                   juce::jmax(0.0f, pos.y / componentHeight),
+                                   InputType::MOUSE);
     }
   }
 
