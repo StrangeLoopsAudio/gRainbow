@@ -13,11 +13,8 @@
 #include "ArcSpectrogram.h"
 #include "AudioRecorder.h"
 #include "Fft.h"
-#include "GeneratorBox.h"
-#include "GeneratorTabs.h"
+#include "GeneratorsBox.h"
 #include "GlobalParamBox.h"
-#include "GrainPositionFinder.h"
-#include "PitchDetector.h"
 #include "RainbowKeyboard.h"
 #include "RainbowLookAndFeel.h"
 #include "TransientDetector.h"
@@ -29,8 +26,7 @@
 class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
                                      public juce::Timer {
  public:
-  GRainbowAudioProcessorEditor(GranularSynth& synth,
-                               juce::AudioProcessorValueTreeState& apvts);
+  GRainbowAudioProcessorEditor(GranularSynth& synth);
   ~GRainbowAudioProcessorEditor() override;
 
   //==============================================================================
@@ -54,7 +50,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   /* DSP Modules */
   GranularSynth& mSynth;
-  juce::AudioProcessorValueTreeState& apvts;
   AudioRecorder mRecorder;
 
   /* UI Components */
@@ -64,9 +59,8 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
-  GeneratorTabs mGeneratorTabs;
   GlobalParamBox mGlobalParamBox;
-  std::array<GeneratorBox, Utils::GeneratorColour::NUM_GEN> mGeneratorBoxes;
+  GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
 
   /* Bookkeeping */

@@ -20,16 +20,11 @@
  */
 class GlobalParamBox : public juce::Component {
  public:
-  GlobalParamBox();
+  GlobalParamBox(GlobalParams& globalParams);
   ~GlobalParamBox() override;
 
   void paint(juce::Graphics&) override;
   void resized() override;
-
-  void setParams(Utils::GlobalParams params);
-
-  std::function<void(GranularSynth::ParameterType param, float value)>
-      onParameterChanged = nullptr;
 
  private:
   /* UI Layout */
@@ -42,19 +37,32 @@ class GlobalParamBox : public juce::Component {
   static constexpr auto MAIN_TITLE = "global parameters";
   static constexpr auto SECTION_AMP_ENV_TITLE = "amplitude envelope";
 
+  /* Parameters */
+  GlobalParams& mGlobalParams;
+
   /* UI Components */
+  std::unique_ptr<
+      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
+      mSliderAttack;
+  std::unique_ptr<
+      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
+      mSliderDecay;
+  std::unique_ptr<
+      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
+      mSliderSustain;
+  std::unique_ptr<
+      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
+      mSliderRelease;
   /* -- ADSR Env */
-  juce::Slider mSliderAttack;
+  //juce::Slider mSliderAttack;
   juce::Label mLabelAttack;
-  juce::Slider mSliderDecay;
+  //juce::Slider mSliderDecay;
   juce::Label mLabelDecay;
-  juce::Slider mSliderSustain;
+  //juce::Slider mSliderSustain;
   juce::Label mLabelSustain;
-  juce::Slider mSliderRelease;
+  //juce::Slider mSliderRelease;
   juce::Label mLabelRelease;
   EnvelopeADSR mEnvelopeAmp;
-
-  void parameterChanged(GranularSynth::ParameterType type, float value);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GlobalParamBox)
 };

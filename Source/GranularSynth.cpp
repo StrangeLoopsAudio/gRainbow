@@ -24,8 +24,10 @@ GranularSynth::GranularSynth()
               )
 #endif
       ,
-      mFft(FFT_SIZE, HOP_SIZE),
-      apvts(*this, nullptr, "ScaleNavParams", createParameterLayout()) {
+      mFft(FFT_SIZE, HOP_SIZE) {
+  mNoteParams.addParams(*this);
+  mGlobalParams.addParams(*this);
+
   mTotalSamps = 0;
   mFormatManager.registerBasicFormats();
 
@@ -43,7 +45,7 @@ GranularSynth::GranularSynth()
           onBufferProcessed(&hpcpBuffer, Utils::SpecType::HPCP);
           onBufferProcessed(&notesBuffer, Utils::SpecType::NOTES);
         }
-        mPositionFinder.setPitches(&mPitchDetector.getPitches());
+        createCandidates(mPitchDetector.getPitches());
         mIsProcessingComplete = true;
       };
 
@@ -187,11 +189,20 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
   // Add contributions from each note
   for (int i = 0; i < buffer.getNumSamples(); ++i) {
     for (GrainNote& gNote : mActiveNotes) {
-      float noteGain = gNote.ampEnv.getAmplitude(mTotalSamps);
+      float noteGain = gNote.ampEnv.getAmplitude(
+          mTotalSamps, mGlobalParams.attack->get() * mSampleRate,
+          mGlobalParams.decay->get() * mSampleRate,
+          mGlobalParams.sustain->get(),
+          mGlobalParams.release->get() * mSampleRate);
       // Add contributions from each grain
       for (Grain& grain : gNote.grains) {
-        float genGain =
-            gNote.positions[grain.generator].ampEnv.getAmplitude(mTotalSamps);
+        GeneratorParams* genParams = mNoteParams.notes[gNote.pitchClass]
+                                         ->generators[grain.generator]
+                                         .get();
+        float genGain = gNote.genAmpEnvs[grain.generator].getAmplitude(
+            mTotalSamps, genParams->attack->get() * mSampleRate,
+            genParams->decay->get() * mSampleRate, genParams->sustain->get(),
+            genParams->release->get() * mSampleRate);
         grain.process(mFileBuffer, buffer, noteGain, genGain, mTotalSamps);
       }
     }
@@ -228,24 +239,35 @@ bool GranularSynth::hasEditor() const {
 }
 
 juce::AudioProcessorEditor* GranularSynth::createEditor() {
-  return new GRainbowAudioProcessorEditor(*this, apvts);
+  return new GRainbowAudioProcessorEditor(*this);
 }
 
 //==============================================================================
 void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
-  juce::ValueTree state = apvts.copyState();
-  std::unique_ptr<juce::XmlElement> xml(state.createXml());
-  copyXmlToBinary(*xml, destData);
+  juce::XmlElement xml("PluginState");
+
+  juce::XmlElement* params = new juce::XmlElement("Params");
+  for (auto& param : getParameters())
+    params->setAttribute(ParamHelper::getParamID(param), param->getValue());
+
+  xml.addChildElement(params);
+
+  copyXmlToBinary(xml, destData);
 }
 
 void GranularSynth::setStateInformation(const void* data,
                                                  int sizeInBytes) {
-  std::unique_ptr<juce::XmlElement> xmlState(
-      getXmlFromBinary(data, sizeInBytes));
+  auto xml = getXmlFromBinary(data, sizeInBytes);
 
-  if (xmlState.get() != nullptr)
-    if (xmlState->hasTagName(apvts.state.getType()))
-      apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
+  if (xml != nullptr) {
+    auto params = xml->getChildByName("Params");
+    if (params != nullptr) {
+      for (auto& param : getParameters())
+        param->setValueNotifyingHost(params->getDoubleAttribute(
+            ParamHelper::getParamID(param), param->getValue()));
+    }
+
+  }
 }
 
 //==============================================================================
@@ -260,44 +282,46 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
     for (GrainNote& gNote : mActiveNotes) {
       for (int i = 0; i < gNote.grainTriggers.size(); ++i) {
         if (gNote.grainTriggers[i] <= 0) {
-          Utils::GeneratorParams params = mNoteSettings[gNote.pitchClass][i];
-          float durMs =
-              juce::jmap(params.duration, MIN_DURATION_MS, MAX_DURATION_MS);
+          GeneratorParams* genParams = mNoteParams.notes[gNote.pitchClass]->generators[i].get();
+          CandidateParams* candidateParams =
+              mNoteParams.notes[gNote.pitchClass]
+                  ->candidates[genParams->candidate->get()].get();
+            float durMs = genParams->grainDuration->get();
           // Skip adding new grain if not enabled or full of grains
-          if (i < gNote.positions.size()) {
-            if (gNote.positions[i].isActive &&
+            if (candidateParams->valid->get() &&
+                Utils::shouldPlay(genParams->enable->get(),
+                                  genParams->solo->get(),
+                                  genParams->waiting->get()) &&
                 gNote.grains.size() < MAX_GRAINS) {
-              juce::Random random;
-              GrainPositionFinder::GrainPosition& gPos = gNote.positions[i];
-              float durSamples =
-                  mSampleRate * (durMs / 1000) * (1.0f / gPos.pbRate);
-              float posSamples =
-                  gPos.pitch.posRatio * mFileBuffer.getNumSamples();
-              float posOffset = juce::jmap(
-                  random.nextFloat(), 0.0f,
-                  (gPos.pitch.duration * mFileBuffer.getNumSamples()) -
-                      durSamples);
-              posOffset +=
-                  (params.posAdjust - 0.5f) * MAX_POS_ADJUST * durSamples;
+            
+            float durSamples = mSampleRate * (durMs / 1000) *
+                               (1.0f / candidateParams->pbRate->get());
+            /* Commented out random spray for now to test consistency
+            juce::Random random;
+            
+             = juce::jmap(random.nextFloat(), 0.0f,
+                                         (candidateParams->duration->get() *
+                                          mFileBuffer.getNumSamples()) -
+                                             durSamples); */
+            float posSamples =
+                candidateParams->posRatio->get() * mFileBuffer.getNumSamples();
+            float posOffset = genParams->positionAdjust->get() * durSamples;
 
-              // TODO: normalize with this or something
-              float rateGainFactor = juce::jmap(
-                  1.0f - params.rate, MIN_RATE_RATIO * 2.0f, MAX_RATE_RATIO);
-              float gain = params.gain;
-              float pbRate = gPos.pbRate +
-                             ((params.pitchAdjust - 0.5f) * MAX_PITCH_ADJUST);
-              jassert(gPos.pbRate > 0.1f);
-              auto grain =
-                  Grain((Utils::GeneratorColour)i, params.grainEnv, durSamples,
-                        pbRate, posSamples + posOffset, mTotalSamps, gain);
-              gNote.grains.add(grain);
-            }
+            // TODO: normalize the gain or something
+            float gain = genParams->grainGain->get();
+            float pbRate =
+                candidateParams->pbRate->get() + genParams->pitchAdjust->get();
+            jassert(candidateParams->pbRate->get() > 0.1f);
+            auto grain =
+                Grain((Utils::GeneratorColour)i, genParams->grainEnv, durSamples,
+                      pbRate, posSamples + posOffset, mTotalSamps, gain);
+            gNote.grains.add(grain);
           }
           // Reset trigger ts
           gNote.grainTriggers[i] +=
               mSampleRate / 1000 *
-              juce::jmap(1.0f - params.rate, durMs * MIN_RATE_RATIO,
-                         durMs * MAX_RATE_RATIO);
+              juce::jmap(1.0f - genParams->grainRate->get(),
+                         durMs * MIN_RATE_RATIO, durMs * MAX_RATE_RATIO);
         } else {
           gNote.grainTriggers[i] -= blockSize;
         }
@@ -343,89 +367,47 @@ void GranularSynth::processFile(juce::File file) {
   mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
 }
 
-void GranularSynth::updateCurPositions() {
-  std::vector<GrainPositionFinder::GrainPosition> gPositions =
-      mPositionFinder.findPositions(Utils::MAX_POSITIONS, mCurPitchClass);
-  std::vector<GrainPositionFinder::GrainPosition> gPosToPlay;
-  for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
-    Utils::GeneratorParams& params = mNoteSettings[mCurPitchClass][i];
-    int position = params.position;
-    if (mNoteSettings[mCurPitchClass][i].state.shouldPlay() &&
-        position < gPositions.size() && mIsProcessingComplete) {
-      gPositions[position].isActive = true;
-      // Copy amp env over to new position
-      if (i < mCurPositions.size())
-        gPositions[position].ampEnv = mCurPositions[i].ampEnv;
-      gPositions[position].ampEnv.attack =
-          mSampleRate *
-          juce::jmap(params.attack, MIN_ATTACK_SEC, MAX_ATTACK_SEC);
-      gPositions[position].ampEnv.decay =
-          mSampleRate * juce::jmap(params.decay, MIN_DECAY_SEC, MAX_DECAY_SEC);
-      gPositions[position].ampEnv.sustain = params.sustain;
-      gPositions[position].ampEnv.release =
-          mSampleRate *
-          juce::jmap(params.release, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
-      gPosToPlay.push_back(gPositions[position]);
-    } else {
-      // Push back an inactive position for the synth
-      gPosToPlay.push_back(
-          GrainPositionFinder::GrainPosition(PitchDetector::Pitch(), 1.0));
-    }
-  }
-  mCurPositions = gPosToPlay;
-}
-
-Utils::GeneratorParams GranularSynth::getGeneratorParams(
-    Utils::GeneratorColour colour) {
-  return mNoteSettings[mCurPitchClass][colour];
-}
-
 int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
-  int pos = mNoteSettings[mCurPitchClass][boxNum].position;
+  int pos = mNoteParams.notes[mCurPitchClass]->generators[boxNum]->candidate->get();
   int newPos = lookRight ? pos + 1 : pos - 1;
   newPos = (newPos + Utils::MAX_POSITIONS) % Utils::MAX_POSITIONS;
-  mNoteSettings[mCurPitchClass][boxNum].position = newPos;
-  updateCurPositions();
-  // Find gNote corresponding to current note and update its positions
-  for (GrainNote& gNote : mActiveNotes) {
-    if (gNote.pitchClass == mCurPitchClass) {
-      gNote.positions = mCurPositions;
+  mNoteParams.notes[mCurPitchClass]
+      ->generators[boxNum]
+      ->candidate->setValueNotifyingHost(newPos);
+  return newPos;
+}
+
+std::vector<CandidateParams*> GranularSynth::getActiveCandidates() {
+  std::vector<CandidateParams*> candidates;
+  for (auto&& gen : mNoteParams.notes[mCurPitchClass]->generators) {
+    if (Utils::shouldPlay(gen->enable->get(), gen->solo->get(),
+                          gen->waiting->get())) {
+      candidates.push_back(mNoteParams.notes[mCurPitchClass]
+                               ->candidates[gen->candidate->get()]
+                               .get());
     }
   }
-  return newPos;
+  return candidates;
 }
 
 void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
   mCurPitchClass = pitchClass;
-  updateCurPositions();
   bool isPlayingAlready = false;
   for (GrainNote& gNote : mActiveNotes) {
     if (gNote.pitchClass == pitchClass) {
       isPlayingAlready = true;
       // Start envelope over
       gNote.ampEnv.noteOn(mTotalSamps);
-      gNote.positions = mCurPositions;
       // Start position envs over as well
-      for (GrainPositionFinder::GrainPosition& gPos : gNote.positions) {
-        gPos.ampEnv.noteOn(mTotalSamps);
+      for (Utils::EnvelopeADSR& genEnv : gNote.genAmpEnvs) {
+        genEnv.noteOn(mTotalSamps);
       }
     }
   }
   if (!isPlayingAlready) {
     mActiveNotes.add(GrainNote(
         pitchClass,
-        std::vector<Utils::GeneratorParams>(mNoteSettings[pitchClass].begin(),
-                                            mNoteSettings[pitchClass].end()),
-        mCurPositions,
-        Utils::EnvelopeADSR(
-            mTotalSamps,
-            mSampleRate * juce::jmap(mGlobalParams.attack, MIN_ATTACK_SEC,
-                                     MAX_ATTACK_SEC),
-            mSampleRate *
-                juce::jmap(mGlobalParams.decay, MIN_DECAY_SEC, MAX_DECAY_SEC),
-            mGlobalParams.sustain,
-            mSampleRate * juce::jmap(mGlobalParams.release, MIN_RELEASE_SEC,
-                                     MAX_RELEASE_SEC))));
+        Utils::EnvelopeADSR(mTotalSamps)));
   }
 }
 
@@ -434,33 +416,21 @@ void GranularSynth::setNoteOff(Utils::PitchClass pitchClass) {
     if (gNote.pitchClass == pitchClass) {
       // Set note off timestamp and set env state to release for each pos
       gNote.ampEnv.noteOff(mTotalSamps);
-      for (GrainPositionFinder::GrainPosition& gPos : gNote.positions) {
-        gPos.ampEnv.noteOff(mTotalSamps);
+      for (Utils::EnvelopeADSR& genEnv : gNote.genAmpEnvs) {
+        genEnv.noteOff(mTotalSamps);
       }
       break;
     }
   }
 }
 
-void GranularSynth::updateGeneratorStates(std::vector<Utils::GeneratorState> genStates) {
-  for (int i = 0; i < genStates.size(); ++i) {
-    mNoteSettings[mCurPitchClass][i].state = genStates[i];
-  }
-  updateCurPositions();
-  // Find gNote corresponding to current note and update its positions
-  for (GrainNote& gNote : mActiveNotes) {
-    if (gNote.pitchClass == mCurPitchClass) {
-      gNote.positions = mCurPositions;
-    }
-  }
-}
-
 void GranularSynth::resetParameters() {
-  mGlobalParams = Utils::GlobalParams(
-      PARAM_GAIN_DEFAULT, PARAM_ATTACK_DEFAULT, PARAM_DECAY_DEFAULT,
-      PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT);
+  // TODO: reset global parameter values using setValueNotifyingHost
+
+  // TODO: reset all note params as well
+
   // Set same params for all notes
-  for (int i = 0; i < mNoteSettings.size(); ++i) {
+  /*for (int i = 0; i < mNoteSettings.size(); ++i) {
     for (int j = 0; j < mNoteSettings[i].size(); ++j) {
       Utils::GeneratorState state = Utils::GeneratorState(j == 0, false);
       mNoteSettings[i][j] = Utils::GeneratorParams(
@@ -470,74 +440,11 @@ void GranularSynth::resetParameters() {
           PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT,
           getGrainEnvelope(PARAM_SHAPE_DEFAULT, PARAM_TILT_DEFAULT));
     }
-  }
+  } */
 }
 
-void GranularSynth::updateGeneratorParameter(Utils::GeneratorColour colour,
-                                    ParameterType param, float value) {
-  switch (param) {
-    case ParameterType::PITCH_ADJUST:
-      mNoteSettings[mCurPitchClass][colour].pitchAdjust = value;
-      break;
-    case ParameterType::POSITION_ADJUST:
-      mNoteSettings[mCurPitchClass][colour].posAdjust = value;
-      break;
-    case ParameterType::SHAPE:
-      mNoteSettings[mCurPitchClass][colour].shape = value;
-      mNoteSettings[mCurPitchClass][colour].grainEnv =
-          getGrainEnvelope(value, mNoteSettings[mCurPitchClass][colour].tilt);
-      break;
-    case ParameterType::TILT:
-      mNoteSettings[mCurPitchClass][colour].tilt = value;
-      mNoteSettings[mCurPitchClass][colour].grainEnv =
-          getGrainEnvelope(mNoteSettings[mCurPitchClass][colour].shape, value);
-      break;
-    case ParameterType::RATE:
-      mNoteSettings[mCurPitchClass][colour].rate = value;
-      break;
-    case ParameterType::DURATION:
-      mNoteSettings[mCurPitchClass][colour].duration = value;
-      break;
-    case ParameterType::GAIN:
-      mNoteSettings[mCurPitchClass][colour].gain = value;
-      break;
-    case ParameterType::ATTACK:
-      mNoteSettings[mCurPitchClass][colour].attack = value;
-      for (GrainNote& gNote : mActiveNotes) {
-        if (gNote.pitchClass != mCurPitchClass) continue;
-        gNote.positions[colour].ampEnv.attack =
-            mSampleRate * juce::jmap(value, MIN_ATTACK_SEC, MAX_ATTACK_SEC);
-      }
-      break;
-    case ParameterType::DECAY:
-      mNoteSettings[mCurPitchClass][colour].decay = value;
-      for (GrainNote& gNote : mActiveNotes) {
-        if (gNote.pitchClass != mCurPitchClass) continue;
-        gNote.positions[colour].ampEnv.decay =
-            mSampleRate * juce::jmap(value, MIN_DECAY_SEC, MAX_DECAY_SEC);
-      }
-      break;
-    case ParameterType::SUSTAIN:
-      mNoteSettings[mCurPitchClass][colour].sustain = value;
-      for (GrainNote& gNote : mActiveNotes) {
-        if (gNote.pitchClass != mCurPitchClass) continue;
-        gNote.positions[colour].ampEnv.sustain = value;
-      }
-      break;
-    case ParameterType::RELEASE:
-      mNoteSettings[mCurPitchClass][colour].release = value;
-      for (GrainNote& gNote : mActiveNotes) {
-        if (gNote.pitchClass != mCurPitchClass) continue;
-        gNote.positions[colour].ampEnv.release =
-            mSampleRate * juce::jmap(value, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
-      }
-      break;
-    default:
-      break;
-  }
-}
-
-void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
+// TODO: add listeners to update note info from these changes like below
+/*void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
   switch (param) {
     case ParameterType::GAIN:
       mGlobalParams.gain = value;
@@ -572,41 +479,62 @@ void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
     default:
       break;
   }
-}
+} */
 
-std::vector<float> GranularSynth::getGrainEnvelope(float shape, float tilt) {
-  std::vector<float> grainEnv;
-  float scaledShape = (shape * GRAIN_ENV_SIZE) / 2.0f;
-  float scaledTilt = tilt * GRAIN_ENV_SIZE;
-  int rampUpEndSample = juce::jmax(0.0f, scaledTilt - scaledShape);
-  int rampDownStartSample = juce::jmin((float)GRAIN_ENV_SIZE, scaledTilt + scaledShape);
-  for (int i = 0; i < GRAIN_ENV_SIZE; i++) {
-    if (i < rampUpEndSample) {
-      grainEnv.push_back((float)i / rampUpEndSample);
-    } else if (i > rampDownStartSample) {
-      grainEnv.push_back(1.0f - (float)(i - rampDownStartSample) /
-                         (GRAIN_ENV_SIZE - rampDownStartSample));
-    } else {
-      grainEnv.push_back(1.0f);
+void GranularSynth::createCandidates(
+    juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>&
+        detectedPitches) {
+  // Add candidates for each pitch class
+  // TODO: check salience instead of blindly adding
+  for (auto&& note : mNoteParams.notes) {
+    // Look for detected pitches with correct pitch and good gain
+    bool foundAll = false;
+    int numFound = 0;
+    int numSearches = 0;
+
+    while (!foundAll) {
+      int noteMin = note->noteIdx - numSearches;
+      int noteMax = note->noteIdx + numSearches;
+      // Check low note
+      std::vector<PitchDetector::Pitch>& pitchVec =
+          detectedPitches.getReference((Utils::PitchClass)(noteMin % 12));
+      float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
+      for (int i = 0; i < pitchVec.size(); ++i) {
+        note->candidates[numFound]->valid->setValueNotifyingHost(true);
+        note->candidates[numFound]->posRatio->setValueNotifyingHost(
+            pitchVec[i].posRatio);
+        note->candidates[numFound]->pbRate->setValueNotifyingHost(pbRate);
+        note->candidates[numFound]->duration->setValueNotifyingHost(
+            pitchVec[i].duration);
+        note->candidates[numFound]->salience->setValueNotifyingHost(
+            pitchVec[i].gain);
+        numFound++;
+        if (numFound >= MAX_CANDIDATES) {
+          foundAll = true;
+          break;
+        }
+      }
+      // Check high note if we haven't filled up the list yet
+      if (!foundAll && numSearches > 0) {
+        std::vector<PitchDetector::Pitch>& pitchVec =
+            detectedPitches.getReference((Utils::PitchClass)(noteMax % 12));
+        float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
+        for (int i = 0; i < pitchVec.size(); ++i) {
+          note->candidates[numFound]->valid->setValueNotifyingHost(true);
+          note->candidates[numFound]->posRatio->setValueNotifyingHost(
+              pitchVec[i].posRatio);
+          note->candidates[numFound]->pbRate->setValueNotifyingHost(pbRate);
+          note->candidates[numFound]->duration->setValueNotifyingHost(pitchVec[i].duration);
+          note->candidates[numFound]->salience->setValueNotifyingHost(pitchVec[i].gain);
+          numFound++;
+          if (numFound >= MAX_CANDIDATES) {
+            foundAll = true;
+            break;
+          }
+        }
+      }
+      numSearches++;
+      if (numSearches >= 11 || foundAll) break;
     }
   }
-  juce::FloatVectorOperations::clip(grainEnv.data(), grainEnv.data(), 0.0f,
-                                    1.0f, grainEnv.size());
-  return grainEnv;
-}
-
-juce::AudioProcessorValueTreeState::ParameterLayout
-GranularSynth::createParameterLayout() {
-  std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
-
-  // TODO: BIG TODO: populate all params for apvts
-
-  // Root combobox
-  /*params.push_back(std::make_unique<juce::AudioParameterChoice>(
-      "ROOT", "Root",
-      juce::StringArray("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A",
-                        "A#", "B"),
-      0)); */
-
-  return {params.begin(), params.end()};
 }

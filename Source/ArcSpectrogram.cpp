@@ -9,7 +9,6 @@
 */
 
 #include "ArcSpectrogram.h"
-
 #include <JuceHeader.h>
 #include <limits.h>
 #include "Utils.h"
@@ -95,7 +94,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     juce::Image vibratingImage = juce::Image(curImage);
     vibratingImage.duplicateIfShared();
 
-    for (GrainPositionFinder::GrainPosition& gPos : mGPositions) {
+    /*for (GrainPositionFinder::GrainPosition& gPos : mGPositions) {
       if (!gPos.isActive) continue;
       auto sweepPos = gPos.pitch.posRatio +
                     ((gPos.pitch.duration / 2) * (mNormalRand(mGenRandom) + 1));
@@ -140,7 +139,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
                                     newColour);
         }
       }
-    }
+    } */
     g.drawImage(
         vibratingImage, getLocalBounds().toFloat(),
         juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
@@ -257,6 +256,7 @@ void ArcSpectrogram::setTransients(
   mTransients = transients;
 }
 
+/*
 void ArcSpectrogram::setPositions(
   std::vector<GrainPositionFinder::GrainPosition> gPositions) {
   mGPositions = gPositions;
@@ -276,3 +276,4 @@ void ArcSpectrogram::setNoteOn(
     mGPositions.push_back(gPositions[i]);
   }
 }
+*/

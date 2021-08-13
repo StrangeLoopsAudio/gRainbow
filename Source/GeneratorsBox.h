@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    GeneratorBox.h
+    GeneratorsBox.h
     Created: 27 Jun 2021 3:49:17pm
     Author:  brady
 
@@ -20,39 +20,26 @@
 //==============================================================================
 /*
  */
-class GeneratorBox : public juce::Component {
+class GeneratorsBox : public juce::Component,
+                      juce::AudioProcessorParameter::Listener,
+                      juce::Timer {
  public:
-  GeneratorBox();
-  ~GeneratorBox() override;
+  GeneratorsBox(NoteParams& noteParams);
+  ~GeneratorsBox() override;
 
   void paint(juce::Graphics&) override;
   void resized() override;
 
-  Utils::GeneratorState getState() { return mState; }
-  void setGeneratorEnabled(bool isEnabled) {
-    mState.isEnabled = isEnabled;
-    refreshState();
-  }
-  void setGeneratorSolo(bool isSolo) {
-    mState.isSolo = isSolo;
-    refreshState();
-  }
-  void setWaiting(bool isWaiting) {
-    mState.isWaiting = isWaiting;
-    refreshState();
-  }
+  void mouseMove(const juce::MouseEvent& event) override;
+  void mouseExit(const juce::MouseEvent& event) override;
+  void mouseUp(const juce::MouseEvent& event) override;
 
-  void setPositionNumber(int positionNumber);
-  void setParams(Utils::GeneratorParams params);
-  void setNumPositions(int numPositions);
+  void parameterValueChanged(int idx, float value) override;
+  void parameterGestureChanged(int, bool) override {}
 
-  void setColour(Utils::GeneratorColour colour);
-  std::function<void(Utils::GeneratorColour pos,
-                     GranularSynth::ParameterType param,
-                     float value)>
-      onParameterChanged = nullptr;
+  void timerCallback() override;
 
-  std::function<void(bool isRight)> onPositionChanged = nullptr;
+  std::function<void(int gen, bool isRight)> onPositionChanged = nullptr;
 
  private:
   /* Params */
@@ -60,6 +47,7 @@ class GeneratorBox : public juce::Component {
   static constexpr auto NUM_GRAIN_ENV_PARAMS = 5;
 
   /* UI Layout */
+  static constexpr auto TABS_HEIGHT = 30;
   static constexpr auto PADDING_SIZE = 6;
   static constexpr auto ADJUSTMENT_HEIGHT = 40;
   static constexpr auto TOGGLE_SIZE = 16;
@@ -70,11 +58,18 @@ class GeneratorBox : public juce::Component {
   static constexpr auto SECTION_GRAIN_ENV_TITLE = "grain envelope";
   static constexpr auto SECTION_ADJUST_TITLE = "generator adjustments";
 
+  /* Parameters */
+  NoteParams& mNoteParams;
+
   /* Bookkeeping */
-  Utils::GeneratorColour mColour;
-  Utils::GeneratorState mState;
+  Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
+  Utils::GeneratorColour mCurSelectedGenerator = Utils::GeneratorColour::BLUE;
+  int mCurHoverGenerator = -1;
+  std::atomic<bool> mParamHasChanged;
 
   /* UI Components */
+  /* -- Generator Tabs*/
+  std::array<juce::ToggleButton, Utils::GeneratorColour::NUM_GEN> mBtnsEnabled;
   /* -- Generator Adjustments */
   PositionChanger mPositionChanger;
   juce::Slider mSliderPitch;
@@ -104,8 +99,8 @@ class GeneratorBox : public juce::Component {
   juce::Label mLabelRelease;
   EnvelopeADSR mEnvelopeAmp;
 
-  void parameterChanged(GranularSynth::ParameterType type, float value);
+  void changeGenerator(Utils::GeneratorColour newGenerator);
   void refreshState();
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorBox)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorsBox)
 };

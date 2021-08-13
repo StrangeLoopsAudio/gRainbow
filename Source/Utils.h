@@ -68,18 +68,13 @@ class Utils {
 
   typedef struct EnvelopeADSR {
     // All adsr params are in samples (except for sustain amp)
-    int attack = 0; 
-    int decay = 0;
-    float sustain = 0.0f;
-    int release = 0;
     EnvelopeState state = EnvelopeState::ATTACK;
     float amplitude = 0.0f;
     float noteOffAmplitude = 0.0f;
     int noteOnTs = -1;
     int noteOffTs = -1;
     EnvelopeADSR() {}
-    EnvelopeADSR(int ts, int attack, int decay, float sustain, int release)
-    : attack(attack), decay(decay), sustain(sustain), release(release) {
+    EnvelopeADSR(int ts) {
       noteOn(ts);
     }
     void noteOn(int ts) { 
@@ -95,7 +90,8 @@ class Utils {
       noteOffAmplitude = amplitude;
       state = EnvelopeState::RELEASE;
     }
-    float getAmplitude(int curTs) {
+    /* ADSR params (except sustain) should be in samples */
+    float getAmplitude(int curTs, float attack, float decay, float sustain, float release) {
       float newAmp = 0.0f;
       switch (state) {
         case Utils::EnvelopeState::ATTACK: {
@@ -136,67 +132,28 @@ class Utils {
     }
   } EnvelopeADSR;
 
-  typedef struct GeneratorState {
-    bool isEnabled = false;
-    bool isSolo = false;
-    bool isWaiting = false; // Waiting for other gen to unsolo
-    GeneratorState() {}
-    GeneratorState(bool isEnabled, bool isSolo)
-        : isEnabled(isEnabled), isSolo(isSolo) {}
-    bool shouldPlay() { return (isEnabled && !isWaiting) || isSolo; }
-  } GeneratorState;
+  static bool shouldPlay(bool enabled, bool solo, bool waiting) {
+    return (enabled && !waiting) || solo;
+  }
 
-  typedef struct GeneratorParams {
-    GeneratorState state;
-    int   position; // Position number to play
-    float pitchAdjust;
-    float posAdjust;
-    float shape;
-    float tilt;
-    float rate;
-    float duration;
-    float gain;
-    float attack;
-    float decay;
-    float sustain;
-    float release;
-    std::vector<float> grainEnv;
-    GeneratorParams() {}
-    GeneratorParams(GeneratorState state, int position, float pitchAdjust,
-                    float posAdjust, float shape, float tilt, float rate,
-                    float duration, float gain, float attack, float decay,
-                    float sustain, float release, std::vector<float> grainEnv)
-        : state(state),
-          position(position),
-          pitchAdjust(pitchAdjust),
-          posAdjust(posAdjust),
-          shape(shape),
-          tilt(tilt),
-          rate(rate),
-          duration(duration),
-          gain(gain),
-          attack(attack),
-          decay(decay),
-          sustain(sustain),
-          release(release),
-          grainEnv(grainEnv) {}
-  } GeneratorParams;
+  template <typename CompType, typename CompAttachment>
+  class AttachedComponent {
+   public:
+    AttachedComponent<CompType, CompAttachment>(
+        juce::RangedAudioParameter& param, juce::Component& parent,
+        std::function<void(CompType&)> init = nullptr) {
+      attachment.reset(new CompAttachment(param, component));
+      parent.addAndMakeVisible(component);
+      if (init != nullptr) init(component);
+      attachment->sendInitialUpdate();
+    }
+    CompType component;
 
-  typedef struct GlobalParams {
-    float gain;
-    float attack;
-    float decay;
-    float sustain;
-    float release;
-    GlobalParams() {}
-    GlobalParams(float gain, float attack, float decay, float sustain,
-                 float release)
-        : gain(gain),
-          attack(attack),
-          decay(decay),
-          sustain(sustain),
-          release(release) {}
-  } GlobalParams;
+   private:
+    std::unique_ptr<CompAttachment> attachment;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AttachedComponent)
+  };
 
   static inline juce::Colour getRainbowColour(int value) {
     jassert(value >= 0 && value <= 6);
