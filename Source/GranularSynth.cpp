@@ -58,7 +58,7 @@ GranularSynth::GranularSynth()
   resetParameters();
 }
 
-GranularSynth::~GranularSynth() { 
+GranularSynth::~GranularSynth() {
   // Get rid of image files
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   parentDir.getChildFile(Utils::FILE_SPECTROGRAM).deleteFile();
@@ -208,7 +208,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
     }
     mTotalSamps++;
   }
-  
+
   // Clip buffers to valid range
   for (int i = 0; i < buffer.getNumChannels(); i++) {
     juce::FloatVectorOperations::clip(buffer.getWritePointer(i),
@@ -239,7 +239,12 @@ bool GranularSynth::hasEditor() const {
 }
 
 juce::AudioProcessorEditor* GranularSynth::createEditor() {
-  return new GRainbowAudioProcessorEditor(*this);
+  juce::AudioProcessorEditor* editor = new GRainbowAudioProcessorEditor(*this);
+
+  // Init anything in main editor post construction
+  reinterpret_cast<GRainbowAudioProcessorEditor*>(editor)->fastDebugMode();
+
+  return editor;
 }
 
 //==============================================================================
@@ -293,12 +298,11 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
                                   genParams->solo->get(),
                                   genParams->waiting->get()) &&
                 gNote.grains.size() < MAX_GRAINS) {
-            
             float durSamples = mSampleRate * (durMs / 1000) *
                                (1.0f / candidateParams->pbRate->get());
             /* Commented out random spray for now to test consistency
             juce::Random random;
-            
+
              = juce::jmap(random.nextFloat(), 0.0f,
                                          (candidateParams->duration->get() *
                                           mFileBuffer.getNumSamples()) -

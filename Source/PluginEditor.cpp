@@ -223,7 +223,7 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
 }
 
 void GRainbowAudioProcessorEditor::processFile(juce::File file) {
-  mSynth.processFile(file);  
+  mSynth.processFile(file);
   mArcSpec.resetBuffers();
 }
 
@@ -271,4 +271,15 @@ void GRainbowAudioProcessorEditor::stopRecording() {
                        juce::Colours::transparentBlack, recordOver, 1.0f,
                        juce::Colours::transparentBlack);
   repaint();
+}
+
+/** Fast Debug Mode is used to speed up iterations of testing
+    This method should be called only once and no-op if not being used
+*/
+void GRainbowAudioProcessorEditor::fastDebugMode() {
+#ifdef FDB_LOAD_FILE
+  // Loads a file right away - make sure macro is in quotes in Projucer
+  DBG("Fast Debug Mode - Loading file " << FDB_LOAD_FILE);
+  openNewFile(FDB_LOAD_FILE);
+#endif  // FDB_LOAD_FILE
 }

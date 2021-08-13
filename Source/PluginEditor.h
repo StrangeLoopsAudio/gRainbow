@@ -36,6 +36,8 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   void timerCallback() override;
 
+  void fastDebugMode();
+
  private:
   /* UI Layout */
   static constexpr auto BTN_PANEL_HEIGHT = 50;
