@@ -14,7 +14,13 @@
 
 //==============================================================================
 RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state)
-    : mState(state) {}
+    : mState(state) {
+  // Currently, only need to set mapping once at start
+  const char keyboardMapping[Utils::PitchClass::COUNT + 1] = "awsedftgyhuj";
+  for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
+    mKeyPresses[pitchClass] = juce::KeyPress(keyboardMapping[pitchClass], 0, 0);
+  }
+}
 
 RainbowKeyboard::~RainbowKeyboard() {}
 
@@ -206,4 +212,70 @@ RainbowKeyboard::Note RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
 
   // note not found
   return RainbowKeyboard::Note();
+}
+
+void RainbowKeyboard::updateKeyState(const juce::KeyPress* pKey,
+                                     bool isKeyDown) {
+  if (mCurrentNote.input != InputType::KEYBOARD &&
+      mCurrentNote.input != InputType::NONE) {
+    // if other input types are being used, ignore keyboard inputs all together
+    return;
+  }
+
+  const bool notePlaying = mCurrentNote.pitch != Utils::PitchClass::NONE;
+  bool stateChange = false;
+
+  // Get the last pressed note
+  if (pKey != nullptr) {
+    jassert(isKeyDown == true);  // juce::KeyListener only gives key on presses
+    const int keyCode = pKey->getKeyCode();
+
+    if (notePlaying && mKeyPresses[mLastPressedKey].isKeyCode(keyCode)) {
+      return;  // same note being played is being held down
+    }
+
+    // look for new key being pressed
+    bool validKey = false;
+    for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
+      if (mKeyPresses[pitchClass].isKeyCode(keyCode)) {
+        mLastPressedKey = pitchClass;
+        validKey = true;
+        break;
+      }
+    }
+
+    if (!validKey) {
+      // another key, that is not related to keyboard, was pressed
+      return;
+    }
+  } else if (isKeyDown) {
+    // if pKey is null and note is down, then its just
+    // juce::KeyListener::keyStateChanged giving redundant information
+    return;
+  }
+
+  if (isKeyDown) {
+    // new key is pressed
+    if (notePlaying) {
+      // two keys were pressed, so need to turn off old one first
+      mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
+    }
+    mCurrentNote =
+        RainbowKeyboard::Note(mLastPressedKey, 0.5f, InputType::KEYBOARD);
+    mState.noteOn(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
+    stateChange = true;
+  } else {
+    if (!mKeyPresses[mCurrentNote.pitch].isCurrentlyDown()) {
+      // key has been released
+      mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
+      mCurrentNote = RainbowKeyboard::Note();
+      stateChange = true;
+    }
+  }
+
+  // if note is pressed or release, want to repaint only. Avoid painting every
+  // keyboard input
+  if (stateChange) {
+    repaint();
+  }
 }

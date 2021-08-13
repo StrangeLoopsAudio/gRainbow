@@ -96,7 +96,14 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
 
   mAudioDeviceManager.addAudioCallback(&mRecorder);
 
-  startTimer(50);  // Keyboard focus timer
+  // Only want keyboard input focus for standalone as DAW will have own input
+  // mappings
+  if (mSynth.wrapperType ==
+      GranularSynth::WrapperType::wrapperType_Standalone) {
+    setWantsKeyboardFocus(true);
+  }
+
+  startTimer(50);
 
   setSize(1200, 565);
 }
@@ -273,6 +280,31 @@ void GRainbowAudioProcessorEditor::stopRecording() {
                        juce::Colours::transparentBlack, recordOver, 1.0f,
                        juce::Colours::transparentBlack);
   repaint();
+}
+
+/**
+ * @brief To properly handle all keyboard input, the main component is used as
+ * it will always be "in focus". From here it can pass through and decide what
+ * keyboard inputs are sent to each child component
+ */
+bool GRainbowAudioProcessorEditor::keyStateChanged(bool isKeyDown) {
+  if (mSynth.wrapperType ==
+      GranularSynth::WrapperType::wrapperType_Standalone) {
+    mKeyboard.updateKeyState(nullptr, isKeyDown);
+  }
+  return false;
+}
+
+/**
+ * @brief keyPressed is called after keyStateChanged, but know which key was
+ * pressed
+ */
+bool GRainbowAudioProcessorEditor::keyPressed(const juce::KeyPress& key) {
+  if (mSynth.wrapperType ==
+      GranularSynth::WrapperType::wrapperType_Standalone) {
+    mKeyboard.updateKeyState(&key, true);
+  }
+  return false;
 }
 
 /** Fast Debug Mode is used to speed up iterations of testing

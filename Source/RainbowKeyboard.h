@@ -31,6 +31,10 @@ class RainbowKeyboard : public juce::Component {
   void mouseEnter(const juce::MouseEvent&) override;
   void mouseExit(const juce::MouseEvent&) override;
 
+  // Takes input of Component::keyStateChanged from parent component due to lack
+  // of always having focus on this component
+  void updateKeyState(const juce::KeyPress* pKey, bool isKeyDown);
+
   // Returns a value between 0.0-1.0 representing the note's x position on the
   // keyboard
   float getPitchXRatio(Utils::PitchClass pitchClass);
@@ -40,6 +44,8 @@ class RainbowKeyboard : public juce::Component {
   static constexpr int MIDI_CHANNEL = 1;
 
   juce::MidiKeyboardState& mState;
+  juce::KeyPress mKeyPresses[Utils::PitchClass::COUNT];
+  Utils::PitchClass mLastPressedKey = Utils::PitchClass::NONE;
 
   enum class InputType { NONE, MOUSE, KEYBOARD, MIDI, PLUGIN };
   struct Note {

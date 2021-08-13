@@ -34,6 +34,9 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void paintOverChildren(juce::Graphics& g) override;
   void resized() override;
 
+  bool keyStateChanged(bool isKeyDown) override;
+  bool keyPressed(const juce::KeyPress& key) override;
+
   void timerCallback() override;
 
   void fastDebugMode();
