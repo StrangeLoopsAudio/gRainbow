@@ -64,12 +64,6 @@ typedef struct EnvelopeADSR {
   EnvelopeADSR() {}
   EnvelopeADSR(int ts) { noteOn(ts); }
   void noteOn(int ts) {
-    void noteOn(int ts) {
-  void noteOn(int ts) {
-    void noteOn(int ts) {
-  void noteOn(int ts) {
-    void noteOn(int ts) {
-  void noteOn(int ts) {
     noteOnTs = ts;
     noteOffTs = -1;
     state = EnvelopeState::ATTACK;
