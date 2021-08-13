@@ -103,6 +103,9 @@ class GeneratorsBox : public juce::Component,
 
   void changeGenerator(Utils::GeneratorColour newGenerator);
   void refreshState();
+  inline GeneratorParams* GeneratorsBox::getCurrentGenerator() {
+    return mNoteParams.notes[mCurPitchClass]->generators[mCurSelectedGenerator].get();
+  }
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorsBox)
 };
