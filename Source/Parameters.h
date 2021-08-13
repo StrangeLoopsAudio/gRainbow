@@ -70,6 +70,10 @@ struct ParamHelper {
 
     return param->getName(50);
   }
+  // Utility function to avoid ugly dereferencing code before sending norm value to host
+  static void setParam(juce::AudioParameterFloat* param, float newValue) {
+    *param = newValue;
+  }
 };
 
 static constexpr auto MAX_CANDIDATES = 6;

@@ -128,6 +128,7 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Release", ParamRanges::RELEASE,
                      ParamDefaults::RELEASE_DEFAULT_SEC));
+  updateGrainEnvelope();
 }
 
 void GeneratorParams::addListener(

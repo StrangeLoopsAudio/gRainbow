@@ -9,11 +9,11 @@
 */
 
 #include "GeneratorsBox.h"
+
 #include <JuceHeader.h>
 
 //==============================================================================
 GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
-
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
     GeneratorParams* gen =
         mNoteParams.notes[mCurPitchClass]->generators[i].get();
@@ -70,11 +70,12 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderPitch.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderPitch.setRotaryParameters(rotaryParams);
   mSliderPitch.setRange(ParamRanges::PITCH_ADJUST.start,
-                        ParamRanges::PITCH_ADJUST.end, 0.01);
+                        ParamRanges::PITCH_ADJUST.end);
   mSliderPitch.onValueChange = [this] {
-    mNoteParams.notes[mCurPitchClass]
-        ->generators[mCurSelectedGenerator]
-        ->pitchAdjust->setValueNotifyingHost(mSliderPitch.getValue());
+    ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
+                              ->generators[mCurSelectedGenerator]
+                              ->pitchAdjust,
+                          mSliderPitch.getValue());
   };
   addAndMakeVisible(mSliderPitch);
 
@@ -87,11 +88,12 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderPosition.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderPosition.setRotaryParameters(rotaryParams);
   mSliderPosition.setRange(ParamRanges::POSITION_ADJUST.start,
-                           ParamRanges::POSITION_ADJUST.end, 0.01);
+                           ParamRanges::POSITION_ADJUST.end);
   mSliderPosition.onValueChange = [this] {
-    mNoteParams.notes[mCurPitchClass]
-        ->generators[mCurSelectedGenerator]
-        ->positionAdjust->setValueNotifyingHost(mSliderPosition.getValue());
+    ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
+                              ->generators[mCurSelectedGenerator]
+                              ->positionAdjust,
+                          mSliderPosition.getValue());
   };
   addAndMakeVisible(mSliderPosition);
 
@@ -103,7 +105,7 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderShape.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderShape.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderShape.setRotaryParameters(rotaryParams);
-  mSliderShape.setRange(0.0, 1.0, 0.01);
+  mSliderShape.setRange(0.0, 1.0);
   mSliderShape.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedGenerator]
@@ -119,7 +121,7 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderTilt.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderTilt.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderTilt.setRotaryParameters(rotaryParams);
-  mSliderTilt.setRange(0.0, 1.0, 0.01);
+  mSliderTilt.setRange(0.0, 1.0);
   mSliderTilt.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedGenerator]
@@ -136,11 +138,12 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderRate.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderRate.setRotaryParameters(rotaryParams);
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start,
-                       ParamRanges::GRAIN_RATE.end, 0.01);
+                       ParamRanges::GRAIN_RATE.end);
   mSliderRate.onValueChange = [this] {
-    mNoteParams.notes[mCurPitchClass]
-        ->generators[mCurSelectedGenerator]
-        ->grainRate->setValueNotifyingHost(mSliderRate.getValue());
+    ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
+                              ->generators[mCurSelectedGenerator]
+                              ->grainRate,
+                          mSliderRate.getValue());
   };
   addAndMakeVisible(mSliderRate);
 
@@ -153,12 +156,12 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderDuration.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderDuration.setRotaryParameters(rotaryParams);
   mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start,
-                           ParamRanges::GRAIN_DURATION.end,
-                           0.01);
+                           ParamRanges::GRAIN_DURATION.end);
   mSliderDuration.onValueChange = [this] {
-    mNoteParams.notes[mCurPitchClass]
-        ->generators[mCurSelectedGenerator]
-        ->grainDuration->setValueNotifyingHost(mSliderDuration.getValue());
+    ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
+                              ->generators[mCurSelectedGenerator]
+                              ->grainDuration,
+                          mSliderDuration.getValue());
   };
   addAndMakeVisible(mSliderDuration);
 
@@ -170,7 +173,7 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderGain.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderGain.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderGain.setRotaryParameters(rotaryParams);
-  mSliderGain.setRange(0.0, 1.0, 0.01);
+  mSliderGain.setRange(0.0, 1.0);
   mSliderGain.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedGenerator]
@@ -192,12 +195,12 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderAttack.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderAttack.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderAttack.setRotaryParameters(rotaryParams);
-  mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end,
-                         0.01);
+  mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end);
   mSliderAttack.onValueChange = [this] {
-    mNoteParams.notes[mCurPitchClass]
-        ->generators[mCurSelectedGenerator]
-        ->attack->setValueNotifyingHost(mSliderAttack.getValue());
+    ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
+                              ->generators[mCurSelectedGenerator]
+                              ->attack,
+                          mSliderAttack.getValue());
   };
   addAndMakeVisible(mSliderAttack);
 
@@ -209,11 +212,12 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderDecay.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderDecay.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderDecay.setRotaryParameters(rotaryParams);
-  mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
+  mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end);
   mSliderDecay.onValueChange = [this] {
-    mNoteParams.notes[mCurPitchClass]
-        ->generators[mCurSelectedGenerator]
-        ->decay->setValueNotifyingHost(mSliderDecay.getValue());
+    ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
+                              ->generators[mCurSelectedGenerator]
+                              ->decay,
+                          mSliderDecay.getValue());
   };
   addAndMakeVisible(mSliderDecay);
 
@@ -225,7 +229,7 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderSustain.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderSustain.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderSustain.setRotaryParameters(rotaryParams);
-  mSliderSustain.setRange(0.0, 1.0, 0.01);
+  mSliderSustain.setRange(0.0, 1.0);
   mSliderSustain.onValueChange = [this] {
     mNoteParams.notes[mCurPitchClass]
         ->generators[mCurSelectedGenerator]
@@ -241,11 +245,12 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   mSliderRelease.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderRelease.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderRelease.setRotaryParameters(rotaryParams);
-  mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
+  mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end);
   mSliderRelease.onValueChange = [this] {
-    mNoteParams.notes[mCurPitchClass]
-        ->generators[mCurSelectedGenerator]
-        ->release->setValueNotifyingHost(mSliderRelease.getValue());
+    ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
+                              ->generators[mCurSelectedGenerator]
+                              ->release,
+                          mSliderRelease.getValue());
   };
   addAndMakeVisible(mSliderRelease);
 
@@ -255,9 +260,10 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
 
   // set default generator for initialization
   changeGenerator(mCurSelectedGenerator);
+  startTimer(33);  // 30 fps
 }
 
-GeneratorsBox::~GeneratorsBox() {}
+GeneratorsBox::~GeneratorsBox() { stopTimer(); }
 
 void GeneratorsBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
@@ -332,7 +338,8 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   }
 
   // Adjustments section title
-  juce::Rectangle<int> adjustTitleRect = juce::Rectangle<int>(
+  juce::Rectangle<int> adjustTitleRect =
+      juce::Rectangle<int>(
           0, mSliderPitch.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f),
           getWidth(), SECTION_TITLE_HEIGHT)
           .reduced(PADDING_SIZE, PADDING_SIZE / 2);
@@ -343,8 +350,9 @@ void GeneratorsBox::paint(juce::Graphics& g) {
              juce::Justification::centred);
 
   // Amp env section title
-  juce::Rectangle<int> ampEnvTitleRect = juce::Rectangle<int>(
-      0, mEnvelopeAmp.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f),
+  juce::Rectangle<int> ampEnvTitleRect =
+      juce::Rectangle<int>(
+          0, mEnvelopeAmp.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f),
           getWidth(), SECTION_TITLE_HEIGHT)
           .reduced(PADDING_SIZE, PADDING_SIZE / 2);
   g.setColour(fillCol);
@@ -354,8 +362,10 @@ void GeneratorsBox::paint(juce::Graphics& g) {
              juce::Justification::centred);
 
   // Grain env section title
-  juce::Rectangle<int> grainEnvTitleRect = juce::Rectangle<int>(
-      0, mEnvelopeGrain.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f),
+  juce::Rectangle<int> grainEnvTitleRect =
+      juce::Rectangle<int>(
+          0,
+          mEnvelopeGrain.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f),
           getWidth(), SECTION_TITLE_HEIGHT)
           .reduced(PADDING_SIZE, PADDING_SIZE / 2);
   g.setColour(fillCol);
@@ -473,75 +483,46 @@ void GeneratorsBox::mouseUp(const juce::MouseEvent& event) {
 }
 
 void GeneratorsBox::parameterValueChanged(int idx, float value) {
-  juce::MessageManager::callAsync(
-      [auto sp = GeneratorsBox::SafePointer<GeneratorsBox>(this), idx, value] {
-        if (sp == nullptr) return;
-        sp->updateParameter(idx, value);
-      });
+  mParamHasChanged.store(true);
 }
 
-void GeneratorsBox::updateParameter(int idx, float value) {
-  GeneratorParams* gen = mNoteParams.notes[mCurPitchClass]
-                             ->generators[mCurSelectedGenerator]
-                             .get();
-
-  if (idx == gen->enable->getParameterIndex()) {
+void GeneratorsBox::timerCallback() {
+  if (mParamHasChanged.load()) {
+    GeneratorParams* gen = mNoteParams.notes[mCurPitchClass]
+                               ->generators[mCurSelectedGenerator]
+                               .get();
     mBtnsEnabled[mCurSelectedGenerator].setToggleState(
-        value, juce::dontSendNotification);
-    refreshState();
-  } else if (idx == gen->solo->getParameterIndex()) {
-    mPositionChanger.setSolo(value);
-    if (value) {
-      mNoteParams.notes[mCurPitchClass]
-          ->generators[mCurSelectedGenerator]
-          ->waiting->setValueNotifyingHost(false);
-    }
-    for (int i = 0; i < NUM_GENERATORS; ++i) {
-      if (i != mCurSelectedGenerator) {
-        mNoteParams.notes[mCurPitchClass]
-            ->generators[i]
-            ->solo->setValueNotifyingHost(false);
-        mNoteParams.notes[mCurPitchClass]
-            ->generators[i]
-            ->waiting->setValueNotifyingHost(value);
-      }
-    }
-    refreshState();
-  } else if (idx == gen->waiting->getParameterIndex()) {
-  } else if (idx == gen->candidate->getParameterIndex()) {
-    mPositionChanger.setPositionNumber(value);
-  } else if (idx == gen->pitchAdjust->getParameterIndex()) {
-    mSliderPitch.setValue(value, juce::dontSendNotification);
-  } else if (idx == gen->positionAdjust->getParameterIndex()) {
-    mSliderPosition.setValue(value, juce::dontSendNotification);
-  } else if (idx == gen->grainShape->getParameterIndex()) {
-    mSliderShape.setValue(value, juce::dontSendNotification);
-    mEnvelopeGrain.setShape(value);
-  } else if (idx == gen->grainTilt->getParameterIndex()) {
-    mSliderTilt.setValue(value, juce::dontSendNotification);
-    mEnvelopeGrain.setTilt(value);
-  } else if (idx == gen->grainRate->getParameterIndex()) {
-    mSliderRate.setValue(value, juce::dontSendNotification);
-    mEnvelopeGrain.setRate(ParamRanges::GRAIN_RATE.convertTo0to1(value));
-  } else if (idx == gen->grainDuration->getParameterIndex()) {
-    mSliderDuration.setValue(value, juce::dontSendNotification);
+        gen->enable->get(), juce::dontSendNotification);
+    mPositionChanger.setSolo(gen->solo->get());
+    mPositionChanger.setPositionNumber(gen->candidate->get());
+    mSliderPitch.setValue(gen->pitchAdjust->get(), juce::dontSendNotification);
+    mSliderPosition.setValue(gen->positionAdjust->get(),
+                             juce::dontSendNotification);
+    mSliderShape.setValue(gen->grainShape->get(), juce::dontSendNotification);
+    mEnvelopeGrain.setShape(gen->grainShape->get());
+    mSliderTilt.setValue(gen->grainTilt->get(), juce::dontSendNotification);
+    mEnvelopeGrain.setTilt(gen->grainTilt->get());
+    mSliderRate.setValue(gen->grainRate->get(), juce::dontSendNotification);
+    mEnvelopeGrain.setRate(
+        ParamRanges::GRAIN_RATE.convertTo0to1(gen->grainRate->get()));
+    mSliderDuration.setValue(gen->grainDuration->get(),
+                             juce::dontSendNotification);
     mEnvelopeGrain.setDuration(
-        ParamRanges::GRAIN_DURATION.convertTo0to1(value));
-  } else if (idx == gen->grainGain->getParameterIndex()) {
-    mSliderGain.setValue(value, juce::dontSendNotification);
-    mEnvelopeGrain.setGain(value);
-  } else if (idx == gen->attack->getParameterIndex()) {
-    mSliderAttack.setValue(value, juce::dontSendNotification);
-    mEnvelopeAmp.setAttack(ParamRanges::ATTACK.convertTo0to1(value));
-  } else if (idx == gen->decay->getParameterIndex()) {
-    mSliderDecay.setValue(value, juce::dontSendNotification);
-    mEnvelopeAmp.setDecay(ParamRanges::DECAY.convertTo0to1(value));
-  } else if (idx == gen->sustain->getParameterIndex()) {
-    mSliderSustain.setValue(value, juce::dontSendNotification);
-    mEnvelopeAmp.setSustain(value);
-  } else if (idx == gen->release->getParameterIndex()) {
-    mSliderRelease.setValue(value, juce::dontSendNotification);
-    mEnvelopeAmp.setRelease(ParamRanges::RELEASE.convertTo0to1(value));
+        ParamRanges::GRAIN_DURATION.convertTo0to1(gen->grainDuration->get()));
+    mSliderGain.setValue(gen->grainGain->get(), juce::dontSendNotification);
+    mEnvelopeGrain.setGain(gen->grainGain->get());
+    mSliderAttack.setValue(gen->attack->get(), juce::dontSendNotification);
+    mEnvelopeAmp.setAttack(
+        ParamRanges::ATTACK.convertTo0to1(gen->attack->get()));
+    mSliderDecay.setValue(gen->decay->get(), juce::dontSendNotification);
+    mEnvelopeAmp.setDecay(ParamRanges::DECAY.convertTo0to1(gen->decay->get()));
+    mSliderSustain.setValue(gen->sustain->get(), juce::dontSendNotification);
+    mEnvelopeAmp.setSustain(gen->sustain->get());
+    mSliderRelease.setValue(gen->release->get(), juce::dontSendNotification);
+    mEnvelopeAmp.setRelease(
+        ParamRanges::RELEASE.convertTo0to1(gen->release->get()));
+    refreshState();
+    mParamHasChanged.store(false);
   }
 }
 
@@ -555,36 +536,7 @@ void GeneratorsBox::changeGenerator(Utils::GeneratorColour newGenerator) {
   mCurSelectedGenerator = newGenerator;
 
   // Update UI Components
-  GeneratorParams* gen =
-      mNoteParams.notes[mCurPitchClass]->generators[newGenerator].get();
-
-  mBtnsEnabled[mCurSelectedGenerator].setToggleState(
-      gen->enable->get(), juce::dontSendNotification);
-  mPositionChanger.setSolo(gen->solo->get());
-  mPositionChanger.setPositionNumber(gen->candidate->get());
-  mSliderPitch.setValue(gen->pitchAdjust->get(), juce::dontSendNotification);
-  mSliderPosition.setValue(gen->positionAdjust->get(),
-                           juce::dontSendNotification);
-  mSliderShape.setValue(gen->grainShape->get(), juce::dontSendNotification);
-  mEnvelopeGrain.setShape(gen->grainShape->get());
-  mSliderTilt.setValue(gen->grainTilt->get(), juce::dontSendNotification);
-  mEnvelopeGrain.setTilt(gen->grainTilt->get());
-  mSliderRate.setValue(gen->grainRate->get(), juce::dontSendNotification);
-  mEnvelopeGrain.setRate(gen->grainRate->get());
-  mSliderDuration.setValue(gen->grainDuration->get(),
-                           juce::dontSendNotification);
-  mEnvelopeGrain.setDuration(gen->grainDuration->get());
-  mSliderGain.setValue(gen->grainGain->get(), juce::dontSendNotification);
-  mEnvelopeGrain.setGain(gen->grainGain->get());
-  mSliderAttack.setValue(gen->attack->get(), juce::dontSendNotification);
-  mEnvelopeAmp.setAttack(gen->attack->get());
-  mSliderDecay.setValue(gen->decay->get(), juce::dontSendNotification);
-  mEnvelopeAmp.setDecay(gen->decay->get());
-  mSliderSustain.setValue(gen->sustain->get(), juce::dontSendNotification);
-  mEnvelopeAmp.setSustain(gen->sustain->get());
-  mSliderRelease.setValue(gen->release->get(), juce::dontSendNotification);
-  mEnvelopeAmp.setRelease(gen->release->get());
-  refreshState();
+  mParamHasChanged.store(true);
 }
 
 void GeneratorsBox::refreshState() {
@@ -608,19 +560,20 @@ void GeneratorsBox::refreshState() {
                               tabColour);
   }
 
-  bool componentsLit = Utils::shouldPlay(gen->enable->get(), gen->solo->get(), gen->waiting->get());
+  bool componentsLit = Utils::shouldPlay(gen->enable->get(), gen->solo->get(),
+                                         gen->waiting->get());
   juce::Colour knobColour =
       componentsLit
           ? juce::Colour(Utils::POSITION_COLOURS[mCurSelectedGenerator])
           : juce::Colours::darkgrey;
   mSliderPitch.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
-                          knobColour);
+                         knobColour);
   mSliderPitch.setColour(
       juce::Slider::ColourIds::rotarySliderOutlineColourId,
       componentsLit ? knobColour.brighter() : juce::Colours::darkgrey);
   mLabelPitch.setEnabled(componentsLit);
   mSliderPosition.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
-                          knobColour);
+                            knobColour);
   mSliderPosition.setColour(
       juce::Slider::ColourIds::rotarySliderOutlineColourId,
       componentsLit ? knobColour.brighter() : juce::Colours::darkgrey);
@@ -659,7 +612,7 @@ void GeneratorsBox::refreshState() {
   mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                          knobColour);
   mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
-                         knobColour);
+                        knobColour);
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                         knobColour);
   mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
@@ -669,7 +622,7 @@ void GeneratorsBox::refreshState() {
   mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                          knobColour);
   mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
-                         knobColour);
+                        knobColour);
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                         knobColour);
   mSliderDuration.setColour(

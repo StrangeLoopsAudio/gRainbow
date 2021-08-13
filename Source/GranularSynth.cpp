@@ -190,15 +190,19 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
   for (int i = 0; i < buffer.getNumSamples(); ++i) {
     for (GrainNote& gNote : mActiveNotes) {
       float noteGain = gNote.ampEnv.getAmplitude(
-          mTotalSamps, mGlobalParams.attack->get(), mGlobalParams.decay->get(),
-          mGlobalParams.sustain->get(), mGlobalParams.release->get());
+          mTotalSamps, mGlobalParams.attack->get() * mSampleRate,
+          mGlobalParams.decay->get() * mSampleRate,
+          mGlobalParams.sustain->get(),
+          mGlobalParams.release->get() * mSampleRate);
       // Add contributions from each grain
       for (Grain& grain : gNote.grains) {
-        GeneratorParams* genParams =
-            mNoteParams.notes[gNote.pitchClass]->generators[grain.generator].get();
+        GeneratorParams* genParams = mNoteParams.notes[gNote.pitchClass]
+                                         ->generators[grain.generator]
+                                         .get();
         float genGain = gNote.genAmpEnvs[grain.generator].getAmplitude(
-            mTotalSamps, genParams->attack->get(), genParams->decay->get(),
-            genParams->sustain->get(), genParams->release->get());
+            mTotalSamps, genParams->attack->get() * mSampleRate,
+            genParams->decay->get() * mSampleRate, genParams->sustain->get(),
+            genParams->release->get() * mSampleRate);
         grain.process(mFileBuffer, buffer, noteGain, genGain, mTotalSamps);
       }
     }
@@ -289,16 +293,19 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
                                   genParams->solo->get(),
                                   genParams->waiting->get()) &&
                 gNote.grains.size() < MAX_GRAINS) {
-            juce::Random random;
+            
             float durSamples = mSampleRate * (durMs / 1000) *
                                (1.0f / candidateParams->pbRate->get());
-            float posSamples =
-                candidateParams->posRatio->get() * mFileBuffer.getNumSamples();
-            float posOffset = juce::jmap(random.nextFloat(), 0.0f,
+            /* Commented out random spray for now to test consistency
+            juce::Random random;
+            
+             = juce::jmap(random.nextFloat(), 0.0f,
                                          (candidateParams->duration->get() *
                                           mFileBuffer.getNumSamples()) -
-                                             durSamples);
-            posOffset += genParams->positionAdjust->get() * durSamples;
+                                             durSamples); */
+            float posSamples =
+                candidateParams->posRatio->get() * mFileBuffer.getNumSamples();
+            float posOffset = genParams->positionAdjust->get() * durSamples;
 
             // TODO: normalize the gain or something
             float gain = genParams->grainGain->get();

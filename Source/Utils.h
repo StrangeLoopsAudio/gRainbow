@@ -90,7 +90,7 @@ class Utils {
       noteOffAmplitude = amplitude;
       state = EnvelopeState::RELEASE;
     }
-    /* ADSR params (excpet sustain) should be in samples */
+    /* ADSR params (except sustain) should be in samples */
     float getAmplitude(int curTs, float attack, float decay, float sustain, float release) {
       float newAmp = 0.0f;
       switch (state) {

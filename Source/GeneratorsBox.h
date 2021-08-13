@@ -21,7 +21,8 @@
 /*
  */
 class GeneratorsBox : public juce::Component,
-                      juce::AudioProcessorParameter::Listener {
+                      juce::AudioProcessorParameter::Listener,
+                      juce::Timer {
  public:
   GeneratorsBox(NoteParams& noteParams);
   ~GeneratorsBox() override;
@@ -35,6 +36,8 @@ class GeneratorsBox : public juce::Component,
 
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
+
+  void timerCallback() override;
 
   std::function<void(int gen, bool isRight)> onPositionChanged = nullptr;
 
@@ -62,6 +65,7 @@ class GeneratorsBox : public juce::Component,
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
   Utils::GeneratorColour mCurSelectedGenerator = Utils::GeneratorColour::BLUE;
   int mCurHoverGenerator = -1;
+  std::atomic<bool> mParamHasChanged;
 
   /* UI Components */
   /* -- Generator Tabs*/
@@ -97,7 +101,6 @@ class GeneratorsBox : public juce::Component,
 
   void changeGenerator(Utils::GeneratorColour newGenerator);
   void refreshState();
-  void updateParameter(int idx, float value);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorsBox)
 };
