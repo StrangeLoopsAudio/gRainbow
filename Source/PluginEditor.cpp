@@ -15,6 +15,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
       mSynth(synth),
       mGlobalParamBox(synth.getGlobalParams()),
       mGeneratorsBox(synth.getNoteParams()),
+      mArcSpec(synth.getNoteParams()),
       mKeyboard(mSynth.getKeyboardState()),
       mProgressBar(mLoadingProgress) {
 
@@ -24,7 +25,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
       mCurPitchClass = pitchClass;
       mStartedPlayingTrig = true;
     } else {
-      //mArcSpec.setNoteOff();
+      mArcSpec.setNoteOff();
     }
   };
 
@@ -110,8 +111,7 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
 
 void GRainbowAudioProcessorEditor::timerCallback() {
   if (mStartedPlayingTrig && mCurPitchClass != Utils::PitchClass::NONE) {
-    // TODO: fix arc spec's note-on  using actual candidates
-    //mArcSpec.setNoteOn(mCurPitchClass, mSynth.getCurrentPositions());
+    mArcSpec.setNoteOn(mCurPitchClass);
     mGeneratorsBox.setPitchClass(mCurPitchClass);
     mStartedPlayingTrig = false;
     repaint();  // Update note display
@@ -187,7 +187,7 @@ void GRainbowAudioProcessorEditor::resized() {
   filePanel.removeFromLeft(BTN_PADDING);
   mBtnRecord.setBounds(filePanel.removeFromLeft(OPEN_FILE_WIDTH));
 
-  r.removeFromTop(NOTE_DISPLAY_HEIGHT);  // Just padding
+  r.removeFromTop(NOTE_DISPLAY_HEIGHT); // Just padding
 
   // Arc spectrogram
   mArcSpec.setBounds(r.removeFromTop(r.getWidth() / 2.0f));

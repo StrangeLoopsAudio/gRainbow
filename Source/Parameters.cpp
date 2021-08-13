@@ -26,6 +26,13 @@ void GlobalParams::addParams(juce::AudioProcessor& p) {
                      ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
 }
 
+void GlobalParams::resetParams() {
+  ParamHelper::setParam(attack, ParamDefaults::ATTACK_DEFAULT_SEC);
+  ParamHelper::setParam(decay, ParamDefaults::DECAY_DEFAULT_SEC);
+  ParamHelper::setParam(sustain, ParamDefaults::SUSTAIN_DEFAULT);
+  ParamHelper::setParam(release, ParamDefaults::RELEASE_DEFAULT_SEC);
+}
+
 void CandidateParams::addParams(juce::AudioProcessor& p) {
   p.addParameter(valid = new juce::AudioParameterBool(
                      ParamIDs::candidateValid + juce::String(noteIdx) +
@@ -61,7 +68,7 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
   p.addParameter(candidate = new juce::AudioParameterInt(
                      ParamIDs::genCandidate + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
-                     "Gen Candidate", 0, MAX_CANDIDATES - 1, 0));
+                     "Gen Candidate", 0, MAX_CANDIDATES - 1, genIdx));
   p.addParameter(pitchAdjust = new juce::AudioParameterFloat(
                      ParamIDs::genPitchAdjust + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
@@ -71,7 +78,6 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Position Adjust", ParamRanges::POSITION_ADJUST,
                      0.0f));
-
   p.addParameter(grainShape = new juce::AudioParameterFloat(
                      ParamIDs::genGrainShape + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
@@ -197,5 +203,33 @@ bool NoteParam::shouldPlayGenerator(int genIdx) {
 void NoteParams::addParams(juce::AudioProcessor& p) {
   for (auto& note : notes) {
     note->addParams(p);
+  }
+}
+
+void NoteParams::resetParams() {
+  for (auto& note : notes) {
+    for (auto& generator : note->generators) {
+      ParamHelper::setParam(generator->enable, generator->genIdx == 0);
+      ParamHelper::setParam(generator->candidate, generator->genIdx);
+      ParamHelper::setParam(generator->pitchAdjust, 0.0f);
+      ParamHelper::setParam(generator->positionAdjust, 0.0f);
+      ParamHelper::setParam(generator->grainShape, 0.5f);
+      ParamHelper::setParam(generator->grainTilt, 0.5f);
+      ParamHelper::setParam(generator->grainRate, ParamDefaults::GRAIN_RATE_DEFAULT);
+      ParamHelper::setParam(generator->grainDuration, ParamDefaults::GRAIN_DURATION_DEFAULT_MS);
+      ParamHelper::setParam(generator->grainGain, ParamDefaults::GRAIN_GAIN_DEFAULT);
+      ParamHelper::setParam(generator->attack, ParamDefaults::ATTACK_DEFAULT_SEC);
+      ParamHelper::setParam(generator->decay, ParamDefaults::DECAY_DEFAULT_SEC);
+      ParamHelper::setParam(generator->sustain, ParamDefaults::SUSTAIN_DEFAULT);
+      ParamHelper::setParam(generator->release, ParamDefaults::RELEASE_DEFAULT_SEC);
+    }
+    for (auto& candidate : note->candidates) {
+      ParamHelper::setParam(candidate->valid, false);
+      ParamHelper::setParam(candidate->posRatio, 0.0f);
+      ParamHelper::setParam(candidate->pbRate, 0.0f);
+      ParamHelper::setParam(candidate->duration, 0.0f);
+      ParamHelper::setParam(candidate->salience, 0.0f);
+    }
+    ParamHelper::setParam(note->soloIdx, SOLO_NONE);
   }
 }

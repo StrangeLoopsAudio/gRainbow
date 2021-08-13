@@ -429,61 +429,9 @@ void GranularSynth::setNoteOff(Utils::PitchClass pitchClass) {
 }
 
 void GranularSynth::resetParameters() {
-  // TODO: reset global parameter values using setValueNotifyingHost
-
-  // TODO: reset all note params as well
-
-  // Set same params for all notes
-  /*for (int i = 0; i < mNoteSettings.size(); ++i) {
-    for (int j = 0; j < mNoteSettings[i].size(); ++j) {
-      Utils::GeneratorState state = Utils::GeneratorState(j == 0, false);
-      mNoteSettings[i][j] = Utils::GeneratorParams(
-          state, j, PARAM_PITCH_DEFAULT, PARAM_POSITION_DEFAULT,
-          PARAM_SHAPE_DEFAULT, PARAM_TILT_DEFAULT, PARAM_RATE_DEFAULT, PARAM_DURATION_DEFAULT,
-          PARAM_GAIN_DEFAULT, PARAM_ATTACK_DEFAULT, PARAM_DECAY_DEFAULT,
-          PARAM_SUSTAIN_DEFAULT, PARAM_RELEASE_DEFAULT,
-          getGrainEnvelope(PARAM_SHAPE_DEFAULT, PARAM_TILT_DEFAULT));
-    }
-  } */
+  mNoteParams.resetParams();
+  mGlobalParams.resetParams();
 }
-
-// TODO: add listeners to update note info from these changes like below
-/*void GranularSynth::updateGlobalParameter(ParameterType param, float value) {
-  switch (param) {
-    case ParameterType::GAIN:
-      mGlobalParams.gain = value;
-      break;
-    case ParameterType::ATTACK:
-      mGlobalParams.attack = value;
-      for (GrainNote& gNote : mActiveNotes) {
-        gNote.ampEnv.attack =
-            mSampleRate * juce::jmap(value, MIN_ATTACK_SEC, MAX_ATTACK_SEC);
-      }
-      break;
-    case ParameterType::DECAY:
-      mGlobalParams.decay = value;
-      for (GrainNote& gNote : mActiveNotes) {
-        gNote.ampEnv.decay =
-            mSampleRate * juce::jmap(value, MIN_DECAY_SEC, MAX_DECAY_SEC);
-      }
-      break;
-    case ParameterType::SUSTAIN:
-      mGlobalParams.sustain = value;
-      for (GrainNote& gNote : mActiveNotes) {
-        gNote.ampEnv.sustain = value;
-      }
-      break;
-    case ParameterType::RELEASE:
-      mGlobalParams.release = value;
-      for (GrainNote& gNote : mActiveNotes) {
-        gNote.ampEnv.release =
-            mSampleRate * juce::jmap(value, MIN_RELEASE_SEC, MAX_RELEASE_SEC);
-      }
-      break;
-    default:
-      break;
-  }
-} */
 
 void GranularSynth::createCandidates(
     juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>&

@@ -169,6 +169,7 @@ struct NoteParams {
   }
 
   void addParams(juce::AudioProcessor& p);
+  void resetParams();
 
   std::vector<std::unique_ptr<NoteParam>> notes;
 
@@ -179,6 +180,7 @@ struct GlobalParams {
   GlobalParams() {}
 
   void addParams(juce::AudioProcessor& p);
+  void resetParams();
 
   juce::AudioParameterFloat* attack = nullptr;
   juce::AudioParameterFloat* decay = nullptr;

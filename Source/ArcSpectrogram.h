@@ -28,7 +28,7 @@
 class ArcSpectrogram : public juce::AnimatedAppComponent,
                        juce::Thread {
  public:
-  ArcSpectrogram();
+  ArcSpectrogram(NoteParams& noteParams);
   ~ArcSpectrogram() override;
 
   void update() override{};
@@ -39,10 +39,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   void resetBuffers();
   void loadBuffer(std::vector<std::vector<float>> *buffer, Utils::SpecType type);
   void setTransients(std::vector<TransientDetector::Transient> *transients);
-  //void setPositions(std::vector<GrainPositionFinder::GrainPosition> gPositions);
-  //void setNoteOn(int midiNote,
-  //               std::vector<GrainPositionFinder::GrainPosition> gPositions);
-  //void setNoteOff() { mIsPlayingNote = false; }
+  void setNoteOn(Utils::PitchClass pitchClass);
+  void setNoteOff() { mIsPlayingNote = false; }
 
   //============================================================================
   void run() override;
@@ -65,12 +63,16 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
   static constexpr auto MAX_VIBRATION_OFFSET =
       MAX_PIXEL_VIBRATION * MAX_PIXEL_VIBRATION;
 
+  // Parameters
+  NoteParams &mNoteParams;
+
+  // Buffers
   std::array<std::vector<std::vector<float>> *, Utils::SpecType::NUM_TYPES - 1>
       mBuffers;
-  //std::vector<GrainPositionFinder::GrainPosition> mGPositions;
   std::vector<TransientDetector::Transient> *mTransients = nullptr;
 
-  int mCurNote = 0;
+  // Bookkeeping
+  Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
   bool mIsPlayingNote = false;
   double mSampleRate;
   Utils::SpecType mProcessType = Utils::SpecType::LOGO;

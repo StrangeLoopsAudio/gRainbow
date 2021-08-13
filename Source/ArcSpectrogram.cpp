@@ -14,7 +14,7 @@
 #include "Utils.h"
 
 //==============================================================================
-ArcSpectrogram::ArcSpectrogram() : juce::Thread("spectrogram thread") {
+ArcSpectrogram::ArcSpectrogram(NoteParams& noteParams) : mNoteParams(noteParams), juce::Thread("spectrogram thread") {
   setFramesPerSecond(10);
   mBuffers.fill(nullptr);
 
@@ -94,14 +94,19 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     juce::Image vibratingImage = juce::Image(curImage);
     vibratingImage.duplicateIfShared();
 
-    /*for (GrainPositionFinder::GrainPosition& gPos : mGPositions) {
-      if (!gPos.isActive) continue;
-      auto sweepPos = gPos.pitch.posRatio +
-                    ((gPos.pitch.duration / 2) * (mNormalRand(mGenRandom) + 1));
+    for (auto&& generator : mNoteParams.notes[mCurPitchClass]->generators) {
+      if (!mNoteParams.notes[mCurPitchClass]->shouldPlayGenerator(
+              generator->genIdx))
+        continue;
+      CandidateParams* candidate = mNoteParams.notes[mCurPitchClass]
+                                       ->candidates[generator->candidate->get()]
+                                       .get();
+      auto sweepPos =
+          candidate->posRatio->get() +
+          ((candidate->duration->get() / 2) * (mNormalRand(mGenRandom) + 1));
       int startVibRad =
           startRadius +
-          (((float)gPos.pitch.pitchClass / Utils::PitchClass::COUNT) *
-           bowWidth) -
+          (((float)mCurPitchClass / Utils::PitchClass::COUNT) * bowWidth) -
           (bowWidth / 4.0f);
       int endVibRad = startVibRad + (bowWidth / 2.0f);
 
@@ -139,7 +144,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
                                     newColour);
         }
       }
-    } */
+    }
     g.drawImage(
         vibratingImage, getLocalBounds().toFloat(),
         juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
@@ -256,24 +261,7 @@ void ArcSpectrogram::setTransients(
   mTransients = transients;
 }
 
-/*
-void ArcSpectrogram::setPositions(
-  std::vector<GrainPositionFinder::GrainPosition> gPositions) {
-  mGPositions = gPositions;
-  for (int i = 0; i < gPositions.size(); ++i) {
-    if (gPositions[i].pitch.pitchClass == Utils::PitchClass::NONE) continue;
-    mGPositions.push_back(gPositions[i]);
-  }
-}
-
-void ArcSpectrogram::setNoteOn(
-    int midiNote, std::vector<GrainPositionFinder::GrainPosition> gPositions) {
+void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
   mIsPlayingNote = true;
-  mCurNote = midiNote;
-  mGPositions = gPositions;
-  for (int i = 0; i < gPositions.size(); ++i) {
-    if (gPositions[i].pitch.pitchClass == Utils::PitchClass::NONE) continue;
-    mGPositions.push_back(gPositions[i]);
-  }
+  mCurPitchClass = pitchClass;
 }
-*/
