@@ -103,7 +103,7 @@ class GeneratorsBox : public juce::Component,
 
   void changeGenerator(Utils::GeneratorColour newGenerator);
   void refreshState();
-  inline GeneratorParams* GeneratorsBox::getCurrentGenerator() {
+  inline GeneratorParams* getCurrentGenerator() {
     return mNoteParams.notes[mCurPitchClass]->generators[mCurSelectedGenerator].get();
   }
 
