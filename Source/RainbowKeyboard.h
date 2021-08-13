@@ -41,8 +41,17 @@ class RainbowKeyboard : public juce::Component {
 
   juce::MidiKeyboardState& mState;
 
+  struct Note {
+    Utils::PitchClass pitch;
+    float velocity;
+
+    Note() : pitch(Utils::PitchClass::NONE), velocity(0.0f) {}
+    Note(Utils::PitchClass pitch, float velocity)
+        : pitch(pitch), velocity(velocity) {}
+  };
+
   // Since only one note can be pressed at once, only need on instance of Note
-  Utils::Note mCurrentNote;
+  RainbowKeyboard::Note mCurrentNote;
 
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectangleMap[Utils::PitchClass::COUNT];
@@ -50,7 +59,21 @@ class RainbowKeyboard : public juce::Component {
 
   void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);
   void updateNoteOver(const juce::MouseEvent& e, bool isDown);
-  Utils::Note xyToNote(juce::Point<float> pos);
+  RainbowKeyboard::Note xyToNote(juce::Point<float> pos);
+
+  // if a key is black or white is only a keyboard UI issue
+  Utils::PitchClass WHITE_KEYS_PITCH_CLASS[7] = {
+      Utils::PitchClass::C, Utils::PitchClass::D, Utils::PitchClass::E,
+      Utils::PitchClass::F, Utils::PitchClass::G, Utils::PitchClass::A,
+      Utils::PitchClass::B};
+
+  Utils::PitchClass BLACK_KEYS_PITCH_CLASS[5] = {
+      Utils::PitchClass::Cs, Utils::PitchClass::Ds, Utils::PitchClass::Fs,
+      Utils::PitchClass::Gs, Utils::PitchClass::As};
+
+  static inline bool isBlackKey(Utils::PitchClass pitchClass) {
+    return ((1 << (pitchClass)) & 0x054a) != 0;
+  }
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowKeyboard)
 };

@@ -23,10 +23,10 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
 
   // Draw each white key, but rainbowy, then black key, but rainbowy, so the
   // black keys rect are fully on top of white key rect visually
-  for (Utils::PitchClass pitchClass : Utils::WHITE_KEYS_PITCH_CLASS) {
+  for (Utils::PitchClass pitchClass : WHITE_KEYS_PITCH_CLASS) {
     drawKey(g, pitchClass);
   }
-  for (Utils::PitchClass pitchClass : Utils::BLACK_KEYS_PITCH_CLASS) {
+  for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
     drawKey(g, pitchClass);
   }
 }
@@ -74,7 +74,7 @@ void RainbowKeyboard::fillNoteRectangleMap() {
   const float whiteNoteHeight = componentHeight;
 
   for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
-    const bool blackKey = Utils::isBlackKey(key);
+    const bool blackKey = isBlackKey(key);
     mNoteRectangleMap[key].setBounds(
         notePos[key], 0, (blackKey) ? blackNoteWidth : whiteNoteWidth,
         (blackKey) ? blackNoteHeight : whiteNoteHeight);
@@ -103,7 +103,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 
   g.fillRect(area);
   g.setColour(juce::Colours::black);
-  g.drawRect(area, Utils::isBlackKey(pitchClass) ? 2 : 1);
+  g.drawRect(area, isBlackKey(pitchClass) ? 2 : 1);
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
@@ -136,7 +136,7 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
 
 void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
   auto pos = e.getEventRelativeTo(this).position;
-  Utils::Note newNote = xyToNote(pos);
+  RainbowKeyboard::Note newNote = xyToNote(pos);
   // Will be invalid if mouse is dragged outside of keyboard
   bool isValidNote = newNote.pitch != Utils::PitchClass::NONE;
   if (newNote.pitch != mCurrentNote.pitch) {
@@ -144,7 +144,7 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
     // Will turn off also if mouse exit keyboard
     if (mCurrentNote.pitch != Utils::PitchClass::NONE) {
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-      mCurrentNote = Utils::Note();
+      mCurrentNote = RainbowKeyboard::Note();
     }
     if (isDown && isValidNote) {
       mState.noteOn(MIDI_CHANNEL, newNote.pitch, newNote.velocity);
@@ -159,7 +159,7 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
     } else if ((mCurrentNote.pitch != Utils::PitchClass::NONE) && !isDown) {
       // Note off if released current note
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-      mCurrentNote = Utils::Note();
+      mCurrentNote = RainbowKeyboard::Note();
     } else {
       // still update state
       mCurrentNote = newNote;
@@ -168,8 +168,8 @@ void RainbowKeyboard::updateNoteOver(const juce::MouseEvent& e, bool isDown) {
   repaint();
 }
 
-Utils::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
-  if (!reallyContains(pos.toInt(), false)) return Utils::Note();
+RainbowKeyboard::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
+  if (!reallyContains(pos.toInt(), false)) return RainbowKeyboard::Note();
   // Since the Juce canvas is all in float, keep in float to prevent strange
   // int-vs-float rounding errors selecting the wrong key
   const float componentHeight = static_cast<float>(getHeight());
@@ -177,20 +177,21 @@ Utils::Note RainbowKeyboard::xyToNote(juce::Point<float> pos) {
 
   // can skip quick checking black notes from y position
   if (pos.getY() < blackNoteLength) {
-    for (Utils::PitchClass pitchClass : Utils::BLACK_KEYS_PITCH_CLASS) {
+    for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
       if (mNoteRectangleMap[pitchClass].contains(pos)) {
-        return Utils::Note(pitchClass,
-                           juce::jmax(0.0f, pos.y / blackNoteLength));
+        return RainbowKeyboard::Note(pitchClass,
+                                     juce::jmax(0.0f, pos.y / blackNoteLength));
       }
     }
   }
 
-  for (Utils::PitchClass pitchClass : Utils::WHITE_KEYS_PITCH_CLASS) {
+  for (Utils::PitchClass pitchClass : WHITE_KEYS_PITCH_CLASS) {
     if (mNoteRectangleMap[pitchClass].contains(pos)) {
-      return Utils::Note(pitchClass, juce::jmax(0.0f, pos.y / componentHeight));
+      return RainbowKeyboard::Note(pitchClass,
+                                   juce::jmax(0.0f, pos.y / componentHeight));
     }
   }
 
   // note not found
-  return Utils::Note();
+  return RainbowKeyboard::Note();
 }
