@@ -228,7 +228,15 @@ void RainbowKeyboard::updateKeyState(const juce::KeyPress* pKey,
   // Get the last pressed note
   if (pKey != nullptr) {
     jassert(isKeyDown == true);  // juce::KeyListener only gives key on presses
-    const int keyCode = pKey->getKeyCode();
+    int keyCode = pKey->getKeyCode();
+    // The JUCE KeyPress constructor is adding lower-case char, but some
+    // keyboards will use the capital letter as input keycode, if that is the
+    // case, just read as lowercase
+    if (keyCode < 97) {
+      // 97 is 'a'
+      // 65 is 'A'
+      keyCode += 32;
+    }
 
     if (notePlaying && mKeyPresses[mLastPressedKey].isKeyCode(keyCode)) {
       return;  // same note being played is being held down
