@@ -17,6 +17,7 @@
 #include <JuceHeader.h>
 
 #include <random>
+
 #include "Fft.h"
 #include "GranularSynth.h"
 #include "TransientDetector.h"
@@ -25,10 +26,9 @@
 //==============================================================================
 /*
  */
-class ArcSpectrogram : public juce::AnimatedAppComponent,
-                       juce::Thread {
+class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
  public:
-  ArcSpectrogram(NoteParams& noteParams);
+  ArcSpectrogram(NoteParams &noteParams, UIParams &uiParams);
   ~ArcSpectrogram() override;
 
   void update() override{};
@@ -37,7 +37,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
 
   void setSampleRate(double sampleRate) { mSampleRate = sampleRate; }
   void resetBuffers();
-  void loadBuffer(std::vector<std::vector<float>> *buffer, Utils::SpecType type);
+  void loadBuffer(std::vector<std::vector<float>> *buffer,
+                  Utils::SpecType type);
   void setTransients(std::vector<TransientDetector::Transient> *transients);
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff() { mIsPlayingNote = false; }
@@ -65,6 +66,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent,
 
   // Parameters
   NoteParams &mNoteParams;
+  UIParams &mUIParams;
 
   // Buffers
   std::array<std::vector<std::vector<float>> *, Utils::SpecType::NUM_TYPES - 1>

@@ -84,6 +84,7 @@ class GranularSynth : public juce::AudioProcessor {
   void processFile(juce::File file);
   NoteParams& getNoteParams() { return mNoteParams; }
   GlobalParams& getGlobalParams() { return mGlobalParams; }
+  UIParams& getUIParams() { return mUIParams; }
   void resetParameters();
   int incrementPosition(int boxNum, bool lookRight);
   std::vector<CandidateParams*> getActiveCandidates();
@@ -142,6 +143,7 @@ class GranularSynth : public juce::AudioProcessor {
   /* Parameters */
   NoteParams mNoteParams;
   GlobalParams mGlobalParams;
+  UIParams mUIParams;
 
   void handleGrainAddRemove(int blockSize);
   void createCandidates(

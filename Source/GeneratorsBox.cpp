@@ -13,7 +13,10 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
+GeneratorsBox::GeneratorsBox(NoteParams& noteParams, UIParams& uiParams)
+    : mNoteParams(noteParams), mUIParams(uiParams) {
+  mCurPitchClass = (Utils::PitchClass)uiParams.pitchClass;
+  mCurSelectedGenerator = (Utils::GeneratorColour)uiParams.generatorTab;
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
     GeneratorParams* gen =
         mNoteParams.notes[mCurPitchClass]->generators[i].get();
@@ -435,6 +438,7 @@ void GeneratorsBox::setPitchClass(Utils::PitchClass pitchClass) {
   mNoteParams.notes[mCurPitchClass]->soloIdx->removeListener(this);
   mNoteParams.notes[pitchClass]->soloIdx->addListener(this);
   mCurPitchClass = pitchClass;
+  mUIParams.pitchClass = pitchClass;
   changeGenerator(mCurSelectedGenerator);
 }
 
@@ -518,7 +522,7 @@ void GeneratorsBox::changeGenerator(Utils::GeneratorColour newGenerator) {
   mNoteParams.notes[mCurPitchClass]->generators[newGenerator]->addListener(
       this);
   mCurSelectedGenerator = newGenerator;
-
+  mUIParams.generatorTab = newGenerator;
   // Update UI Components
   mParamHasChanged.store(true);
 }

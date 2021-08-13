@@ -14,10 +14,12 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     : AudioProcessorEditor(&synth),
       mSynth(synth),
       mGlobalParamBox(synth.getGlobalParams()),
-      mGeneratorsBox(synth.getNoteParams()),
-      mArcSpec(synth.getNoteParams()),
+      mGeneratorsBox(synth.getNoteParams(), synth.getUIParams()),
+      mArcSpec(synth.getNoteParams(), synth.getUIParams()),
       mKeyboard(mSynth.getKeyboardState()),
       mProgressBar(mLoadingProgress) {
+
+  mCurPitchClass = (Utils::PitchClass)synth.getUIParams().pitchClass;
 
   mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass,
                                     bool isNoteOn) {
@@ -147,6 +149,7 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
     // Draw position arrows
     for (int i = 0; i < candidates.size(); ++i) {
       if (candidates[i] == nullptr) continue;
+      if (!candidates[i]->valid->get()) continue;
       g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[i]));
       auto middlePos =
           candidates[i]->posRatio->get() + (candidates[i]->duration->get() / 2.0f);

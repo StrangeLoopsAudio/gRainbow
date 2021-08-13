@@ -24,7 +24,7 @@ class GeneratorsBox : public juce::Component,
                       juce::AudioProcessorParameter::Listener,
                       juce::Timer {
  public:
-  GeneratorsBox(NoteParams& noteParams);
+  GeneratorsBox(NoteParams& noteParams, UIParams& uiParams);
   ~GeneratorsBox() override;
 
   void paint(juce::Graphics&) override;
@@ -62,6 +62,7 @@ class GeneratorsBox : public juce::Component,
 
   /* Parameters */
   NoteParams& mNoteParams;
+  UIParams& mUIParams;
 
   /* Bookkeeping */
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;

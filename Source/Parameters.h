@@ -189,3 +189,32 @@ struct GlobalParams {
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GlobalParams)
 };
+
+/**
+ * A representation of the last UI settings to restore it when loading the
+ * editor
+ */
+struct UIParams {
+  UIParams() = default;
+  // Get it from the plugin state
+  UIParams(juce::XmlElement* xml) {
+    if (xml != nullptr) {
+      generatorTab = xml->getIntAttribute("generatorTab");
+      pitchClass = xml->getIntAttribute("pitchClass");
+      specType = xml->getIntAttribute("specType");
+    }
+  }
+
+  // Build the XML representation to save in plugin state.
+  juce::XmlElement* getXml() {
+    juce::XmlElement* xml = new juce::XmlElement("UIParams");
+    xml->setAttribute("generatorTab", generatorTab);
+    xml->setAttribute("pitchClass", pitchClass);
+    xml->setAttribute("specType", specType);
+    return xml;
+  }
+
+  int generatorTab = 0;
+  int pitchClass = 0;
+  int specType = 0;
+};
