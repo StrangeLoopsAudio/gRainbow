@@ -294,9 +294,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             float durMs = genParams->grainDuration->get();
           // Skip adding new grain if not enabled or full of grains
             if (candidateParams->valid->get() &&
-                Utils::shouldPlay(genParams->enable->get(),
-                                  genParams->solo->get(),
-                                  genParams->waiting->get()) &&
+                mNoteParams.notes[gNote.pitchClass]->shouldPlayGenerator(i) &&
                 gNote.grains.size() < MAX_GRAINS) {
             float durSamples = mSampleRate * (durMs / 1000) *
                                (1.0f / candidateParams->pbRate->get());
@@ -383,12 +381,14 @@ int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
 
 std::vector<CandidateParams*> GranularSynth::getActiveCandidates() {
   std::vector<CandidateParams*> candidates;
-  for (auto&& gen : mNoteParams.notes[mCurPitchClass]->generators) {
-    if (Utils::shouldPlay(gen->enable->get(), gen->solo->get(),
-                          gen->waiting->get())) {
-      candidates.push_back(mNoteParams.notes[mCurPitchClass]
-                               ->candidates[gen->candidate->get()]
-                               .get());
+  for (int i = 0; i < NUM_GENERATORS; ++i) {
+    if (mNoteParams.notes[mCurPitchClass]->shouldPlayGenerator(i)) {
+      int candidate =
+          mNoteParams.notes[mCurPitchClass]->generators[i]->candidate->get();
+      candidates.push_back(
+          mNoteParams.notes[mCurPitchClass]->candidates[candidate].get());
+    } else {
+      candidates.push_back(nullptr);
     }
   }
   return candidates;

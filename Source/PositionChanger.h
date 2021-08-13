@@ -34,7 +34,6 @@ class PositionChanger : public juce::Component {
   void setColour(juce::Colour colour);
   int  getPositionNumber() { return mPosition; }
   void setPositionNumber(int position);
-  void setNumPositions(int numPositions);
 
   std::function<void(bool isRight)> onPositionChanged = nullptr;
   std::function<void(bool isSolo)> onSoloChanged = nullptr;
@@ -52,7 +51,6 @@ class PositionChanger : public juce::Component {
   juce::Colour mColour;
   int mIndexInBoxes; // Index among other boxes on screen
   int mPosition; // Position index
-  int mNumPositions = 1;
   bool mIsClickingArrow = false;
   bool mIsOverLeftArrow = false;
   bool mIsOverRightArrow = false;

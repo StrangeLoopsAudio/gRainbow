@@ -39,6 +39,8 @@ class GeneratorsBox : public juce::Component,
 
   void timerCallback() override;
 
+  void setPitchClass(Utils::PitchClass pitchClass);
+
   std::function<void(int gen, bool isRight)> onPositionChanged = nullptr;
 
  private:

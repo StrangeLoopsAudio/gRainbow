@@ -132,10 +132,6 @@ class Utils {
     }
   } EnvelopeADSR;
 
-  static bool shouldPlay(bool enabled, bool solo, bool waiting) {
-    return (enabled && !waiting) || solo;
-  }
-
   template <typename CompType, typename CompAttachment>
   class AttachedComponent {
    public:

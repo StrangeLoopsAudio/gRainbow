@@ -16,7 +16,6 @@ namespace ParamIDs {
 // Generator params
 static juce::String genEnable{"gen_enable_"};
 static juce::String genSolo{"gen_solo_"};
-static juce::String genWaiting{"gen_waiting_"};
 static juce::String genCandidate{"gen_candidate_"};
 static juce::String genPitchAdjust{"gen_pitch_adjust_"};
 static juce::String genPositionAdjust{"gen_position_adjust_"};
@@ -74,12 +73,16 @@ struct ParamHelper {
   static void setParam(juce::AudioParameterFloat* param, float newValue) {
     *param = newValue;
   }
+  static void setParam(juce::AudioParameterInt* param, int newValue) {
+    *param = newValue;
+  }
 };
 
 static constexpr auto MAX_CANDIDATES = 6;
 static constexpr auto NUM_NOTES = 12;
 static constexpr auto NUM_GENERATORS = 4;
 static constexpr auto ENV_LUT_SIZE = 128;
+static constexpr auto SOLO_NONE = -1;
 
 struct CandidateParams {
   CandidateParams(int noteIdx, int candidateIdx)
@@ -117,8 +120,6 @@ struct GeneratorParams : juce::AudioProcessorParameter::Listener {
   int genIdx;
 
   juce::AudioParameterBool* enable = nullptr;
-  juce::AudioParameterBool* solo = nullptr;
-  juce::AudioParameterBool* waiting = nullptr;
   juce::AudioParameterInt* candidate = nullptr;
   juce::AudioParameterFloat* pitchAdjust = nullptr;
   juce::AudioParameterFloat* positionAdjust = nullptr;
@@ -147,10 +148,12 @@ struct NoteParam {
   }
 
   void addParams(juce::AudioProcessor& p);
+  bool shouldPlayGenerator(int genIdx);
 
   int noteIdx;
   std::vector<std::unique_ptr<GeneratorParams>> generators;
   std::vector<std::unique_ptr<CandidateParams>> candidates;
+  juce::AudioParameterInt* soloIdx = nullptr;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoteParam)
 };

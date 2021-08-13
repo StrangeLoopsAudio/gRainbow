@@ -112,6 +112,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   if (mStartedPlayingTrig && mCurPitchClass != Utils::PitchClass::NONE) {
     // TODO: fix arc spec's note-on  using actual candidates
     //mArcSpec.setNoteOn(mCurPitchClass, mSynth.getCurrentPositions());
+    mGeneratorsBox.setPitchClass(mCurPitchClass);
     mStartedPlayingTrig = false;
     repaint();  // Update note display
   }
@@ -138,6 +139,7 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
         mSynth.getActiveCandidates();
     // Draw position arrows
     for (int i = 0; i < candidates.size(); ++i) {
+      if (candidates[i] == nullptr) continue;
       g.setColour(juce::Colour(Utils::POSITION_COLOURS[i]));
       auto middlePos =
           candidates[i]->posRatio->get() + (candidates[i]->duration->get() / 2.0f);

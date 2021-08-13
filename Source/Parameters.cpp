@@ -58,14 +58,6 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
                      ParamIDs::genEnable + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Enable", genIdx == 0));
-  p.addParameter(solo = new juce::AudioParameterBool(
-                     ParamIDs::genSolo + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Solo", false));
-  p.addParameter(waiting = new juce::AudioParameterBool(
-                     ParamIDs::genWaiting + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Waiting", false));
   p.addParameter(candidate = new juce::AudioParameterInt(
                      ParamIDs::genCandidate + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
@@ -134,8 +126,6 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
 void GeneratorParams::addListener(
     juce::AudioProcessorParameter::Listener* listener) {
   enable->addListener(listener);
-  solo->addListener(listener);
-  waiting->addListener(listener);
   candidate->addListener(listener);
   pitchAdjust->addListener(listener);
   positionAdjust->addListener(listener);
@@ -153,8 +143,6 @@ void GeneratorParams::addListener(
 void GeneratorParams::removeListener(
     juce::AudioProcessorParameter::Listener* listener) {
   enable->removeListener(listener);
-  solo->removeListener(listener);
-  waiting->removeListener(listener);
   candidate->removeListener(listener);
   pitchAdjust->removeListener(listener);
   positionAdjust->removeListener(listener);
@@ -197,6 +185,13 @@ void NoteParam::addParams(juce::AudioProcessor& p) {
   for (auto& candidate : candidates) {
     candidate->addParams(p);
   }
+  p.addParameter(soloIdx = new juce::AudioParameterInt(
+                     ParamIDs::genSolo + juce::String(noteIdx),
+                     "Gen Solo", SOLO_NONE, NUM_GENERATORS - 1, SOLO_NONE));
+}
+
+bool NoteParam::shouldPlayGenerator(int genIdx) {
+  return (soloIdx->get() == genIdx) || (generators[genIdx]->enable->get() && soloIdx->get() == SOLO_NONE);
 }
 
 void NoteParams::addParams(juce::AudioProcessor& p) {

@@ -44,9 +44,8 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
     }
   };
   mPositionChanger.onSoloChanged = [this](bool isSolo) {
-    mNoteParams.notes[mCurPitchClass]
-        ->generators[mCurSelectedGenerator]
-        ->solo->setValueNotifyingHost(isSolo);
+    ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
+        ->soloIdx, isSolo ? mCurSelectedGenerator : SOLO_NONE);
   };
   addAndMakeVisible(mPositionChanger);
 
@@ -259,6 +258,7 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
   addAndMakeVisible(mLabelRelease);
 
   // set default generator for initialization
+  mNoteParams.notes[mCurPitchClass]->soloIdx->addListener(this);
   changeGenerator(mCurSelectedGenerator);
   startTimer(33);  // 30 fps
 }
@@ -271,8 +271,7 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   GeneratorParams* gen = mNoteParams.notes[mCurPitchClass]
                              ->generators[mCurSelectedGenerator]
                              .get();
-  bool borderLit = Utils::shouldPlay(gen->enable->get(), gen->solo->get(),
-                                     gen->waiting->get());
+  bool borderLit = mNoteParams.notes[mCurPitchClass]->shouldPlayGenerator(mCurSelectedGenerator);
   juce::Colour fillCol =
       borderLit ? juce::Colour(Utils::POSITION_COLOURS[mCurSelectedGenerator])
                 : juce::Colours::darkgrey;
@@ -293,8 +292,7 @@ void GeneratorsBox::paint(juce::Graphics& g) {
     GeneratorParams* gen =
         mNoteParams.notes[mCurPitchClass]->generators[i].get();
     juce::Colour tabColour =
-        Utils::shouldPlay(gen->enable->get(), gen->solo->get(),
-                          gen->waiting->get())
+        mNoteParams.notes[mCurPitchClass]->shouldPlayGenerator(i)
             ? juce::Colour(Utils::POSITION_COLOURS[i])
             : juce::Colours::darkgrey;
     float tabHeight =
@@ -311,7 +309,7 @@ void GeneratorsBox::paint(juce::Graphics& g) {
     juce::Rectangle<int> textRect = juce::Rectangle<int>(
         mBtnsEnabled[i].getRight(), 0,
         tabRect.getRight() - mBtnsEnabled[i].getRight() - 6, TABS_HEIGHT);
-    if (gen->solo->get()) {
+    if (mNoteParams.notes[mCurPitchClass]->soloIdx->get() == i) {
       g.setColour(juce::Colours::blue);
       g.fillRect(textRect.withSizeKeepingCentre(textRect.getWidth() / 2.0f,
                                                 textRect.getHeight() / 2.0f));
@@ -455,6 +453,13 @@ void GeneratorsBox::resized() {
   mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
+void GeneratorsBox::setPitchClass(Utils::PitchClass pitchClass) {
+  mNoteParams.notes[mCurPitchClass]->soloIdx->removeListener(this);
+  mNoteParams.notes[pitchClass]->soloIdx->addListener(this);
+  mCurPitchClass = pitchClass;
+  changeGenerator(mCurSelectedGenerator);
+}
+
 void GeneratorsBox::mouseMove(const juce::MouseEvent& event) {
   if (event.y > TABS_HEIGHT) {
     mCurHoverGenerator = -1;
@@ -491,9 +496,14 @@ void GeneratorsBox::timerCallback() {
     GeneratorParams* gen = mNoteParams.notes[mCurPitchClass]
                                ->generators[mCurSelectedGenerator]
                                .get();
-    mBtnsEnabled[mCurSelectedGenerator].setToggleState(
-        gen->enable->get(), juce::dontSendNotification);
-    mPositionChanger.setSolo(gen->solo->get());
+    for (int i = 0; i < NUM_GENERATORS; ++i) {
+      mBtnsEnabled[i].setToggleState(
+          mNoteParams.notes[mCurPitchClass]->generators[i]->enable->get(),
+          juce::dontSendNotification);
+    }
+    mPositionChanger.setSolo(
+        mNoteParams.notes[mCurPitchClass]->soloIdx->get() ==
+        mCurSelectedGenerator);
     mPositionChanger.setPositionNumber(gen->candidate->get());
     mSliderPitch.setValue(gen->pitchAdjust->get(), juce::dontSendNotification);
     mSliderPosition.setValue(gen->positionAdjust->get(),
@@ -543,7 +553,8 @@ void GeneratorsBox::refreshState() {
   GeneratorParams* gen = mNoteParams.notes[mCurPitchClass]
                              ->generators[mCurSelectedGenerator]
                              .get();
-  mPositionChanger.setSolo(gen->solo->get());
+  mPositionChanger.setSolo(mNoteParams.notes[mCurPitchClass]->soloIdx->get() ==
+                           mCurSelectedGenerator);
 
   juce::Colour newColour =
       juce::Colour(Utils::POSITION_COLOURS[mCurSelectedGenerator]);
@@ -560,8 +571,7 @@ void GeneratorsBox::refreshState() {
                               tabColour);
   }
 
-  bool componentsLit = Utils::shouldPlay(gen->enable->get(), gen->solo->get(),
-                                         gen->waiting->get());
+  bool componentsLit = mNoteParams.notes[mCurPitchClass]->shouldPlayGenerator(mCurSelectedGenerator);
   juce::Colour knobColour =
       componentsLit
           ? juce::Colour(Utils::POSITION_COLOURS[mCurSelectedGenerator])
