@@ -372,7 +372,7 @@ void GranularSynth::processFile(juce::File file) {
 int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
   int pos = mNoteParams.notes[mCurPitchClass]->generators[boxNum]->candidate->get();
   int newPos = lookRight ? pos + 1 : pos - 1;
-  newPos = (newPos + Utils::MAX_POSITIONS) % Utils::MAX_POSITIONS;
+  newPos = (newPos + Utils::MAX_CANDIDATES) % Utils::MAX_CANDIDATES;
   ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
       ->generators[boxNum]
       ->candidate, newPos);

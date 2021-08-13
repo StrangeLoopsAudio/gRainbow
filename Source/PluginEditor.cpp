@@ -140,7 +140,7 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
     // Draw position arrows
     for (int i = 0; i < candidates.size(); ++i) {
       if (candidates[i] == nullptr) continue;
-      g.setColour(juce::Colour(Utils::POSITION_COLOURS[i]));
+      g.setColour(juce::Colour(Utils::GENERTOR_COLOURS_HEX[i]));
       auto middlePos =
           candidates[i]->posRatio->get() + (candidates[i]->duration->get() / 2.0f);
       float angleRad = (juce::MathConstants<float>::pi * middlePos) -

@@ -20,7 +20,7 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams) : mNoteParams(noteParams) {
     mBtnsEnabled[i].setToggleState(gen->enable->get(),
                                    juce::dontSendNotification);
     juce::Colour tabColour = gen->enable->get()
-                                 ? juce::Colour(Utils::POSITION_COLOURS[i])
+                                 ? juce::Colour(Utils::GENERTOR_COLOURS_HEX[i])
                                  : juce::Colours::darkgrey;
     mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
                               tabColour);
@@ -277,8 +277,9 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   bool borderLit = mNoteParams.notes[mCurPitchClass]->shouldPlayGenerator(
       mCurSelectedGenerator);
   juce::Colour fillCol =
-      borderLit ? juce::Colour(Utils::POSITION_COLOURS[mCurSelectedGenerator])
-                : juce::Colours::darkgrey;
+      borderLit
+          ? juce::Colour(Utils::GENERTOR_COLOURS_HEX[mCurSelectedGenerator])
+          : juce::Colours::darkgrey;
   g.setColour(fillCol);
   g.drawRoundedRectangle(getLocalBounds()
                              .withHeight(getHeight() + 10)
@@ -297,7 +298,7 @@ void GeneratorsBox::paint(juce::Graphics& g) {
         mNoteParams.notes[mCurPitchClass]->generators[i].get();
     juce::Colour tabColour =
         mNoteParams.notes[mCurPitchClass]->shouldPlayGenerator(i)
-            ? juce::Colour(Utils::POSITION_COLOURS[i])
+            ? juce::Colour(Utils::GENERTOR_COLOURS_HEX[i])
             : juce::Colours::darkgrey;
     float tabHeight =
         (mCurSelectedGenerator == i) ? TABS_HEIGHT + 20.0f : TABS_HEIGHT - 2.0f;
@@ -561,7 +562,7 @@ void GeneratorsBox::refreshState() {
                            mCurSelectedGenerator);
 
   juce::Colour newColour =
-      juce::Colour(Utils::POSITION_COLOURS[mCurSelectedGenerator]);
+      juce::Colour(Utils::GENERTOR_COLOURS_HEX[mCurSelectedGenerator]);
   mPositionChanger.setColour(newColour);
   mEnvelopeGrain.setColour(newColour);
   mEnvelopeAmp.setColour(newColour);
@@ -569,7 +570,7 @@ void GeneratorsBox::refreshState() {
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
     juce::Colour tabColour =
         mNoteParams.notes[mCurPitchClass]->generators[i]->enable->get()
-            ? juce::Colour(Utils::POSITION_COLOURS[i])
+            ? juce::Colour(Utils::GENERTOR_COLOURS_HEX[i])
             : juce::Colours::darkgrey;
     mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId,
                               tabColour);
@@ -579,7 +580,7 @@ void GeneratorsBox::refreshState() {
       mCurSelectedGenerator);
   juce::Colour knobColour =
       componentsLit
-          ? juce::Colour(Utils::POSITION_COLOURS[mCurSelectedGenerator])
+          ? juce::Colour(Utils::GENERTOR_COLOURS_HEX[mCurSelectedGenerator])
           : juce::Colours::darkgrey;
   mSliderPitch.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                          knobColour);

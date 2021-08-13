@@ -16,6 +16,9 @@
 namespace Utils {
 // Tetradic colours
 enum GeneratorColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_GEN };
+static constexpr juce::int64 GENERTOR_COLOURS_HEX[4] = {0xFF52C4FF, 0xFFE352FF,
+                                                        0xFFFF8D52, 0xFF6EFF52};
+
 enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
 enum SpecType { LOGO, SPECTROGRAM, HPCP, NOTES, NUM_TYPES };
 
@@ -43,9 +46,7 @@ static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
     PitchClass::E,  PitchClass::F,  PitchClass::Fs, PitchClass::G,
     PitchClass::Gs, PitchClass::A,  PitchClass::As, PitchClass::B};
 
-static constexpr auto MAX_POSITIONS = 6;
-static constexpr juce::int64 POSITION_COLOURS[4] = {0xFF52C4FF, 0xFFE352FF,
-                                                    0xFFFF8D52, 0xFF6EFF52};
+static constexpr auto MAX_CANDIDATES = 6;
 static constexpr auto TIMESTRETCH_RATIO =
     1.0594f;  // Constant used for pitch shifting by semitones
 static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
