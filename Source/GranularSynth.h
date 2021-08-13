@@ -98,6 +98,7 @@ class GranularSynth : public juce::AudioProcessor {
   // Param bounds
   static constexpr auto MIN_RATE_RATIO = .25f;
   static constexpr auto MAX_RATE_RATIO = 1.0f;
+  static constexpr auto MIN_CANDIDATE_SALIENCE = 0.5f;
   static constexpr auto MAX_GRAINS = 20; // Max grains active at once
 
   typedef struct GrainNote {

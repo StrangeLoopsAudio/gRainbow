@@ -452,6 +452,7 @@ void GranularSynth::createCandidates(
           detectedPitches.getReference((Utils::PitchClass)(noteMin % 12));
       float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
       for (int i = 0; i < pitchVec.size(); ++i) {
+        if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
         ParamHelper::setParam(note->candidates[numFound]->valid, true);
         ParamHelper::setParam(note->candidates[numFound]->posRatio,
                               pitchVec[i].posRatio);
@@ -472,6 +473,7 @@ void GranularSynth::createCandidates(
             detectedPitches.getReference((Utils::PitchClass)(noteMax % 12));
         float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
         for (int i = 0; i < pitchVec.size(); ++i) {
+          if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
           ParamHelper::setParam(note->candidates[numFound]->valid, true);
           ParamHelper::setParam(note->candidates[numFound]->posRatio, pitchVec[i].posRatio);
           ParamHelper::setParam(note->candidates[numFound]->pbRate, pbRate);
@@ -485,7 +487,7 @@ void GranularSynth::createCandidates(
         }
       }
       numSearches++;
-      if (numSearches >= 11 || foundAll) break;
+      if (numSearches >= 6 || foundAll) break;
     }
   }
 }
