@@ -85,13 +85,13 @@ static constexpr auto NUM_GENERATORS = 4;
 static constexpr auto ENV_LUT_SIZE = 128;
 static constexpr auto SOLO_NONE = -1;
 
-struct CandidateParams {
+struct ParamCandidate {
   float posRatio;
   float pbRate;
   float duration;
   float salience;
 
-  CandidateParams(float posRatio, float pbRate, float duration, float salience)
+  ParamCandidate(float posRatio, float pbRate, float duration, float salience)
       : posRatio(posRatio),
         pbRate(pbRate),
         duration(duration),
@@ -99,8 +99,8 @@ struct CandidateParams {
 
   // setUserStateXml equivalent since we always need a valid candidate param
   // value
-  CandidateParams(juce::XmlElement* xml) {
-    jassert(xml->hasTagName("CandidateParams"));
+  ParamCandidate(juce::XmlElement* xml) {
+    jassert(xml->hasTagName("ParamCandidate"));
     posRatio = xml->getDoubleAttribute("posRatio");
     pbRate = xml->getDoubleAttribute("pbRate");
     duration = xml->getDoubleAttribute("duration");
@@ -108,7 +108,7 @@ struct CandidateParams {
   }
 
   juce::XmlElement* getUserStateXml() {
-    juce::XmlElement* xml = new juce::XmlElement("CandidateParams");
+    juce::XmlElement* xml = new juce::XmlElement("ParamCandidate");
     xml->setAttribute("posRatio", posRatio);
     xml->setAttribute("pbRate", pbRate);
     xml->setAttribute("duration", duration);
@@ -117,9 +117,9 @@ struct CandidateParams {
   }
 };
 
-struct GeneratorParams : juce::AudioProcessorParameter::Listener {
-  GeneratorParams(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {}
-  ~GeneratorParams() {
+struct ParamGenerator : juce::AudioProcessorParameter::Listener {
+  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {}
+  ~ParamGenerator() {
     grainShape->removeListener(this);
     grainTilt->removeListener(this);
   }
@@ -148,13 +148,13 @@ struct GeneratorParams : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* release = nullptr;
   std::vector<float> grainEnv;
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorParams)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGenerator)
 };
 
-struct NoteParam {
-  NoteParam(int noteIdx) : noteIdx(noteIdx) {
+struct ParamNote {
+  ParamNote(int noteIdx) : noteIdx(noteIdx) {
     for (int i = 0; i < NUM_GENERATORS; ++i) {
-      generators.emplace_back(new GeneratorParams(noteIdx, i));
+      generators.emplace_back(new ParamGenerator(noteIdx, i));
     }
   }
 
@@ -164,7 +164,7 @@ struct NoteParam {
   void removeListener(int genIdx,
                       juce::AudioProcessorParameter::Listener* listener);
   bool shouldPlayGenerator(int genIdx);
-  CandidateParams* getCandidate(int genIdx);
+  ParamCandidate* getCandidate(int genIdx);
 
   void grainCreated(int genIdx, float envGain) {
     if (onGrainCreated != nullptr) onGrainCreated(genIdx, envGain);
@@ -172,42 +172,42 @@ struct NoteParam {
   std::function<void(int genIdx, float envGain)> onGrainCreated = nullptr;
 
   int noteIdx;
-  std::vector<std::unique_ptr<GeneratorParams>> generators;
-  std::vector<CandidateParams> candidates;
+  std::vector<std::unique_ptr<ParamGenerator>> generators;
+  std::vector<ParamCandidate> candidates;
   juce::AudioParameterInt* soloIdx = nullptr;
 
   juce::XmlElement* getUserStateXml() {
-    juce::XmlElement* xml = new juce::XmlElement("NoteParam");
-    for (CandidateParams& candidate : candidates) {
+    juce::XmlElement* xml = new juce::XmlElement("ParamNote");
+    for (ParamCandidate& candidate : candidates) {
       xml->addChildElement(candidate.getUserStateXml());
     }
     return xml;
   }
 
   void setUserStateXml(juce::XmlElement* xml) {
-    jassert(xml->hasTagName("NoteParam"));
+    jassert(xml->hasTagName("ParamNote"));
     candidates.clear();
     for (auto* children : xml->getChildIterator()) {
-      if (children->hasTagName("CandidateParams")) {
-        candidates.push_back(CandidateParams(children));
+      if (children->hasTagName("ParamCandidate")) {
+        candidates.push_back(ParamCandidate(children));
       }
     }
   }
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoteParam)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamNote)
 };
 
-struct NoteParams {
-  NoteParams() {
+struct ParamsNote {
+  ParamsNote() {
     for (int i = 0; i < NUM_NOTES; ++i) {
-      notes.emplace_back(new NoteParam(i));
+      notes.emplace_back(new ParamNote(i));
     }
   }
 
   void addParams(juce::AudioProcessor& p);
   void resetParams();
 
-  std::vector<std::unique_ptr<NoteParam>> notes;
+  std::vector<std::unique_ptr<ParamNote>> notes;
 
   juce::XmlElement* getUserStateXml() {
     juce::XmlElement* xml = new juce::XmlElement("NotesParams");
@@ -225,11 +225,11 @@ struct NoteParams {
     }
   }
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoteParams)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamsNote)
 };
 
-struct GlobalParams {
-  GlobalParams() {}
+struct ParamGlobal {
+  ParamGlobal() {}
 
   void addParams(juce::AudioProcessor& p);
   void resetParams();
@@ -239,17 +239,17 @@ struct GlobalParams {
   juce::AudioParameterFloat* sustain = nullptr;
   juce::AudioParameterFloat* release = nullptr;
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GlobalParams)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
 };
 
 /**
  * A representation of the last UI settings to restore it when loading the
  * editor
  */
-struct UIParams {
-  UIParams() = default;
+struct ParamUI {
+  ParamUI() = default;
   // Get it from the plugin state
-  UIParams(juce::XmlElement* xml) {
+  ParamUI(juce::XmlElement* xml) {
     if (xml != nullptr) {
       generatorTab = xml->getIntAttribute("generatorTab");
       pitchClass = xml->getIntAttribute("pitchClass");
@@ -259,7 +259,7 @@ struct UIParams {
 
   // Build the XML representation to save in plugin state.
   juce::XmlElement* getXml() {
-    juce::XmlElement* xml = new juce::XmlElement("UIParams");
+    juce::XmlElement* xml = new juce::XmlElement("ParamUI");
     xml->setAttribute("generatorTab", generatorTab);
     xml->setAttribute("pitchClass", pitchClass);
     xml->setAttribute("specType", specType);

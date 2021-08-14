@@ -13,8 +13,8 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-GlobalParamBox::GlobalParamBox(GlobalParams& globalParams)
-    : mGlobalParams(globalParams) {
+GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
+    : mParamGlobal(paramGlobal) {
   juce::Colour mainColour = juce::Colours::white;
   /* Amp envelope viz */
   mEnvelopeAmp.setActive(true);
@@ -30,7 +30,7 @@ GlobalParamBox::GlobalParamBox(GlobalParams& globalParams)
   /* Attack */
   mSliderAttack = std::make_unique<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
-      *mGlobalParams.attack, *this,
+      *mParamGlobal.attack, *this,
       [mainColour, rotaryParams](juce::Slider& slider) {
         slider.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                          mainColour);
@@ -52,7 +52,7 @@ GlobalParamBox::GlobalParamBox(GlobalParams& globalParams)
   /* Decay */
   mSliderDecay = std::make_unique<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
-      *mGlobalParams.decay, *this,
+      *mParamGlobal.decay, *this,
       [mainColour, rotaryParams](juce::Slider& slider) {
         slider.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                          mainColour);
@@ -73,7 +73,7 @@ GlobalParamBox::GlobalParamBox(GlobalParams& globalParams)
   /* Sustain */
   mSliderSustain = std::make_unique<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
-      *mGlobalParams.sustain, *this,
+      *mParamGlobal.sustain, *this,
       [mainColour, rotaryParams](juce::Slider& slider) {
         slider.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                          mainColour);
@@ -94,7 +94,7 @@ GlobalParamBox::GlobalParamBox(GlobalParams& globalParams)
   /* Release */
   mSliderRelease = std::make_unique<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
-      *mGlobalParams.release, *this,
+      *mParamGlobal.release, *this,
       [mainColour, rotaryParams](juce::Slider& slider) {
         slider.setColour(juce::Slider::ColourIds::rotarySliderFillColourId,
                          mainColour);

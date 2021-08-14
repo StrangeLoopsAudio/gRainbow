@@ -27,7 +27,7 @@
  */
 class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
  public:
-  ArcSpectrogram(NoteParams &noteParams, UIParams &uiParams);
+  ArcSpectrogram(ParamsNote &paramsNote, ParamUI &paramUI);
   ~ArcSpectrogram() override;
 
   void update() override{};
@@ -58,20 +58,20 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   static constexpr auto COLOUR_MULTIPLIER = 20.0f;
 
   typedef struct ArcGrain {
-    GeneratorParams *genParams;
+    ParamGenerator *paramGenerator;
     float gain;
     float envIncSamples;  // How many envelope samples to increment each frame
     int numFramesActive;
-    ArcGrain(GeneratorParams *genParams, float gain, float envIncSamples)
-        : genParams(genParams),
+    ArcGrain(ParamGenerator *paramGenerator, float gain, float envIncSamples)
+        : paramGenerator(paramGenerator),
           gain(gain),
           envIncSamples(envIncSamples),
           numFramesActive(0) {}
   } ArcGrain;
 
   // Parameters
-  NoteParams &mNoteParams;
-  UIParams &mUIParams;
+  ParamsNote &mParamsNote;
+  ParamUI &mParamUI;
 
   // Buffers
   std::array<std::vector<std::vector<float>> *, Utils::SpecType::NUM_TYPES - 1>
