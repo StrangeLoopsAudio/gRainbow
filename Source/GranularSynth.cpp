@@ -319,8 +319,22 @@ void GranularSynth::setPresetParamsXml(const void* data, int sizeInBytes) {
 }
 
 //==============================================================================
-// This creates new instances of the plugin..
+// This creates new instances of the plugin.
+// For all intents and purposes "main()" for standalone and/or any plugin
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
+  // There is no known reason for pre-6.0.8 not being valid, just lack of
+  // testing with older versions. Some older versions will not compile due to
+  // missing JUCE functions
+  if ((JUCE_MAJOR_VERSION < 6) ||
+      (JUCE_MAJOR_VERSION == 6 && JUCE_MINOR_VERSION == 0 &&
+       JUCE_BUILDNUMBER < 8)) {
+    printf(
+        "[ERROR] Using JUCE version %s but gRainbow requires JUCE 6.0.8 or "
+        "greater\n",
+        juce::SystemStats::getJUCEVersion().toRawUTF8());
+    jassertfalse;
+  }
+
   return new GranularSynth();
 }
 
