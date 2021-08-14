@@ -19,7 +19,7 @@
 #include <random>
 
 #include "Fft.h"
-#include "GranularSynth.h"
+#include "Parameters.h"
 #include "Utils.h"
 
 //==============================================================================
@@ -30,18 +30,25 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   ArcSpectrogram(ParamsNote &paramsNote, ParamUI &paramUI);
   ~ArcSpectrogram() override;
 
+  // LOGO is always last since its not in the ComboBox
+  enum SpecType { SPECTROGRAM = 0, HPCP, DETECTED, LOGO, COUNT };
+
   void update() override{};
   void paint(juce::Graphics &) override;
   void resized() override;
 
-  void resetBuffers();
-  void loadBuffer(std::vector<std::vector<float>> *buffer,
-                  Utils::SpecType type);
+  void reset();
+  void loadBuffer(std::vector<std::vector<float>> *buffer, SpecType type);
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff() { mIsPlayingNote = false; }
 
   //============================================================================
   void run() override;
+
+  static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
+  static constexpr auto FILE_SPECTROGRAM = "gRainbow_spec.png";
+  static constexpr auto FILE_HPCP = "gRainbow_hpcp.png";
+  static constexpr auto FILE_DETECTED = "gRainbow_detected.png";
 
  private:
   static constexpr auto MIN_FREQ = 100;
@@ -74,20 +81,19 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   ParamUI &mParamUI;
 
   // Buffers
-  std::array<std::vector<std::vector<float>> *, Utils::SpecType::NUM_TYPES - 1>
-      mBuffers;
+  std::array<std::vector<std::vector<float>> *, SpecType::COUNT - 1> mBuffers;
 
   // Bookkeeping
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
   juce::Array<ArcGrain> mArcGrains;
   bool mIsPlayingNote = false;
-  Utils::SpecType mProcessType = Utils::SpecType::LOGO;
+  SpecType mProcessType = SpecType::LOGO;  // if LOGO, nothing loaded yet
 
   std::random_device mRandomDevice{};
   std::mt19937 mGenRandom{mRandomDevice()};
   std::normal_distribution<> mNormalRand{0.0f, 0.4f};
 
-  std::array<juce::Image, Utils::SpecType::NUM_TYPES> mImages;
+  std::array<juce::Image, SpecType::COUNT> mImages;
   juce::ComboBox mSpecType;
 
   void grainCreatedCallback(int genIdx, float envGain);

@@ -20,7 +20,6 @@ static constexpr juce::int64 GENERATOR_COLOURS_HEX[4] = {0xFF52C4FF, 0xFFE352FF,
                                                         0xFFFF8D52, 0xFF6EFF52};
 
 enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
-enum SpecType { LOGO, SPECTROGRAM, HPCP, NOTES, NUM_TYPES };
 
 // All util logic around the notes/pitchClasses
 enum PitchClass {
@@ -49,10 +48,6 @@ static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
 static constexpr auto MAX_CANDIDATES = 6;
 static constexpr auto TIMESTRETCH_RATIO =
     1.0594f;  // Constant used for pitch shifting by semitones
-static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
-static constexpr auto FILE_SPECTROGRAM = "gRainbow_spec.png";
-static constexpr auto FILE_HPCP = "gRainbow_hpcp.png";
-static constexpr auto FILE_NOTES = "gRainbow_notes.png";
 
 typedef struct EnvelopeADSR {
   // All adsr params are in samples (except for sustain amp)

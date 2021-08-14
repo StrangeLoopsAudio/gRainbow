@@ -12,10 +12,11 @@
 
 #include <JuceHeader.h>
 
+#include "ArcSpectrogram.h"
 #include "Grain.h"
+#include "Parameters.h"
 #include "PitchDetector.h"
 #include "Utils.h"
-#include "Parameters.h"
 
 class GranularSynth : public juce::AudioProcessor {
  public:
@@ -80,7 +81,7 @@ class GranularSynth : public juce::AudioProcessor {
   std::function<void(Utils::PitchClass pitchClass, bool isNoteOn)>
       onNoteChanged = nullptr;
   std::function<void(std::vector<std::vector<float>>* buffer,
-                     Utils::SpecType type)>
+                     ArcSpectrogram::SpecType type)>
       onBufferProcessed = nullptr;
   std::function<void(double progress)>
       onProgressUpdated = nullptr;

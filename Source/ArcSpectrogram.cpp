@@ -23,37 +23,36 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
   setFramesPerSecond(REFRESH_RATE_FPS);
   mBuffers.fill(nullptr);
 
-  mImages[Utils::SpecType::LOGO] = juce::PNGImageFormat::loadFrom(
+  mImages[SpecType::LOGO] = juce::PNGImageFormat::loadFrom(
       BinaryData::logo_png, BinaryData::logo_pngSize);
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  juce::File imageFile = parentDir.getChildFile(Utils::FILE_SPECTROGRAM);
+  juce::File imageFile = parentDir.getChildFile(FILE_SPECTROGRAM);
   if (imageFile.existsAsFile()) {
-    mImages[Utils::SpecType::SPECTROGRAM] =
-        juce::PNGImageFormat::loadFrom(imageFile);
+    mImages[SpecType::SPECTROGRAM] = juce::PNGImageFormat::loadFrom(imageFile);
   }
-  imageFile = parentDir.getChildFile(Utils::FILE_HPCP);
+  imageFile = parentDir.getChildFile(FILE_HPCP);
   if (imageFile.existsAsFile()) {
-    mImages[Utils::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(imageFile);
+    mImages[SpecType::HPCP] = juce::PNGImageFormat::loadFrom(imageFile);
   }
-  imageFile = parentDir.getChildFile(Utils::FILE_NOTES);
+  imageFile = parentDir.getChildFile(FILE_DETECTED);
   if (imageFile.existsAsFile()) {
-    mImages[Utils::SpecType::NOTES] = juce::PNGImageFormat::loadFrom(imageFile);
+    mImages[SpecType::DETECTED] = juce::PNGImageFormat::loadFrom(imageFile);
   }
 
-  mSpecType.addItem("Spectrogram", (int)Utils::SpecType::SPECTROGRAM);
-  mSpecType.addItem("Harmonic Profile", (int)Utils::SpecType::HPCP);
-  mSpecType.addItem("Detected Pitches", (int)Utils::SpecType::NOTES);
-  mSpecType.setSelectedId(mParamUI.specType, juce::dontSendNotification);
-  mSpecType.setVisible(mParamUI.specType != Utils::SpecType::LOGO);
+  // ComboBox for some reason is not zero indexed like the rest of JUCE and C++
+  // for adding items we go by 'id' base but everything else is 'index' based
+  mSpecType.addItem("Spectrogram", (int)SpecType::SPECTROGRAM + 1);
+  mSpecType.addItem("Harmonic Profile", (int)SpecType::HPCP + 1);
+  mSpecType.addItem("Detected Pitches", (int)SpecType::DETECTED + 1);
+  mSpecType.setTooltip("Select different spectrum type");
+  // Will get called from user using UI and from inside this class when loading
+  // buffers
   mSpecType.onChange = [this](void) {
-    if (mSpecType.getSelectedId() != Utils::SpecType::LOGO) {
-      mSpecType.setVisible(true);
-      mParamUI.specType = mSpecType.getSelectedId();
-    }
+    mParamUI.specType = mSpecType.getSelectedItemIndex();
     repaint();
   };
+
   addChildComponent(mSpecType);
-  mSpecType.setVisible(imageFile.existsAsFile());
 }
 
 ArcSpectrogram::~ArcSpectrogram() {
@@ -62,24 +61,21 @@ ArcSpectrogram::~ArcSpectrogram() {
   // Save image files
   juce::PNGImageFormat pngWriter;
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  if (mImages[Utils::SpecType::SPECTROGRAM].isValid()) {
-    parentDir.getChildFile(Utils::FILE_SPECTROGRAM).deleteFile();
+  if (mImages[SpecType::SPECTROGRAM].isValid()) {
+    parentDir.getChildFile(FILE_SPECTROGRAM).deleteFile();
     juce::FileOutputStream imageStream(
-        parentDir.getChildFile(Utils::FILE_SPECTROGRAM));
-    pngWriter.writeImageToStream(mImages[Utils::SpecType::SPECTROGRAM],
-                                 imageStream);
+        parentDir.getChildFile(FILE_SPECTROGRAM));
+    pngWriter.writeImageToStream(mImages[SpecType::SPECTROGRAM], imageStream);
   }
-  if (mImages[Utils::SpecType::HPCP].isValid()) {
-    parentDir.getChildFile(Utils::FILE_HPCP).deleteFile();
-    juce::FileOutputStream imageStream(
-        parentDir.getChildFile(Utils::FILE_HPCP));
-    pngWriter.writeImageToStream(mImages[Utils::SpecType::HPCP], imageStream);
+  if (mImages[SpecType::HPCP].isValid()) {
+    parentDir.getChildFile(FILE_HPCP).deleteFile();
+    juce::FileOutputStream imageStream(parentDir.getChildFile(FILE_HPCP));
+    pngWriter.writeImageToStream(mImages[SpecType::HPCP], imageStream);
   }
-  if (mImages[Utils::SpecType::NOTES].isValid()) {
-    parentDir.getChildFile(Utils::FILE_NOTES).deleteFile();
-    juce::FileOutputStream imageStream(
-        parentDir.getChildFile(Utils::FILE_NOTES));
-    pngWriter.writeImageToStream(mImages[Utils::SpecType::NOTES], imageStream);
+  if (mImages[SpecType::DETECTED].isValid()) {
+    parentDir.getChildFile(FILE_DETECTED).deleteFile();
+    juce::FileOutputStream imageStream(parentDir.getChildFile(FILE_DETECTED));
+    pngWriter.writeImageToStream(mImages[SpecType::DETECTED], imageStream);
   }
 }
 
@@ -87,7 +83,10 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
   // Draw selected type
-  Utils::SpecType specType = (Utils::SpecType)(mSpecType.getSelectedId());
+  // if nothing has been loaded, want to keep drawing the logo
+  SpecType specType = (mProcessType == SpecType::LOGO)
+                          ? SpecType::LOGO
+                          : (SpecType)(mSpecType.getSelectedItemIndex());
   juce::Point<float> centerPoint =
       juce::Point<float>(getWidth() / 2.0f, getHeight());
   int startRadius = getHeight() / 4.0f;
@@ -145,16 +144,15 @@ void ArcSpectrogram::resized() {
 }
 
 void ArcSpectrogram::run() {
-  std::vector<std::vector<float>>& spec = *mBuffers[mProcessType - 1];
+  std::vector<std::vector<float>>& spec = *mBuffers[mProcessType];
   if (spec.size() == 0 || threadShouldExit()) return;
 
   // Initialize rainbow parameters
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
-  int maxRow = (mProcessType == Utils::SpecType::SPECTROGRAM)
-                   ? spec[0].size() / 8
-                   : spec[0].size();
+  int maxRow = (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 8
+                                                       : spec[0].size();
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mImages[mProcessType] =
       juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
@@ -197,7 +195,7 @@ void ArcSpectrogram::run() {
   }
 }
 
-void ArcSpectrogram::resetBuffers() {
+void ArcSpectrogram::reset() {
   // Reset all images except logo
   for (int i = 1; i < mImages.size(); ++i) {
     mImages[i].clear(mImages[i].getBounds());
@@ -205,15 +203,19 @@ void ArcSpectrogram::resetBuffers() {
 }
 
 void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
-                                Utils::SpecType type) {
+                                SpecType type) {
   if (buffer == nullptr) return;
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
-  mBuffers[type - 1] = buffer;
   mProcessType = type;
+  mBuffers[mProcessType] = buffer;
 
   const juce::MessageManagerLock lock;
-  if (type == Utils::SpecType::SPECTROGRAM || type == Utils::SpecType::HPCP) {
-    mSpecType.setSelectedId(mProcessType, juce::sendNotification);
+  // As each buffer is loaded, want to display the next spec type image. If not
+  // the last viewable item index, then process next item
+  if ((int)mProcessType < (mSpecType.getNumItems() - 1)) {
+    mSpecType.setSelectedItemIndex(mProcessType, juce::sendNotification);
+    // make visible when loading the buffer if it isn't already
+    mSpecType.setVisible(true);
   }
   // Only make image if component size has been set
   if (getWidth() > 0 && getHeight() > 0) startThread();

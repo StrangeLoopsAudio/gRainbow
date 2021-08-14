@@ -32,7 +32,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   };
 
   mSynth.onBufferProcessed = [this](std::vector<std::vector<float>>* buffer,
-                                    Utils::SpecType type) {
+                                    ArcSpectrogram::SpecType type) {
     mArcSpec.loadBuffer(buffer, type);
   };
 
@@ -134,7 +134,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
 GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  auto recordFile = parentDir.getChildFile(Utils::FILE_RECORDING);
+  auto recordFile = parentDir.getChildFile(ArcSpectrogram::FILE_RECORDING);
   recordFile.deleteFile();
   mAudioDeviceManager.removeAudioCallback(&mRecorder);
   setLookAndFeel(nullptr);
@@ -307,7 +307,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
   }
 
   mSynth.processFile(&fileAudioBuffer, sampleRate);
-  mArcSpec.resetBuffers();
+  mArcSpec.reset();
 
   mBtnPreset.setEnabled(true);  // if it wasn't already enabled
   mLabelFilenfo.setText(file.getFileName(), juce::dontSendNotification);
@@ -327,8 +327,8 @@ void GRainbowAudioProcessorEditor::startRecording() {
   }
 
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  parentDir.getChildFile(Utils::FILE_RECORDING).deleteFile();
-  mRecordedFile = parentDir.getChildFile(Utils::FILE_RECORDING);
+  parentDir.getChildFile(ArcSpectrogram::FILE_RECORDING).deleteFile();
+  mRecordedFile = parentDir.getChildFile(ArcSpectrogram::FILE_RECORDING);
 
   mRecorder.startRecording(mRecordedFile);
 

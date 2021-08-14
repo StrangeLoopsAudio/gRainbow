@@ -34,16 +34,17 @@ GranularSynth::GranularSynth()
   mFft.onProcessingComplete =
       [this](std::vector<std::vector<float>>& spectrum) {
         if (onBufferProcessed != nullptr) {
-          onBufferProcessed(&spectrum, Utils::SpecType::SPECTROGRAM);
+          onBufferProcessed(&spectrum, ArcSpectrogram::SpecType::SPECTROGRAM);
         }
       };
 
   mPitchDetector.onPitchesUpdated =
       [this](std::vector<std::vector<float>>& hpcpBuffer,
-             std::vector<std::vector<float>>& notesBuffer) {
+             std::vector<std::vector<float>>& detectedBuffer) {
         if (onBufferProcessed != nullptr) {
-          onBufferProcessed(&hpcpBuffer, Utils::SpecType::HPCP);
-          onBufferProcessed(&notesBuffer, Utils::SpecType::NOTES);
+          onBufferProcessed(&hpcpBuffer, ArcSpectrogram::SpecType::HPCP);
+          onBufferProcessed(&detectedBuffer,
+                            ArcSpectrogram::SpecType::DETECTED);
         }
         createCandidates(mPitchDetector.getPitches());
         mIsProcessingComplete = true;
@@ -61,9 +62,9 @@ GranularSynth::GranularSynth()
 GranularSynth::~GranularSynth() {
   // Get rid of image files
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  parentDir.getChildFile(Utils::FILE_SPECTROGRAM).deleteFile();
-  parentDir.getChildFile(Utils::FILE_HPCP).deleteFile();
-  parentDir.getChildFile(Utils::FILE_NOTES).deleteFile();
+  parentDir.getChildFile(ArcSpectrogram::FILE_SPECTROGRAM).deleteFile();
+  parentDir.getChildFile(ArcSpectrogram::FILE_HPCP).deleteFile();
+  parentDir.getChildFile(ArcSpectrogram::FILE_DETECTED).deleteFile();
 }
 
 //==============================================================================
