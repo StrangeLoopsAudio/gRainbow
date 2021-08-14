@@ -24,6 +24,7 @@ static juce::String genGrainTilt{"_grain_tilt_gen_"};
 static juce::String genGrainRate{"_grain_rate_gen_"};
 static juce::String genGrainDuration{"_grain_duration_gen_"};
 static juce::String genGrainGain{"_grain_gain_gen_"};
+static juce::String genGrainSync{"_grain_sync_gen_"};
 static juce::String genAttack{"_attack_gen_"};
 static juce::String genDecay{"_decay_gen_"};
 static juce::String genSustain{"_sustain_gen_"};
@@ -142,6 +143,7 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* grainRate = nullptr;
   juce::AudioParameterFloat* grainDuration = nullptr;
   juce::AudioParameterFloat* grainGain = nullptr;
+  juce::AudioParameterBool* grainSync = nullptr;
   juce::AudioParameterFloat* attack = nullptr;
   juce::AudioParameterFloat* decay = nullptr;
   juce::AudioParameterFloat* sustain = nullptr;

@@ -78,6 +78,10 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   p.addParameter(grainGain = new juce::AudioParameterFloat(
                      gainId, gainId, juce::NormalisableRange<float>(0.0f, 1.0f),
                      ParamDefaults::GRAIN_GAIN_DEFAULT));
+  juce::String syncId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainSync +
+                        juce::String(genIdx);
+  p.addParameter(grainSync =
+                     new juce::AudioParameterBool(syncId, syncId, false));
   juce::String attackId =
       PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genAttack + juce::String(genIdx);
   p.addParameter(attack = new juce::AudioParameterFloat(
@@ -147,6 +151,7 @@ void ParamNote::addListener(int genIdx,
   generator->grainRate->addListener(listener);
   generator->grainDuration->addListener(listener);
   generator->grainGain->addListener(listener);
+  generator->grainSync->addListener(listener);
   generator->attack->addListener(listener);
   generator->decay->addListener(listener);
   generator->sustain->addListener(listener);
@@ -168,6 +173,7 @@ void ParamNote::removeListener(
   generator->grainRate->removeListener(listener);
   generator->grainDuration->removeListener(listener);
   generator->grainGain->removeListener(listener);
+  generator->grainSync->removeListener(listener);
   generator->attack->removeListener(listener);
   generator->decay->removeListener(listener);
   generator->sustain->removeListener(listener);
@@ -205,6 +211,7 @@ void ParamsNote::resetParams() {
                             ParamDefaults::GRAIN_DURATION_DEFAULT);
       ParamHelper::setParam(generator->grainGain,
                             ParamDefaults::GRAIN_GAIN_DEFAULT);
+      ParamHelper::setParam(generator->grainSync, false);
       ParamHelper::setParam(generator->attack,
                             ParamDefaults::ATTACK_DEFAULT_SEC);
       ParamHelper::setParam(generator->decay, ParamDefaults::DECAY_DEFAULT_SEC);

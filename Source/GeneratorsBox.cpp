@@ -148,6 +148,7 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderDuration.setRotaryParameters(rotaryParams);
   mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start,
                            ParamRanges::GRAIN_DURATION.end);
+  mSliderDuration.setTextValueSuffix("s");
   mSliderDuration.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->grainDuration,
                           mSliderDuration.getValue());
@@ -184,6 +185,7 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderAttack.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderAttack.setRotaryParameters(rotaryParams);
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end);
+  mSliderAttack.setTextValueSuffix("s");
   mSliderAttack.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->attack,
                           mSliderAttack.getValue());
@@ -199,6 +201,7 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderDecay.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderDecay.setRotaryParameters(rotaryParams);
   mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end);
+  mSliderDecay.setTextValueSuffix("s");
   mSliderDecay.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->decay,
                           mSliderDecay.getValue());
@@ -229,6 +232,7 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderRelease.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderRelease.setRotaryParameters(rotaryParams);
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end);
+  mSliderRelease.setTextValueSuffix("s");
   mSliderRelease.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->release,
                           mSliderRelease.getValue());
