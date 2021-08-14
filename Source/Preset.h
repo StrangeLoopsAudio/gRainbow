@@ -29,8 +29,8 @@ struct Header {
 
   // Audio Buffer info
   uint32_t audioBufferSize;  // bytes of raw data
-  double audioBufferNumberOfSamples;
-  int32_t audioBufferSamplerRate;
+  double audioBufferSamplerRate;
+  int32_t audioBufferNumberOfSamples;
   int32_t audioBufferChannel;
 
   uint32_t reserved[32];

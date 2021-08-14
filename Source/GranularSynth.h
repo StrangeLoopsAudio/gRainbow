@@ -85,7 +85,7 @@ class GranularSynth : public juce::AudioProcessor {
   std::function<void(double progress)>
       onProgressUpdated = nullptr;
 
-  void processFile(juce::File file);
+  void processFile(juce::AudioBuffer<float>* audioBuffer, double sampleRate);
   ParamsNote& getParamsNote() { return mParamsNote; }
   ParamGlobal& getParamGlobal() { return mParamGlobal; }
   ParamUI& getParamUI() { return mParamUI; }
@@ -137,7 +137,6 @@ class GranularSynth : public juce::AudioProcessor {
   juce::MidiKeyboardState mKeyboardState;
   bool mIsProcessingComplete = false;
   double mLoadingProgress = 0.0;
-  juce::AudioFormatManager mFormatManager;
 
   /* Grain control */
   long mTotalSamps;

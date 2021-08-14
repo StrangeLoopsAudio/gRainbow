@@ -30,7 +30,6 @@ GranularSynth::GranularSynth()
   mParamGlobal.addParams(*this);
 
   mTotalSamps = 0;
-  mFormatManager.registerBasicFormats();
 
   mFft.onProcessingComplete =
       [this](std::vector<std::vector<float>>& spectrum) {
@@ -402,30 +401,24 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
   });
 }
 
-void GranularSynth::processFile(juce::File file) {
+void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer,
+                                double sampleRate) {
   resetParameters();
   mIsProcessingComplete = false;
-  std::unique_ptr<juce::AudioFormatReader> reader(
-      mFormatManager.createReaderFor(file));
 
-  if (reader.get() != nullptr) {
-    mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
-
-    // resamples the buffer from the file sampler rate to the the proper sampler
-    // rate set from the DAW in prepareToPlay
-    juce::AudioBuffer<float> tempBuffer = juce::AudioBuffer<float>(
-        reader->numChannels, (int)reader->lengthInSamples);
-    reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
-    std::unique_ptr<juce::LagrangeInterpolator> resampler =
-        std::make_unique<juce::LagrangeInterpolator>();
-    double ratio = reader->sampleRate / mSampleRate;
-    const float** inputs = tempBuffer.getArrayOfReadPointers();
-    float** outputs = mFileBuffer.getArrayOfWritePointers();
-    for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
-      resampler->reset();
-      resampler->process(ratio, inputs[c], outputs[c],
-                         mFileBuffer.getNumSamples());
-    }
+  // resamples the buffer from the file sampler rate to the the proper sampler
+  // rate set from the DAW in prepareToPlay
+  mFileBuffer.setSize(audioBuffer->getNumChannels(),
+                      audioBuffer->getNumSamples());
+  std::unique_ptr<juce::LagrangeInterpolator> resampler =
+      std::make_unique<juce::LagrangeInterpolator>();
+  double ratio = sampleRate / mSampleRate;
+  const float** inputs = audioBuffer->getArrayOfReadPointers();
+  float** outputs = mFileBuffer.getArrayOfWritePointers();
+  for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
+    resampler->reset();
+    resampler->process(ratio, inputs[c], outputs[c],
+                       mFileBuffer.getNumSamples());
   }
 
   mFft.processBuffer(&mFileBuffer);

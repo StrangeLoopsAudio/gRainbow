@@ -116,6 +116,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   mAudioDeviceManager.addAudioCallback(&mRecorder);
 
+  mFormatManager.registerBasicFormats();
+
   // Only want keyboard input focus for standalone as DAW will have own input
   // mappings
   if (mSynth.wrapperType ==
@@ -265,6 +267,9 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
 }
 
 void GRainbowAudioProcessorEditor::processFile(juce::File file) {
+  juce::AudioBuffer<float> fileAudioBuffer;
+  double sampleRate;
+
   if (file.getFileExtension() == ".gbow") {
     Preset::Header presetFileHeader;
     juce::FileInputStream input(file);
@@ -275,10 +280,11 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       jassert(presetFileHeader.versionMajor == Preset::VERSION_MAJOR);
       jassert(presetFileHeader.versionMinor == Preset::VERSION_MINOR);
 
-      void* audioBuffer = malloc(presetFileHeader.audioBufferSize);
-      jassert(audioBuffer != nullptr);
-      input.read(audioBuffer, presetFileHeader.audioBufferSize);
-      free(audioBuffer);
+      fileAudioBuffer.setSize(presetFileHeader.audioBufferChannel,
+                              presetFileHeader.audioBufferNumberOfSamples);
+      input.read(fileAudioBuffer.getWritePointer(0),
+                 presetFileHeader.audioBufferSize);
+      sampleRate = presetFileHeader.audioBufferSamplerRate;
 
       // juce::FileInputStream uses 'int' to read
       int xmlSize =
@@ -290,10 +296,18 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       free(xmlData);
     }
   } else {
-    // audio clipS
-    mSynth.processFile(file);
-    mArcSpec.resetBuffers();
+    // loading audio clip
+    std::unique_ptr<juce::AudioFormatReader> reader(
+        mFormatManager.createReaderFor(file));
+    jassert(reader.get() != nullptr);
+    fileAudioBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
+    reader->read(&fileAudioBuffer, 0, (int)reader->lengthInSamples, 0, true,
+                 true);
+    sampleRate = reader->sampleRate;
   }
+
+  mSynth.processFile(&fileAudioBuffer, sampleRate);
+  mArcSpec.resetBuffers();
 
   mBtnPreset.setEnabled(true);  // if it wasn't already enabled
   mLabelFilenfo.setText(file.getFileName(), juce::dontSendNotification);
