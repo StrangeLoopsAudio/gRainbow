@@ -55,13 +55,16 @@
       <GROUP id="{686FB61F-2127-074F-B6C7-E25843969006}" name="Resources">
         <FILE id="deOQaC" name="appicon.png" compile="0" resource="1" file="Source/Resources/appicon.png"/>
         <FILE id="FIxQc8" name="logo.png" compile="0" resource="1" file="Source/Resources/logo.png"/>
-        <FILE id="CzGiew" name="microphone.png" compile="0" resource="1" file="Source/Resources/microphone.png"/>
-        <FILE id="SKC6ix" name="microphoneOver.png" compile="0" resource="1"
+        <FILE id="qEeUXc" name="microphone.png" compile="0" resource="1" file="Source/Resources/microphone.png"/>
+        <FILE id="gQZuVv" name="microphoneOver.png" compile="0" resource="1"
               file="Source/Resources/microphoneOver.png"/>
         <FILE id="oLfVft" name="openFileNormal.png" compile="0" resource="1"
               file="Source/Resources/openFileNormal.png"/>
         <FILE id="AKnPf2" name="openFileOver.png" compile="0" resource="1"
               file="Source/Resources/openFileOver.png"/>
+        <FILE id="CGXHMC" name="presetNormal.png" compile="0" resource="1"
+              file="Source/Resources/presetNormal.png"/>
+        <FILE id="gvJiVv" name="presetOver.png" compile="0" resource="1" file="Source/Resources/presetOver.png"/>
       </GROUP>
       <FILE id="KSuUMg" name="Parameters.cpp" compile="1" resource="0" file="Source/Parameters.cpp"/>
       <FILE id="XcFpdr" name="Parameters.h" compile="0" resource="0" file="Source/Parameters.h"/>

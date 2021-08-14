@@ -46,7 +46,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
 
   setLookAndFeel(&mRainbowLookAndFeel);
 
-  /* Open file button */
+  // Open file button
   juce::Image openFileNormal = juce::PNGImageFormat::loadFrom(
       BinaryData::openFileNormal_png, BinaryData::openFileNormal_pngSize);
   juce::Image openFileOver = juce::PNGImageFormat::loadFrom(
@@ -58,7 +58,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
 
-  /* Recording button */
+  // Recording button
   juce::Image recordIcon = juce::PNGImageFormat::loadFrom(
       BinaryData::microphone_png, BinaryData::microphone_pngSize);
   juce::Image recordOver = juce::PNGImageFormat::loadFrom(
@@ -76,16 +76,34 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
   };
   addAndMakeVisible(mBtnRecord);
 
-  /* Generators box */
+  // Present button
+  juce::Image presetNormal = juce::PNGImageFormat::loadFrom(
+      BinaryData::presetNormal_png, BinaryData::presetNormal_pngSize);
+  juce::Image presetOver = juce::PNGImageFormat::loadFrom(
+      BinaryData::presetOver_png, BinaryData::presetOver_pngSize);
+  mBtnPreset.setImages(false, true, true, presetNormal, 1.0f,
+                       juce::Colours::transparentBlack, presetOver, 1.0f,
+                       juce::Colours::transparentBlack, presetOver, 1.0f,
+                       juce::Colours::transparentBlack);
+  mBtnPreset.onClick = [this] {};
+  addAndMakeVisible(mBtnPreset);
+
+  // File info label
+  mLabelClipInfo.setJustificationType(juce::Justification::centred);
+  addAndMakeVisible(mLabelClipInfo);
+  mLabelPresetInfo.setJustificationType(juce::Justification::centred);
+  addAndMakeVisible(mLabelPresetInfo);
+
+  // Generators box
   mGeneratorsBox.onPositionChanged = [this](int gen, bool isRight) {
     mSynth.incrementPosition(gen, isRight);
   };
   addAndMakeVisible(mGeneratorsBox);
 
-  /* Global parameter box */
+  // Global parameter box
   addAndMakeVisible(mGlobalParamBox);
 
-  /* Arc spectrogram */
+  // Arc spectrogram
   addAndMakeVisible(mArcSpec);
 
   addChildComponent(mProgressBar);
@@ -137,6 +155,10 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   g.setColour(mRecorder.isRecording() ? juce::Colours::red
                                       : juce::Colours::darkgrey);
   g.fillRoundedRectangle(mBtnRecord.getBounds().toFloat(), 14);
+
+  // Draw background for preset button
+  g.setColour(juce::Colours::darkgrey);
+  g.fillRoundedRectangle(mBtnPreset.getBounds().toFloat(), 14);
 }
 
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
@@ -188,11 +210,20 @@ void GRainbowAudioProcessorEditor::resized() {
 
   // Open and record buttons
   auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT + BTN_PADDING);
-  filePanel.removeFromLeft(BTN_PADDING);
   filePanel.removeFromTop(BTN_PADDING);
+  filePanel.removeFromLeft(BTN_PADDING);
   mBtnOpenFile.setBounds(filePanel.removeFromLeft(OPEN_FILE_WIDTH));
   filePanel.removeFromLeft(BTN_PADDING);
   mBtnRecord.setBounds(filePanel.removeFromLeft(OPEN_FILE_WIDTH));
+  // preset button
+  filePanel.removeFromRight(BTN_PADDING);
+  mBtnPreset.setBounds(filePanel.removeFromRight(OPEN_FILE_WIDTH));
+  // no button currntly, but add padding as if one was present
+  filePanel.removeFromRight(BTN_PADDING);
+  filePanel.removeFromRight(OPEN_FILE_WIDTH);
+  // remaining space on sides remaing is for file information
+  mLabelClipInfo.setBounds(filePanel.removeFromTop(BTN_PANEL_HEIGHT / 2));
+  mLabelPresetInfo.setBounds(filePanel.removeFromTop(BTN_PANEL_HEIGHT / 2));
 
   r.removeFromTop(NOTE_DISPLAY_HEIGHT); // Just padding
 
@@ -232,6 +263,8 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
 }
 
 void GRainbowAudioProcessorEditor::processFile(juce::File file) {
+  mLabelClipInfo.setText("CLIP: " + file.getFileName(),
+                         juce::dontSendNotification);
   mSynth.processFile(file);
   mArcSpec.resetBuffers();
 }

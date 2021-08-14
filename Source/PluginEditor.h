@@ -61,6 +61,9 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::ImageComponent mLogo;
   juce::ImageButton mBtnOpenFile;
   juce::ImageButton mBtnRecord;
+  juce::ImageButton mBtnPreset;
+  juce::Label mLabelClipInfo;
+  juce::Label mLabelPresetInfo;
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
