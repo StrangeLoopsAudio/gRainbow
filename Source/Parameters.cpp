@@ -33,98 +33,71 @@ void GlobalParams::resetParams() {
   ParamHelper::setParam(release, ParamDefaults::RELEASE_DEFAULT_SEC);
 }
 
-void CandidateParams::addParams(juce::AudioProcessor& p) {
-  p.addParameter(valid = new juce::AudioParameterBool(
-                     ParamIDs::candidateValid + juce::String(noteIdx) +
-                         juce::String("_") + juce::String(candidateIdx),
-                     "Valid", false));
-  p.addParameter(posRatio = new juce::AudioParameterFloat(
-                     ParamIDs::candidatePosRatio + juce::String(noteIdx) +
-                         juce::String("_") + juce::String(candidateIdx),
-                     "Pos Ratio", juce::NormalisableRange<float>(0.0f, 1.0f),
-                     0.0f));
-  p.addParameter(pbRate = new juce::AudioParameterFloat(
-                     ParamIDs::candidatePbRate + juce::String(noteIdx) +
-                         juce::String("_") + juce::String(candidateIdx),
-                     "Playback Rate",
-                     juce::NormalisableRange<float>(0.01f, 2.0f), 1.0f));
-  p.addParameter(duration = new juce::AudioParameterFloat(
-                     ParamIDs::candidateDuration + juce::String(noteIdx) +
-                         juce::String("_") + juce::String(candidateIdx),
-                     "Duration", juce::NormalisableRange<float>(0.0f, 1.0f),
-                     0.0f));
-  p.addParameter(salience = new juce::AudioParameterFloat(
-                     ParamIDs::candidateSalience + juce::String(noteIdx) +
-                         juce::String("_") + juce::String(candidateIdx),
-                     "Salience", juce::NormalisableRange<float>(0.0f, 1.0f),
-                     0.0f));
-}
-
 void GeneratorParams::addParams(juce::AudioProcessor& p) {
-  p.addParameter(enable = new juce::AudioParameterBool(
-                     ParamIDs::genEnable + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Enable", genIdx == 0));
+  juce::String enableId =
+      PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genEnable + juce::String(genIdx);
+  p.addParameter(
+      enable = new juce::AudioParameterBool(enableId, enableId, genIdx == 0));
+  juce::String candidateId = PITCH_CLASS_NAMES[noteIdx] +
+                             ParamIDs::genCandidate + juce::String(genIdx);
   p.addParameter(candidate = new juce::AudioParameterInt(
-                     ParamIDs::genCandidate + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Candidate", 0, MAX_CANDIDATES - 1, genIdx));
+                     candidateId, candidateId, 0, MAX_CANDIDATES - 1, genIdx));
+  juce::String pitchId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchAdjust +
+                         juce::String(genIdx);
   p.addParameter(pitchAdjust = new juce::AudioParameterFloat(
-                     ParamIDs::genPitchAdjust + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Pitch Adjust", ParamRanges::PITCH_ADJUST, 0.0f));
-  p.addParameter(positionAdjust = new juce::AudioParameterFloat(
-                     ParamIDs::genPositionAdjust + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Position Adjust", ParamRanges::POSITION_ADJUST,
-                     0.0f));
-  p.addParameter(grainShape = new juce::AudioParameterFloat(
-                     ParamIDs::genGrainShape + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Grain Shape",
-                     juce::NormalisableRange<float>(0.0f, 1.0f), 0.5f));
+                     pitchId, pitchId, ParamRanges::PITCH_ADJUST, 0.0f));
+  juce::String positionId = PITCH_CLASS_NAMES[noteIdx] +
+                            ParamIDs::genPositionAdjust + juce::String(genIdx);
+  p.addParameter(
+      positionAdjust = new juce::AudioParameterFloat(
+          positionId, positionId, ParamRanges::POSITION_ADJUST, 0.0f));
+  juce::String shapeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainShape +
+                         juce::String(genIdx);
+  p.addParameter(
+      grainShape = new juce::AudioParameterFloat(
+          shapeId, shapeId, juce::NormalisableRange<float>(0.0f, 1.0f), 0.5f));
   grainShape->addListener(this);
-  p.addParameter(grainTilt = new juce::AudioParameterFloat(
-                     ParamIDs::genGrainTilt + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Grain Tilt",
-                     juce::NormalisableRange<float>(0.0f, 1.0f), 0.5f));
+  juce::String tiltId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainTilt +
+                        juce::String(genIdx);
+  p.addParameter(
+      grainTilt = new juce::AudioParameterFloat(
+          tiltId, tiltId, juce::NormalisableRange<float>(0.0f, 1.0f), 0.5f));
   grainTilt->addListener(this);
+  juce::String rateId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainRate +
+                        juce::String(genIdx);
   p.addParameter(grainRate = new juce::AudioParameterFloat(
-                     ParamIDs::genGrainRate + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Grain Rate", ParamRanges::GRAIN_RATE,
+                     rateId, rateId, ParamRanges::GRAIN_RATE,
                      ParamDefaults::GRAIN_RATE_DEFAULT));
+  juce::String durationId = PITCH_CLASS_NAMES[noteIdx] +
+                            ParamIDs::genGrainDuration + juce::String(genIdx);
   p.addParameter(grainDuration = new juce::AudioParameterFloat(
-                     ParamIDs::genGrainDuration + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Grain Duration", ParamRanges::GRAIN_DURATION,
+                     durationId, durationId, ParamRanges::GRAIN_DURATION,
                      ParamDefaults::GRAIN_DURATION_DEFAULT));
+  juce::String gainId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainGain +
+                        juce::String(genIdx);
   p.addParameter(grainGain = new juce::AudioParameterFloat(
-                     ParamIDs::genGrainGain + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Grain Gain",
-                     juce::NormalisableRange<float>(0.0f, 1.0f),
+                     gainId, gainId, juce::NormalisableRange<float>(0.0f, 1.0f),
                      ParamDefaults::GRAIN_GAIN_DEFAULT));
+  juce::String attackId =
+      PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genAttack + juce::String(genIdx);
   p.addParameter(attack = new juce::AudioParameterFloat(
-                     ParamIDs::genAttack + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Attack", ParamRanges::ATTACK,
+                     attackId, attackId, ParamRanges::ATTACK,
                      ParamDefaults::ATTACK_DEFAULT_SEC));
+  juce::String decayId =
+      PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genDecay + juce::String(genIdx);
   p.addParameter(decay = new juce::AudioParameterFloat(
-                     ParamIDs::genDecay + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Decay", ParamRanges::DECAY,
+                     decayId, decayId, ParamRanges::DECAY,
                      ParamDefaults::DECAY_DEFAULT_SEC));
+  juce::String sustainId =
+      PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genSustain + juce::String(genIdx);
   p.addParameter(sustain = new juce::AudioParameterFloat(
-                     ParamIDs::genSustain + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Sustain", juce::NormalisableRange<float>(0.0f, 1.0f),
+                     sustainId, sustainId,
+                     juce::NormalisableRange<float>(0.0f, 1.0f),
                      ParamDefaults::SUSTAIN_DEFAULT));
+  juce::String releaseId =
+      PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genRelease + juce::String(genIdx);
   p.addParameter(release = new juce::AudioParameterFloat(
-                     ParamIDs::genRelease + juce::String(genIdx) +
-                         juce::String("_") + juce::String(noteIdx),
-                     "Gen Release", ParamRanges::RELEASE,
+                     releaseId, releaseId, ParamRanges::RELEASE,
                      ParamDefaults::RELEASE_DEFAULT_SEC));
   updateGrainEnvelope();
 }
@@ -188,16 +161,14 @@ void NoteParam::addParams(juce::AudioProcessor& p) {
   for (auto& generator : generators) {
     generator->addParams(p);
   }
-  for (auto& candidate : candidates) {
-    candidate->addParams(p);
-  }
   p.addParameter(soloIdx = new juce::AudioParameterInt(
-                     ParamIDs::genSolo + juce::String(noteIdx),
-                     "Gen Solo", SOLO_NONE, NUM_GENERATORS - 1, SOLO_NONE));
+                     ParamIDs::genSolo + juce::String(noteIdx), "Gen Solo",
+                     SOLO_NONE, NUM_GENERATORS - 1, SOLO_NONE));
 }
 
 bool NoteParam::shouldPlayGenerator(int genIdx) {
-  return (soloIdx->get() == genIdx) || (generators[genIdx]->enable->get() && soloIdx->get() == SOLO_NONE);
+  return (soloIdx->get() == genIdx) ||
+         (generators[genIdx]->enable->get() && soloIdx->get() == SOLO_NONE);
 }
 
 void NoteParams::addParams(juce::AudioProcessor& p) {
@@ -215,21 +186,20 @@ void NoteParams::resetParams() {
       ParamHelper::setParam(generator->positionAdjust, 0.0f);
       ParamHelper::setParam(generator->grainShape, 0.5f);
       ParamHelper::setParam(generator->grainTilt, 0.5f);
-      ParamHelper::setParam(generator->grainRate, ParamDefaults::GRAIN_RATE_DEFAULT);
-      ParamHelper::setParam(generator->grainDuration, ParamDefaults::GRAIN_DURATION_DEFAULT);
-      ParamHelper::setParam(generator->grainGain, ParamDefaults::GRAIN_GAIN_DEFAULT);
-      ParamHelper::setParam(generator->attack, ParamDefaults::ATTACK_DEFAULT_SEC);
+      ParamHelper::setParam(generator->grainRate,
+                            ParamDefaults::GRAIN_RATE_DEFAULT);
+      ParamHelper::setParam(generator->grainDuration,
+                            ParamDefaults::GRAIN_DURATION_DEFAULT);
+      ParamHelper::setParam(generator->grainGain,
+                            ParamDefaults::GRAIN_GAIN_DEFAULT);
+      ParamHelper::setParam(generator->attack,
+                            ParamDefaults::ATTACK_DEFAULT_SEC);
       ParamHelper::setParam(generator->decay, ParamDefaults::DECAY_DEFAULT_SEC);
       ParamHelper::setParam(generator->sustain, ParamDefaults::SUSTAIN_DEFAULT);
-      ParamHelper::setParam(generator->release, ParamDefaults::RELEASE_DEFAULT_SEC);
+      ParamHelper::setParam(generator->release,
+                            ParamDefaults::RELEASE_DEFAULT_SEC);
     }
-    for (auto& candidate : note->candidates) {
-      ParamHelper::setParam(candidate->valid, false);
-      ParamHelper::setParam(candidate->posRatio, 0.0f);
-      ParamHelper::setParam(candidate->pbRate, 0.0f);
-      ParamHelper::setParam(candidate->duration, 0.0f);
-      ParamHelper::setParam(candidate->salience, 0.0f);
-    }
+    note->candidates.clear();
     ParamHelper::setParam(note->soloIdx, SOLO_NONE);
   }
 }

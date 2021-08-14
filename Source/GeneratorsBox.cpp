@@ -437,6 +437,8 @@ void GeneratorsBox::resized() {
 void GeneratorsBox::setPitchClass(Utils::PitchClass pitchClass) {
   mNoteParams.notes[mCurPitchClass]->soloIdx->removeListener(this);
   mNoteParams.notes[pitchClass]->soloIdx->addListener(this);
+  mPositionChanger.setNumPositions(
+      mNoteParams.notes[pitchClass]->candidates.size());
   mCurPitchClass = pitchClass;
   mUIParams.pitchClass = pitchClass;
   changeGenerator(mCurSelectedGenerator);

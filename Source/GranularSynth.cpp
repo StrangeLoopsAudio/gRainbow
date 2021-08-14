@@ -251,6 +251,7 @@ void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
 
   xml.addChildElement(params);
   xml.addChildElement(mUIParams.getXml());
+  // TODO: get/set candidates
 
   copyXmlToBinary(xml, destData);
 }
@@ -287,11 +288,11 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
               mNoteParams.notes[gNote.pitchClass]->getCandidate(i);
           float durSec = genParams->grainDuration->get();
           // Skip adding new grain if not enabled or full of grains
-          if (candidateParams->valid->get() &&
+          if (candidateParams != nullptr &&
               mNoteParams.notes[gNote.pitchClass]->shouldPlayGenerator(i) &&
               gNote.grains.size() < MAX_GRAINS) {
             float durSamples =
-                mSampleRate * durSec * (1.0f / candidateParams->pbRate->get());
+                mSampleRate * durSec * (1.0f / candidateParams->pbRate);
             /* Commented out random spray for now to test consistency
             juce::Random random;
 
@@ -300,14 +301,14 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
                                           mFileBuffer.getNumSamples()) -
                                              durSamples); */
             float posSamples =
-                candidateParams->posRatio->get() * mFileBuffer.getNumSamples();
+                candidateParams->posRatio * mFileBuffer.getNumSamples();
             float posOffset = genParams->positionAdjust->get() * durSamples;
 
             // TODO: normalize the gain or something
             float gain = genParams->grainGain->get();
             float pbRate =
-                candidateParams->pbRate->get() + genParams->pitchAdjust->get();
-            jassert(candidateParams->pbRate->get() > 0.1f);
+                candidateParams->pbRate + genParams->pitchAdjust->get();
+            jassert(candidateParams->pbRate > 0.1f);
             auto grain = Grain((Utils::GeneratorColour)i, genParams->grainEnv,
                                durSamples, pbRate, posSamples + posOffset,
                                mTotalSamps, gain);
@@ -368,8 +369,9 @@ void GranularSynth::processFile(juce::File file) {
 int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
   int pos =
       mNoteParams.notes[mCurPitchClass]->generators[boxNum]->candidate->get();
+  int numCandidates = mNoteParams.notes[mCurPitchClass]->candidates.size();
   int newPos = lookRight ? pos + 1 : pos - 1;
-  newPos = (newPos + Utils::MAX_CANDIDATES) % Utils::MAX_CANDIDATES;
+  newPos = (newPos + numCandidates) % numCandidates;
   ParamHelper::setParam(
       mNoteParams.notes[mCurPitchClass]->generators[boxNum]->candidate, newPos);
   return newPos;
@@ -379,10 +381,8 @@ std::vector<CandidateParams*> GranularSynth::getActiveCandidates() {
   std::vector<CandidateParams*> candidates;
   for (int i = 0; i < NUM_GENERATORS; ++i) {
     if (mNoteParams.notes[mCurPitchClass]->shouldPlayGenerator(i)) {
-      int candidate =
-          mNoteParams.notes[mCurPitchClass]->generators[i]->candidate->get();
       candidates.push_back(
-          mNoteParams.notes[mCurPitchClass]->candidates[candidate].get());
+          mNoteParams.notes[mCurPitchClass]->getCandidate(i));
     } else {
       candidates.push_back(nullptr);
     }
@@ -447,14 +447,9 @@ void GranularSynth::createCandidates(
       float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
       for (int i = 0; i < pitchVec.size(); ++i) {
         if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
-        ParamHelper::setParam(note->candidates[numFound]->valid, true);
-        ParamHelper::setParam(note->candidates[numFound]->posRatio,
-                              pitchVec[i].posRatio);
-        ParamHelper::setParam(note->candidates[numFound]->pbRate, pbRate);
-        ParamHelper::setParam(note->candidates[numFound]->duration,
-                              pitchVec[i].duration);
-        ParamHelper::setParam(note->candidates[numFound]->salience,
-                              pitchVec[i].gain);
+        note->candidates.push_back(CandidateParams(pitchVec[i].posRatio, pbRate,
+                                                   pitchVec[i].duration,
+                                                   pitchVec[i].gain));
         numFound++;
         if (numFound >= MAX_CANDIDATES) {
           foundAll = true;
@@ -468,14 +463,9 @@ void GranularSynth::createCandidates(
         float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
         for (int i = 0; i < pitchVec.size(); ++i) {
           if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
-          ParamHelper::setParam(note->candidates[numFound]->valid, true);
-          ParamHelper::setParam(note->candidates[numFound]->posRatio,
-                                pitchVec[i].posRatio);
-          ParamHelper::setParam(note->candidates[numFound]->pbRate, pbRate);
-          ParamHelper::setParam(note->candidates[numFound]->duration,
-                                pitchVec[i].duration);
-          ParamHelper::setParam(note->candidates[numFound]->salience,
-                                pitchVec[i].gain);
+          note->candidates.push_back(
+              CandidateParams(pitchVec[i].posRatio, pbRate,
+                              pitchVec[i].duration, pitchVec[i].gain));
           numFound++;
           if (numFound >= MAX_CANDIDATES) {
             foundAll = true;

@@ -77,7 +77,7 @@ void PositionChanger::paint(juce::Graphics& g) {
   if (mPosition >= 0) {
     int posNum = (mPosition >= 0) ? mPosition + 1 : 0;
     juce::String posString = juce::String(posNum) + juce::String(" / ") +
-                             juce::String(MAX_CANDIDATES);
+                             juce::String(mNumPositions);
     g.setColour(bgColour);
     g.drawText(posString, titleRect, juce::Justification::centred);
   }
@@ -111,6 +111,11 @@ void PositionChanger::setSolo(bool isSolo) {
 
 void PositionChanger::setColour(juce::Colour colour) {
   mColour = colour;
+  repaint();
+}
+
+void PositionChanger::setNumPositions(int numPositions) {
+  mNumPositions = numPositions;
   repaint();
 }
 

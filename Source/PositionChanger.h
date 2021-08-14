@@ -32,6 +32,7 @@ class PositionChanger : public juce::Component {
   void setActive(bool isActive);
   void setSolo(bool isSolo);
   void setColour(juce::Colour colour);
+  void setNumPositions(int numPositions);
   int  getPositionNumber() { return mPosition; }
   void setPositionNumber(int position);
 
@@ -49,6 +50,7 @@ class PositionChanger : public juce::Component {
   bool mIsActive = false;
   bool mIsSolo = false;
   juce::Colour mColour;
+  int mNumPositions = 0;
   int mIndexInBoxes; // Index among other boxes on screen
   int mPosition; // Position index
   bool mIsClickingArrow = false;

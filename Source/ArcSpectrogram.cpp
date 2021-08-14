@@ -103,15 +103,14 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   // Draw active grains
   for (ArcGrain& grain : mArcGrains) {
     CandidateParams* candidate =
-        mNoteParams.notes[grain.genParams->noteIdx]
-            ->candidates[grain.genParams->candidate->get()]
-            .get();
+        mNoteParams.notes[grain.genParams->noteIdx]->getCandidate(
+            grain.genParams->genIdx);
     float xRatio =
-        candidate->posRatio->get() +
-        (candidate->duration->get() * grain.genParams->positionAdjust->get());
+        candidate->posRatio +
+        (candidate->duration * grain.genParams->positionAdjust->get());
     float grainProg =
         (grain.numFramesActive * grain.envIncSamples) / ENV_LUT_SIZE;
-    xRatio += candidate->duration->get() * grainProg;
+    xRatio += candidate->duration * grainProg;
     float yRatio = (grain.genParams->noteIdx +
                     (grain.genParams->pitchAdjust->get() * 6.0f)) /
                    (float)Utils::PitchClass::COUNT;

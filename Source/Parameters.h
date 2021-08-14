@@ -14,26 +14,20 @@
 
 namespace ParamIDs {
 // Generator params
-static juce::String genEnable{"gen_enable_"};
-static juce::String genSolo{"gen_solo_"};
-static juce::String genCandidate{"gen_candidate_"};
-static juce::String genPitchAdjust{"gen_pitch_adjust_"};
-static juce::String genPositionAdjust{"gen_position_adjust_"};
-static juce::String genGrainShape{"gen_grain_shape_"};
-static juce::String genGrainTilt{"gen_grain_tilt_"};
-static juce::String genGrainRate{"gen_grain_rate_"};
-static juce::String genGrainDuration{"gen_grain_duration_"};
-static juce::String genGrainGain{"gen_grain_gain_"};
-static juce::String genAttack{"gen_attack_"};
-static juce::String genDecay{"gen_decay_"};
-static juce::String genSustain{"gen_sustain_"};
-static juce::String genRelease{"gen_release_"};
-// Position candidate params
-static juce::String candidateValid{"candidate_valid_"};
-static juce::String candidatePosRatio{"candidate_pos_ratio_"};
-static juce::String candidatePbRate{"candidate_pb_rate_"};
-static juce::String candidateDuration{"candidate_duration_"};
-static juce::String candidateSalience{"candidate_salience_"};
+static juce::String genEnable{"_enable_gen_"};
+static juce::String genSolo{"_solo_gen_"};
+static juce::String genCandidate{"_candidate_gen_"};
+static juce::String genPitchAdjust{"_pitch_adjust_gen_"};
+static juce::String genPositionAdjust{"_position_adjust_gen_"};
+static juce::String genGrainShape{"_grain_shape_gen_"};
+static juce::String genGrainTilt{"_grain_tilt_gen_"};
+static juce::String genGrainRate{"_grain_rate_gen_"};
+static juce::String genGrainDuration{"_grain_duration_gen_"};
+static juce::String genGrainGain{"_grain_gain_gen_"};
+static juce::String genAttack{"_attack_gen_"};
+static juce::String genDecay{"_decay_gen_"};
+static juce::String genSustain{"_sustain_gen_"};
+static juce::String genRelease{"_release_gen_"};
 // Global params
 static juce::String globalAttack{"global_attack"};
 static juce::String globalDecay{"global_decay"};
@@ -49,7 +43,7 @@ static juce::NormalisableRange<float> GRAIN_DURATION(0.06f, 0.3f);
 static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
-} // namespace ParamRanges
+}  // namespace ParamRanges
 
 namespace ParamDefaults {
 static float GRAIN_RATE_DEFAULT = 0.5f;
@@ -59,7 +53,10 @@ static float ATTACK_DEFAULT_SEC = 0.2f;
 static float DECAY_DEFAULT_SEC = 0.2f;
 static float SUSTAIN_DEFAULT = 0.8f;
 static float RELEASE_DEFAULT_SEC = 0.2f;
-} // namespace ParamDefaults
+}  // namespace ParamDefaults
+
+static juce::Array<juce::String> PITCH_CLASS_NAMES{
+    "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
 
 struct ParamHelper {
   static juce::String getParamID(juce::AudioProcessorParameter* param) {
@@ -69,7 +66,8 @@ struct ParamHelper {
 
     return param->getName(50);
   }
-  // Utility function to avoid ugly dereferencing code before sending norm value to host
+  // Utility function to avoid ugly dereferencing code before sending norm value
+  // to host
   static void setParam(juce::AudioParameterFloat* param, float newValue) {
     *param = newValue;
   }
@@ -88,20 +86,16 @@ static constexpr auto ENV_LUT_SIZE = 128;
 static constexpr auto SOLO_NONE = -1;
 
 struct CandidateParams {
-  CandidateParams(int noteIdx, int candidateIdx)
-      : noteIdx(noteIdx), candidateIdx(candidateIdx) {}
+  float posRatio;
+  float pbRate;
+  float duration;
+  float salience;
 
-  void addParams(juce::AudioProcessor& p);
-
-  int noteIdx;
-  int candidateIdx;
-  juce::AudioParameterBool* valid = nullptr;
-  juce::AudioParameterFloat* posRatio = nullptr;
-  juce::AudioParameterFloat* pbRate   = nullptr;
-  juce::AudioParameterFloat* duration = nullptr;
-  juce::AudioParameterFloat* salience = nullptr;
-
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CandidateParams)
+  CandidateParams(float posRatio, float pbRate, float duration, float salience)
+      : posRatio(posRatio),
+        pbRate(pbRate),
+        duration(duration),
+        salience(salience) {}
 };
 
 struct GeneratorParams : juce::AudioProcessorParameter::Listener {
@@ -145,15 +139,13 @@ struct NoteParam {
     for (int i = 0; i < NUM_GENERATORS; ++i) {
       generators.emplace_back(new GeneratorParams(noteIdx, i));
     }
-    for (int i = 0; i < MAX_CANDIDATES; ++i) {
-      candidates.emplace_back(new CandidateParams(noteIdx, i));
-    }
   }
 
   void addParams(juce::AudioProcessor& p);
   bool shouldPlayGenerator(int genIdx);
   CandidateParams* getCandidate(int genIdx) {
-    return candidates[generators[genIdx]->candidate->get()].get();
+    if (genIdx >= candidates.size()) return nullptr;
+    return &candidates[generators[genIdx]->candidate->get()];
   }
 
   void grainCreated(int genIdx, float envGain) {
@@ -163,7 +155,7 @@ struct NoteParam {
 
   int noteIdx;
   std::vector<std::unique_ptr<GeneratorParams>> generators;
-  std::vector<std::unique_ptr<CandidateParams>> candidates;
+  std::vector<CandidateParams> candidates;
   juce::AudioParameterInt* soloIdx = nullptr;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoteParam)
