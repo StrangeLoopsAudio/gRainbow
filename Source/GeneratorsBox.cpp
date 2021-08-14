@@ -240,8 +240,7 @@ GeneratorsBox::GeneratorsBox(NoteParams& noteParams, UIParams& uiParams)
   addAndMakeVisible(mLabelRelease);
 
   // set default generator for initialization
-  mNoteParams.notes[mCurPitchClass]->soloIdx->addListener(this);
-  changeGenerator(mCurSelectedGenerator);
+  setPitchClass(mCurPitchClass);
   startTimer(33);  // 30 fps
 }
 
@@ -435,13 +434,22 @@ void GeneratorsBox::resized() {
 }
 
 void GeneratorsBox::setPitchClass(Utils::PitchClass pitchClass) {
+  // Remove listeners from old generator
   mNoteParams.notes[mCurPitchClass]->soloIdx->removeListener(this);
-  mNoteParams.notes[pitchClass]->soloIdx->addListener(this);
+  getCurrentGenerator()->removeListener(this);
+  
+  // Update components and members
   mPositionChanger.setNumPositions(
       mNoteParams.notes[pitchClass]->candidates.size());
   mCurPitchClass = pitchClass;
   mUIParams.pitchClass = pitchClass;
-  changeGenerator(mCurSelectedGenerator);
+
+  // Add listeners to new generator
+  mNoteParams.notes[mCurPitchClass]->soloIdx->addListener(this);
+  getCurrentGenerator()->addListener(this);
+
+  // Update UI Components
+  mParamHasChanged.store(true);
 }
 
 void GeneratorsBox::mouseMove(const juce::MouseEvent& event) {
@@ -519,6 +527,7 @@ void GeneratorsBox::timerCallback() {
 }
 
 void GeneratorsBox::changeGenerator(Utils::GeneratorColour newGenerator) {
+  if (newGenerator == mCurSelectedGenerator) return;
   // Replace parameter listener with new generator
   getCurrentGenerator()->removeListener(this);
   mNoteParams.notes[mCurPitchClass]->generators[newGenerator]->addListener(
