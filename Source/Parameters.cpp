@@ -102,40 +102,6 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
   updateGrainEnvelope();
 }
 
-void GeneratorParams::addListener(
-    juce::AudioProcessorParameter::Listener* listener) {
-  enable->addListener(listener);
-  candidate->addListener(listener);
-  pitchAdjust->addListener(listener);
-  positionAdjust->addListener(listener);
-  grainShape->addListener(listener);
-  grainTilt->addListener(listener);
-  grainRate->addListener(listener);
-  grainDuration->addListener(listener);
-  grainGain->addListener(listener);
-  attack->addListener(listener);
-  decay->addListener(listener);
-  sustain->addListener(listener);
-  release->addListener(listener);
-}
-
-void GeneratorParams::removeListener(
-    juce::AudioProcessorParameter::Listener* listener) {
-  enable->removeListener(listener);
-  candidate->removeListener(listener);
-  pitchAdjust->removeListener(listener);
-  positionAdjust->removeListener(listener);
-  grainShape->removeListener(listener);
-  grainTilt->removeListener(listener);
-  grainRate->removeListener(listener);
-  grainDuration->removeListener(listener);
-  grainGain->removeListener(listener);
-  attack->removeListener(listener);
-  decay->removeListener(listener);
-  sustain->removeListener(listener);
-  release->removeListener(listener);
-}
-
 void GeneratorParams::updateGrainEnvelope() {
   grainEnv.clear();
   float scaledShape = (grainShape->get() * ENV_LUT_SIZE) / 2.0f;
@@ -164,6 +130,53 @@ void NoteParam::addParams(juce::AudioProcessor& p) {
   p.addParameter(soloIdx = new juce::AudioParameterInt(
                      ParamIDs::genSolo + juce::String(noteIdx), "Gen Solo",
                      SOLO_NONE, NUM_GENERATORS - 1, SOLO_NONE));
+}
+
+void NoteParam::addListener(int genIdx,
+                            juce::AudioProcessorParameter::Listener* listener) {
+  soloIdx->addListener(listener);
+  for (auto&& gen : generators) {
+    gen->enable->addListener(listener);
+  }
+  GeneratorParams* generator = generators[genIdx].get();
+  generator->candidate->addListener(listener);
+  generator->pitchAdjust->addListener(listener);
+  generator->positionAdjust->addListener(listener);
+  generator->grainShape->addListener(listener);
+  generator->grainTilt->addListener(listener);
+  generator->grainRate->addListener(listener);
+  generator->grainDuration->addListener(listener);
+  generator->grainGain->addListener(listener);
+  generator->attack->addListener(listener);
+  generator->decay->addListener(listener);
+  generator->sustain->addListener(listener);
+  generator->release->addListener(listener);
+}
+
+void NoteParam::removeListener(
+    int genIdx, juce::AudioProcessorParameter::Listener* listener) {
+  soloIdx->removeListener(listener);
+  for (auto&& gen : generators) {
+    gen->enable->removeListener(listener);
+  }
+  GeneratorParams* generator = generators[genIdx].get();
+  generator->candidate->removeListener(listener);
+  generator->pitchAdjust->removeListener(listener);
+  generator->positionAdjust->removeListener(listener);
+  generator->grainShape->removeListener(listener);
+  generator->grainTilt->removeListener(listener);
+  generator->grainRate->removeListener(listener);
+  generator->grainDuration->removeListener(listener);
+  generator->grainGain->removeListener(listener);
+  generator->attack->removeListener(listener);
+  generator->decay->removeListener(listener);
+  generator->sustain->removeListener(listener);
+  generator->release->removeListener(listener);
+}
+
+CandidateParams* NoteParam::getCandidate(int genIdx) {
+  if (genIdx >= candidates.size()) return nullptr;
+  return &candidates[generators[genIdx]->candidate->get()];
 }
 
 bool NoteParam::shouldPlayGenerator(int genIdx) {

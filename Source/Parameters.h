@@ -109,8 +109,6 @@ struct GeneratorParams : juce::AudioProcessorParameter::Listener {
   void parameterGestureChanged(int, bool) override {}
 
   void addParams(juce::AudioProcessor& p);
-  void addListener(juce::AudioProcessorParameter::Listener* listener);
-  void removeListener(juce::AudioProcessorParameter::Listener* listener);
   void updateGrainEnvelope();
 
   int noteIdx;
@@ -142,11 +140,12 @@ struct NoteParam {
   }
 
   void addParams(juce::AudioProcessor& p);
+  void addListener(int genIdx,
+                   juce::AudioProcessorParameter::Listener* listener);
+  void removeListener(int genIdx,
+                      juce::AudioProcessorParameter::Listener* listener);
   bool shouldPlayGenerator(int genIdx);
-  CandidateParams* getCandidate(int genIdx) {
-    if (genIdx >= candidates.size()) return nullptr;
-    return &candidates[generators[genIdx]->candidate->get()];
-  }
+  CandidateParams* getCandidate(int genIdx);
 
   void grainCreated(int genIdx, float envGain) {
     if (onGrainCreated != nullptr) onGrainCreated(genIdx, envGain);

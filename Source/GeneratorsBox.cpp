@@ -434,19 +434,18 @@ void GeneratorsBox::resized() {
 }
 
 void GeneratorsBox::setPitchClass(Utils::PitchClass pitchClass) {
-  // Remove listeners from old generator
-  mNoteParams.notes[mCurPitchClass]->soloIdx->removeListener(this);
-  getCurrentGenerator()->removeListener(this);
-  
+  // Remove listeners from old generator and note
+  mNoteParams.notes[mCurPitchClass]->removeListener(mCurSelectedGenerator,
+                                                    this);
+
   // Update components and members
   mPositionChanger.setNumPositions(
       mNoteParams.notes[pitchClass]->candidates.size());
   mCurPitchClass = pitchClass;
   mUIParams.pitchClass = pitchClass;
 
-  // Add listeners to new generator
-  mNoteParams.notes[mCurPitchClass]->soloIdx->addListener(this);
-  getCurrentGenerator()->addListener(this);
+  // Add listeners to new generator and note
+  mNoteParams.notes[mCurPitchClass]->addListener(mCurSelectedGenerator, this);
 
   // Update UI Components
   mParamHasChanged.store(true);
@@ -528,12 +527,17 @@ void GeneratorsBox::timerCallback() {
 
 void GeneratorsBox::changeGenerator(Utils::GeneratorColour newGenerator) {
   if (newGenerator == mCurSelectedGenerator) return;
-  // Replace parameter listener with new generator
-  getCurrentGenerator()->removeListener(this);
-  mNoteParams.notes[mCurPitchClass]->generators[newGenerator]->addListener(
-      this);
+  // Remove listener from old generator
+  mNoteParams.notes[mCurPitchClass]->removeListener(mCurSelectedGenerator,
+                                                    this);
+  // Update components and members
   mCurSelectedGenerator = newGenerator;
   mUIParams.generatorTab = newGenerator;
+
+  // Add listener to new generator
+  mNoteParams.notes[mCurPitchClass]->removeListener(mCurSelectedGenerator,
+                                                    this);
+
   // Update UI Components
   mParamHasChanged.store(true);
 }
