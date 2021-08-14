@@ -50,6 +50,12 @@ private:
                              (width / 2.0f) - 2, 0, startRadians, endRadians,
                              true);
    g.strokePath(rainbowPath, juce::PathStrokeType(3));
+
+   // Draw text label inside arc
+   juce::Rectangle<int> textRect =
+       juce::Rectangle<int>(0, height / 2, width, height / 2);
+   g.drawFittedText(juce::String(slider.getValue(), 2).trimCharactersAtEnd("0"), textRect,
+                    juce::Justification::centred, 1);
   }
 
   void drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn,

@@ -535,7 +535,7 @@ void GeneratorsBox::changeGenerator(Utils::GeneratorColour newGenerator) {
   mUIParams.generatorTab = newGenerator;
 
   // Add listener to new generator
-  mNoteParams.notes[mCurPitchClass]->removeListener(mCurSelectedGenerator,
+  mNoteParams.notes[mCurPitchClass]->addListener(mCurSelectedGenerator,
                                                     this);
 
   // Update UI Components
