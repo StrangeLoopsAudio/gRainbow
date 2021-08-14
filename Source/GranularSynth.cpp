@@ -251,11 +251,12 @@ juce::AudioProcessorEditor* GranularSynth::createEditor() {
 void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
   juce::XmlElement xml("PluginState");
 
-  juce::XmlElement* params = new juce::XmlElement("Params");
+  juce::XmlElement* params = new juce::XmlElement("AudioParams");
   for (auto& param : getParameters())
     params->setAttribute(ParamHelper::getParamID(param), param->getValue());
 
   xml.addChildElement(params);
+  xml.addChildElement(mUIParams.getXml());
 
   copyXmlToBinary(xml, destData);
 }
@@ -265,13 +266,13 @@ void GranularSynth::setStateInformation(const void* data,
   auto xml = getXmlFromBinary(data, sizeInBytes);
 
   if (xml != nullptr) {
-    auto params = xml->getChildByName("Params");
+    auto params = xml->getChildByName("AudioParams");
     if (params != nullptr) {
       for (auto& param : getParameters())
         param->setValueNotifyingHost(params->getDoubleAttribute(
             ParamHelper::getParamID(param), param->getValue()));
     }
-
+    mUIParams = UIParams(xml->getChildByName("UIParams"));
   }
 }
 

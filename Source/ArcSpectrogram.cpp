@@ -9,17 +9,22 @@
 */
 
 #include "ArcSpectrogram.h"
+
 #include <JuceHeader.h>
 #include <limits.h>
+
 #include "Utils.h"
 
 //==============================================================================
-ArcSpectrogram::ArcSpectrogram(NoteParams& noteParams) : mNoteParams(noteParams), juce::Thread("spectrogram thread") {
+ArcSpectrogram::ArcSpectrogram(NoteParams& noteParams, UIParams& uiParams)
+    : mNoteParams(noteParams),
+      mUIParams(uiParams),
+      juce::Thread("spectrogram thread") {
   setFramesPerSecond(10);
   mBuffers.fill(nullptr);
 
   mImages[Utils::SpecType::LOGO] = juce::PNGImageFormat::loadFrom(
-     BinaryData::logo_png, BinaryData::logo_pngSize);
+      BinaryData::logo_png, BinaryData::logo_pngSize);
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   juce::File imageFile = parentDir.getChildFile(Utils::FILE_SPECTROGRAM);
   if (imageFile.existsAsFile()) {
@@ -28,23 +33,23 @@ ArcSpectrogram::ArcSpectrogram(NoteParams& noteParams) : mNoteParams(noteParams)
   }
   imageFile = parentDir.getChildFile(Utils::FILE_HPCP);
   if (imageFile.existsAsFile()) {
-    mImages[Utils::SpecType::HPCP] =
-        juce::PNGImageFormat::loadFrom(imageFile);
+    mImages[Utils::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(imageFile);
   }
   imageFile = parentDir.getChildFile(Utils::FILE_NOTES);
   if (imageFile.existsAsFile()) {
-    mImages[Utils::SpecType::NOTES] =
-        juce::PNGImageFormat::loadFrom(imageFile);
-  } 
+    mImages[Utils::SpecType::NOTES] = juce::PNGImageFormat::loadFrom(imageFile);
+  }
 
   mSpecType.addItem("Spectrogram", (int)Utils::SpecType::SPECTROGRAM);
   mSpecType.addItem("Harmonic Profile", (int)Utils::SpecType::HPCP);
   mSpecType.addItem("Detected Pitches", (int)Utils::SpecType::NOTES);
-  // TODO: save currently selected image in apvts and restore
-  mSpecType.setSelectedId(imageFile.existsAsFile() ? 1 : 0, juce::dontSendNotification);
+  mSpecType.setSelectedId(mUIParams.specType,
+                          juce::dontSendNotification);
+  mSpecType.setVisible(mUIParams.specType != Utils::SpecType::LOGO);
   mSpecType.onChange = [this](void) {
     if (mSpecType.getSelectedId() != Utils::SpecType::LOGO) {
       mSpecType.setVisible(true);
+      mUIParams.specType = mSpecType.getSelectedId();
     }
     repaint();
   };
@@ -59,21 +64,22 @@ ArcSpectrogram::~ArcSpectrogram() {
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   if (mImages[Utils::SpecType::SPECTROGRAM].isValid()) {
     parentDir.getChildFile(Utils::FILE_SPECTROGRAM).deleteFile();
-    juce::FileOutputStream imageStream(parentDir.getChildFile(Utils::FILE_SPECTROGRAM));
+    juce::FileOutputStream imageStream(
+        parentDir.getChildFile(Utils::FILE_SPECTROGRAM));
     pngWriter.writeImageToStream(mImages[Utils::SpecType::SPECTROGRAM],
                                  imageStream);
   }
   if (mImages[Utils::SpecType::HPCP].isValid()) {
     parentDir.getChildFile(Utils::FILE_HPCP).deleteFile();
-    juce::FileOutputStream imageStream(parentDir.getChildFile(Utils::FILE_HPCP));
-    pngWriter.writeImageToStream(mImages[Utils::SpecType::HPCP],
-                                 imageStream);
+    juce::FileOutputStream imageStream(
+        parentDir.getChildFile(Utils::FILE_HPCP));
+    pngWriter.writeImageToStream(mImages[Utils::SpecType::HPCP], imageStream);
   }
   if (mImages[Utils::SpecType::NOTES].isValid()) {
     parentDir.getChildFile(Utils::FILE_NOTES).deleteFile();
-    juce::FileOutputStream imageStream(parentDir.getChildFile(Utils::FILE_NOTES));
-    pngWriter.writeImageToStream(mImages[Utils::SpecType::NOTES],
-                                 imageStream);
+    juce::FileOutputStream imageStream(
+        parentDir.getChildFile(Utils::FILE_NOTES));
+    pngWriter.writeImageToStream(mImages[Utils::SpecType::NOTES], imageStream);
   }
 }
 
@@ -121,7 +127,8 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
           float yOffset = mNormalRand(mGenRandom) * MAX_PIXEL_VIBRATION;
           juce::Point<float> newPoint = juce::Point<float>(
               ogPoint.getX() + xOffset, ogPoint.getY() + yOffset);
-          juce::Colour newPixel = curImage.getPixelAt(newPoint.getX(), newPoint.getY());
+          juce::Colour newPixel =
+              curImage.getPixelAt(newPoint.getX(), newPoint.getY());
           juce::Colour newColour = ogPixel.withAlpha(
               juce::jmax(ogPixel.getAlpha(), newPixel.getAlpha()));
           vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY(),
@@ -183,7 +190,7 @@ void ArcSpectrogram::resized() {
 }
 
 void ArcSpectrogram::run() {
-    std::vector<std::vector<float>>& spec = *mBuffers[mProcessType - 1];
+  std::vector<std::vector<float>>& spec = *mBuffers[mProcessType - 1];
   if (spec.size() == 0 || threadShouldExit()) return;
 
   // Initialize rainbow parameters
@@ -209,7 +216,8 @@ void ArcSpectrogram::run() {
 
       // Choose rainbow color depending on radius
       auto level = juce::jlimit(
-          0.0f, 1.0f, spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
+          0.0f, 1.0f,
+          spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
       auto rainbowColour = juce::Colour::fromHSV(radPerc, 1.0, 1.0f, level);
       g.setColour(rainbowColour);
 
