@@ -99,7 +99,7 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
                      ParamIDs::genGrainDuration + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
                      "Gen Grain Duration", ParamRanges::GRAIN_DURATION,
-                     ParamDefaults::GRAIN_DURATION_DEFAULT_MS));
+                     ParamDefaults::GRAIN_DURATION_DEFAULT));
   p.addParameter(grainGain = new juce::AudioParameterFloat(
                      ParamIDs::genGrainGain + juce::String(genIdx) +
                          juce::String("_") + juce::String(noteIdx),
@@ -216,7 +216,7 @@ void NoteParams::resetParams() {
       ParamHelper::setParam(generator->grainShape, 0.5f);
       ParamHelper::setParam(generator->grainTilt, 0.5f);
       ParamHelper::setParam(generator->grainRate, ParamDefaults::GRAIN_RATE_DEFAULT);
-      ParamHelper::setParam(generator->grainDuration, ParamDefaults::GRAIN_DURATION_DEFAULT_MS);
+      ParamHelper::setParam(generator->grainDuration, ParamDefaults::GRAIN_DURATION_DEFAULT);
       ParamHelper::setParam(generator->grainGain, ParamDefaults::GRAIN_GAIN_DEFAULT);
       ParamHelper::setParam(generator->attack, ParamDefaults::ATTACK_DEFAULT_SEC);
       ParamHelper::setParam(generator->decay, ParamDefaults::DECAY_DEFAULT_SEC);

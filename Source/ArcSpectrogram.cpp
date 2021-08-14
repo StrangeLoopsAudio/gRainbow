@@ -20,7 +20,7 @@ ArcSpectrogram::ArcSpectrogram(NoteParams& noteParams, UIParams& uiParams)
     : mNoteParams(noteParams),
       mUIParams(uiParams),
       juce::Thread("spectrogram thread") {
-  setFramesPerSecond(10);
+  setFramesPerSecond(REFRESH_RATE_FPS);
   mBuffers.fill(nullptr);
 
   mImages[Utils::SpecType::LOGO] = juce::PNGImageFormat::loadFrom(
@@ -58,6 +58,7 @@ ArcSpectrogram::ArcSpectrogram(NoteParams& noteParams, UIParams& uiParams)
 }
 
 ArcSpectrogram::~ArcSpectrogram() {
+  mNoteParams.notes[mCurPitchClass]->onGrainCreated = nullptr;
   stopThread(4000);
   // Save image files
   juce::PNGImageFormat pngWriter;
@@ -93,93 +94,49 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
-  juce::Image& curImage = mImages[specType];
 
-  if (mIsPlayingNote) {
-    juce::Path sunRays;
-    juce::Image vibratingImage = juce::Image(curImage);
-    vibratingImage.duplicateIfShared();
+  g.drawImage(
+      mImages[specType], getLocalBounds().toFloat(),
+      juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
+      false);
 
-    for (auto&& generator : mNoteParams.notes[mCurPitchClass]->generators) {
-      if (!mNoteParams.notes[mCurPitchClass]->shouldPlayGenerator(
-              generator->genIdx))
-        continue;
-      CandidateParams* candidate = mNoteParams.notes[mCurPitchClass]
-                                       ->candidates[generator->candidate->get()]
-                                       .get();
-      auto sweepPos =
-          candidate->posRatio->get() +
-          ((candidate->duration->get() / 2) * (mNormalRand(mGenRandom) + 1));
-      int startVibRad =
-          startRadius +
-          (((float)mCurPitchClass / Utils::PitchClass::COUNT) * bowWidth) -
-          (bowWidth / 4.0f);
-      int endVibRad = startVibRad + (bowWidth / 2.0f);
-
-      for (int radius = startVibRad; radius < endVibRad; ++radius) {
-        auto ogPoint = centerPoint.getPointOnCircumference(
-            radius, (1.5 * juce::MathConstants<float>::pi) +
-                        (sweepPos * juce::MathConstants<float>::pi));
-        juce::Colour ogPixel =
-            curImage.getPixelAt(ogPoint.getX(), ogPoint.getY());
-        if (ogPixel.getBrightness() > 0.1) {
-          float xOffset = mNormalRand(mGenRandom) * MAX_PIXEL_VIBRATION;
-          float yOffset = mNormalRand(mGenRandom) * MAX_PIXEL_VIBRATION;
-          juce::Point<float> newPoint = juce::Point<float>(
-              ogPoint.getX() + xOffset, ogPoint.getY() + yOffset);
-          juce::Colour newPixel =
-              curImage.getPixelAt(newPoint.getX(), newPoint.getY());
-          juce::Colour newColour = ogPixel.withAlpha(
-              juce::jmax(ogPixel.getAlpha(), newPixel.getAlpha()));
-          vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY(),
-                                    newColour);
-          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY(),
-                                    newColour);
-          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY(),
-                                    newColour);
-          vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY() + 1,
-                                    newColour);
-          vibratingImage.setPixelAt(newPoint.getX(), newPoint.getY() - 1,
-                                    newColour);
-          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY() + 1,
-                                    newColour);
-          vibratingImage.setPixelAt(newPoint.getX() + 1, newPoint.getY() - 1,
-                                    newColour);
-          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY() + 1,
-                                    newColour);
-          vibratingImage.setPixelAt(newPoint.getX() - 1, newPoint.getY() - 1,
-                                    newColour);
-        }
-      }
-    }
-    g.drawImage(
-        vibratingImage, getLocalBounds().toFloat(),
-        juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
-        false);
-  } else {
-    g.drawImage(
-        mImages[specType], getLocalBounds().toFloat(),
-        juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
-        false);
+  // Draw active grains
+  for (ArcGrain& grain : mArcGrains) {
+    CandidateParams* candidate =
+        mNoteParams.notes[grain.genParams->noteIdx]
+            ->candidates[grain.genParams->candidate->get()]
+            .get();
+    float xRatio =
+        candidate->posRatio->get() +
+        (candidate->duration->get() * grain.genParams->positionAdjust->get());
+    float grainProg =
+        (grain.numFramesActive * grain.envIncSamples) / ENV_LUT_SIZE;
+    xRatio += candidate->duration->get() * grainProg;
+    float yRatio = (grain.genParams->noteIdx +
+                    (grain.genParams->pitchAdjust->get() * 6.0f)) /
+                   (float)Utils::PitchClass::COUNT;
+    int grainRad = startRadius + (yRatio * bowWidth);
+    juce::Point<float> grainPoint = centerPoint.getPointOnCircumference(
+        grainRad, (1.5 * juce::MathConstants<float>::pi) +
+                      (xRatio * juce::MathConstants<float>::pi));
+    float envIdx = juce::jmin(MAX_GRAIN_SIZE - 1.0f,
+                              grain.numFramesActive * grain.envIncSamples);
+    float grainSize =
+        grain.gain * grain.genParams->grainEnv[envIdx] * MAX_GRAIN_SIZE;
+    juce::Rectangle<float> grainRect =
+        juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
+    g.setColour(
+        juce::Colour(Utils::GENERATOR_COLOURS_HEX[grain.genParams->genIdx]));
+    g.fillEllipse(grainRect);
+    g.setColour(juce::Colour::fromHSV(yRatio, 1.0, 1.0f, 1.0f));
+    g.fillEllipse(grainRect.reduced(2));
+    grain.numFramesActive++;
   }
 
-  // Draw transient markers
-  if (mTransients != nullptr) {
-    g.setOpacity(0.7);
-    g.setColour(juce::Colours::blue);
-    for (int i = 0; i < mTransients->size(); ++i) {
-      TransientDetector::Transient transient = mTransients->at(i);
-      auto startPoint = centerPoint.getPointOnCircumference(
-          getHeight() - 21,
-          (1.5 * juce::MathConstants<float>::pi) +
-              (transient.posRatio * juce::MathConstants<float>::pi));
-      auto endPoint = centerPoint.getPointOnCircumference(
-          getHeight() - 17,
-          (1.5 * juce::MathConstants<float>::pi) +
-              (transient.posRatio * juce::MathConstants<float>::pi));
-      g.drawLine(juce::Line<float>(startPoint, endPoint), 1.0f);
-    }
-  }
+  // Remove arc grains that are completed
+  mArcGrains.removeIf([this](ArcGrain& g) {
+    return (g.numFramesActive * g.envIncSamples) > ENV_LUT_SIZE;
+  });
 }
 
 void ArcSpectrogram::resized() {
@@ -264,12 +221,19 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
   if (getWidth() > 0 && getHeight() > 0) startThread();
 }
 
-void ArcSpectrogram::setTransients(
-    std::vector<TransientDetector::Transient>* transients) {
-  mTransients = transients;
-}
-
 void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
+  mNoteParams.notes[mCurPitchClass]->onGrainCreated = nullptr;
+  mNoteParams.notes[pitchClass]->onGrainCreated = [this](int genIdx, float envGain) {
+    grainCreatedCallback(genIdx, envGain);
+  };
   mIsPlayingNote = true;
   mCurPitchClass = pitchClass;
+}
+
+void ArcSpectrogram::grainCreatedCallback(int genIdx, float envGain) {
+  GeneratorParams* gen =
+      mNoteParams.notes[mCurPitchClass]->generators[genIdx].get();
+  float envIncSamples =
+      ENV_LUT_SIZE / (gen->grainDuration->get() * REFRESH_RATE_FPS);
+  mArcGrains.add(ArcGrain(gen, envGain, envIncSamples));
 }

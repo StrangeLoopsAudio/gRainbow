@@ -9,6 +9,7 @@
 */
 
 #include "GranularSynth.h"
+
 #include "PluginEditor.h"
 
 GranularSynth::GranularSynth()
@@ -67,9 +68,7 @@ GranularSynth::~GranularSynth() {
 }
 
 //==============================================================================
-const juce::String GranularSynth::getName() const {
-  return JucePlugin_Name;
-}
+const juce::String GranularSynth::getName() const { return JucePlugin_Name; }
 
 bool GranularSynth::acceptsMidi() const {
 #if JucePlugin_WantsMidiInput
@@ -107,16 +106,12 @@ int GranularSynth::getCurrentProgram() { return 0; }
 
 void GranularSynth::setCurrentProgram(int index) {}
 
-const juce::String GranularSynth::getProgramName(int index) {
-  return {};
-}
+const juce::String GranularSynth::getProgramName(int index) { return {}; }
 
-void GranularSynth::changeProgramName(int index,
-                                               const juce::String& newName) {}
+void GranularSynth::changeProgramName(int index, const juce::String& newName) {}
 
 //==============================================================================
-void GranularSynth::prepareToPlay(double sampleRate,
-                                           int samplesPerBlock) {
+void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
   mSampleRate = sampleRate;
 }
 
@@ -126,8 +121,7 @@ void GranularSynth::releaseResources() {
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool GranularSynth::isBusesLayoutSupported(
-    const BusesLayout& layouts) const {
+bool GranularSynth::isBusesLayoutSupported(const BusesLayout& layouts) const {
 #if JucePlugin_IsMidiEffect
   juce::ignoreUnused(layouts);
   return true;
@@ -150,7 +144,7 @@ bool GranularSynth::isBusesLayoutSupported(
 #endif
 
 void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
-                                          juce::MidiBuffer& midiMessages) {
+                                 juce::MidiBuffer& midiMessages) {
   juce::ScopedNoDenormals noDenormals;
   auto totalNumInputChannels = getTotalNumInputChannels();
   auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -261,8 +255,7 @@ void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
   copyXmlToBinary(xml, destData);
 }
 
-void GranularSynth::setStateInformation(const void* data,
-                                                 int sizeInBytes) {
+void GranularSynth::setStateInformation(const void* data, int sizeInBytes) {
   auto xml = getXmlFromBinary(data, sizeInBytes);
 
   if (xml != nullptr) {
@@ -288,17 +281,17 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
     for (GrainNote& gNote : mActiveNotes) {
       for (int i = 0; i < gNote.grainTriggers.size(); ++i) {
         if (gNote.grainTriggers[i] <= 0) {
-          GeneratorParams* genParams = mNoteParams.notes[gNote.pitchClass]->generators[i].get();
+          GeneratorParams* genParams =
+              mNoteParams.notes[gNote.pitchClass]->generators[i].get();
           CandidateParams* candidateParams =
-              mNoteParams.notes[gNote.pitchClass]
-                  ->candidates[genParams->candidate->get()].get();
-            float durMs = genParams->grainDuration->get();
+              mNoteParams.notes[gNote.pitchClass]->getCandidate(i);
+          float durSec = genParams->grainDuration->get();
           // Skip adding new grain if not enabled or full of grains
-            if (candidateParams->valid->get() &&
-                mNoteParams.notes[gNote.pitchClass]->shouldPlayGenerator(i) &&
-                gNote.grains.size() < MAX_GRAINS) {
-            float durSamples = mSampleRate * (durMs / 1000) *
-                               (1.0f / candidateParams->pbRate->get());
+          if (candidateParams->valid->get() &&
+              mNoteParams.notes[gNote.pitchClass]->shouldPlayGenerator(i) &&
+              gNote.grains.size() < MAX_GRAINS) {
+            float durSamples =
+                mSampleRate * durSec * (1.0f / candidateParams->pbRate->get());
             /* Commented out random spray for now to test consistency
             juce::Random random;
 
@@ -315,16 +308,18 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             float pbRate =
                 candidateParams->pbRate->get() + genParams->pitchAdjust->get();
             jassert(candidateParams->pbRate->get() > 0.1f);
-            auto grain =
-                Grain((Utils::GeneratorColour)i, genParams->grainEnv, durSamples,
-                      pbRate, posSamples + posOffset, mTotalSamps, gain);
+            auto grain = Grain((Utils::GeneratorColour)i, genParams->grainEnv,
+                               durSamples, pbRate, posSamples + posOffset,
+                               mTotalSamps, gain);
+            mNoteParams.notes[gNote.pitchClass]->grainCreated(
+                i, gNote.genAmpEnvs[i].amplitude);
             gNote.grains.add(grain);
           }
           // Reset trigger ts
           gNote.grainTriggers[i] +=
-              mSampleRate / 1000 *
-              juce::jmap(1.0f - genParams->grainRate->get(),
-                         durMs * MIN_RATE_RATIO, durMs * MAX_RATE_RATIO);
+              mSampleRate * juce::jmap(1.0f - genParams->grainRate->get(),
+                                       durSec * MIN_RATE_RATIO,
+                                       durSec * MAX_RATE_RATIO);
         } else {
           gNote.grainTriggers[i] -= blockSize;
         }
@@ -371,12 +366,12 @@ void GranularSynth::processFile(juce::File file) {
 }
 
 int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
-  int pos = mNoteParams.notes[mCurPitchClass]->generators[boxNum]->candidate->get();
+  int pos =
+      mNoteParams.notes[mCurPitchClass]->generators[boxNum]->candidate->get();
   int newPos = lookRight ? pos + 1 : pos - 1;
   newPos = (newPos + Utils::MAX_CANDIDATES) % Utils::MAX_CANDIDATES;
-  ParamHelper::setParam(mNoteParams.notes[mCurPitchClass]
-      ->generators[boxNum]
-      ->candidate, newPos);
+  ParamHelper::setParam(
+      mNoteParams.notes[mCurPitchClass]->generators[boxNum]->candidate, newPos);
   return newPos;
 }
 
@@ -410,9 +405,7 @@ void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
     }
   }
   if (!isPlayingAlready) {
-    mActiveNotes.add(GrainNote(
-        pitchClass,
-        Utils::EnvelopeADSR(mTotalSamps)));
+    mActiveNotes.add(GrainNote(pitchClass, Utils::EnvelopeADSR(mTotalSamps)));
   }
 }
 
@@ -476,10 +469,13 @@ void GranularSynth::createCandidates(
         for (int i = 0; i < pitchVec.size(); ++i) {
           if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
           ParamHelper::setParam(note->candidates[numFound]->valid, true);
-          ParamHelper::setParam(note->candidates[numFound]->posRatio, pitchVec[i].posRatio);
+          ParamHelper::setParam(note->candidates[numFound]->posRatio,
+                                pitchVec[i].posRatio);
           ParamHelper::setParam(note->candidates[numFound]->pbRate, pbRate);
-          ParamHelper::setParam(note->candidates[numFound]->duration, pitchVec[i].duration);
-          ParamHelper::setParam(note->candidates[numFound]->salience, pitchVec[i].gain);
+          ParamHelper::setParam(note->candidates[numFound]->duration,
+                                pitchVec[i].duration);
+          ParamHelper::setParam(note->candidates[numFound]->salience,
+                                pitchVec[i].gain);
           numFound++;
           if (numFound >= MAX_CANDIDATES) {
             foundAll = true;

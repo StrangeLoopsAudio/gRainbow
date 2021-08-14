@@ -45,7 +45,7 @@ namespace ParamRanges {
 static juce::NormalisableRange<float> PITCH_ADJUST(-0.25f, 0.25f);
 static juce::NormalisableRange<float> POSITION_ADJUST(-0.5f, 0.5f);
 static juce::NormalisableRange<float> GRAIN_RATE(0.25f, 1.0f);
-static juce::NormalisableRange<float> GRAIN_DURATION(60.0f, 300.0f);
+static juce::NormalisableRange<float> GRAIN_DURATION(0.06f, 0.3f);
 static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
@@ -53,7 +53,7 @@ static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
 
 namespace ParamDefaults {
 static float GRAIN_RATE_DEFAULT = 0.5f;
-static float GRAIN_DURATION_DEFAULT_MS = 100.f;
+static float GRAIN_DURATION_DEFAULT = 0.1f;
 static float GRAIN_GAIN_DEFAULT = 0.8f;
 static float ATTACK_DEFAULT_SEC = 0.2f;
 static float DECAY_DEFAULT_SEC = 0.2f;
@@ -152,6 +152,14 @@ struct NoteParam {
 
   void addParams(juce::AudioProcessor& p);
   bool shouldPlayGenerator(int genIdx);
+  CandidateParams* getCandidate(int genIdx) {
+    return candidates[generators[genIdx]->candidate->get()].get();
+  }
+
+  void grainCreated(int genIdx, float envGain) {
+    if (onGrainCreated != nullptr) onGrainCreated(genIdx, envGain);
+  }
+  std::function<void(int genIdx, float envGain)> onGrainCreated = nullptr;
 
   int noteIdx;
   std::vector<std::unique_ptr<GeneratorParams>> generators;

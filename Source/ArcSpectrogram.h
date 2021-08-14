@@ -20,7 +20,6 @@
 
 #include "Fft.h"
 #include "GranularSynth.h"
-#include "TransientDetector.h"
 #include "Utils.h"
 
 //==============================================================================
@@ -35,11 +34,9 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void paint(juce::Graphics &) override;
   void resized() override;
 
-  void setSampleRate(double sampleRate) { mSampleRate = sampleRate; }
   void resetBuffers();
   void loadBuffer(std::vector<std::vector<float>> *buffer,
                   Utils::SpecType type);
-  void setTransients(std::vector<TransientDetector::Transient> *transients);
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff() { mIsPlayingNote = false; }
 
@@ -50,19 +47,27 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   static constexpr auto MIN_FREQ = 100;
   static constexpr auto MAX_FREQ = 5000;
   static constexpr auto BUFFER_PROCESS_TIMEOUT = 10000;
+  static constexpr auto REFRESH_RATE_FPS = 30;
 
   // UI variables
   static constexpr auto SPEC_TYPE_HEIGHT = 50;
   static constexpr auto SPEC_TYPE_WIDTH = 130;
+  static constexpr auto MAX_GRAIN_SIZE = 25;
   static constexpr auto NUM_COLS = 600;
   // Colours
   static constexpr auto COLOUR_MULTIPLIER = 20.0f;
 
-  // Pixel vibration
-  static constexpr auto PIXEL_VIBRATION_SIZE = 2;
-  static constexpr auto MAX_PIXEL_VIBRATION = 15;
-  static constexpr auto MAX_VIBRATION_OFFSET =
-      MAX_PIXEL_VIBRATION * MAX_PIXEL_VIBRATION;
+  typedef struct ArcGrain {
+    GeneratorParams *genParams;
+    float gain;
+    float envIncSamples;  // How many envelope samples to increment each frame
+    int numFramesActive;
+    ArcGrain(GeneratorParams *genParams, float gain, float envIncSamples)
+        : genParams(genParams),
+          gain(gain),
+          envIncSamples(envIncSamples),
+          numFramesActive(0) {}
+  } ArcGrain;
 
   // Parameters
   NoteParams &mNoteParams;
@@ -71,12 +76,11 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   // Buffers
   std::array<std::vector<std::vector<float>> *, Utils::SpecType::NUM_TYPES - 1>
       mBuffers;
-  std::vector<TransientDetector::Transient> *mTransients = nullptr;
 
   // Bookkeeping
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
+  juce::Array<ArcGrain> mArcGrains;
   bool mIsPlayingNote = false;
-  double mSampleRate;
   Utils::SpecType mProcessType = Utils::SpecType::LOGO;
 
   std::random_device mRandomDevice{};
@@ -85,6 +89,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
 
   std::array<juce::Image, Utils::SpecType::NUM_TYPES> mImages;
   juce::ComboBox mSpecType;
+
+  void grainCreatedCallback(int genIdx, float envGain);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
 };
