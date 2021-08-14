@@ -88,8 +88,9 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
                        juce::Colours::transparentBlack, presetOver, 1.0f,
                        juce::Colours::transparentBlack);
   mBtnPreset.onClick = [this] { savePreset(); };
-  // don't display until audio clip is loaded
-  addChildComponent(mBtnPreset);
+  addAndMakeVisible(mBtnPreset);
+  // don't enable until audio clip is loaded
+  mBtnPreset.setEnabled(false);
 
   // File info label
   mLabelFilenfo.setJustificationType(juce::Justification::centred);
@@ -264,7 +265,6 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
 }
 
 void GRainbowAudioProcessorEditor::processFile(juce::File file) {
-  mLabelFilenfo.setText(file.getFileName(), juce::dontSendNotification);
   if (file.getFileExtension() == ".gbow") {
     Preset::Header presetFileHeader;
     juce::FileInputStream input(file);
@@ -293,9 +293,10 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     // audio clipS
     mSynth.processFile(file);
     mArcSpec.resetBuffers();
-    // if it wasn't already visible
-    mBtnPreset.setVisible(true);
   }
+
+  mBtnPreset.setEnabled(true);  // if it wasn't already enabled
+  mLabelFilenfo.setText(file.getFileName(), juce::dontSendNotification);
 }
 
 void GRainbowAudioProcessorEditor::startRecording() {
