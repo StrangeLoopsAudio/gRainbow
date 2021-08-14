@@ -16,9 +16,9 @@
 #include "Utils.h"
 
 //==============================================================================
-ArcSpectrogram::ArcSpectrogram(NoteParams& noteParams, UIParams& uiParams)
-    : mNoteParams(noteParams),
-      mUIParams(uiParams),
+ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
+    : mParamsNote(paramsNote),
+      mParamUI(paramUI),
       juce::Thread("spectrogram thread") {
   setFramesPerSecond(REFRESH_RATE_FPS);
   mBuffers.fill(nullptr);
@@ -43,13 +43,12 @@ ArcSpectrogram::ArcSpectrogram(NoteParams& noteParams, UIParams& uiParams)
   mSpecType.addItem("Spectrogram", (int)Utils::SpecType::SPECTROGRAM);
   mSpecType.addItem("Harmonic Profile", (int)Utils::SpecType::HPCP);
   mSpecType.addItem("Detected Pitches", (int)Utils::SpecType::NOTES);
-  mSpecType.setSelectedId(mUIParams.specType,
-                          juce::dontSendNotification);
-  mSpecType.setVisible(mUIParams.specType != Utils::SpecType::LOGO);
+  mSpecType.setSelectedId(mParamUI.specType, juce::dontSendNotification);
+  mSpecType.setVisible(mParamUI.specType != Utils::SpecType::LOGO);
   mSpecType.onChange = [this](void) {
     if (mSpecType.getSelectedId() != Utils::SpecType::LOGO) {
       mSpecType.setVisible(true);
-      mUIParams.specType = mSpecType.getSelectedId();
+      mParamUI.specType = mSpecType.getSelectedId();
     }
     repaint();
   };
@@ -58,7 +57,7 @@ ArcSpectrogram::ArcSpectrogram(NoteParams& noteParams, UIParams& uiParams)
 }
 
 ArcSpectrogram::~ArcSpectrogram() {
-  mNoteParams.notes[mCurPitchClass]->onGrainCreated = nullptr;
+  mParamsNote.notes[mCurPitchClass]->onGrainCreated = nullptr;
   stopThread(4000);
   // Save image files
   juce::PNGImageFormat pngWriter;
@@ -102,17 +101,17 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
   // Draw active grains
   for (ArcGrain& grain : mArcGrains) {
-    CandidateParams* candidate =
-        mNoteParams.notes[grain.genParams->noteIdx]->getCandidate(
-            grain.genParams->genIdx);
+    ParamCandidate* candidate =
+        mParamsNote.notes[grain.paramGenerator->noteIdx]->getCandidate(
+            grain.paramGenerator->genIdx);
     float xRatio =
         candidate->posRatio +
-        (candidate->duration * grain.genParams->positionAdjust->get());
+        (candidate->duration * grain.paramGenerator->positionAdjust->get());
     float grainProg =
         (grain.numFramesActive * grain.envIncSamples) / ENV_LUT_SIZE;
     xRatio += candidate->duration * grainProg;
-    float yRatio = (grain.genParams->noteIdx +
-                    (grain.genParams->pitchAdjust->get() * 6.0f)) /
+    float yRatio = (grain.paramGenerator->noteIdx +
+                    (grain.paramGenerator->pitchAdjust->get() * 6.0f)) /
                    (float)Utils::PitchClass::COUNT;
     int grainRad = startRadius + (yRatio * bowWidth);
     juce::Point<float> grainPoint = centerPoint.getPointOnCircumference(
@@ -121,11 +120,11 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     float envIdx = juce::jmin(MAX_GRAIN_SIZE - 1.0f,
                               grain.numFramesActive * grain.envIncSamples);
     float grainSize =
-        grain.gain * grain.genParams->grainEnv[envIdx] * MAX_GRAIN_SIZE;
+        grain.gain * grain.paramGenerator->grainEnv[envIdx] * MAX_GRAIN_SIZE;
     juce::Rectangle<float> grainRect =
         juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
-    g.setColour(
-        juce::Colour(Utils::GENERATOR_COLOURS_HEX[grain.genParams->genIdx]));
+    g.setColour(juce::Colour(
+        Utils::GENERATOR_COLOURS_HEX[grain.paramGenerator->genIdx]));
     g.fillEllipse(grainRect);
     g.setColour(juce::Colour::fromHSV(yRatio, 1.0, 1.0f, 1.0f));
     g.fillEllipse(grainRect.reduced(2));
@@ -221,8 +220,9 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
 }
 
 void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
-  mNoteParams.notes[mCurPitchClass]->onGrainCreated = nullptr;
-  mNoteParams.notes[pitchClass]->onGrainCreated = [this](int genIdx, float envGain) {
+  mParamsNote.notes[mCurPitchClass]->onGrainCreated = nullptr;
+  mParamsNote.notes[pitchClass]->onGrainCreated = [this](int genIdx,
+                                                         float envGain) {
     grainCreatedCallback(genIdx, envGain);
   };
   mIsPlayingNote = true;
@@ -230,8 +230,8 @@ void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
 }
 
 void ArcSpectrogram::grainCreatedCallback(int genIdx, float envGain) {
-  GeneratorParams* gen =
-      mNoteParams.notes[mCurPitchClass]->generators[genIdx].get();
+  ParamGenerator* gen =
+      mParamsNote.notes[mCurPitchClass]->generators[genIdx].get();
   float envIncSamples =
       ENV_LUT_SIZE / (gen->grainDuration->get() * REFRESH_RATE_FPS);
   mArcGrains.add(ArcGrain(gen, envGain, envIncSamples));

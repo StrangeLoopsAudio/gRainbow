@@ -20,7 +20,7 @@
  */
 class GlobalParamBox : public juce::Component {
  public:
-  GlobalParamBox(GlobalParams& globalParams);
+  GlobalParamBox(ParamGlobal& paramGlobal);
   ~GlobalParamBox() override;
 
   void paint(juce::Graphics&) override;
@@ -38,7 +38,7 @@ class GlobalParamBox : public juce::Component {
   static constexpr auto SECTION_AMP_ENV_TITLE = "amplitude envelope";
 
   /* Parameters */
-  GlobalParams& mGlobalParams;
+  ParamGlobal& mParamGlobal;
 
   /* UI Components */
   std::unique_ptr<

@@ -24,7 +24,7 @@ class GeneratorsBox : public juce::Component,
                       juce::AudioProcessorParameter::Listener,
                       juce::Timer {
  public:
-  GeneratorsBox(NoteParams& noteParams, UIParams& uiParams);
+  GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI);
   ~GeneratorsBox() override;
 
   void paint(juce::Graphics&) override;
@@ -61,8 +61,8 @@ class GeneratorsBox : public juce::Component,
   static constexpr auto SECTION_ADJUST_TITLE = "generator adjustments";
 
   /* Parameters */
-  NoteParams& mNoteParams;
-  UIParams& mUIParams;
+  ParamsNote& mParamsNote;
+  ParamUI& mParamUI;
 
   /* Bookkeeping */
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
@@ -104,8 +104,10 @@ class GeneratorsBox : public juce::Component,
 
   void changeGenerator(Utils::GeneratorColour newGenerator);
   void refreshState();
-  inline GeneratorParams* getCurrentGenerator() {
-    return mNoteParams.notes[mCurPitchClass]->generators[mCurSelectedGenerator].get();
+  inline ParamGenerator* getCurrentGenerator() {
+    return mParamsNote.notes[mCurPitchClass]
+        ->generators[mCurSelectedGenerator]
+        .get();
   }
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorsBox)

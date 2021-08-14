@@ -11,17 +11,15 @@
 #include "Preset.h"
 
 //==============================================================================
-GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
-    GranularSynth& synth)
+GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
-      mGlobalParamBox(synth.getGlobalParams()),
-      mGeneratorsBox(synth.getNoteParams(), synth.getUIParams()),
-      mArcSpec(synth.getNoteParams(), synth.getUIParams()),
+      mGlobalParamBox(synth.getParamGlobal()),
+      mGeneratorsBox(synth.getParamsNote(), synth.getParamUI()),
+      mArcSpec(synth.getParamsNote(), synth.getParamUI()),
       mKeyboard(mSynth.getKeyboardState()),
       mProgressBar(mLoadingProgress) {
-
-  mCurPitchClass = (Utils::PitchClass)synth.getUIParams().pitchClass;
+  mCurPitchClass = (Utils::PitchClass)synth.getParamUI().pitchClass;
 
   mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass,
                                     bool isNoteOn) {
@@ -169,8 +167,7 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
   // Draw note display
   if (mCurPitchClass != Utils::PitchClass::NONE) {
-    std::vector<CandidateParams*> candidates =
-        mSynth.getActiveCandidates();
+    std::vector<ParamCandidate*> candidates = mSynth.getActiveCandidates();
     // Draw position arrows
     for (int i = 0; i < candidates.size(); ++i) {
       if (candidates[i] == nullptr) continue;

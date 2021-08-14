@@ -10,7 +10,7 @@
 
 #include "Parameters.h"
 
-void GlobalParams::addParams(juce::AudioProcessor& p) {
+void ParamGlobal::addParams(juce::AudioProcessor& p) {
   p.addParameter(attack = new juce::AudioParameterFloat(
                      ParamIDs::globalAttack, "Master Attack",
                      ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
@@ -26,14 +26,14 @@ void GlobalParams::addParams(juce::AudioProcessor& p) {
                      ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
 }
 
-void GlobalParams::resetParams() {
+void ParamGlobal::resetParams() {
   ParamHelper::setParam(attack, ParamDefaults::ATTACK_DEFAULT_SEC);
   ParamHelper::setParam(decay, ParamDefaults::DECAY_DEFAULT_SEC);
   ParamHelper::setParam(sustain, ParamDefaults::SUSTAIN_DEFAULT);
   ParamHelper::setParam(release, ParamDefaults::RELEASE_DEFAULT_SEC);
 }
 
-void GeneratorParams::addParams(juce::AudioProcessor& p) {
+void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String enableId =
       PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genEnable + juce::String(genIdx);
   p.addParameter(
@@ -102,7 +102,7 @@ void GeneratorParams::addParams(juce::AudioProcessor& p) {
   updateGrainEnvelope();
 }
 
-void GeneratorParams::updateGrainEnvelope() {
+void ParamGenerator::updateGrainEnvelope() {
   grainEnv.clear();
   float scaledShape = (grainShape->get() * ENV_LUT_SIZE) / 2.0f;
   float scaledTilt = grainTilt->get() * ENV_LUT_SIZE;
@@ -123,7 +123,7 @@ void GeneratorParams::updateGrainEnvelope() {
                                     1.0f, grainEnv.size());
 }
 
-void NoteParam::addParams(juce::AudioProcessor& p) {
+void ParamNote::addParams(juce::AudioProcessor& p) {
   for (auto& generator : generators) {
     generator->addParams(p);
   }
@@ -132,13 +132,13 @@ void NoteParam::addParams(juce::AudioProcessor& p) {
                      SOLO_NONE, NUM_GENERATORS - 1, SOLO_NONE));
 }
 
-void NoteParam::addListener(int genIdx,
+void ParamNote::addListener(int genIdx,
                             juce::AudioProcessorParameter::Listener* listener) {
   soloIdx->addListener(listener);
   for (auto&& gen : generators) {
     gen->enable->addListener(listener);
   }
-  GeneratorParams* generator = generators[genIdx].get();
+  ParamGenerator* generator = generators[genIdx].get();
   generator->candidate->addListener(listener);
   generator->pitchAdjust->addListener(listener);
   generator->positionAdjust->addListener(listener);
@@ -153,13 +153,13 @@ void NoteParam::addListener(int genIdx,
   generator->release->addListener(listener);
 }
 
-void NoteParam::removeListener(
+void ParamNote::removeListener(
     int genIdx, juce::AudioProcessorParameter::Listener* listener) {
   soloIdx->removeListener(listener);
   for (auto&& gen : generators) {
     gen->enable->removeListener(listener);
   }
-  GeneratorParams* generator = generators[genIdx].get();
+  ParamGenerator* generator = generators[genIdx].get();
   generator->candidate->removeListener(listener);
   generator->pitchAdjust->removeListener(listener);
   generator->positionAdjust->removeListener(listener);
@@ -174,23 +174,23 @@ void NoteParam::removeListener(
   generator->release->removeListener(listener);
 }
 
-CandidateParams* NoteParam::getCandidate(int genIdx) {
+ParamCandidate* ParamNote::getCandidate(int genIdx) {
   if (genIdx >= candidates.size()) return nullptr;
   return &candidates[generators[genIdx]->candidate->get()];
 }
 
-bool NoteParam::shouldPlayGenerator(int genIdx) {
+bool ParamNote::shouldPlayGenerator(int genIdx) {
   return (soloIdx->get() == genIdx) ||
          (generators[genIdx]->enable->get() && soloIdx->get() == SOLO_NONE);
 }
 
-void NoteParams::addParams(juce::AudioProcessor& p) {
+void ParamsNote::addParams(juce::AudioProcessor& p) {
   for (auto& note : notes) {
     note->addParams(p);
   }
 }
 
-void NoteParams::resetParams() {
+void ParamsNote::resetParams() {
   for (auto& note : notes) {
     for (auto& generator : note->generators) {
       ParamHelper::setParam(generator->enable, generator->genIdx == 0);
