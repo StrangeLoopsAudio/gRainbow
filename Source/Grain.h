@@ -33,8 +33,7 @@ class Grain {
   ~Grain() {}
 
   void process(juce::AudioBuffer<float>& fileBuffer,
-               juce::AudioBuffer<float>& blockBuffer, float noteGain,
-               float genGain, int time);
+               juce::AudioBuffer<float>& blockBuffer, float gain, int time);
 
   float getAmplitude(float timePerc);
 

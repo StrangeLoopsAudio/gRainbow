@@ -196,7 +196,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
             paramGenerator->decay->get() * mSampleRate,
             paramGenerator->sustain->get(),
             paramGenerator->release->get() * mSampleRate);
-        grain.process(mFileBuffer, buffer, noteGain, genGain, mTotalSamps);
+        grain.process(mFileBuffer, buffer, noteGain * genGain * mParamGlobal.gain->get(), mTotalSamps);
       }
     }
     mTotalSamps++;
@@ -367,7 +367,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
                 paramGenerator->positionAdjust->get() * durSamples;
 
             // TODO: normalize the gain or something
-            float gain = paramGenerator->grainGain->get();
+            float gain = paramGenerator->gain->get();
             float pbRate =
                 paramCandidate->pbRate + paramGenerator->pitchAdjust->get();
             jassert(paramCandidate->pbRate > 0.1f);

@@ -28,6 +28,7 @@ class EnvelopeADSR : public juce::Component {
   void setDecay(float decay);
   void setSustain(float sustain);
   void setRelease(float release);
+  void setGain(float gain);
   void setColour(juce::Colour colour);
 
  private:
@@ -37,6 +38,7 @@ class EnvelopeADSR : public juce::Component {
   float mDecay = 0.2f;
   float mSustain = 0.8f;
   float mRelease = 0.5f;
+  float mGain = 0.8f;
   bool mIsActive = false;
   juce::Colour mColour;
 

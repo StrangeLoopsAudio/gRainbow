@@ -159,21 +159,6 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mLabelDuration.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelDuration);
 
-  /* Gain */
-  mSliderGain.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderGain.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderGain.setRotaryParameters(rotaryParams);
-  mSliderGain.setRange(0.0, 1.0);
-  mSliderGain.onValueChange = [this] {
-    ParamHelper::setParam(getCurrentGenerator()->grainGain,
-                          mSliderGain.getValue());
-  };
-  addAndMakeVisible(mSliderGain);
-
-  mLabelGain.setText("Gain", juce::dontSendNotification);
-  mLabelGain.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelGain);
-
   /* Grain envelope viz */
   addAndMakeVisible(mEnvelopeGrain);
 
@@ -242,6 +227,21 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mLabelRelease.setText("Release", juce::dontSendNotification);
   mLabelRelease.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRelease);
+
+  /* Gain */
+  mSliderGain.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderGain.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderGain.setRotaryParameters(rotaryParams);
+  mSliderGain.setRange(0.0, 1.0);
+  mSliderGain.onValueChange = [this] {
+    ParamHelper::setParam(getCurrentGenerator()->gain,
+                          mSliderGain.getValue());
+  };
+  addAndMakeVisible(mSliderGain);
+
+  mLabelGain.setText("Gain", juce::dontSendNotification);
+  mLabelGain.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelGain);
 
   // set default generator for initialization
   setPitchClass(mCurPitchClass);
@@ -396,11 +396,16 @@ void GeneratorsBox::resized() {
 
   // Amp envelope
   r.removeFromTop(SECTION_TITLE_HEIGHT);
-  mEnvelopeAmp.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
+  auto knobWidth = r.getWidth() / NUM_AMP_ENV_PARAMS;
+  auto ampEnvPanel = r.removeFromTop(ENVELOPE_HEIGHT);
+  auto gainPanel = ampEnvPanel.removeFromRight(knobWidth);
+  mLabelGain.setBounds(gainPanel.removeFromBottom(LABEL_HEIGHT));
+  mSliderGain.setBounds(
+      gainPanel.withSizeKeepingCentre(gainPanel.getWidth(), gainPanel.getWidth() / 2.0f));
+  mEnvelopeAmp.setBounds(ampEnvPanel);
   r.removeFromTop(PADDING_SIZE);
 
   // Amp env knobs
-  auto knobWidth = r.getWidth() / NUM_AMP_ENV_PARAMS;
   auto knobPanel = r.removeFromTop(knobWidth / 2);
   mSliderAttack.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderDecay.setBounds(knobPanel.removeFromLeft(knobWidth));
@@ -427,14 +432,12 @@ void GeneratorsBox::resized() {
   mSliderTilt.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderDuration.setBounds(knobPanel.removeFromLeft(knobWidth));
-  mSliderGain.setBounds(knobPanel.removeFromLeft(knobWidth));
-
+  
   labelPanel = r.removeFromTop(LABEL_HEIGHT);
   mLabelShape.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelTilt.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelRate.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelDuration.setBounds(labelPanel.removeFromLeft(knobWidth));
-  mLabelGain.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
 void GeneratorsBox::setPitchClass(Utils::PitchClass pitchClass) {
@@ -512,8 +515,6 @@ void GeneratorsBox::timerCallback() {
                              juce::dontSendNotification);
     mEnvelopeGrain.setDuration(
         ParamRanges::GRAIN_DURATION.convertTo0to1(gen->grainDuration->get()));
-    mSliderGain.setValue(gen->grainGain->get(), juce::dontSendNotification);
-    mEnvelopeGrain.setGain(gen->grainGain->get());
     mSliderAttack.setValue(gen->attack->get(), juce::dontSendNotification);
     mEnvelopeAmp.setAttack(
         ParamRanges::ATTACK.convertTo0to1(gen->attack->get()));
@@ -524,6 +525,8 @@ void GeneratorsBox::timerCallback() {
     mSliderRelease.setValue(gen->release->get(), juce::dontSendNotification);
     mEnvelopeAmp.setRelease(
         ParamRanges::RELEASE.convertTo0to1(gen->release->get()));
+    mSliderGain.setValue(gen->gain->get(), juce::dontSendNotification);
+    mEnvelopeAmp.setGain(gen->gain->get());
     refreshState();
     mParamHasChanged.store(false);
   }
@@ -532,14 +535,13 @@ void GeneratorsBox::timerCallback() {
 void GeneratorsBox::changeGenerator(Utils::GeneratorColour newGenerator) {
   if (newGenerator == mCurSelectedGenerator) return;
   // Remove listener from old generator
-  mParamsNote.notes[mCurPitchClass]->removeListener(mCurSelectedGenerator,
-                                                    this);
+  getCurrentGenerator()->removeListener(this);
   // Update components and members
   mCurSelectedGenerator = newGenerator;
   mParamUI.generatorTab = newGenerator;
 
   // Add listener to new generator
-  mParamsNote.notes[mCurPitchClass]->addListener(mCurSelectedGenerator, this);
+  getCurrentGenerator()->addListener(this);
 
   // Update UI Components
   mParamHasChanged.store(true);

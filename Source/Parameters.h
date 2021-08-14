@@ -13,9 +13,11 @@
 #include <JuceHeader.h>
 
 namespace ParamIDs {
+// Note params
+static juce::String genSolo{"_solo_gen_"};
 // Generator params
 static juce::String genEnable{"_enable_gen_"};
-static juce::String genSolo{"_solo_gen_"};
+static juce::String genGain{"_gain_gen_"};
 static juce::String genCandidate{"_candidate_gen_"};
 static juce::String genPitchAdjust{"_pitch_adjust_gen_"};
 static juce::String genPositionAdjust{"_position_adjust_gen_"};
@@ -23,13 +25,13 @@ static juce::String genGrainShape{"_grain_shape_gen_"};
 static juce::String genGrainTilt{"_grain_tilt_gen_"};
 static juce::String genGrainRate{"_grain_rate_gen_"};
 static juce::String genGrainDuration{"_grain_duration_gen_"};
-static juce::String genGrainGain{"_grain_gain_gen_"};
 static juce::String genGrainSync{"_grain_sync_gen_"};
 static juce::String genAttack{"_attack_gen_"};
 static juce::String genDecay{"_decay_gen_"};
 static juce::String genSustain{"_sustain_gen_"};
 static juce::String genRelease{"_release_gen_"};
 // Global params
+static juce::String globalGain{"global_gain"};
 static juce::String globalAttack{"global_attack"};
 static juce::String globalDecay{"global_decay"};
 static juce::String globalSustain{"global_sustain"};
@@ -49,7 +51,7 @@ static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
 namespace ParamDefaults {
 static float GRAIN_RATE_DEFAULT = 0.5f;
 static float GRAIN_DURATION_DEFAULT = 0.1f;
-static float GRAIN_GAIN_DEFAULT = 0.8f;
+static float GAIN_DEFAULT = 0.8f;
 static float ATTACK_DEFAULT_SEC = 0.2f;
 static float DECAY_DEFAULT_SEC = 0.2f;
 static float SUSTAIN_DEFAULT = 0.8f;
@@ -129,12 +131,15 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   void parameterGestureChanged(int, bool) override {}
 
   void addParams(juce::AudioProcessor& p);
+  void addListener(juce::AudioProcessorParameter::Listener* listener);
+  void removeListener(juce::AudioProcessorParameter::Listener* listener);
   void updateGrainEnvelope();
 
   int noteIdx;
   int genIdx;
 
   juce::AudioParameterBool* enable = nullptr;
+  juce::AudioParameterFloat* gain = nullptr;
   juce::AudioParameterInt* candidate = nullptr;
   juce::AudioParameterFloat* pitchAdjust = nullptr;
   juce::AudioParameterFloat* positionAdjust = nullptr;
@@ -142,8 +147,7 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* grainTilt = nullptr;
   juce::AudioParameterFloat* grainRate = nullptr;
   juce::AudioParameterFloat* grainDuration = nullptr;
-  juce::AudioParameterFloat* grainGain = nullptr;
-  juce::AudioParameterBool* grainSync = nullptr;
+  juce::AudioParameterBool*  grainSync = nullptr;
   juce::AudioParameterFloat* attack = nullptr;
   juce::AudioParameterFloat* decay = nullptr;
   juce::AudioParameterFloat* sustain = nullptr;
@@ -236,6 +240,7 @@ struct ParamGlobal {
   void addParams(juce::AudioProcessor& p);
   void resetParams();
 
+  juce::AudioParameterFloat* gain = nullptr;
   juce::AudioParameterFloat* attack = nullptr;
   juce::AudioParameterFloat* decay = nullptr;
   juce::AudioParameterFloat* sustain = nullptr;

@@ -43,6 +43,9 @@ class GlobalParamBox : public juce::Component {
   /* UI Components */
   std::unique_ptr<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
+      mSliderGain;
+  std::unique_ptr<
+      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
       mSliderAttack;
   std::unique_ptr<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
@@ -54,13 +57,10 @@ class GlobalParamBox : public juce::Component {
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
       mSliderRelease;
   /* -- ADSR Env */
-  //juce::Slider mSliderAttack;
+  juce::Label mLabelGain;
   juce::Label mLabelAttack;
-  //juce::Slider mSliderDecay;
   juce::Label mLabelDecay;
-  //juce::Slider mSliderSustain;
   juce::Label mLabelSustain;
-  //juce::Slider mSliderRelease;
   juce::Label mLabelRelease;
   EnvelopeADSR mEnvelopeAmp;
 

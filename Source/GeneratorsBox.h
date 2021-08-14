@@ -46,7 +46,7 @@ class GeneratorsBox : public juce::Component,
  private:
   /* Params */
   static constexpr auto NUM_AMP_ENV_PARAMS = 4;
-  static constexpr auto NUM_GRAIN_ENV_PARAMS = 5;
+  static constexpr auto NUM_GRAIN_ENV_PARAMS = 4;
 
   /* UI Layout */
   static constexpr auto TABS_HEIGHT = 30;
@@ -88,8 +88,6 @@ class GeneratorsBox : public juce::Component,
   juce::Label mLabelRate;
   juce::Slider mSliderDuration;
   juce::Label mLabelDuration;
-  juce::Slider mSliderGain;
-  juce::Label mLabelGain;
   EnvelopeGrain mEnvelopeGrain;
   /* -- ADSR Env */
   juce::Slider mSliderAttack;
@@ -101,6 +99,8 @@ class GeneratorsBox : public juce::Component,
   juce::Slider mSliderRelease;
   juce::Label mLabelRelease;
   EnvelopeADSR mEnvelopeAmp;
+  juce::Slider mSliderGain;
+  juce::Label mLabelGain;
 
   void changeGenerator(Utils::GeneratorColour newGenerator);
   void refreshState();
