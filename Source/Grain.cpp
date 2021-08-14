@@ -15,17 +15,22 @@ void Grain::process(juce::AudioBuffer<float>& fileBuffer,
                     float genGain, int time) {
   float timePerc = (time - trigTs) / (float)duration;
   float totalGain = noteGain * genGain * gain * getAmplitude(timePerc);
-  const float* fileBuf = fileBuffer.getReadPointer(0);
+  const float** fileBuf = fileBuffer.getArrayOfReadPointers();
+  int numFileChannels = fileBuffer.getNumChannels();
 
   float unStretchedDuration = duration * pbRate;
   int lowSample = std::floor(juce::jmax(0.0f, timePerc * unStretchedDuration));
   int highSample = std::ceil(juce::jmax(0.0f, timePerc * unStretchedDuration));
   float rem = (timePerc * unStretchedDuration) - lowSample;
-  float sample = juce::jmap(
-      rem, fileBuf[(startPos + lowSample) % fileBuffer.getNumSamples()],
-      fileBuf[(startPos + highSample) % fileBuffer.getNumSamples()]);
-  sample *= totalGain;
+
   for (int ch = 0; ch < blockBuffer.getNumChannels(); ++ch) {
+    float sample = juce::jmap(
+        rem,
+        fileBuf[ch % numFileChannels]
+               [(startPos + lowSample) % fileBuffer.getNumSamples()],
+        fileBuf[ch % numFileChannels]
+               [(startPos + highSample) % fileBuffer.getNumSamples()]);
+    sample *= totalGain;
     float* channelBlock = blockBuffer.getWritePointer(ch);
     channelBlock[time % blockBuffer.getNumSamples()] += sample;
   }

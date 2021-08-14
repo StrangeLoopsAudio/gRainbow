@@ -74,7 +74,7 @@ void PositionChanger::paint(juce::Graphics& g) {
   g.drawRect(titleRect, 2);
 
   /* Draw position text */
-  if (mPosition >= 0) {
+  if (mPosition >= 0 && mNumPositions > 0) {
     int posNum = (mPosition >= 0) ? mPosition + 1 : 0;
     juce::String posString = juce::String(posNum) + juce::String(" / ") +
                              juce::String(mNumPositions);
