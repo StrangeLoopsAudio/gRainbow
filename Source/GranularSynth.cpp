@@ -246,12 +246,12 @@ void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
   juce::XmlElement xml("PluginState");
 
   juce::XmlElement* params = new juce::XmlElement("AudioParams");
-  for (auto& param : getParameters())
+  for (auto& param : getParameters()) {
     params->setAttribute(ParamHelper::getParamID(param), param->getValue());
+  }
 
   xml.addChildElement(params);
   xml.addChildElement(mUIParams.getXml());
-  // TODO: get/set candidates
 
   copyXmlToBinary(xml, destData);
 }
@@ -262,11 +262,59 @@ void GranularSynth::setStateInformation(const void* data, int sizeInBytes) {
   if (xml != nullptr) {
     auto params = xml->getChildByName("AudioParams");
     if (params != nullptr) {
-      for (auto& param : getParameters())
+      for (auto& param : getParameters()) {
         param->setValueNotifyingHost(params->getDoubleAttribute(
             ParamHelper::getParamID(param), param->getValue()));
+      }
     }
     mUIParams = UIParams(xml->getChildByName("UIParams"));
+  }
+}
+
+// These are slightly different then the get/setStateInformation. These are for
+// 'user params' which include items that are related to audio, but not actually
+// juce::AudioParam items that the DAW can use
+void GranularSynth::getPresetParamsXml(juce::MemoryBlock& destData) {
+  juce::XmlElement xml("UserState");
+
+  juce::XmlElement* audioParams = new juce::XmlElement("AudioParams");
+  for (auto& param : getParameters()) {
+    audioParams->setAttribute(ParamHelper::getParamID(param),
+                              param->getValue());
+  }
+  xml.addChildElement(audioParams);
+  xml.addChildElement(mNoteParams.getUserStateXml());
+
+#ifdef FDB_PRESET_XML
+  DBG("getPresetParamsXml:\n" << xml.toString().toRawUTF8());
+#endif  // FDB_PRESET_XML
+
+  copyXmlToBinary(xml, destData);
+}
+
+void GranularSynth::setPresetParamsXml(const void* data, int sizeInBytes) {
+  auto xml = getXmlFromBinary(data, sizeInBytes);
+
+  if (xml != nullptr) {
+    // To make sure nothing unwanted stays behind
+    resetParameters();
+
+#ifdef FDB_PRESET_XML
+    DBG("setPresetParamsXml:\n" << xml->toString().toRawUTF8());
+#endif  // FDB_PRESET_XML
+
+    auto audioParams = xml->getChildByName("AudioParams");
+    if (audioParams != nullptr) {
+      for (auto& param : getParameters()) {
+        param->setValueNotifyingHost(audioParams->getDoubleAttribute(
+            ParamHelper::getParamID(param), param->getValue()));
+      }
+    }
+
+    auto notesParams = xml->getChildByName("NotesParams");
+    if (notesParams != nullptr) {
+      mNoteParams.setUserStateXml(notesParams);
+    }
   }
 }
 
@@ -348,6 +396,8 @@ void GranularSynth::processFile(juce::File file) {
   if (reader.get() != nullptr) {
     mFileBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
 
+    // resamples the buffer from the file sampler rate to the the proper sampler
+    // rate set from the DAW in prepareToPlay
     juce::AudioBuffer<float> tempBuffer = juce::AudioBuffer<float>(
         reader->numChannels, (int)reader->lengthInSamples);
     reader->read(&tempBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
@@ -362,6 +412,7 @@ void GranularSynth::processFile(juce::File file) {
                          mFileBuffer.getNumSamples());
     }
   }
+
   mFft.processBuffer(&mFileBuffer);
   mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
 }

@@ -29,3 +29,6 @@ These can be set manually or in Projucer `Preprocessor Definitions` section in t
 - `FDB_LOAD_FILE`
     - Starts loading a file on start up instead of finding the file in file explorer each time
     - Example: `FDB_LOAD_FILE="/home/Music/test.wav"`
+- `FDB_PRESET_XML`
+    - Prints the XML to the console on when loading/saving preset
+    - Example: `FDB_PRESET_XML=1"`

@@ -69,7 +69,11 @@ class GranularSynth : public juce::AudioProcessor {
   void setStateInformation(const void* data, int sizeInBytes) override;
   //=====================end-inherited-functions==================================
 
+  void getPresetParamsXml(juce::MemoryBlock& destData);
+  void setPresetParamsXml(const void* data, int sizeInBytes);
+
   double getSampleRate() { return mSampleRate; }
+  const juce::AudioBuffer<float>& getAudioBuffer() { return mFileBuffer; }
   juce::MidiKeyboardState& getKeyboardState() { return mKeyboardState; }
 
   // Callback functions

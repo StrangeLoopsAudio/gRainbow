@@ -96,6 +96,25 @@ struct CandidateParams {
         pbRate(pbRate),
         duration(duration),
         salience(salience) {}
+
+  // setUserStateXml equivalent since we always need a valid candidate param
+  // value
+  CandidateParams(juce::XmlElement* xml) {
+    jassert(xml->hasTagName("CandidateParams"));
+    posRatio = xml->getDoubleAttribute("posRatio");
+    pbRate = xml->getDoubleAttribute("pbRate");
+    duration = xml->getDoubleAttribute("duration");
+    salience = xml->getDoubleAttribute("salience");
+  }
+
+  juce::XmlElement* getUserStateXml() {
+    juce::XmlElement* xml = new juce::XmlElement("CandidateParams");
+    xml->setAttribute("posRatio", posRatio);
+    xml->setAttribute("pbRate", pbRate);
+    xml->setAttribute("duration", duration);
+    xml->setAttribute("salience", salience);
+    return xml;
+  }
 };
 
 struct GeneratorParams : juce::AudioProcessorParameter::Listener {
@@ -157,6 +176,24 @@ struct NoteParam {
   std::vector<CandidateParams> candidates;
   juce::AudioParameterInt* soloIdx = nullptr;
 
+  juce::XmlElement* getUserStateXml() {
+    juce::XmlElement* xml = new juce::XmlElement("NoteParam");
+    for (CandidateParams& candidate : candidates) {
+      xml->addChildElement(candidate.getUserStateXml());
+    }
+    return xml;
+  }
+
+  void setUserStateXml(juce::XmlElement* xml) {
+    jassert(xml->hasTagName("NoteParam"));
+    candidates.clear();
+    for (auto* children : xml->getChildIterator()) {
+      if (children->hasTagName("CandidateParams")) {
+        candidates.push_back(CandidateParams(children));
+      }
+    }
+  }
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoteParam)
 };
 
@@ -171,6 +208,22 @@ struct NoteParams {
   void resetParams();
 
   std::vector<std::unique_ptr<NoteParam>> notes;
+
+  juce::XmlElement* getUserStateXml() {
+    juce::XmlElement* xml = new juce::XmlElement("NotesParams");
+    for (auto&& note : notes) {
+      xml->addChildElement(note->getUserStateXml());
+    }
+    return xml;
+  }
+
+  void setUserStateXml(juce::XmlElement* xml) {
+    jassert(xml->hasTagName("NotesParams"));
+    // Currently all child elements are NotesParam elements
+    for (size_t i = 0; i < notes.size(); i++) {
+      notes[i].get()->setUserStateXml(xml->getChildElement(i));
+    }
+  }
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoteParams)
 };

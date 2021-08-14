@@ -8,6 +8,8 @@
 
 #include "PluginEditor.h"
 
+#include "Preset.h"
+
 //==============================================================================
 GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
     GranularSynth& synth)
@@ -87,14 +89,13 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
                        juce::Colours::transparentBlack, presetOver, 1.0f,
                        juce::Colours::transparentBlack, presetOver, 1.0f,
                        juce::Colours::transparentBlack);
-  mBtnPreset.onClick = [this] {};
-  addAndMakeVisible(mBtnPreset);
+  mBtnPreset.onClick = [this] { savePreset(); };
+  // don't display until audio clip is loaded
+  addChildComponent(mBtnPreset);
 
   // File info label
-  mLabelClipInfo.setJustificationType(juce::Justification::centred);
-  addAndMakeVisible(mLabelClipInfo);
-  mLabelPresetInfo.setJustificationType(juce::Justification::centred);
-  addAndMakeVisible(mLabelPresetInfo);
+  mLabelFilenfo.setJustificationType(juce::Justification::centred);
+  addAndMakeVisible(mLabelFilenfo);
 
   // Generators box
   mGeneratorsBox.onPositionChanged = [this](int gen, bool isRight) {
@@ -121,6 +122,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(
   if (mSynth.wrapperType ==
       GranularSynth::WrapperType::wrapperType_Standalone) {
     setWantsKeyboardFocus(true);
+    // Standalone will persist between usages
+    mSynth.resetParameters();
   }
 
   startTimer(50);
@@ -224,8 +227,7 @@ void GRainbowAudioProcessorEditor::resized() {
   filePanel.removeFromRight(BTN_PADDING);
   filePanel.removeFromRight(OPEN_FILE_WIDTH);
   // remaining space on sides remaing is for file information
-  mLabelClipInfo.setBounds(filePanel.removeFromTop(BTN_PANEL_HEIGHT / 2));
-  mLabelPresetInfo.setBounds(filePanel.removeFromTop(BTN_PANEL_HEIGHT / 2));
+  mLabelFilenfo.setBounds(filePanel.removeFromTop(BTN_PANEL_HEIGHT));
 
   r.removeFromTop(NOTE_DISPLAY_HEIGHT); // Just padding
 
@@ -252,7 +254,7 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
   if (path == nullptr) {
     juce::FileChooser chooser("Select a file to granulize...",
                               juce::File::getCurrentWorkingDirectory(),
-                              "*.wav;*.mp3", true);
+                              "*.wav;*.mp3;*.gbow", true);
 
     if (chooser.browseForFileToOpen()) {
       auto file = chooser.getResult();
@@ -265,10 +267,38 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
 }
 
 void GRainbowAudioProcessorEditor::processFile(juce::File file) {
-  mLabelClipInfo.setText("CLIP: " + file.getFileName(),
-                         juce::dontSendNotification);
-  mSynth.processFile(file);
-  mArcSpec.resetBuffers();
+  mLabelFilenfo.setText(file.getFileName(), juce::dontSendNotification);
+  if (file.getFileExtension() == ".gbow") {
+    Preset::Header presetFileHeader;
+    juce::FileInputStream input(file);
+    if (input.openedOk()) {
+      input.read(&presetFileHeader, sizeof(presetFileHeader));
+      // TODO - give better warnings
+      jassert(presetFileHeader.magic == Preset::MAGIC);
+      jassert(presetFileHeader.versionMajor == Preset::VERSION_MAJOR);
+      jassert(presetFileHeader.versionMinor == Preset::VERSION_MINOR);
+
+      void* audioBuffer = malloc(presetFileHeader.audioBufferSize);
+      jassert(audioBuffer != nullptr);
+      input.read(audioBuffer, presetFileHeader.audioBufferSize);
+      free(audioBuffer);
+
+      // juce::FileInputStream uses 'int' to read
+      int xmlSize =
+          static_cast<int>(input.getTotalLength() - input.getPosition());
+      void* xmlData = malloc(xmlSize);
+      jassert(xmlData != nullptr);
+      input.read(xmlData, xmlSize);
+      mSynth.setPresetParamsXml(xmlData, xmlSize);
+      free(xmlData);
+    }
+  } else {
+    // audio clipS
+    mSynth.processFile(file);
+    mArcSpec.resetBuffers();
+    // if it wasn't already visible
+    mBtnPreset.setVisible(true);
+  }
 }
 
 void GRainbowAudioProcessorEditor::startRecording() {
@@ -315,6 +345,46 @@ void GRainbowAudioProcessorEditor::stopRecording() {
                        juce::Colours::transparentBlack, recordOver, 1.0f,
                        juce::Colours::transparentBlack);
   repaint();
+}
+
+void GRainbowAudioProcessorEditor::savePreset() {
+  Preset::Header presetFileHeader;
+  presetFileHeader.magic = Preset::MAGIC;
+  presetFileHeader.versionMajor = Preset::VERSION_MAJOR;
+  presetFileHeader.versionMinor = Preset::VERSION_MINOR;
+
+  juce::FileChooser chooser("Save gRainbow presets to a file",
+                            juce::File::getCurrentWorkingDirectory(), "*.gbow",
+                            true);
+
+  if (chooser.browseForFileToSave(true)) {
+    juce::File file = chooser.getResult().withFileExtension("gbow");
+
+    if (file.hasWriteAccess()) {
+      const juce::AudioBuffer<float>& audioBuffer = mSynth.getAudioBuffer();
+      presetFileHeader.audioBufferSamplerRate = mSynth.getSampleRate();
+      presetFileHeader.audioBufferNumberOfSamples = audioBuffer.getNumSamples();
+      presetFileHeader.audioBufferChannel = audioBuffer.getNumChannels();
+      presetFileHeader.audioBufferSize =
+          presetFileHeader.audioBufferNumberOfSamples *
+          presetFileHeader.audioBufferChannel * sizeof(float);
+
+      // first write is a 'replace' to clear any file if overriding
+      file.replaceWithData(&presetFileHeader, sizeof(presetFileHeader));
+      file.appendData(
+          reinterpret_cast<const void*>(audioBuffer.getReadPointer(0)),
+          presetFileHeader.audioBufferSize);
+
+      // XML structure of preset contains all audio related information
+      // These include not just AudioParams but also other params not exposes to
+      // the DAW or UI directly
+      juce::MemoryBlock xmlMemoryBlock;
+      mSynth.getPresetParamsXml(xmlMemoryBlock);
+      file.appendData(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
+    } else {
+      // TODO - let users know we can't write here
+    }
+  }
 }
 
 /**

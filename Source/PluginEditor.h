@@ -62,8 +62,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::ImageButton mBtnOpenFile;
   juce::ImageButton mBtnRecord;
   juce::ImageButton mBtnPreset;
-  juce::Label mLabelClipInfo;
-  juce::Label mLabelPresetInfo;
+  juce::Label mLabelFilenfo;
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
@@ -83,6 +82,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void processFile(juce::File file);
   void startRecording();
   void stopRecording();
+  void savePreset();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GRainbowAudioProcessorEditor)
 };
