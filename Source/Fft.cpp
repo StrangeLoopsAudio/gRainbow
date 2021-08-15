@@ -10,8 +10,11 @@
 
 #include "Fft.h"
 
+// Once a buffer is loaded, will run to produce mFftData and then will async
+// notify when done
 void Fft::run() {
   if (mFileBuffer == nullptr) return;
+  // Runs with first channel
   const float* pBuffer = mFileBuffer->getReadPointer(0);
   mFftFrame.clear();
   mFftFrame.resize(mWindowSize * 2, 0.0f);
@@ -42,7 +45,7 @@ void Fft::run() {
                                                               mFftFrame.size());
     if (frameMax > curMax) curMax = frameMax;
     mFftData.push_back(newFrame);
-    /* Normalize fft values according to max frame value */
+    // Normalize fft values according to max frame value
     for (int i = 0; i < mFftData.back().size(); ++i) {
       mFftData.back()[i] /= curMax;
     }
@@ -59,5 +62,5 @@ void Fft::run() {
 void Fft::processBuffer(juce::AudioBuffer<float>* fileBuffer) {
   stopThread(4000);
   mFileBuffer = fileBuffer;
-  startThread(); 
+  startThread();
 }

@@ -34,11 +34,16 @@ class Fft: public juce::Thread {
       nullptr;
 
  private:
+  // values passed in at creation time
   int mWindowSize;
   int mHopSize;
   juce::dsp::FFT mForwardFFT;
   juce::dsp::WindowingFunction<float> mWindowEnvelope;
+
+  // pointer to buffer to read from
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
+
+  // processed data
   std::vector<float> mFftFrame;
   std::vector<std::vector<float>> mFftData;  // FFT data normalized from 0.0-1.0
 };
