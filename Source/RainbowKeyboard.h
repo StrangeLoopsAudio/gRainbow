@@ -53,12 +53,8 @@ class RainbowKeyboard : public juce::Component {
     float velocity;
     InputType input;  // prevents other inputs from stepping on each other
 
-    Note()
-        : pitch(Utils::PitchClass::NONE),
-          velocity(0.0f),
-          input(InputType::NONE) {}
-    Note(Utils::PitchClass pitch, float velocity, InputType input)
-        : pitch(pitch), velocity(velocity), input(input) {}
+    Note() : pitch(Utils::PitchClass::NONE), velocity(0.0f), input(InputType::NONE) {}
+    Note(Utils::PitchClass pitch, float velocity, InputType input) : pitch(pitch), velocity(velocity), input(input) {}
   };
 
   // Since only one note can be pressed at once, only need on instance of Note
@@ -75,18 +71,14 @@ class RainbowKeyboard : public juce::Component {
   RainbowKeyboard::Note xyMouseToNote(juce::Point<float> pos);
 
   // if a key is black or white is only a keyboard UI issue
-  Utils::PitchClass WHITE_KEYS_PITCH_CLASS[7] = {
-      Utils::PitchClass::C, Utils::PitchClass::D, Utils::PitchClass::E,
-      Utils::PitchClass::F, Utils::PitchClass::G, Utils::PitchClass::A,
-      Utils::PitchClass::B};
+  Utils::PitchClass WHITE_KEYS_PITCH_CLASS[7] = {Utils::PitchClass::C, Utils::PitchClass::D, Utils::PitchClass::E,
+                                                 Utils::PitchClass::F, Utils::PitchClass::G, Utils::PitchClass::A,
+                                                 Utils::PitchClass::B};
 
-  Utils::PitchClass BLACK_KEYS_PITCH_CLASS[5] = {
-      Utils::PitchClass::Cs, Utils::PitchClass::Ds, Utils::PitchClass::Fs,
-      Utils::PitchClass::Gs, Utils::PitchClass::As};
+  Utils::PitchClass BLACK_KEYS_PITCH_CLASS[5] = {Utils::PitchClass::Cs, Utils::PitchClass::Ds, Utils::PitchClass::Fs,
+                                                 Utils::PitchClass::Gs, Utils::PitchClass::As};
 
-  static inline bool isBlackKey(Utils::PitchClass pitchClass) {
-    return ((1 << (pitchClass)) & 0x054a) != 0;
-  }
+  static inline bool isBlackKey(Utils::PitchClass pitchClass) { return ((1 << (pitchClass)) & 0x054a) != 0; }
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowKeyboard)
 };

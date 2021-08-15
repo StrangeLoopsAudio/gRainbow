@@ -23,9 +23,7 @@
 //==============================================================================
 /**
  */
-class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                     public juce::FileDragAndDropTarget,
-                                     public juce::Timer {
+class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::FileDragAndDropTarget, public juce::Timer {
  public:
   GRainbowAudioProcessorEditor(GranularSynth& synth);
   ~GRainbowAudioProcessorEditor() override;

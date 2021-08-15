@@ -14,14 +14,13 @@
 
 #include <JuceHeader.h>
 
-class Fft: public juce::Thread {
+class Fft : public juce::Thread {
  public:
   Fft(int windowSize, int hopSize)
       : mWindowSize(windowSize),
         mHopSize(hopSize),
         mForwardFFT(std::log2(windowSize)),
-        mWindowEnvelope(windowSize,
-                        juce::dsp::WindowingFunction<float>::WindowingMethod::blackmanHarris),
+        mWindowEnvelope(windowSize, juce::dsp::WindowingFunction<float>::WindowingMethod::blackmanHarris),
         juce::Thread("fft thread") {}
   ~Fft() {}
 
@@ -30,8 +29,7 @@ class Fft: public juce::Thread {
   void processBuffer(juce::AudioBuffer<float>* fileBuffer);
   std::vector<std::vector<float>>& getSpectrum() { return mFftData; }
 
-  std::function<void(std::vector<std::vector<float>>& spectrum)> onProcessingComplete =
-      nullptr;
+  std::function<void(std::vector<std::vector<float>>& spectrum)> onProcessingComplete = nullptr;
 
  private:
   // values passed in at creation time

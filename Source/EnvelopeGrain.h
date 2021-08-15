@@ -32,7 +32,6 @@ class EnvelopeGrain : public juce::Component {
   void setColour(juce::Colour colour);
 
  private:
-
   static constexpr auto MIN_RATE_RATIO = .25f;
   static constexpr auto MAX_RATE_RATIO = 1.0f;
   static constexpr auto GAIN_HEIGHT = 0.8f;

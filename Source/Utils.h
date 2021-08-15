@@ -18,37 +18,20 @@ typedef std::vector<std::vector<float>> SpecBuffer;
 
 // Tetradic colours
 enum GeneratorColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_GEN };
-static constexpr juce::int64 GENERATOR_COLOURS_HEX[4] = {0xFF52C4FF, 0xFFE352FF,
-                                                        0xFFFF8D52, 0xFF6EFF52};
+static constexpr juce::int64 GENERATOR_COLOURS_HEX[4] = {0xFF52C4FF, 0xFFE352FF, 0xFFFF8D52, 0xFF6EFF52};
 
 enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
 
 // All util logic around the notes/pitchClasses
-enum PitchClass {
-  NONE = -1,
-  C = 0,
-  Cs,
-  D,
-  Ds,
-  E,
-  F,
-  Fs,
-  G,
-  Gs,
-  A,
-  As,
-  B,
-  COUNT
-};
+enum PitchClass { NONE = -1, C = 0, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, COUNT };
 
 // Use initializer_list to do "for (PitchClass key : ALL_PITCH_CLASS)" logic
 static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
-    PitchClass::C,  PitchClass::Cs, PitchClass::D,  PitchClass::Ds,
-    PitchClass::E,  PitchClass::F,  PitchClass::Fs, PitchClass::G,
-    PitchClass::Gs, PitchClass::A,  PitchClass::As, PitchClass::B};
+    PitchClass::C,  PitchClass::Cs, PitchClass::D,  PitchClass::Ds, PitchClass::E,  PitchClass::F,
+    PitchClass::Fs, PitchClass::G,  PitchClass::Gs, PitchClass::A,  PitchClass::As, PitchClass::B};
 
 // Constant used for pitch shifting by semitones
-static constexpr auto TIMESTRETCH_RATIO = 1.0594f;  
+static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
 
 typedef struct EnvelopeADSR {
   // All adsr params are in samples (except for sustain amp)
@@ -73,8 +56,7 @@ typedef struct EnvelopeADSR {
     state = EnvelopeState::RELEASE;
   }
   /* ADSR params (except sustain) should be in samples */
-  float getAmplitude(int curTs, float attack, float decay, float sustain,
-                     float release) {
+  float getAmplitude(int curTs, float attack, float decay, float sustain, float release) {
     float newAmp = 0.0f;
     switch (state) {
       case Utils::EnvelopeState::ATTACK: {
@@ -87,8 +69,7 @@ typedef struct EnvelopeADSR {
       }
       case Utils::EnvelopeState::DECAY: {
         if (noteOnTs < 0) return 0.0f;
-        newAmp = 1.0f - ((curTs - noteOnTs - attack) / (float)decay) *
-                            (1.0f - sustain);
+        newAmp = 1.0f - ((curTs - noteOnTs - attack) / (float)decay) * (1.0f - sustain);
         if (curTs - noteOnTs - attack >= decay) {
           state = Utils::EnvelopeState::SUSTAIN;
         }
@@ -102,8 +83,7 @@ typedef struct EnvelopeADSR {
       }
       case Utils::EnvelopeState::RELEASE: {
         if (noteOffTs < 0) return 0.0f;
-        newAmp = noteOffAmplitude -
-                 (((curTs - noteOffTs) / (float)release) * noteOffAmplitude);
+        newAmp = noteOffAmplitude - (((curTs - noteOffTs) / (float)release) * noteOffAmplitude);
         if ((curTs - noteOffTs) > release) {
           noteOffTs = -1;
         }
@@ -118,9 +98,8 @@ typedef struct EnvelopeADSR {
 template <typename CompType, typename CompAttachment>
 class AttachedComponent {
  public:
-  AttachedComponent<CompType, CompAttachment>(
-      juce::RangedAudioParameter& param, juce::Component& parent,
-      std::function<void(CompType&)> init = nullptr) {
+  AttachedComponent<CompType, CompAttachment>(juce::RangedAudioParameter& param, juce::Component& parent,
+                                              std::function<void(CompType&)> init = nullptr) {
     attachment.reset(new CompAttachment(param, component));
     parent.addAndMakeVisible(component);
     if (init != nullptr) init(component);
@@ -253,8 +232,7 @@ static inline juce::Colour getRainbow12Colour(int value) {
   return juce::Colour(r * 255.0f, g * 255.0f, b * 255.0f);
 }
 
-template <class TimeT = std::chrono::milliseconds,
-          class ClockT = std::chrono::steady_clock>
+template <class TimeT = std::chrono::milliseconds, class ClockT = std::chrono::steady_clock>
 class Timer {
   using timep_t = typename ClockT::time_point;
   timep_t _start = ClockT::now(), _end = {};
@@ -273,12 +251,8 @@ class Timer {
   }
 };
 
-static inline float db2lin(float value) {
-  return std::pow(10.0f, value / 10.0f);
-}
-static inline float lin2db(float value) {
-  return value < 1e-10 ? -100 : 10.0f * std::log10(value);
-}
+static inline float db2lin(float value) { return std::pow(10.0f, value / 10.0f); }
+static inline float lin2db(float value) { return value < 1e-10 ? -100 : 10.0f * std::log10(value); }
 
 // Ripped from essentia utils
 class BPF {
@@ -289,9 +263,7 @@ class BPF {
 
  public:
   BPF() {}
-  BPF(std::vector<float> xPoints, std::vector<float> yPoints) {
-    init(xPoints, yPoints);
-  }
+  BPF(std::vector<float> xPoints, std::vector<float> yPoints) { init(xPoints, yPoints); }
   void init(std::vector<float> xPoints, std::vector<float> yPoints) {
     _xPoints = xPoints;
     _yPoints = yPoints;
@@ -307,8 +279,7 @@ class BPF {
     for (int j = 1; j < int(_xPoints.size()); ++j) {
       // this never gives a division by zero as we checked just before that
       // x[i-1] < x[i]
-      _slopes[j - 1] =
-          (_yPoints[j] - _yPoints[j - 1]) / (_xPoints[j] - _xPoints[j - 1]);
+      _slopes[j - 1] = (_yPoints[j] - _yPoints[j - 1]) / (_xPoints[j] - _xPoints[j - 1]);
     }
   }
 

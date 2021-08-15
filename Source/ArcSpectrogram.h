@@ -35,11 +35,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void resized() override;
 
   void reset();
-  bool shouldLoadImage(ParamUI::SpecType type) {
-    return mProcessType != type && !mImagesComplete[type];
-  }
-  void loadBuffer(Utils::SpecBuffer *buffer,
-                  ParamUI::SpecType type);
+  bool shouldLoadImage(ParamUI::SpecType type) { return mProcessType != type && !mImagesComplete[type]; }
+  void loadBuffer(Utils::SpecBuffer *buffer, ParamUI::SpecType type);
   void loadPreset();
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff() { mIsPlayingNote = false; }
@@ -71,10 +68,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
     float envIncSamples;  // How many envelope samples to increment each frame
     int numFramesActive;
     ArcGrain(ParamGenerator *paramGenerator, float gain, float envIncSamples)
-        : paramGenerator(paramGenerator),
-          gain(gain),
-          envIncSamples(envIncSamples),
-          numFramesActive(0) {}
+        : paramGenerator(paramGenerator), gain(gain), envIncSamples(envIncSamples), numFramesActive(0) {}
   } ArcGrain;
 
   // Parameters

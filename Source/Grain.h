@@ -14,26 +14,12 @@
 
 class Grain {
  public:
-  Grain()
-      : generator((Utils::GeneratorColour)0),
-        duration(0),
-        pbRate(1.0),
-        startPos(0),
-        trigTs(0),
-        gain(0.0) {}
-  Grain(Utils::GeneratorColour generator, std::vector<float> env, int duration,
-        float pbRate, int startPos, int trigTs, float gain)
-      : generator(generator),
-        mEnv(env),
-        duration(duration),
-        pbRate(pbRate),
-        startPos(startPos),
-        trigTs(trigTs),
-        gain(gain) {}
+  Grain() : generator((Utils::GeneratorColour)0), duration(0), pbRate(1.0), startPos(0), trigTs(0), gain(0.0) {}
+  Grain(Utils::GeneratorColour generator, std::vector<float> env, int duration, float pbRate, int startPos, int trigTs, float gain)
+      : generator(generator), mEnv(env), duration(duration), pbRate(pbRate), startPos(startPos), trigTs(trigTs), gain(gain) {}
   ~Grain() {}
 
-  void process(juce::AudioBuffer<float>& fileBuffer,
-               juce::AudioBuffer<float>& blockBuffer, float gain, int time);
+  void process(juce::AudioBuffer<float>& fileBuffer, juce::AudioBuffer<float>& blockBuffer, float gain, int time);
 
   float getAmplitude(float timePerc);
 

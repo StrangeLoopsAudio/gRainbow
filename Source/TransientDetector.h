@@ -26,8 +26,7 @@ class TransientDetector : juce::Thread {
   typedef struct Transient {
     float posRatio;
     float confidence;
-    Transient(float posRatio, float confidence)
-        : posRatio(posRatio), confidence(confidence) {}
+    Transient(float posRatio, float confidence) : posRatio(posRatio), confidence(confidence) {}
   } Transient;
 
   std::function<void(std::vector<Transient>&)> onTransientsUpdated = nullptr;
@@ -45,8 +44,7 @@ class TransientDetector : juce::Thread {
 
   Fft mFft;
   juce::AudioBuffer<float>* mFileBuffer = nullptr;
-  std::array<float, PARAM_SPREAD>
-      mEnergyBuffer;  // Spectral energy rolling buffer
+  std::array<float, PARAM_SPREAD> mEnergyBuffer;  // Spectral energy rolling buffer
   std::vector<Transient> mTransients;
   int mAttackFrames = PARAM_ATTACK_LOCK;
 
