@@ -52,6 +52,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   static constexpr auto PROGRESS_SIZE = 80;
   static constexpr auto NOTE_BULB_SIZE = 10;
   static constexpr auto NOTE_DISPLAY_HEIGHT = 20;
+  static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
 
   // DSP Modules
   GranularSynth& mSynth;

@@ -134,7 +134,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
 GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  auto recordFile = parentDir.getChildFile(ArcSpectrogram::FILE_RECORDING);
+  auto recordFile = parentDir.getChildFile(FILE_RECORDING);
   recordFile.deleteFile();
   mAudioDeviceManager.removeAudioCallback(&mRecorder);
   setLookAndFeel(nullptr);
@@ -266,54 +266,6 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
   }
 }
 
-void GRainbowAudioProcessorEditor::processFile(juce::File file) {
-  juce::AudioBuffer<float> fileAudioBuffer;
-  double sampleRate;
-  bool preset = (file.getFileExtension() == ".gbow");
-
-  if (preset) {
-    Preset::Header presetFileHeader;
-    juce::FileInputStream input(file);
-    if (input.openedOk()) {
-      input.read(&presetFileHeader, sizeof(presetFileHeader));
-      // TODO - give better warnings
-      jassert(presetFileHeader.magic == Preset::MAGIC);
-      jassert(presetFileHeader.versionMajor == Preset::VERSION_MAJOR);
-      jassert(presetFileHeader.versionMinor == Preset::VERSION_MINOR);
-
-      fileAudioBuffer.setSize(presetFileHeader.audioBufferChannel,
-                              presetFileHeader.audioBufferNumberOfSamples);
-      input.read(fileAudioBuffer.getWritePointer(0),
-                 presetFileHeader.audioBufferSize);
-      sampleRate = presetFileHeader.audioBufferSamplerRate;
-
-      // juce::FileInputStream uses 'int' to read
-      int xmlSize =
-          static_cast<int>(input.getTotalLength() - input.getPosition());
-      void* xmlData = malloc(xmlSize);
-      jassert(xmlData != nullptr);
-      input.read(xmlData, xmlSize);
-      mSynth.setPresetParamsXml(xmlData, xmlSize);
-      free(xmlData);
-    }
-  } else {
-    // loading audio clip
-    std::unique_ptr<juce::AudioFormatReader> reader(
-        mFormatManager.createReaderFor(file));
-    jassert(reader.get() != nullptr);
-    fileAudioBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
-    reader->read(&fileAudioBuffer, 0, (int)reader->lengthInSamples, 0, true,
-                 true);
-    sampleRate = reader->sampleRate;
-  }
-
-  mSynth.processFile(&fileAudioBuffer, sampleRate, preset);
-  mArcSpec.reset();
-
-  mBtnPreset.setEnabled(true);  // if it wasn't already enabled
-  mLabelFilenfo.setText(file.getFileName(), juce::dontSendNotification);
-}
-
 void GRainbowAudioProcessorEditor::startRecording() {
   if (!juce::RuntimePermissions::isGranted(
           juce::RuntimePermissions::writeExternalStorage)) {
@@ -328,8 +280,8 @@ void GRainbowAudioProcessorEditor::startRecording() {
   }
 
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  parentDir.getChildFile(ArcSpectrogram::FILE_RECORDING).deleteFile();
-  mRecordedFile = parentDir.getChildFile(ArcSpectrogram::FILE_RECORDING);
+  parentDir.getChildFile(FILE_RECORDING).deleteFile();
+  mRecordedFile = parentDir.getChildFile(FILE_RECORDING);
 
   mRecorder.startRecording(mRecordedFile);
 
@@ -360,11 +312,82 @@ void GRainbowAudioProcessorEditor::stopRecording() {
   repaint();
 }
 
+void GRainbowAudioProcessorEditor::processFile(juce::File file) {
+  juce::AudioBuffer<float> fileAudioBuffer;
+  double sampleRate;
+  bool preset = (file.getFileExtension() == ".gbow");
+
+  if (preset) {
+    Preset::Header header;
+    juce::FileInputStream input(file);
+    if (input.openedOk()) {
+      input.read(&header, sizeof(header));
+      // TODO - give better warnings
+      jassert(header.magic == Preset::MAGIC);
+      jassert(header.versionMajor == Preset::VERSION_MAJOR);
+      jassert(header.versionMinor == Preset::VERSION_MINOR);
+
+      // Get Audio Buffer blob
+      fileAudioBuffer.setSize(header.audioBufferChannel,
+                              header.audioBufferNumberOfSamples);
+      input.read(fileAudioBuffer.getWritePointer(0), header.audioBufferSize);
+      sampleRate = header.audioBufferSamplerRate;
+
+      // Get offsets and load all png for spec images
+      uint32_t maxSpecImageSize =
+          juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize,
+                     header.specImageDetectedSize);
+      void* specImageData = malloc(maxSpecImageSize);
+      jassert(specImageData != nullptr);
+      // resize incase the preset is the first thing loaded
+      mSynth.getParamUI().specImages.resize(
+          (size_t)ArcSpectrogram::SpecType::COUNT);
+      input.read(specImageData, header.specImageSpectrogramSize);
+      mSynth.getParamUI().specImages[ArcSpectrogram::SpecType::SPECTROGRAM] =
+          juce::PNGImageFormat::loadFrom(specImageData,
+                                         header.specImageSpectrogramSize);
+      input.read(specImageData, header.specImageHpcpSize);
+      mSynth.getParamUI().specImages[ArcSpectrogram::SpecType::HPCP] =
+          juce::PNGImageFormat::loadFrom(specImageData,
+                                         header.specImageHpcpSize);
+      input.read(specImageData, header.specImageDetectedSize);
+      mSynth.getParamUI().specImages[ArcSpectrogram::SpecType::DETECTED] =
+          juce::PNGImageFormat::loadFrom(specImageData,
+                                         header.specImageDetectedSize);
+      free(specImageData);
+
+      // juce::FileInputStream uses 'int' to read
+      int xmlSize =
+          static_cast<int>(input.getTotalLength() - input.getPosition());
+      void* xmlData = malloc(xmlSize);
+      jassert(xmlData != nullptr);
+      input.read(xmlData, xmlSize);
+      mSynth.setPresetParamsXml(xmlData, xmlSize);
+      free(xmlData);
+    }
+  } else {
+    // loading audio clip
+    std::unique_ptr<juce::AudioFormatReader> reader(
+        mFormatManager.createReaderFor(file));
+    jassert(reader.get() != nullptr);
+    fileAudioBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
+    reader->read(&fileAudioBuffer, 0, (int)reader->lengthInSamples, 0, true,
+                 true);
+    sampleRate = reader->sampleRate;
+  }
+
+  mSynth.processFile(&fileAudioBuffer, sampleRate, preset);
+  mArcSpec.reset();
+
+  mBtnPreset.setEnabled(true);  // if it wasn't already enabled
+  mLabelFilenfo.setText(file.getFileName(), juce::dontSendNotification);
+}
+
 void GRainbowAudioProcessorEditor::savePreset() {
-  Preset::Header presetFileHeader;
-  presetFileHeader.magic = Preset::MAGIC;
-  presetFileHeader.versionMajor = Preset::VERSION_MAJOR;
-  presetFileHeader.versionMinor = Preset::VERSION_MINOR;
+  Preset::Header header;
+  header.magic = Preset::MAGIC;
+  header.versionMajor = Preset::VERSION_MAJOR;
+  header.versionMinor = Preset::VERSION_MINOR;
 
   juce::FileChooser chooser("Save gRainbow presets to a file",
                             juce::File::getCurrentWorkingDirectory(), "*.gbow",
@@ -372,28 +395,55 @@ void GRainbowAudioProcessorEditor::savePreset() {
 
   if (chooser.browseForFileToSave(true)) {
     juce::File file = chooser.getResult().withFileExtension("gbow");
+    file.deleteFile();  // clear file if replacing
+    juce::FileOutputStream outputStream(file);
 
-    if (file.hasWriteAccess()) {
+    if (file.hasWriteAccess() && outputStream.openedOk()) {
+      // Audio buffer data is grabbed from current synth
       const juce::AudioBuffer<float>& audioBuffer = mSynth.getAudioBuffer();
-      presetFileHeader.audioBufferSamplerRate = mSynth.getSampleRate();
-      presetFileHeader.audioBufferNumberOfSamples = audioBuffer.getNumSamples();
-      presetFileHeader.audioBufferChannel = audioBuffer.getNumChannels();
-      presetFileHeader.audioBufferSize =
-          presetFileHeader.audioBufferNumberOfSamples *
-          presetFileHeader.audioBufferChannel * sizeof(float);
+      header.audioBufferSamplerRate = mSynth.getSampleRate();
+      header.audioBufferNumberOfSamples = audioBuffer.getNumSamples();
+      header.audioBufferChannel = audioBuffer.getNumChannels();
+      header.audioBufferSize = header.audioBufferNumberOfSamples *
+                               header.audioBufferChannel * sizeof(float);
 
-      // first write is a 'replace' to clear any file if overriding
-      file.replaceWithData(&presetFileHeader, sizeof(presetFileHeader));
-      file.appendData(
-          reinterpret_cast<const void*>(audioBuffer.getReadPointer(0)),
-          presetFileHeader.audioBufferSize);
+      // There is no way in JUCE to be able to know the size of the
+      // png/imageFormat blob until after it is written into the outstream which
+      // is too late. To keep things working, just do a double copy to a
+      // internal memory object so the size is know prior to writtin the image
+      // data to the stream.
+      juce::MemoryOutputStream spectrogramStaging;
+      mSynth.getParamUI().saveSpecImage(spectrogramStaging,
+                                        ArcSpectrogram::SpecType::SPECTROGRAM);
+      header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
+
+      juce::MemoryOutputStream hpcpStaging;
+      mSynth.getParamUI().saveSpecImage(hpcpStaging,
+                                        ArcSpectrogram::SpecType::HPCP);
+      header.specImageHpcpSize = hpcpStaging.getDataSize();
+
+      juce::MemoryOutputStream detectedStaging;
+      mSynth.getParamUI().saveSpecImage(detectedStaging,
+                                        ArcSpectrogram::SpecType::DETECTED);
+      header.specImageDetectedSize = detectedStaging.getDataSize();
 
       // XML structure of preset contains all audio related information
       // These include not just AudioParams but also other params not exposes to
       // the DAW or UI directly
       juce::MemoryBlock xmlMemoryBlock;
       mSynth.getPresetParamsXml(xmlMemoryBlock);
-      file.appendData(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
+
+      // Write data out section by section
+      outputStream.write(&header, sizeof(header));
+      outputStream.write(
+          reinterpret_cast<const void*>(audioBuffer.getReadPointer(0)),
+          header.audioBufferSize);
+      outputStream.write(spectrogramStaging.getData(),
+                         header.specImageSpectrogramSize);
+      outputStream.write(hpcpStaging.getData(), header.specImageHpcpSize);
+      outputStream.write(detectedStaging.getData(),
+                         header.specImageDetectedSize);
+      outputStream.write(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
     } else {
       // TODO - let users know we can't write here
     }

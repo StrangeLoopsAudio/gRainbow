@@ -46,11 +46,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   //============================================================================
   void run() override;
 
-  static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
-  static constexpr auto FILE_SPECTROGRAM = "gRainbow_spec.png";
-  static constexpr auto FILE_HPCP = "gRainbow_hpcp.png";
-  static constexpr auto FILE_DETECTED = "gRainbow_detected.png";
-
  private:
   static constexpr auto MIN_FREQ = 100;
   static constexpr auto MAX_FREQ = 5000;

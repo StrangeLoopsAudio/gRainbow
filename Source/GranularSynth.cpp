@@ -63,11 +63,6 @@ GranularSynth::GranularSynth()
 }
 
 GranularSynth::~GranularSynth() {
-  // Get rid of image files
-  auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  parentDir.getChildFile(ArcSpectrogram::FILE_SPECTROGRAM).deleteFile();
-  parentDir.getChildFile(ArcSpectrogram::FILE_HPCP).deleteFile();
-  parentDir.getChildFile(ArcSpectrogram::FILE_DETECTED).deleteFile();
 }
 
 //==============================================================================

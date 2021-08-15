@@ -275,6 +275,14 @@ struct ParamUI {
     return xml;
   }
 
+  // Save image files
+  bool saveSpecImage(juce::OutputStream& outputStream, size_t index) {
+    juce::PNGImageFormat pngWriter;
+    jassert(index < specImages.size());
+    jassert(specImages[index].isValid());
+    return pngWriter.writeImageToStream(specImages[index], outputStream);
+  }
+
   int generatorTab = 0;
   int pitchClass = 0;
 

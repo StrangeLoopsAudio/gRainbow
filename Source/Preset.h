@@ -33,6 +33,13 @@ struct Header {
   int32_t audioBufferNumberOfSamples;
   int32_t audioBufferChannel;
 
+  // UI Spec image info
+  // for now instead of creating linked list structure, just list the images
+  // used
+  uint32_t specImageSpectrogramSize;
+  uint32_t specImageHpcpSize;
+  uint32_t specImageDetectedSize;
+
   uint32_t reserved[32];
 };
 
@@ -40,6 +47,7 @@ struct Header {
 // ------------------
 // - Header
 // - Encoded audio buffer blob
+// - List of UI spec images as png blob
 // - XML of user param (binary form)
 
 }  // namespace Preset
