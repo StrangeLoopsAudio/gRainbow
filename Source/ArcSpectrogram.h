@@ -60,7 +60,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   // UI variables
   static constexpr auto SPEC_TYPE_HEIGHT = 50;
   static constexpr auto SPEC_TYPE_WIDTH = 130;
-  static constexpr auto MAX_GRAIN_SIZE = 25;
+  static constexpr auto MAX_GRAIN_SIZE = 40;
   static constexpr auto NUM_COLS = 600;
   // Colours
   static constexpr auto COLOUR_MULTIPLIER = 20.0f;
@@ -99,7 +99,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   juce::Image mLogoImage;
   juce::ComboBox mSpecType;
 
-  void grainCreatedCallback(int genIdx, float envGain);
+  void grainCreatedCallback(int genIdx, float durationSec, float envGain);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
 };

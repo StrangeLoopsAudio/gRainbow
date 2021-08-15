@@ -398,8 +398,11 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             auto grain = Grain((Utils::GeneratorColour)i,
                                paramGenerator->grainEnv, durSamples, pbRate,
                                posSamples + posOffset, mTotalSamps, gain);
-            mParamsNote.notes[gNote.pitchClass]->grainCreated(
-                i, gNote.genAmpEnvs[i].amplitude);
+            float totalGain = gain * gNote.ampEnv.amplitude *
+                              gNote.genAmpEnvs[i].amplitude * gNote.velocity *
+                              mParamGlobal.gain->get();
+            mParamsNote.notes[gNote.pitchClass]->grainCreated(i, durSec,
+                                                              totalGain);
             gNote.grains.add(grain);
           }
           // Reset trigger ts

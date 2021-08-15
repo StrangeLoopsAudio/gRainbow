@@ -173,10 +173,11 @@ struct ParamNote {
   bool shouldPlayGenerator(int genIdx);
   ParamCandidate* getCandidate(int genIdx);
 
-  void grainCreated(int genIdx, float envGain) {
-    if (onGrainCreated != nullptr) onGrainCreated(genIdx, envGain);
+  void grainCreated(int genIdx, float durationSec, float envGain) {
+    if (onGrainCreated != nullptr) onGrainCreated(genIdx, durationSec, envGain);
   }
-  std::function<void(int genIdx, float envGain)> onGrainCreated = nullptr;
+  std::function<void(int genIdx, float durationSec, float envGain)>
+      onGrainCreated = nullptr;
 
   int noteIdx;
   std::vector<std::unique_ptr<ParamGenerator>> generators;

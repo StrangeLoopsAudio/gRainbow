@@ -220,18 +220,24 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
 
 void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
   mParamsNote.notes[mCurPitchClass]->onGrainCreated = nullptr;
-  mParamsNote.notes[pitchClass]->onGrainCreated = [this](int genIdx,
-                                                         float envGain) {
-    grainCreatedCallback(genIdx, envGain);
+  mParamsNote.notes[pitchClass]->onGrainCreated =
+      [this](int genIdx, float durationSec, float envGain) {
+    grainCreatedCallback(genIdx, durationSec, envGain);
   };
   mIsPlayingNote = true;
   mCurPitchClass = pitchClass;
 }
 
-void ArcSpectrogram::grainCreatedCallback(int genIdx, float envGain) {
+void ArcSpectrogram::grainCreatedCallback(int genIdx, float durationSec,
+                                          float envGain) {
   ParamGenerator* gen =
       mParamsNote.notes[mCurPitchClass]->generators[genIdx].get();
-  float envIncSamples =
-      ENV_LUT_SIZE / (gen->grainDuration->get() * REFRESH_RATE_FPS);
+  float envIncSamples;
+  if (gen->grainSync->get()) {
+    envIncSamples = ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
+  } else {
+    envIncSamples = ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
+  }
+
   mArcGrains.add(ArcGrain(gen, envGain, envIncSamples));
 }
