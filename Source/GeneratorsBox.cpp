@@ -528,6 +528,7 @@ void GeneratorsBox::parameterValueChanged(int idx, float value) {
 
 void GeneratorsBox::timerCallback() {
   if (mParamHasChanged.load()) {
+    mParamHasChanged.store(false);
     ParamGenerator* gen = getCurrentGenerator();
     for (int i = 0; i < NUM_GENERATORS; ++i) {
       mBtnsEnabled[i].setToggleState(
@@ -546,6 +547,7 @@ void GeneratorsBox::timerCallback() {
     mSliderTilt.setValue(gen->grainTilt->get(), juce::dontSendNotification);
     mEnvelopeGrain.setTilt(gen->grainTilt->get());
     mBtnSync.setToggleState(gen->grainSync->get(), juce::dontSendNotification);
+    mEnvelopeGrain.setSync(gen->grainSync->get());
     mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "free");
     mSliderRate.setSync(gen->grainSync->get());
     mSliderRate.setValue(gen->grainRate->get(), juce::dontSendNotification);
@@ -570,7 +572,6 @@ void GeneratorsBox::timerCallback() {
     mSliderGain.setValue(gen->gain->get(), juce::dontSendNotification);
     mEnvelopeAmp.setGain(gen->gain->get());
     refreshState();
-    mParamHasChanged.store(false);
   }
 }
 

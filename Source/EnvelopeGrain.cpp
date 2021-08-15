@@ -9,6 +9,7 @@
 */
 
 #include "EnvelopeGrain.h"
+#include "Parameters.h"
 #include <JuceHeader.h>
 
 void EnvelopeGrain::paint(juce::Graphics& g) {
@@ -16,9 +17,19 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
 
   float minEnvWidth = getWidth() / 6.0f;
   float maxEnvWidth = getWidth() / 2.0f;
-  float envWidth = juce::jmap(mDuration, minEnvWidth, maxEnvWidth);
-  float envOffset = juce::jmap(mRate, envWidth * MIN_RATE_RATIO, envWidth * MAX_RATE_RATIO);
-  float envTop = ((1.0f - mGain) * (getHeight() - 2)) + 2;
+  float envWidth;
+  float envOffset;
+  if (mSync) {
+    float durDiv = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * mDuration));
+    envWidth = maxEnvWidth / durDiv;
+    float rateDiv = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * mRate));
+    envOffset = envWidth / rateDiv;
+  } else {
+    envWidth = juce::jmap(mDuration, minEnvWidth, maxEnvWidth);
+    envOffset =
+        juce::jmap(mRate, envWidth * MIN_RATE_RATIO, envWidth * MAX_RATE_RATIO);
+  }
+  float envTop = ((1.0f - GAIN_HEIGHT) * (getHeight() - 2)) + 2;
   float envBottom = getHeight() - 1.0f;
   float shapeWidth = envWidth * mShape / 2.0f;
 
@@ -92,12 +103,10 @@ void EnvelopeGrain::setDuration(float duration) {
   repaint();
 }
 
-void EnvelopeGrain::setGain(float gain) {
-  mGain = gain;
+void EnvelopeGrain::setSync(bool sync) {
+  mSync = sync;
   repaint();
 }
-
-
 
 void EnvelopeGrain::setColour(juce::Colour colour) {
   mColour = colour;
