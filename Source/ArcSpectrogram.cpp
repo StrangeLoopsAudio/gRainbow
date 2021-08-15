@@ -45,9 +45,9 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
   mSpecType.addItem("Harmonic Profile", (int)SpecType::HPCP + 1);
   mSpecType.addItem("Detected Pitches", (int)SpecType::DETECTED + 1);
   mSpecType.setTooltip("Select different spectrum type");
-  // Will get called from user using UI and from inside this class when loading
-  // buffers
   mSpecType.onChange = [this](void) {
+    // Will get called from user using UI ComboBox and from inside this class
+    // when loading buffers
     mParamUI.specType = mSpecType.getSelectedItemIndex();
     repaint();
   };
@@ -193,14 +193,6 @@ void ArcSpectrogram::run() {
       g.fillPath(rectPath, rotation);
     }
   }
-
-  // Set the default first selection to display when all items are shown loaded
-  // and displaye
-  if (mBuffersLoaded == (SpecType::COUNT - 1)) {
-    const juce::MessageManagerLock lock;
-    mSpecType.setSelectedItemIndex(mFirstDisplayType, juce::sendNotification);
-    mBuffersLoaded++;
-  }
 }
 
 void ArcSpectrogram::reset() {
@@ -208,7 +200,6 @@ void ArcSpectrogram::reset() {
   for (int i = 1; i < mImages.size(); ++i) {
     mImages[i].clear(mImages[i].getBounds());
   }
-  mBuffersLoaded = 0;
 }
 
 void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
@@ -217,7 +208,6 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   mProcessType = type;
   mBuffers[mProcessType] = buffer;
-  mBuffersLoaded++;
 
   const juce::MessageManagerLock lock;
 
@@ -226,6 +216,7 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
 
   // As each buffer is loaded, want to display it being generated
   // Will be loaded in what ever order loaded from async callbacks
+  // The last item loaded will be the first item selected in ComboBox
   if ((int)mProcessType < mSpecType.getNumItems()) {
     mSpecType.setSelectedItemIndex(mProcessType, juce::sendNotification);
   }

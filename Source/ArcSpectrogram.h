@@ -82,7 +82,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
 
   // Buffers
   std::array<std::vector<std::vector<float>> *, SpecType::COUNT - 1> mBuffers;
-  int mBuffersLoaded = 0;
 
   // Bookkeeping
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
