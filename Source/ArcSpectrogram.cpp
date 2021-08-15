@@ -26,8 +26,7 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
   setFramesPerSecond(REFRESH_RATE_FPS);
   mBuffers.fill(nullptr);
 
-  mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png,
-                                              BinaryData::logo_pngSize);
+  mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize);
 
   // check if params has images, which would mean the plugin was reopened
   if (mParamUI.specComplete) {
@@ -80,45 +79,28 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     drawImage = mParamUI.specImages[imageIndex];
   }
 
-  juce::Point<float> centerPoint =
-      juce::Point<float>(getWidth() / 2.0f, getHeight());
+  juce::Point<float> centerPoint = juce::Point<float>(getWidth() / 2.0f, getHeight());
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
 
-  g.drawImage(
-      drawImage, getLocalBounds().toFloat(),
-      juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
-      false);
+  g.drawImage(drawImage, getLocalBounds().toFloat(), juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
 
   // Draw active grains
   for (ArcGrain& grain : mArcGrains) {
-    ParamCandidate* candidate =
-        mParamsNote.notes[grain.paramGenerator->noteIdx]->getCandidate(
-            grain.paramGenerator->genIdx);
-    float xRatio =
-        candidate->posRatio +
-        (candidate->duration * grain.paramGenerator->positionAdjust->get());
-    float grainProg =
-        (grain.numFramesActive * grain.envIncSamples) / ENV_LUT_SIZE;
+    ParamCandidate* candidate = mParamsNote.notes[grain.paramGenerator->noteIdx]->getCandidate(grain.paramGenerator->genIdx);
+    float xRatio = candidate->posRatio + (candidate->duration * grain.paramGenerator->positionAdjust->get());
+    float grainProg = (grain.numFramesActive * grain.envIncSamples) / ENV_LUT_SIZE;
     xRatio += (candidate->duration / candidate->pbRate) * grainProg;
-    float pitchClass = grain.paramGenerator->noteIdx -
-                       (std::log(candidate->pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
-    float yRatio = (pitchClass + 0.25f +
-                    (grain.paramGenerator->pitchAdjust->get() * 6.0f)) /
-                   (float)Utils::PitchClass::COUNT;
+    float pitchClass = grain.paramGenerator->noteIdx - (std::log(candidate->pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
+    float yRatio = (pitchClass + 0.25f + (grain.paramGenerator->pitchAdjust->get() * 6.0f)) / (float)Utils::PitchClass::COUNT;
     int grainRad = startRadius + (yRatio * bowWidth);
     juce::Point<float> grainPoint = centerPoint.getPointOnCircumference(
-        grainRad, (1.5 * juce::MathConstants<float>::pi) +
-                      (xRatio * juce::MathConstants<float>::pi));
-    float envIdx = juce::jmin(ENV_LUT_SIZE - 1.0f,
-                              grain.numFramesActive * grain.envIncSamples);
-    float grainSize =
-        grain.gain * grain.paramGenerator->grainEnv[envIdx] * MAX_GRAIN_SIZE;
-    juce::Rectangle<float> grainRect =
-        juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
-    g.setColour(juce::Colour(
-        Utils::GENERATOR_COLOURS_HEX[grain.paramGenerator->genIdx]));
+        grainRad, (1.5 * juce::MathConstants<float>::pi) + (xRatio * juce::MathConstants<float>::pi));
+    float envIdx = juce::jmin(ENV_LUT_SIZE - 1.0f, grain.numFramesActive * grain.envIncSamples);
+    float grainSize = grain.gain * grain.paramGenerator->grainEnv[envIdx] * MAX_GRAIN_SIZE;
+    juce::Rectangle<float> grainRect = juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
+    g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[grain.paramGenerator->genIdx]));
     g.fillEllipse(grainRect);
     g.setColour(juce::Colour::fromHSV(yRatio, 1.0, 1.0f, 1.0f));
     g.fillEllipse(grainRect.reduced(2));
@@ -126,16 +108,13 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   }
 
   // Remove arc grains that are completed
-  mArcGrains.removeIf([this](ArcGrain& grain) {
-    return (grain.numFramesActive * grain.envIncSamples) > ENV_LUT_SIZE;
-  });
+  mArcGrains.removeIf([this](ArcGrain& grain) { return (grain.numFramesActive * grain.envIncSamples) > ENV_LUT_SIZE; });
 }
 
 void ArcSpectrogram::resized() {
   auto r = getLocalBounds();
   // Spec type combobox
-  mSpecType.setBounds(
-      r.removeFromRight(SPEC_TYPE_WIDTH).removeFromTop(SPEC_TYPE_HEIGHT));
+  mSpecType.setBounds(r.removeFromRight(SPEC_TYPE_WIDTH).removeFromTop(SPEC_TYPE_HEIGHT));
 }
 
 void ArcSpectrogram::run() {
@@ -146,11 +125,9 @@ void ArcSpectrogram::run() {
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
-  int maxRow = (mProcessType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8
-                                                       : spec[0].size();
+  int maxRow = (mProcessType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size();
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
-  mParamUI.specImages[mProcessType] =
-      juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
+  mParamUI.specImages[mProcessType] = juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
   juce::Graphics g(mParamUI.specImages[mProcessType]);
 
   // Draw each column of frequencies
@@ -163,19 +140,15 @@ void ArcSpectrogram::run() {
       auto specRow = radPerc * maxRow;
 
       // Choose rainbow color depending on radius
-      auto level = juce::jlimit(
-          0.0f, 1.0f,
-          spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
+      auto level = juce::jlimit(0.0f, 1.0f, spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
       auto rainbowColour = juce::Colour::fromHSV(radPerc, 1.0, 1.0f, level);
       g.setColour(rainbowColour);
 
       float xPerc = (float)specCol / spec.size();
-      float angleRad = (juce::MathConstants<float>::pi * xPerc) -
-                       (juce::MathConstants<float>::pi / 2.0f);
+      float angleRad = (juce::MathConstants<float>::pi * xPerc) - (juce::MathConstants<float>::pi / 2.0f);
 
       // Create and rotate a rectangle to represent the "pixel"
-      juce::Point<float> p =
-          startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
+      juce::Point<float> p = startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
       juce::AffineTransform rotation = juce::AffineTransform();
       rotation = rotation.rotated(angleRad, p.x, p.y);
       juce::Rectangle<float> rect = juce::Rectangle<float>(2, 2);
@@ -217,8 +190,7 @@ void ArcSpectrogram::reset() {
   mParamUI.specComplete = false;
 }
 
-void ArcSpectrogram::loadBuffer(Utils::SpecBuffer* buffer,
-                                ParamUI::SpecType type) {
+void ArcSpectrogram::loadBuffer(Utils::SpecBuffer* buffer, ParamUI::SpecType type) {
   if (buffer == nullptr) return;
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   if (mImagesComplete[type]) return;
@@ -249,19 +221,16 @@ void ArcSpectrogram::loadPreset() {
 
 void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
   mParamsNote.notes[mCurPitchClass]->onGrainCreated = nullptr;
-  mParamsNote.notes[pitchClass]->onGrainCreated =
-      [this](int genIdx, float durationSec, float envGain) {
+  mParamsNote.notes[pitchClass]->onGrainCreated = [this](int genIdx, float durationSec, float envGain) {
     grainCreatedCallback(genIdx, durationSec, envGain);
   };
   mIsPlayingNote = true;
   mCurPitchClass = pitchClass;
 }
 
-void ArcSpectrogram::grainCreatedCallback(int genIdx, float durationSec,
-                                          float envGain) {
+void ArcSpectrogram::grainCreatedCallback(int genIdx, float durationSec, float envGain) {
   if (mArcGrains.size() >= MAX_NUM_GRAINS) return;
-  ParamGenerator* gen =
-      mParamsNote.notes[mCurPitchClass]->generators[genIdx].get();
+  ParamGenerator* gen = mParamsNote.notes[mCurPitchClass]->generators[genIdx].get();
   float envIncSamples;
   if (gen->grainSync->get()) {
     envIncSamples = ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);

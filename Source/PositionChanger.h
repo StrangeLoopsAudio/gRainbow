@@ -33,14 +33,13 @@ class PositionChanger : public juce::Component {
   void setSolo(bool isSolo);
   void setColour(juce::Colour colour);
   void setNumPositions(int numPositions);
-  int  getPositionNumber() { return mPosition; }
+  int getPositionNumber() { return mPosition; }
   void setPositionNumber(int position);
 
   std::function<void(bool isRight)> onPositionChanged = nullptr;
   std::function<void(bool isSolo)> onSoloChanged = nullptr;
 
  private:
-
   static constexpr auto TITLE_PERC = 0.6;
   static constexpr auto ARROW_PERC = (1.0 - TITLE_PERC) / 2.0;
   static constexpr auto BUBBLE_WIDTH = 10;
@@ -51,8 +50,8 @@ class PositionChanger : public juce::Component {
   bool mIsSolo = false;
   juce::Colour mColour;
   int mNumPositions = 0;
-  int mIndexInBoxes; // Index among other boxes on screen
-  int mPosition; // Position index
+  int mIndexInBoxes;  // Index among other boxes on screen
+  int mPosition;      // Position index
   bool mIsClickingArrow = false;
   bool mIsOverLeftArrow = false;
   bool mIsOverRightArrow = false;

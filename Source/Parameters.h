@@ -46,7 +46,7 @@ static juce::NormalisableRange<float> GRAIN_DURATION(0.06f, 0.3f);
 static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
-static int SYNC_DIV_MAX = 4; // pow of 2 division, so 1/16
+static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
 namespace ParamDefaults {
@@ -59,28 +59,19 @@ static float SUSTAIN_DEFAULT = 0.8f;
 static float RELEASE_DEFAULT_SEC = 0.2f;
 }  // namespace ParamDefaults
 
-static juce::Array<juce::String> PITCH_CLASS_NAMES{
-    "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
+static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
 
 struct ParamHelper {
   static juce::String getParamID(juce::AudioProcessorParameter* param) {
-    if (auto paramWithID =
-            dynamic_cast<juce::AudioProcessorParameterWithID*>(param))
-      return paramWithID->paramID;
+    if (auto paramWithID = dynamic_cast<juce::AudioProcessorParameterWithID*>(param)) return paramWithID->paramID;
 
     return param->getName(50);
   }
   // Utility function to avoid ugly dereferencing code before sending norm value
   // to host
-  static void setParam(juce::AudioParameterFloat* param, float newValue) {
-    *param = newValue;
-  }
-  static void setParam(juce::AudioParameterInt* param, int newValue) {
-    *param = newValue;
-  }
-  static void setParam(juce::AudioParameterBool* param, bool newValue) {
-    *param = newValue;
-  }
+  static void setParam(juce::AudioParameterFloat* param, float newValue) { *param = newValue; }
+  static void setParam(juce::AudioParameterInt* param, int newValue) { *param = newValue; }
+  static void setParam(juce::AudioParameterBool* param, bool newValue) { *param = newValue; }
 };
 
 static constexpr auto MAX_CANDIDATES = 6;
@@ -96,10 +87,7 @@ struct ParamCandidate {
   float salience;
 
   ParamCandidate(float posRatio, float pbRate, float duration, float salience)
-      : posRatio(posRatio),
-        pbRate(pbRate),
-        duration(duration),
-        salience(salience) {}
+      : posRatio(posRatio), pbRate(pbRate), duration(duration), salience(salience) {}
 
   // setUserStateXml equivalent since we always need a valid candidate param
   // value
@@ -148,7 +136,7 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* grainTilt = nullptr;
   juce::AudioParameterFloat* grainRate = nullptr;
   juce::AudioParameterFloat* grainDuration = nullptr;
-  juce::AudioParameterBool*  grainSync = nullptr;
+  juce::AudioParameterBool* grainSync = nullptr;
   juce::AudioParameterFloat* attack = nullptr;
   juce::AudioParameterFloat* decay = nullptr;
   juce::AudioParameterFloat* sustain = nullptr;
@@ -166,18 +154,15 @@ struct ParamNote {
   }
 
   void addParams(juce::AudioProcessor& p);
-  void addListener(int genIdx,
-                   juce::AudioProcessorParameter::Listener* listener);
-  void removeListener(int genIdx,
-                      juce::AudioProcessorParameter::Listener* listener);
+  void addListener(int genIdx, juce::AudioProcessorParameter::Listener* listener);
+  void removeListener(int genIdx, juce::AudioProcessorParameter::Listener* listener);
   bool shouldPlayGenerator(int genIdx);
   ParamCandidate* getCandidate(int genIdx);
 
   void grainCreated(int genIdx, float durationSec, float envGain) {
     if (onGrainCreated != nullptr) onGrainCreated(genIdx, durationSec, envGain);
   }
-  std::function<void(int genIdx, float durationSec, float envGain)>
-      onGrainCreated = nullptr;
+  std::function<void(int genIdx, float durationSec, float envGain)> onGrainCreated = nullptr;
 
   int noteIdx;
   std::vector<std::unique_ptr<ParamGenerator>> generators;

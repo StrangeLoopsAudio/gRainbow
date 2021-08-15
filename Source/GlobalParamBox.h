@@ -41,21 +41,11 @@ class GlobalParamBox : public juce::Component {
   ParamGlobal& mParamGlobal;
 
   // UI Components
-  std::unique_ptr<
-      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
-      mSliderGain;
-  std::unique_ptr<
-      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
-      mSliderAttack;
-  std::unique_ptr<
-      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
-      mSliderDecay;
-  std::unique_ptr<
-      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
-      mSliderSustain;
-  std::unique_ptr<
-      Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
-      mSliderRelease;
+  std::unique_ptr<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>> mSliderGain;
+  std::unique_ptr<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>> mSliderAttack;
+  std::unique_ptr<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>> mSliderDecay;
+  std::unique_ptr<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>> mSliderSustain;
+  std::unique_ptr<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>> mSliderRelease;
   // -- ADSR Env
   juce::Label mLabelGain;
   juce::Label mLabelAttack;

@@ -34,8 +34,7 @@ class GRainbowAudioProcessor : public juce::AudioProcessor {
   double getSampleRate() { return mSampleRate; }
   juce::MidiKeyboardState& getKeyboardState() { return mKeyboardState; }
 
-  std::function<void(Utils::PitchClass pitchClass, bool isNoteOn)>
-      onNoteChanged = nullptr;
+  std::function<void(Utils::PitchClass pitchClass, bool isNoteOn)> onNoteChanged = nullptr;
 
   //==============================================================================
   juce::AudioProcessorEditor* createEditor() override;
@@ -61,7 +60,6 @@ class GRainbowAudioProcessor : public juce::AudioProcessor {
   void setStateInformation(const void* data, int sizeInBytes) override;
 
   GranularSynth synth;
-
 
  private:
   double mSampleRate;

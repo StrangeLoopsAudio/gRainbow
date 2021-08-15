@@ -14,13 +14,11 @@
 
 #include <limits.h>
 
-TransientDetector::TransientDetector()
-    : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("transient thread") {
-  mFft.onProcessingComplete =
-      [this](std::vector<std::vector<float>>& spectrum) {
-        stopThread(4000);
-        startThread();
-      };
+TransientDetector::TransientDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("transient thread") {
+  mFft.onProcessingComplete = [this](std::vector<std::vector<float>>& spectrum) {
+    stopThread(4000);
+    startThread();
+  };
 }
 
 TransientDetector::~TransientDetector() { stopThread(2000); }
@@ -70,8 +68,7 @@ void TransientDetector::retrieveTransients() {
 }
 
 bool TransientDetector::isTransient() {
-  if (mAttackFrames != 0)
-    return false;  // Too close to a previous transient, skip
+  if (mAttackFrames != 0) return false;  // Too close to a previous transient, skip
   for (int i = 0; i < PARAM_SPREAD; ++i) {
     if (i == PARAM_SPREAD - 1) {
       if (mEnergyBuffer[0] <= mEnergyBuffer[i] * PARAM_THRESHOLD) return false;

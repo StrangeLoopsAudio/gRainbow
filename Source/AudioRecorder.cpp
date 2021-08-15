@@ -10,28 +10,25 @@
 
 #include "AudioRecorder.h"
 
-  void AudioRecorder::startRecording(const juce::File& file) {
+void AudioRecorder::startRecording(const juce::File& file) {
   stop();
 
   if (mSampleRate > 0) {
     // Create an OutputStream to write to our destination file...
     file.deleteFile();
 
-    if (auto fileStream = std::unique_ptr<juce::FileOutputStream>(
-            file.createOutputStream())) {
+    if (auto fileStream = std::unique_ptr<juce::FileOutputStream>(file.createOutputStream())) {
       // Now create a WAV writer object that writes to our output stream...
       juce::WavAudioFormat wavFormat;
 
-      if (auto writer = wavFormat.createWriterFor(fileStream.get(), mSampleRate,
-                                                  1, 16, {}, 0)) {
+      if (auto writer = wavFormat.createWriterFor(fileStream.get(), mSampleRate, 1, 16, {}, 0)) {
         fileStream.release();  // (passes responsibility for deleting the stream
                                // to the writer object that is now using it)
 
         // Now we'll create one of these helper objects which will act as a
         // FIFO buffer, and will write the data to disk on our background
         // thread.
-        mThreadedWriter.reset(new juce::AudioFormatWriter::ThreadedWriter(
-            writer, mBackgroundThread, 32768));
+        mThreadedWriter.reset(new juce::AudioFormatWriter::ThreadedWriter(writer, mBackgroundThread, 32768));
 
         // And now, swap over our active writer pointer so that the audio
         // callback will start using it..
@@ -57,22 +54,15 @@ void AudioRecorder::stop() {
   mThreadedWriter.reset();
 }
 
-bool AudioRecorder::isRecording() const {
-  return mActiveWriter.load() != nullptr;
-}
+bool AudioRecorder::isRecording() const { return mActiveWriter.load() != nullptr; }
 
 //==============================================================================
-void AudioRecorder::audioDeviceAboutToStart(
-    juce::AudioIODevice* device) {
-  mSampleRate = device->getCurrentSampleRate();
-}
+void AudioRecorder::audioDeviceAboutToStart(juce::AudioIODevice* device) { mSampleRate = device->getCurrentSampleRate(); }
 
 void AudioRecorder::audioDeviceStopped() { mSampleRate = 0; }
 
-void AudioRecorder::audioDeviceIOCallback(const float** inputChannelData,
-                                          int numInputChannels,
-                           float** outputChannelData, int numOutputChannels,
-                           int numSamples) {
+void AudioRecorder::audioDeviceIOCallback(const float** inputChannelData, int numInputChannels, float** outputChannelData,
+                                          int numOutputChannels, int numSamples) {
   const juce::ScopedLock sl(mWriterLock);
 
   if (mActiveWriter.load() != nullptr) {
@@ -81,6 +71,5 @@ void AudioRecorder::audioDeviceIOCallback(const float** inputChannelData,
 
   // We need to clear the output buffers, in case they're full of junk..
   for (int i = 0; i < numOutputChannels; ++i)
-    if (outputChannelData[i] != nullptr)
-      juce::FloatVectorOperations::clear(outputChannelData[i], numSamples);
+    if (outputChannelData[i] != nullptr) juce::FloatVectorOperations::clear(outputChannelData[i], numSamples);
 }

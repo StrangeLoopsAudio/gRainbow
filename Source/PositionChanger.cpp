@@ -13,9 +13,7 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-PositionChanger::PositionChanger() {
-
-}
+PositionChanger::PositionChanger() {}
 
 PositionChanger::~PositionChanger() {}
 
@@ -30,40 +28,32 @@ void PositionChanger::paint(juce::Graphics& g) {
   juce::Path leftPath;
   leftPath.addEllipse(1, 1, (arrowWidth * 2) - 1, selectorHeight - 2);
   if (mIsOverLeftArrow) {
-    juce::Colour fillColour =
-        mIsClickingArrow ? bgColour
-                         : bgColour.interpolatedWith(juce::Colours::black, 0.8);
+    juce::Colour fillColour = mIsClickingArrow ? bgColour : bgColour.interpolatedWith(juce::Colours::black, 0.8);
     g.setColour(fillColour);
     g.fillPath(leftPath);
   }
   g.setColour(bgColour);
   g.strokePath(leftPath, juce::PathStrokeType(2));
-  g.drawArrow(
-      juce::Line<float>(arrowWidth - (arrowWidth * 0.1), selectorHeight / 2,
-                        (arrowWidth * 0.3), selectorHeight / 2),
-      2, 6, 6);
+  g.drawArrow(juce::Line<float>(arrowWidth - (arrowWidth * 0.1), selectorHeight / 2, (arrowWidth * 0.3), selectorHeight / 2), 2, 6,
+              6);
 
   /* Draw right arrow */
   int rightStart = getWidth() * (ARROW_PERC + TITLE_PERC);
   juce::Path rightPath;
-  rightPath.addEllipse(rightStart - arrowWidth, 1, (arrowWidth * 2) - 1,
-                       selectorHeight - 2);
+  rightPath.addEllipse(rightStart - arrowWidth, 1, (arrowWidth * 2) - 1, selectorHeight - 2);
   if (mIsOverRightArrow) {
-    juce::Colour fillColour =
-        mIsClickingArrow ? bgColour
-                         : bgColour.interpolatedWith(juce::Colours::black, 0.8);
+    juce::Colour fillColour = mIsClickingArrow ? bgColour : bgColour.interpolatedWith(juce::Colours::black, 0.8);
     g.setColour(fillColour);
     g.fillPath(rightPath);
   }
   g.setColour(bgColour);
   g.strokePath(rightPath, juce::PathStrokeType(2));
   g.drawArrow(
-      juce::Line<float>(rightStart + (arrowWidth * 0.1), selectorHeight / 2,
-                        getWidth() - (arrowWidth * 0.3), selectorHeight / 2),
+      juce::Line<float>(rightStart + (arrowWidth * 0.1), selectorHeight / 2, getWidth() - (arrowWidth * 0.3), selectorHeight / 2),
       2, 6, 6);
 
-  juce::Rectangle<int> titleRect = getLocalBounds().withHeight(selectorHeight).withSizeKeepingCentre(
-      getWidth() * TITLE_PERC, selectorHeight);
+  juce::Rectangle<int> titleRect =
+      getLocalBounds().withHeight(selectorHeight).withSizeKeepingCentre(getWidth() * TITLE_PERC, selectorHeight);
 
   /* Fill in title section to mask ellipses */
   g.setColour(juce::Colours::black);
@@ -76,19 +66,15 @@ void PositionChanger::paint(juce::Graphics& g) {
   /* Draw position text */
   if (mPosition >= 0 && mNumPositions > 0) {
     int posNum = (mPosition >= 0) ? mPosition + 1 : 0;
-    juce::String posString = juce::String(posNum) + juce::String(" / ") +
-                             juce::String(mNumPositions);
+    juce::String posString = juce::String(posNum) + juce::String(" / ") + juce::String(mNumPositions);
     g.setColour(bgColour);
     g.drawText(posString, titleRect, juce::Justification::centred);
   }
 
   /* Solo button */
-  mSoloRect = titleRect.translated(0, selectorHeight)
-                  .withHeight(soloHeight - 2)
-                  .toFloat();
+  mSoloRect = titleRect.translated(0, selectorHeight).withHeight(soloHeight - 2).toFloat();
   if (mIsOverSolo || mIsSolo) {
-    g.setColour(mIsSolo ? juce::Colours::blue
-                        : juce::Colours::blue.withAlpha(0.3f));
+    g.setColour(mIsSolo ? juce::Colours::blue : juce::Colours::blue.withAlpha(0.3f));
     g.fillRect(mSoloRect);
   }
   g.setColour(juce::Colours::blue);
@@ -119,28 +105,16 @@ void PositionChanger::setNumPositions(int numPositions) {
   repaint();
 }
 
-void PositionChanger::mouseMove(const juce::MouseEvent& e) {
-  updateMouseOver(e, false);
-}
+void PositionChanger::mouseMove(const juce::MouseEvent& e) { updateMouseOver(e, false); }
 
-void PositionChanger::mouseDrag(const juce::MouseEvent& e) {
-  updateMouseOver(e, true);
-}
+void PositionChanger::mouseDrag(const juce::MouseEvent& e) { updateMouseOver(e, true); }
 
-void PositionChanger::mouseDown(const juce::MouseEvent& e) {
-  updateMouseOver(e, true);
-}
+void PositionChanger::mouseDown(const juce::MouseEvent& e) { updateMouseOver(e, true); }
 
-void PositionChanger::mouseUp(const juce::MouseEvent& e) {
-  updateMouseOver(e, false);
-}
-void PositionChanger::mouseEnter(const juce::MouseEvent& e) {
-  updateMouseOver(e, false);
-}
+void PositionChanger::mouseUp(const juce::MouseEvent& e) { updateMouseOver(e, false); }
+void PositionChanger::mouseEnter(const juce::MouseEvent& e) { updateMouseOver(e, false); }
 
-void PositionChanger::mouseExit(const juce::MouseEvent& e) {
-  updateMouseOver(e, false);
-}
+void PositionChanger::mouseExit(const juce::MouseEvent& e) { updateMouseOver(e, false); }
 
 void PositionChanger::updateMouseOver(const juce::MouseEvent& e, bool isDown) {
   auto pos = e.getEventRelativeTo(this).position;
@@ -164,7 +138,7 @@ void PositionChanger::updateMouseOver(const juce::MouseEvent& e, bool isDown) {
     if (isDown) {
       mIsSolo = !mIsSolo;
       if (onSoloChanged != nullptr) onSoloChanged(mIsSolo);
-    } 
+    }
   } else {
     mIsOverSolo = false;
   }
@@ -173,17 +147,13 @@ void PositionChanger::updateMouseOver(const juce::MouseEvent& e, bool isDown) {
 
 bool PositionChanger::isLeftArrow(juce::Point<float> point) {
   juce::Rectangle<int> arrowRect =
-      getLocalBounds()
-          .removeFromLeft(getWidth() * ARROW_PERC)
-          .withHeight(getHeight() * (1.0f - SOLO_HEIGHT_PERC));
+      getLocalBounds().removeFromLeft(getWidth() * ARROW_PERC).withHeight(getHeight() * (1.0f - SOLO_HEIGHT_PERC));
   return arrowRect.contains(point.toInt());
 }
 
 bool PositionChanger::isRightArrow(juce::Point<float> point) {
   juce::Rectangle<int> arrowRect =
-      getLocalBounds()
-          .removeFromRight(getWidth() * ARROW_PERC)
-          .withHeight(getHeight() * (1.0f - SOLO_HEIGHT_PERC));
+      getLocalBounds().removeFromRight(getWidth() * ARROW_PERC).withHeight(getHeight() * (1.0f - SOLO_HEIGHT_PERC));
   return arrowRect.contains(point.toInt());
 }
 

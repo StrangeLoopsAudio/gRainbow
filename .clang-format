@@ -1,4 +1,6 @@
 ---
 # Use defaults from the Google style with the following exceptions:
 BasedOnStyle: Google
+ColumnLimit: 132
+SortIncludes: false
 ...

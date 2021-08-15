@@ -20,9 +20,7 @@
 //==============================================================================
 /*
  */
-class GeneratorsBox : public juce::Component,
-                      juce::AudioProcessorParameter::Listener,
-                      juce::Timer {
+class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
   GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI);
   ~GeneratorsBox() override;
@@ -49,8 +47,7 @@ class GeneratorsBox : public juce::Component,
   static constexpr auto NUM_GRAIN_ENV_PARAMS = 4;
 
   // UI Layout
-  static constexpr juce::int64 GRAIN_SYNC_COLOURS_HEX[2] = {0xFF20FFD4,
-                                                            0xFFFFD420};
+  static constexpr juce::int64 GRAIN_SYNC_COLOURS_HEX[2] = {0xFF20FFD4, 0xFFFFD420};
 
   static constexpr auto TABS_HEIGHT = 30;
   static constexpr auto PADDING_SIZE = 6;
@@ -76,16 +73,13 @@ class GeneratorsBox : public juce::Component,
   class QuantizedSlider : public juce::Slider {
    public:
     QuantizedSlider() : mSync(false), juce::Slider() {}
-    QuantizedSlider(juce::NormalisableRange<float> range)
-        : mRange(range), juce::Slider() {}
+    QuantizedSlider(juce::NormalisableRange<float> range) : mRange(range), juce::Slider() {}
     void setSync(bool sync) { mSync = sync; }
 
     juce::String getTextFromValue(double value) override {
       if (mSync) {
         float prog = mRange.convertTo0to1(getValue());
-        return juce::String("1/") +
-               juce::String(
-                   std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * prog)));
+        return juce::String("1/") + juce::String(std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * prog)));
       } else {
         return juce::String(getValue());
       }
@@ -94,7 +88,7 @@ class GeneratorsBox : public juce::Component,
    private:
     bool mSync;
     juce::NormalisableRange<float> mRange;
-    
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(QuantizedSlider)
   };
 
@@ -134,9 +128,7 @@ class GeneratorsBox : public juce::Component,
   void changeGenerator(Utils::GeneratorColour newGenerator);
   void refreshState();
   inline ParamGenerator* getCurrentGenerator() {
-    return mParamsNote.notes[mCurPitchClass]
-        ->generators[mCurSelectedGenerator]
-        .get();
+    return mParamsNote.notes[mCurPitchClass]->generators[mCurSelectedGenerator].get();
   }
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GeneratorsBox)

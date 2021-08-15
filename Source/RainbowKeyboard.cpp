@@ -13,8 +13,7 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state)
-    : mState(state) {
+RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state) : mState(state) {
   // Currently, only need to set mapping once at start
   const char keyboardMapping[Utils::PitchClass::COUNT + 1] = "awsedftgyhuj";
   for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
@@ -38,8 +37,7 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
 }
 
 float RainbowKeyboard::getPitchXRatio(Utils::PitchClass pitchClass) {
-  float noteMiddle = mNoteRectangleMap[pitchClass].getCentreX() /
-                     static_cast<float>(getWidth());
+  float noteMiddle = mNoteRectangleMap[pitchClass].getCentreX() / static_cast<float>(getWidth());
   bool needsLeftShift = ((1 << (pitchClass)) & 0x021) != 0;
   bool needsRightShift = ((1 << (pitchClass)) & 0x810) != 0;
   float shiftAmount = (1.0f / 7.0f) * (BLACK_NOTE_SIZE_RATIO / 4.0f);
@@ -60,19 +58,18 @@ void RainbowKeyboard::fillNoteRectangleMap() {
   const float keyWidth = componentWidth / 7.0f;
   const float blackKeyOffset = BLACK_NOTE_SIZE_RATIO * keyWidth / 2.0f;
 
-  const float notePos[Utils::PitchClass::COUNT] = {
-      0.0f * keyWidth,
-      1.0f * keyWidth - blackKeyOffset,
-      1.0f * keyWidth,
-      2.0f * keyWidth - blackKeyOffset,
-      2.0f * keyWidth,
-      3.0f * keyWidth,
-      4.0f * keyWidth - blackKeyOffset,
-      4.0f * keyWidth,
-      5.0f * keyWidth - blackKeyOffset,
-      5.0f * keyWidth,
-      6.0f * keyWidth - blackKeyOffset,
-      6.0f * keyWidth};
+  const float notePos[Utils::PitchClass::COUNT] = {0.0f * keyWidth,
+                                                   1.0f * keyWidth - blackKeyOffset,
+                                                   1.0f * keyWidth,
+                                                   2.0f * keyWidth - blackKeyOffset,
+                                                   2.0f * keyWidth,
+                                                   3.0f * keyWidth,
+                                                   4.0f * keyWidth - blackKeyOffset,
+                                                   4.0f * keyWidth,
+                                                   5.0f * keyWidth - blackKeyOffset,
+                                                   5.0f * keyWidth,
+                                                   6.0f * keyWidth - blackKeyOffset,
+                                                   6.0f * keyWidth};
 
   const float blackNoteWidth = BLACK_NOTE_SIZE_RATIO * keyWidth;
   const float whiteNoteWidth = keyWidth;
@@ -81,9 +78,8 @@ void RainbowKeyboard::fillNoteRectangleMap() {
 
   for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
     const bool blackKey = isBlackKey(key);
-    mNoteRectangleMap[key].setBounds(
-        notePos[key], 0, (blackKey) ? blackNoteWidth : whiteNoteWidth,
-        (blackKey) ? blackNoteHeight : whiteNoteHeight);
+    mNoteRectangleMap[key].setBounds(notePos[key], 0, (blackKey) ? blackNoteWidth : whiteNoteWidth,
+                                     (blackKey) ? blackNoteHeight : whiteNoteHeight);
   }
 }
 
@@ -102,13 +98,11 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   juce::Rectangle<float> area = mNoteRectangleMap[pitchClass];
   g.setColour(keyColor);
   if (isDown) {
-    g.setFillType(juce::ColourGradient(
-        keyColor.brighter(), juce::Point<float>(0.0f, 0.0f), keyColor,
-        juce::Point<float>(0, getHeight()), false));
+    g.setFillType(juce::ColourGradient(keyColor.brighter(), juce::Point<float>(0.0f, 0.0f), keyColor,
+                                       juce::Point<float>(0, getHeight()), false));
   } else {
-    g.setFillType(juce::ColourGradient(
-        keyColor, juce::Point<float>(0.0f, 0.0f), keyColor.brighter(),
-        juce::Point<float>(0, getHeight()), false));
+    g.setFillType(juce::ColourGradient(keyColor, juce::Point<float>(0.0f, 0.0f), keyColor.brighter(),
+                                       juce::Point<float>(0, getHeight()), false));
   }
 
   g.fillRect(area);
@@ -118,21 +112,13 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
 
-void RainbowKeyboard::mouseMove(const juce::MouseEvent& e) {
-  updateMouseState(e, false);
-}
+void RainbowKeyboard::mouseMove(const juce::MouseEvent& e) { updateMouseState(e, false); }
 
-void RainbowKeyboard::mouseDrag(const juce::MouseEvent& e) {
-  updateMouseState(e, true);
-}
+void RainbowKeyboard::mouseDrag(const juce::MouseEvent& e) { updateMouseState(e, true); }
 
-void RainbowKeyboard::mouseDown(const juce::MouseEvent& e) {
-  updateMouseState(e, true);
-}
+void RainbowKeyboard::mouseDown(const juce::MouseEvent& e) { updateMouseState(e, true); }
 
-void RainbowKeyboard::mouseUp(const juce::MouseEvent& e) {
-  updateMouseState(e, false);
-}
+void RainbowKeyboard::mouseUp(const juce::MouseEvent& e) { updateMouseState(e, false); }
 
 void RainbowKeyboard::mouseEnter(const juce::MouseEvent& e) {
   // This is NOT called if mouseDrag() is still happening
@@ -148,8 +134,7 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown) {
   auto pos = e.getEventRelativeTo(this).position;
   mHoverNote = xyMouseToNote(pos);
 
-  if (mCurrentNote.input != InputType::MOUSE &&
-      mCurrentNote.input != InputType::NONE) {
+  if (mCurrentNote.input != InputType::MOUSE && mCurrentNote.input != InputType::NONE) {
     return;
   }
 
@@ -167,8 +152,7 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown) {
       mCurrentNote = mHoverNote;
     }
   } else {
-    if (isDown && (mCurrentNote.pitch == Utils::PitchClass::NONE) &&
-        isValidNote) {
+    if (isDown && (mCurrentNote.pitch == Utils::PitchClass::NONE) && isValidNote) {
       // Note on if pressing current note
       mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch, mHoverNote.velocity);
       mCurrentNote = mHoverNote;
@@ -195,18 +179,14 @@ RainbowKeyboard::Note RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
   if (pos.getY() < blackNoteLength) {
     for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
       if (mNoteRectangleMap[pitchClass].contains(pos)) {
-        return RainbowKeyboard::Note(pitchClass,
-                                     juce::jmax(0.0f, 1.0f - (pos.y / blackNoteLength)),
-                                     InputType::MOUSE);
+        return RainbowKeyboard::Note(pitchClass, juce::jmax(0.0f, 1.0f - (pos.y / blackNoteLength)), InputType::MOUSE);
       }
     }
   }
 
   for (Utils::PitchClass pitchClass : WHITE_KEYS_PITCH_CLASS) {
     if (mNoteRectangleMap[pitchClass].contains(pos)) {
-      return RainbowKeyboard::Note(pitchClass,
-                                   juce::jmax(0.0f, 1.0f - (pos.y / componentHeight)),
-                                   InputType::MOUSE);
+      return RainbowKeyboard::Note(pitchClass, juce::jmax(0.0f, 1.0f - (pos.y / componentHeight)), InputType::MOUSE);
     }
   }
 
@@ -214,10 +194,8 @@ RainbowKeyboard::Note RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
   return RainbowKeyboard::Note();
 }
 
-void RainbowKeyboard::updateKeyState(const juce::KeyPress* pKey,
-                                     bool isKeyDown) {
-  if (mCurrentNote.input != InputType::KEYBOARD &&
-      mCurrentNote.input != InputType::NONE) {
+void RainbowKeyboard::updateKeyState(const juce::KeyPress* pKey, bool isKeyDown) {
+  if (mCurrentNote.input != InputType::KEYBOARD && mCurrentNote.input != InputType::NONE) {
     // if other input types are being used, ignore keyboard inputs all together
     return;
   }
@@ -268,8 +246,7 @@ void RainbowKeyboard::updateKeyState(const juce::KeyPress* pKey,
       // two keys were pressed, so need to turn off old one first
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
     }
-    mCurrentNote =
-        RainbowKeyboard::Note(mLastPressedKey, 0.5f, InputType::KEYBOARD);
+    mCurrentNote = RainbowKeyboard::Note(mLastPressedKey, 0.5f, InputType::KEYBOARD);
     mState.noteOn(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
     stateChange = true;
   } else {

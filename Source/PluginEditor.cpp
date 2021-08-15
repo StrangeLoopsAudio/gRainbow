@@ -22,8 +22,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mParamUI(synth.getParamUI()) {
   mCurPitchClass = (Utils::PitchClass)mParamUI.pitchClass;
 
-  mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass,
-                                    bool isNoteOn) {
+  mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass, bool isNoteOn) {
     if (isNoteOn) {
       mCurPitchClass = pitchClass;
       mStartedPlayingTrig = true;
@@ -35,26 +34,18 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   setLookAndFeel(&mRainbowLookAndFeel);
 
   // Open file button
-  juce::Image openFileNormal = juce::PNGImageFormat::loadFrom(
-      BinaryData::openFileNormal_png, BinaryData::openFileNormal_pngSize);
-  juce::Image openFileOver = juce::PNGImageFormat::loadFrom(
-      BinaryData::openFileOver_png, BinaryData::openFileOver_pngSize);
-  mBtnOpenFile.setImages(false, true, true, openFileNormal, 1.0f,
-                         juce::Colours::transparentBlack, openFileOver, 1.0f,
-                         juce::Colours::transparentBlack, openFileOver, 1.0f,
-                         juce::Colours::transparentBlack);
+  juce::Image openFileNormal = juce::PNGImageFormat::loadFrom(BinaryData::openFileNormal_png, BinaryData::openFileNormal_pngSize);
+  juce::Image openFileOver = juce::PNGImageFormat::loadFrom(BinaryData::openFileOver_png, BinaryData::openFileOver_pngSize);
+  mBtnOpenFile.setImages(false, true, true, openFileNormal, 1.0f, juce::Colours::transparentBlack, openFileOver, 1.0f,
+                         juce::Colours::transparentBlack, openFileOver, 1.0f, juce::Colours::transparentBlack);
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   addAndMakeVisible(mBtnOpenFile);
 
   // Recording button
-  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(
-      BinaryData::microphone_png, BinaryData::microphone_pngSize);
-  juce::Image recordOver = juce::PNGImageFormat::loadFrom(
-      BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
-  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f,
-                       juce::Colours::transparentBlack, recordOver, 1.0f,
-                       juce::Colours::transparentBlack, recordOver, 1.0f,
-                       juce::Colours::transparentBlack);
+  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
+  juce::Image recordOver = juce::PNGImageFormat::loadFrom(BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
+  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f, juce::Colours::transparentBlack, recordOver, 1.0f,
+                       juce::Colours::transparentBlack, recordOver, 1.0f, juce::Colours::transparentBlack);
   mBtnRecord.onClick = [this] {
     if (mRecorder.isRecording()) {
       stopRecording();
@@ -65,14 +56,10 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mBtnRecord);
 
   // Present button
-  juce::Image presetNormal = juce::PNGImageFormat::loadFrom(
-      BinaryData::presetNormal_png, BinaryData::presetNormal_pngSize);
-  juce::Image presetOver = juce::PNGImageFormat::loadFrom(
-      BinaryData::presetOver_png, BinaryData::presetOver_pngSize);
-  mBtnPreset.setImages(false, true, true, presetNormal, 1.0f,
-                       juce::Colours::transparentBlack, presetOver, 1.0f,
-                       juce::Colours::transparentBlack, presetOver, 1.0f,
-                       juce::Colours::transparentBlack);
+  juce::Image presetNormal = juce::PNGImageFormat::loadFrom(BinaryData::presetNormal_png, BinaryData::presetNormal_pngSize);
+  juce::Image presetOver = juce::PNGImageFormat::loadFrom(BinaryData::presetOver_png, BinaryData::presetOver_pngSize);
+  mBtnPreset.setImages(false, true, true, presetNormal, 1.0f, juce::Colours::transparentBlack, presetOver, 1.0f,
+                       juce::Colours::transparentBlack, presetOver, 1.0f, juce::Colours::transparentBlack);
   mBtnPreset.onClick = [this] { savePreset(); };
   addAndMakeVisible(mBtnPreset);
   // if reloading and images are done, then enable right away
@@ -87,9 +74,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mLabelFileName);
 
   // Generators box
-  mGeneratorsBox.onPositionChanged = [this](int gen, bool isRight) {
-    mSynth.incrementPosition(gen, isRight);
-  };
+  mGeneratorsBox.onPositionChanged = [this](int gen, bool isRight) { mSynth.incrementPosition(gen, isRight); };
   addAndMakeVisible(mGeneratorsBox);
 
   // Global parameter box
@@ -116,8 +101,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   // Only want keyboard input focus for standalone as DAW will have own input
   // mappings
-  if (mSynth.wrapperType ==
-      GranularSynth::WrapperType::wrapperType_Standalone) {
+  if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
     setWantsKeyboardFocus(true);
     // Standalone will persist between usages
     mSynth.resetParameters();
@@ -172,8 +156,7 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   g.fillRoundedRectangle(mBtnOpenFile.getBounds().toFloat(), 14);
 
   // Draw background for record button
-  g.setColour(mRecorder.isRecording() ? juce::Colours::red
-                                      : juce::Colours::darkgrey);
+  g.setColour(mRecorder.isRecording() ? juce::Colours::red : juce::Colours::darkgrey);
   g.fillRoundedRectangle(mBtnRecord.getBounds().toFloat(), 14);
 
   // Draw background for preset button
@@ -189,30 +172,22 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
     for (int i = 0; i < candidates.size(); ++i) {
       if (candidates[i] == nullptr) continue;
       g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[i]));
-      auto middlePos =
-          candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
-      float angleRad = (juce::MathConstants<float>::pi * middlePos) -
-                       (juce::MathConstants<float>::pi / 2.0f);
-      juce::Point<float> startPoint = juce::Point<float>(
-          mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
-      juce::Point<float> endPoint = startPoint.getPointOnCircumference(
-          mArcSpec.getHeight() / 4.5f, angleRad);
+      auto middlePos = candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
+      float angleRad = (juce::MathConstants<float>::pi * middlePos) - (juce::MathConstants<float>::pi / 2.0f);
+      juce::Point<float> startPoint = juce::Point<float>(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
+      juce::Point<float> endPoint = startPoint.getPointOnCircumference(mArcSpec.getHeight() / 4.5f, angleRad);
       g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
     }
     // Draw path to positions
-    float noteX =
-        mKeyboard.getBounds().getX() +
-        (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(mCurPitchClass));
+    float noteX = mKeyboard.getBounds().getX() + (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(mCurPitchClass));
     juce::Path displayPath;
     displayPath.startNewSubPath(noteX, mNoteDisplayRect.getBottom());
-    displayPath.lineTo(
-        noteX, mNoteDisplayRect.getBottom() - (NOTE_DISPLAY_HEIGHT / 2.0f));
+    displayPath.lineTo(noteX, mNoteDisplayRect.getBottom() - (NOTE_DISPLAY_HEIGHT / 2.0f));
     displayPath.lineTo(mNoteDisplayRect.getCentre());
     displayPath.lineTo(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
     g.setColour(Utils::getRainbow12Colour(mCurPitchClass));
     g.strokePath(displayPath, juce::PathStrokeType(4.0f));
-    g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f),
-                  mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
+    g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
                   NOTE_BULB_SIZE, NOTE_BULB_SIZE);
   }
   if (mIsFileHovering) {
@@ -247,25 +222,21 @@ void GRainbowAudioProcessorEditor::resized() {
   // remaining space on sides remaing is for file information
   mLabelFileName.setBounds(filePanel.removeFromTop(BTN_PANEL_HEIGHT));
 
-  r.removeFromTop(NOTE_DISPLAY_HEIGHT); // Just padding
+  r.removeFromTop(NOTE_DISPLAY_HEIGHT);  // Just padding
 
   // Arc spectrogram
   mArcSpec.setBounds(r.removeFromTop(r.getWidth() / 2.0f));
-  mProgressBar.setBounds(
-      mArcSpec.getBounds().withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
+  mProgressBar.setBounds(mArcSpec.getBounds().withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
 
   // Space for note display
   mNoteDisplayRect = r.removeFromTop(NOTE_DISPLAY_HEIGHT).toFloat();
 
   // Keyboard
-  juce::Rectangle<int> keyboardRect =
-      r.removeFromTop(r.getHeight() - NOTE_DISPLAY_HEIGHT)
-          .reduced(NOTE_DISPLAY_HEIGHT, 0.0f);
+  juce::Rectangle<int> keyboardRect = r.removeFromTop(r.getHeight() - NOTE_DISPLAY_HEIGHT).reduced(NOTE_DISPLAY_HEIGHT, 0.0f);
   mKeyboard.setBounds(keyboardRect);
 }
 
-bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(
-    const juce::StringArray& files) {
+bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files) {
   // Only accept 1 file of wav/mp3/gbow at a time
   if (files.size() == 1) {
     juce::String extension = files[0].fromLastOccurrenceOf(".", false, false);
@@ -275,18 +246,15 @@ bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(
   }
   return false;
 }
-void GRainbowAudioProcessorEditor::fileDragEnter(const juce::StringArray& files,
-                                                 int x, int y) {
+void GRainbowAudioProcessorEditor::fileDragEnter(const juce::StringArray& files, int x, int y) {
   mIsFileHovering = true;
   repaint();
 }
-void GRainbowAudioProcessorEditor::fileDragExit(
-    const juce::StringArray& files) {
+void GRainbowAudioProcessorEditor::fileDragExit(const juce::StringArray& files) {
   mIsFileHovering = false;
   repaint();
 }
-void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files,
-                                                int x, int y) {
+void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files, int x, int y) {
   jassert(files.size() == 1);
   mIsFileHovering = false;
   repaint();
@@ -299,9 +267,8 @@ void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files,
 */
 void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
   if (path == nullptr) {
-    juce::FileChooser chooser("Select a file to granulize...",
-                              juce::File::getCurrentWorkingDirectory(),
-                              "*.wav;*.mp3;*.gbow", true);
+    juce::FileChooser chooser("Select a file to granulize...", juce::File::getCurrentWorkingDirectory(), "*.wav;*.mp3;*.gbow",
+                              true);
 
     if (chooser.browseForFileToOpen()) {
       auto file = chooser.getResult();
@@ -314,15 +281,12 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
 }
 
 void GRainbowAudioProcessorEditor::startRecording() {
-  if (!juce::RuntimePermissions::isGranted(
-          juce::RuntimePermissions::writeExternalStorage)) {
+  if (!juce::RuntimePermissions::isGranted(juce::RuntimePermissions::writeExternalStorage)) {
     SafePointer<GRainbowAudioProcessorEditor> safeThis(this);
 
-    juce::RuntimePermissions::request(
-        juce::RuntimePermissions::writeExternalStorage,
-        [safeThis](bool granted) mutable {
-          if (granted) safeThis->startRecording();
-        });
+    juce::RuntimePermissions::request(juce::RuntimePermissions::writeExternalStorage, [safeThis](bool granted) mutable {
+      if (granted) safeThis->startRecording();
+    });
     return;
   }
 
@@ -332,12 +296,9 @@ void GRainbowAudioProcessorEditor::startRecording() {
 
   mRecorder.startRecording(mRecordedFile);
 
-  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(
-      BinaryData::microphone_png, BinaryData::microphone_pngSize);
-  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f,
-                       juce::Colours::transparentBlack, recordIcon, 1.0f,
-                       juce::Colours::transparentBlack, recordIcon, 1.0f,
-                       juce::Colours::transparentBlack);
+  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
+  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f, juce::Colours::transparentBlack, recordIcon, 1.0f,
+                       juce::Colours::transparentBlack, recordIcon, 1.0f, juce::Colours::transparentBlack);
   repaint();
 }
 
@@ -348,14 +309,10 @@ void GRainbowAudioProcessorEditor::stopRecording() {
 
   mRecordedFile = juce::File();
 
-  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(
-      BinaryData::microphone_png, BinaryData::microphone_pngSize);
-  juce::Image recordOver = juce::PNGImageFormat::loadFrom(
-      BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
-  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f,
-                       juce::Colours::transparentBlack, recordOver, 1.0f,
-                       juce::Colours::transparentBlack, recordOver, 1.0f,
-                       juce::Colours::transparentBlack);
+  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
+  juce::Image recordOver = juce::PNGImageFormat::loadFrom(BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
+  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f, juce::Colours::transparentBlack, recordOver, 1.0f,
+                       juce::Colours::transparentBlack, recordOver, 1.0f, juce::Colours::transparentBlack);
   repaint();
 }
 
@@ -375,34 +332,27 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       jassert(header.versionMinor == Preset::VERSION_MINOR);
 
       // Get Audio Buffer blob
-      fileAudioBuffer.setSize(header.audioBufferChannel,
-                              header.audioBufferNumberOfSamples);
+      fileAudioBuffer.setSize(header.audioBufferChannel, header.audioBufferNumberOfSamples);
       input.read(fileAudioBuffer.getWritePointer(0), header.audioBufferSize);
       sampleRate = header.audioBufferSamplerRate;
 
       // Get offsets and load all png for spec images
       uint32_t maxSpecImageSize =
-          juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize,
-                     header.specImageDetectedSize);
+          juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize, header.specImageDetectedSize);
       void* specImageData = malloc(maxSpecImageSize);
       jassert(specImageData != nullptr);
       input.read(specImageData, header.specImageSpectrogramSize);
       mParamUI.specImages[ParamUI::SpecType::SPECTROGRAM] =
-          juce::PNGImageFormat::loadFrom(specImageData,
-                                         header.specImageSpectrogramSize);
+          juce::PNGImageFormat::loadFrom(specImageData, header.specImageSpectrogramSize);
       input.read(specImageData, header.specImageHpcpSize);
-      mParamUI.specImages[ParamUI::SpecType::HPCP] =
-          juce::PNGImageFormat::loadFrom(specImageData,
-                                         header.specImageHpcpSize);
+      mParamUI.specImages[ParamUI::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(specImageData, header.specImageHpcpSize);
       input.read(specImageData, header.specImageDetectedSize);
       mParamUI.specImages[ParamUI::SpecType::DETECTED] =
-          juce::PNGImageFormat::loadFrom(specImageData,
-                                         header.specImageDetectedSize);
+          juce::PNGImageFormat::loadFrom(specImageData, header.specImageDetectedSize);
       free(specImageData);
 
       // juce::FileInputStream uses 'int' to read
-      int xmlSize =
-          static_cast<int>(input.getTotalLength() - input.getPosition());
+      int xmlSize = static_cast<int>(input.getTotalLength() - input.getPosition());
       void* xmlData = malloc(xmlSize);
       jassert(xmlData != nullptr);
       input.read(xmlData, xmlSize);
@@ -413,12 +363,10 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     }
   } else {
     // loading audio clip
-    std::unique_ptr<juce::AudioFormatReader> reader(
-        mFormatManager.createReaderFor(file));
+    std::unique_ptr<juce::AudioFormatReader> reader(mFormatManager.createReaderFor(file));
     jassert(reader.get() != nullptr);
     fileAudioBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
-    reader->read(&fileAudioBuffer, 0, (int)reader->lengthInSamples, 0, true,
-                 true);
+    reader->read(&fileAudioBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
     sampleRate = reader->sampleRate;
 
     // Reset any UI elements that will need to wait until processing
@@ -439,9 +387,7 @@ void GRainbowAudioProcessorEditor::savePreset() {
   header.versionMajor = Preset::VERSION_MAJOR;
   header.versionMinor = Preset::VERSION_MINOR;
 
-  juce::FileChooser chooser("Save gRainbow presets to a file",
-                            juce::File::getCurrentWorkingDirectory(), "*.gbow",
-                            true);
+  juce::FileChooser chooser("Save gRainbow presets to a file", juce::File::getCurrentWorkingDirectory(), "*.gbow", true);
 
   if (chooser.browseForFileToSave(true)) {
     juce::File file = chooser.getResult().withFileExtension("gbow");
@@ -454,8 +400,7 @@ void GRainbowAudioProcessorEditor::savePreset() {
       header.audioBufferSamplerRate = mSynth.getSampleRate();
       header.audioBufferNumberOfSamples = audioBuffer.getNumSamples();
       header.audioBufferChannel = audioBuffer.getNumChannels();
-      header.audioBufferSize = header.audioBufferNumberOfSamples *
-                               header.audioBufferChannel * sizeof(float);
+      header.audioBufferSize = header.audioBufferNumberOfSamples * header.audioBufferChannel * sizeof(float);
 
       // There is no way in JUCE to be able to know the size of the
       // png/imageFormat blob until after it is written into the outstream which
@@ -463,8 +408,7 @@ void GRainbowAudioProcessorEditor::savePreset() {
       // internal memory object so the size is know prior to writtin the image
       // data to the stream.
       juce::MemoryOutputStream spectrogramStaging;
-      mParamUI.saveSpecImage(spectrogramStaging,
-                             ParamUI::SpecType::SPECTROGRAM);
+      mParamUI.saveSpecImage(spectrogramStaging, ParamUI::SpecType::SPECTROGRAM);
       header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
 
       juce::MemoryOutputStream hpcpStaging;
@@ -483,14 +427,10 @@ void GRainbowAudioProcessorEditor::savePreset() {
 
       // Write data out section by section
       outputStream.write(&header, sizeof(header));
-      outputStream.write(
-          reinterpret_cast<const void*>(audioBuffer.getReadPointer(0)),
-          header.audioBufferSize);
-      outputStream.write(spectrogramStaging.getData(),
-                         header.specImageSpectrogramSize);
+      outputStream.write(reinterpret_cast<const void*>(audioBuffer.getReadPointer(0)), header.audioBufferSize);
+      outputStream.write(spectrogramStaging.getData(), header.specImageSpectrogramSize);
       outputStream.write(hpcpStaging.getData(), header.specImageHpcpSize);
-      outputStream.write(detectedStaging.getData(),
-                         header.specImageDetectedSize);
+      outputStream.write(detectedStaging.getData(), header.specImageDetectedSize);
       outputStream.write(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
     } else {
       // TODO - let users know we can't write here
@@ -504,8 +444,7 @@ void GRainbowAudioProcessorEditor::savePreset() {
  * keyboard inputs are sent to each child component
  */
 bool GRainbowAudioProcessorEditor::keyStateChanged(bool isKeyDown) {
-  if (mSynth.wrapperType ==
-      GranularSynth::WrapperType::wrapperType_Standalone) {
+  if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
     mKeyboard.updateKeyState(nullptr, isKeyDown);
   }
   return false;
@@ -516,8 +455,7 @@ bool GRainbowAudioProcessorEditor::keyStateChanged(bool isKeyDown) {
  * pressed
  */
 bool GRainbowAudioProcessorEditor::keyPressed(const juce::KeyPress& key) {
-  if (mSynth.wrapperType ==
-      GranularSynth::WrapperType::wrapperType_Standalone) {
+  if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
     mKeyboard.updateKeyState(&key, true);
   }
   return false;

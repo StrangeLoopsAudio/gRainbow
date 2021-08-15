@@ -32,17 +32,14 @@ void Fft::run() {
     mFftFrame.clear();
     mFftFrame.resize(mWindowSize * 2, 0.0f);
     memcpy(mFftFrame.data(), startSample, numSamples);
-    mWindowEnvelope.multiplyWithWindowingTable(mFftFrame.data(),
-                                               mFftFrame.size());
+    mWindowEnvelope.multiplyWithWindowingTable(mFftFrame.data(), mFftFrame.size());
 
     // then render our FFT data..
     mForwardFFT.performFrequencyOnlyForwardTransform(mFftFrame.data());
 
     // Add fft data to our master array
-    std::vector<float> newFrame = std::vector<float>(
-        mFftFrame.begin(), mFftFrame.begin() + (mWindowSize / 2));
-    float frameMax = juce::FloatVectorOperations::findMaximum(mFftFrame.data(),
-                                                              mFftFrame.size());
+    std::vector<float> newFrame = std::vector<float>(mFftFrame.begin(), mFftFrame.begin() + (mWindowSize / 2));
+    float frameMax = juce::FloatVectorOperations::findMaximum(mFftFrame.data(), mFftFrame.size());
     if (frameMax > curMax) curMax = frameMax;
     mFftData.push_back(newFrame);
     // Normalize fft values according to max frame value
