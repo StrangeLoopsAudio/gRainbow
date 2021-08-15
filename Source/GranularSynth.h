@@ -136,8 +136,21 @@ class GranularSynth : public juce::AudioProcessor {
   juce::AudioBuffer<float> mFileBuffer;
   double mSampleRate;
   juce::MidiKeyboardState mKeyboardState;
-  bool mIsProcessingComplete = false;
   double mLoadingProgress = 0.0;
+
+  // Proessing Status
+  bool mPitchDetectorComplete = false;
+  bool mFftDetectorComplete = false;
+  bool mProcessingComplete = false;
+
+  inline void resetProcessStatus() {
+    mPitchDetectorComplete = false;
+    mFftDetectorComplete = false;
+    mProcessingComplete = false;
+  }
+  inline void checkProcessComplete() {
+    mProcessingComplete = (mPitchDetectorComplete && mFftDetectorComplete);
+  }
 
   // Grain control
   long mTotalSamps;

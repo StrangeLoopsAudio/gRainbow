@@ -36,6 +36,8 @@ GranularSynth::GranularSynth()
         if (onBufferProcessed != nullptr) {
           onBufferProcessed(&spectrum, ArcSpectrogram::SpecType::SPECTROGRAM);
         }
+        mFftDetectorComplete = true;
+        checkProcessComplete();
       };
 
   mPitchDetector.onProcessingComplete =
@@ -47,7 +49,8 @@ GranularSynth::GranularSynth()
                             ArcSpectrogram::SpecType::DETECTED);
         }
         createCandidates(mPitchDetector.getPitches());
-        mIsProcessingComplete = true;
+        mPitchDetectorComplete = true;
+        checkProcessComplete();
       };
 
   mPitchDetector.onProgressUpdated = [this](float progress) {
@@ -339,7 +342,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
 }
 
 void GranularSynth::handleGrainAddRemove(int blockSize) {
-  if (mIsProcessingComplete) {
+  if (mProcessingComplete) {
     // Add one grain per active note
     for (GrainNote& gNote : mActiveNotes) {
       for (int i = 0; i < gNote.grainTriggers.size(); ++i) {
@@ -405,7 +408,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
 void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer,
                                 double sampleRate) {
   resetParameters();
-  mIsProcessingComplete = false;
+  resetProcessStatus();
 
   // resamples the buffer from the file sampler rate to the the proper sampler
   // rate set from the DAW in prepareToPlay

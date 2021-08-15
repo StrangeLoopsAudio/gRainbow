@@ -82,12 +82,15 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
 
   // Buffers
   std::array<std::vector<std::vector<float>> *, SpecType::COUNT - 1> mBuffers;
+  int mBuffersLoaded = 0;
 
   // Bookkeeping
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
   juce::Array<ArcGrain> mArcGrains;
   bool mIsPlayingNote = false;
   SpecType mProcessType = SpecType::LOGO;  // if LOGO, nothing loaded yet
+  SpecType mFirstDisplayType =
+      SpecType::HPCP;  // To show when done loading first
 
   std::random_device mRandomDevice{};
   std::mt19937 mGenRandom{mRandomDevice()};

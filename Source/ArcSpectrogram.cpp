@@ -193,6 +193,14 @@ void ArcSpectrogram::run() {
       g.fillPath(rectPath, rotation);
     }
   }
+
+  // Set the default first selection to display when all items are shown loaded
+  // and displaye
+  if (mBuffersLoaded == (SpecType::COUNT - 1)) {
+    const juce::MessageManagerLock lock;
+    mSpecType.setSelectedItemIndex(mFirstDisplayType, juce::sendNotification);
+    mBuffersLoaded++;
+  }
 }
 
 void ArcSpectrogram::reset() {
@@ -200,6 +208,7 @@ void ArcSpectrogram::reset() {
   for (int i = 1; i < mImages.size(); ++i) {
     mImages[i].clear(mImages[i].getBounds());
   }
+  mBuffersLoaded = 0;
 }
 
 void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
@@ -208,14 +217,17 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   mProcessType = type;
   mBuffers[mProcessType] = buffer;
+  mBuffersLoaded++;
 
   const juce::MessageManagerLock lock;
-  // As each buffer is loaded, want to display the next spec type image. If not
-  // the last viewable item index, then process next item
-  if ((int)mProcessType < (mSpecType.getNumItems() - 1)) {
+
+  // make visible when loading the buffer if it isn't already
+  mSpecType.setVisible(true);
+
+  // As each buffer is loaded, want to display it being generated
+  // Will be loaded in what ever order loaded from async callbacks
+  if ((int)mProcessType < mSpecType.getNumItems()) {
     mSpecType.setSelectedItemIndex(mProcessType, juce::sendNotification);
-    // make visible when loading the buffer if it isn't already
-    mSpecType.setVisible(true);
   }
   // Only make image if component size has been set
   if (getWidth() > 0 && getHeight() > 0) startThread();
