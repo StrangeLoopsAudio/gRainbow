@@ -27,20 +27,23 @@ PitchDetector::~PitchDetector() { stopThread(4000); }
 
 void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer,
                                   double sampleRate) {
+  cancelProcessing();
   mFileBuffer = fileBuffer;
   mSampleRate = sampleRate;
   mFft.processBuffer(fileBuffer);
 }
 
+void PitchDetector::cancelProcessing() {
+  mFft.stopThread(4000);
+  stopThread(4000);
+}
+
 void PitchDetector::run() {
   if (mFileBuffer == nullptr) return;
   updateProgress(0.0);
-  if (threadShouldExit()) return;
-  computeHPCP();
-  if (threadShouldExit()) return;
-  segmentPitches();
+  if (!computeHPCP()) return;
+  if (!segmentPitches()) return;
   updateProgress(0.9);
-  if (threadShouldExit()) return;
   getSegmentedPitchBuffer();
   if (onProcessingComplete != nullptr && !threadShouldExit()) {
     onProcessingComplete(mHPCP, mSegmentedPitches);
@@ -73,11 +76,12 @@ void PitchDetector::getSegmentedPitchBuffer() {
   }
 }
 
-void PitchDetector::computeHPCP() {
+bool PitchDetector::computeHPCP() {
   mHPCP.clear();
 
   std::vector<std::vector<float>>& spec = mFft.getSpectrum();
   for (int frame = 0; frame < spec.size(); ++frame) {
+    if (threadShouldExit()) return false;
     updateProgress(0.1 + 0.8 * ((float)frame / spec.size()));
     mHPCP.push_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
 
@@ -88,6 +92,7 @@ void PitchDetector::computeHPCP() {
 
     float curMax = 0.0;
     for (int i = 0; i < peaks.size(); ++i) {
+      if (threadShouldExit()) return false;
       float peakFreq = ((peaks[i].binNum / (specFrame.size() - 1)) * mSampleRate) / 2;
       if (peakFreq < MIN_FREQ || peakFreq > MAX_FREQ) continue;
 
@@ -111,7 +116,6 @@ void PitchDetector::computeHPCP() {
           }
         }
       }
-      if (threadShouldExit()) return;
     }
 
     // Normalize HPCP frame and clear low energy frames
@@ -125,13 +129,12 @@ void PitchDetector::computeHPCP() {
     if (totalEnergy / NUM_HPCP_BINS < MIN_AVG_FRAME_ENERGY) {
       std::fill(mHPCP[frame].begin(), mHPCP[frame].end(), 0.0f);
     }
-
-    if (threadShouldExit()) return;
   }
+  return true;
 }
 
-void PitchDetector::segmentPitches() {
-  if (mHPCP.empty()) return;
+bool PitchDetector::segmentPitches() {
+  if (mHPCP.empty()) return false;
 
   mPitches.clear();
   for (int i = 0; i < mSegments.size(); ++i) {
@@ -145,6 +148,7 @@ void PitchDetector::segmentPitches() {
 
   // Calculate note trajectories through the clip
   for (int frame = 0; frame < mHPCP.size(); ++frame) {
+    if (threadShouldExit()) return false;
     // Get the new pitch candidates
     std::vector<PitchDetector::Peak> peaks =
         getPeaks(NUM_ACTIVE_SEGMENTS, mHPCP[frame]);
@@ -220,8 +224,6 @@ void PitchDetector::segmentPitches() {
           }
         }
       }
-
-
     }
   }
 
@@ -235,6 +237,7 @@ void PitchDetector::segmentPitches() {
     std::sort(pitchVec.begin(), pitchVec.end(),
               [](Pitch self, Pitch other) { return self.gain > other.gain; });
   }
+  return true;
 }
 
 bool PitchDetector::hasBetterCandidateAhead(int startFrame, float target, float deviation) {

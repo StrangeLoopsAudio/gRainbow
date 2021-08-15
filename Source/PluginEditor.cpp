@@ -18,7 +18,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mGeneratorsBox(mSynth.getParamsNote(), synth.getParamUI()),
       mArcSpec(synth.getParamsNote(), synth.getParamUI()),
       mKeyboard(synth.getKeyboardState()),
-      mProgressBar(mLoadingProgress),
+      mProgressBar(synth.getLoadingProgress()),
       mParamUI(synth.getParamUI()) {
   mCurPitchClass = (Utils::PitchClass)mParamUI.pitchClass;
 
@@ -29,21 +29,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mStartedPlayingTrig = true;
     } else {
       mArcSpec.setNoteOff();
-    }
-  };
-
-  mSynth.onBufferProcessed = [this](std::vector<std::vector<float>>* buffer,
-                                    ArcSpectrogram::SpecType type) {
-    mArcSpec.loadBuffer(buffer, type);
-  };
-
-  mSynth.onProgressUpdated = [this](float progress) {
-    mLoadingProgress = progress;
-    juce::MessageManagerLock lock;
-    if (progress >= 1.0) {
-      mProgressBar.setVisible(false);
-    } else if (!mProgressBar.isVisible()) {
-      mProgressBar.setVisible(true);
     }
   };
 
@@ -144,6 +129,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 }
 
 GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
+  mSynth.onNoteChanged = nullptr;
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   auto recordFile = parentDir.getChildFile(FILE_RECORDING);
   recordFile.deleteFile();
@@ -152,6 +138,23 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
 }
 
 void GRainbowAudioProcessorEditor::timerCallback() {
+  // Update progress bar
+  double loadingProgress = mSynth.getLoadingProgress();
+  if (loadingProgress < 1.0 && loadingProgress > 0.0) {
+    mProgressBar.setVisible(true);
+  } else {
+    mProgressBar.setVisible(false);
+  }
+
+  // Check for buffers needing to be updated
+  if (!mParamUI.specComplete) {
+    std::vector<Utils::SpecBuffer*> specs = mSynth.getProcessedSpecs();
+    for (int i = 0; i < specs.size(); ++i) {
+      if (specs[i] != nullptr && mArcSpec.shouldLoadImage((ParamUI::SpecType)i))
+        mArcSpec.loadBuffer(specs[i], (ParamUI::SpecType)i);
+    }
+  }
+
   if (mStartedPlayingTrig && mCurPitchClass != Utils::PitchClass::NONE) {
     mArcSpec.setNoteOn(mCurPitchClass);
     mGeneratorsBox.setPitchClass(mCurPitchClass);
@@ -384,15 +387,15 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       void* specImageData = malloc(maxSpecImageSize);
       jassert(specImageData != nullptr);
       input.read(specImageData, header.specImageSpectrogramSize);
-      mParamUI.specImages[ArcSpectrogram::SpecType::SPECTROGRAM] =
+      mParamUI.specImages[ParamUI::SpecType::SPECTROGRAM] =
           juce::PNGImageFormat::loadFrom(specImageData,
                                          header.specImageSpectrogramSize);
       input.read(specImageData, header.specImageHpcpSize);
-      mParamUI.specImages[ArcSpectrogram::SpecType::HPCP] =
+      mParamUI.specImages[ParamUI::SpecType::HPCP] =
           juce::PNGImageFormat::loadFrom(specImageData,
                                          header.specImageHpcpSize);
       input.read(specImageData, header.specImageDetectedSize);
-      mParamUI.specImages[ArcSpectrogram::SpecType::DETECTED] =
+      mParamUI.specImages[ParamUI::SpecType::DETECTED] =
           juce::PNGImageFormat::loadFrom(specImageData,
                                          header.specImageDetectedSize);
       free(specImageData);
@@ -461,16 +464,15 @@ void GRainbowAudioProcessorEditor::savePreset() {
       // data to the stream.
       juce::MemoryOutputStream spectrogramStaging;
       mParamUI.saveSpecImage(spectrogramStaging,
-                             ArcSpectrogram::SpecType::SPECTROGRAM);
+                             ParamUI::SpecType::SPECTROGRAM);
       header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
 
       juce::MemoryOutputStream hpcpStaging;
-      mParamUI.saveSpecImage(hpcpStaging, ArcSpectrogram::SpecType::HPCP);
+      mParamUI.saveSpecImage(hpcpStaging, ParamUI::SpecType::HPCP);
       header.specImageHpcpSize = hpcpStaging.getDataSize();
 
       juce::MemoryOutputStream detectedStaging;
-      mParamUI.saveSpecImage(detectedStaging,
-                             ArcSpectrogram::SpecType::DETECTED);
+      mParamUI.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED);
       header.specImageDetectedSize = detectedStaging.getDataSize();
 
       // XML structure of preset contains all audio related information

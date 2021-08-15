@@ -288,13 +288,15 @@ struct ParamUI {
     return pngWriter.writeImageToStream(specImages[index], outputStream);
   }
 
+  enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, COUNT };
+
   juce::String fileName;
   int generatorTab = 0;
   int pitchClass = 0;
 
   // ArcSpectrogram related items
   int specType = 0;
-  std::vector<juce::Image> specImages;
+  std::array<juce::Image, SpecType::COUNT> specImages;
   // Where ArcSpectrogram can let others know when it is "complete"
   // Makes no scenes to save to preset file
   bool specComplete = false;

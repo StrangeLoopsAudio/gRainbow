@@ -79,15 +79,17 @@ class GranularSynth : public juce::AudioProcessor {
   // Callback functions
   std::function<void(Utils::PitchClass pitchClass, bool isNoteOn)>
       onNoteChanged = nullptr;
-  std::function<void(std::vector<std::vector<float>>* buffer,
-                     ArcSpectrogram::SpecType type)>
-      onBufferProcessed = nullptr;
-  std::function<void(double progress)> onProgressUpdated = nullptr;
 
   void processFile(juce::AudioBuffer<float>* audioBuffer, double sampleRate,
                    bool preset);
+  std::vector<Utils::SpecBuffer*> getProcessedSpecs() {
+    return std::vector<Utils::SpecBuffer*> (mProcessedSpecs.begin(), mProcessedSpecs.end());
+  }
+  
   ParamsNote& getParamsNote() { return mParamsNote; }
   ParamGlobal& getParamGlobal() { return mParamGlobal; }
+  double& getLoadingProgress() { return mLoadingProgress; }
+  
   ParamUI& getParamUI() { return mParamUI; }
   void resetParameters();
   int incrementPosition(int boxNum, bool lookRight);
@@ -131,24 +133,16 @@ class GranularSynth : public juce::AudioProcessor {
 
   // Bookkeeping
   juce::AudioBuffer<float> mFileBuffer;
+  std::array<Utils::SpecBuffer*, ParamUI::SpecType::COUNT> mProcessedSpecs; 
   double mSampleRate;
   juce::MidiKeyboardState mKeyboardState;
   double mLoadingProgress = 0.0;
 
-  // Proessing Status
-  bool mPitchDetectorComplete = false;
-  bool mFftDetectorComplete = false;
-  bool mProcessingComplete = false;
-
-  inline void setProcessStatus(bool status) {
-    mPitchDetectorComplete = status;
-    mFftDetectorComplete = status;
-    mProcessingComplete = status;
-  }
-
-  inline bool checkProcessComplete() {
-    mProcessingComplete = (mPitchDetectorComplete && mFftDetectorComplete);
-    return mProcessingComplete;
+  inline bool isProcessingComplete() {
+    for (Utils::SpecBuffer* buf : mProcessedSpecs) {
+      if (buf == nullptr) return false;
+    }
+    return true;
   }
 
   // Grain control

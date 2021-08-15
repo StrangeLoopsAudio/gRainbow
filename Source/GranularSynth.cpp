@@ -30,33 +30,22 @@ GranularSynth::GranularSynth()
   mParamGlobal.addParams(*this);
 
   mTotalSamps = 0;
+  mProcessedSpecs.fill(nullptr);
 
-  mFft.onProcessingComplete =
-      [this](std::vector<std::vector<float>>& spectrum) {
-        if (onBufferProcessed != nullptr) {
-          onBufferProcessed(&spectrum, ArcSpectrogram::SpecType::SPECTROGRAM);
-        }
-        mFftDetectorComplete = true;
-        checkProcessComplete();
-      };
+  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
+    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = &spectrum;
+  };
 
   mPitchDetector.onProcessingComplete =
-      [this](std::vector<std::vector<float>>& hpcpBuffer,
-             std::vector<std::vector<float>>& detectedBuffer) {
-        if (onBufferProcessed != nullptr) {
-          onBufferProcessed(&hpcpBuffer, ArcSpectrogram::SpecType::HPCP);
-          onBufferProcessed(&detectedBuffer,
-                            ArcSpectrogram::SpecType::DETECTED);
-        }
+      [this](Utils::SpecBuffer& hpcpBuffer,
+             Utils::SpecBuffer& detectedBuffer) {
+        mProcessedSpecs[ParamUI::SpecType::HPCP] = &hpcpBuffer;
+        mProcessedSpecs[ParamUI::SpecType::DETECTED] = &detectedBuffer;
         createCandidates(mPitchDetector.getPitches());
-        mPitchDetectorComplete = true;
-        checkProcessComplete();
       };
 
   mPitchDetector.onProgressUpdated = [this](float progress) {
-    if (onProgressUpdated != nullptr) {
-      onProgressUpdated(progress);
-    }
+    mLoadingProgress = progress;
   };
 
   resetParameters();
@@ -353,7 +342,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
 }
 
 void GranularSynth::handleGrainAddRemove(int blockSize) {
-  if (mProcessingComplete) {
+  if (isProcessingComplete()) {
     // Add one grain per active note
     for (GrainNote& gNote : mActiveNotes) {
       for (int i = 0; i < gNote.grainTriggers.size(); ++i) {
@@ -450,6 +439,10 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
 
 void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer,
                                 double sampleRate, bool preset) {
+  // Cancel processing if in progress
+  mFft.stopThread(4000);
+  mPitchDetector.cancelProcessing();
+
   // resamples the buffer from the file sampler rate to the the proper sampler
   // rate set from the DAW in prepareToPlay
   mFileBuffer.setSize(audioBuffer->getNumChannels(),
@@ -469,11 +462,9 @@ void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer,
   if (!preset) {
     // Only place that should reset params on loading files/presets
     resetParameters();
-    setProcessStatus(false);
+    mProcessedSpecs.fill(nullptr);
     mFft.processBuffer(&mFileBuffer);
     mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
-  } else {
-    setProcessStatus(true);
   }
 }
 

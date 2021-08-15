@@ -84,7 +84,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::NONE;
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
-  double mLoadingProgress = 0.0;
   bool mStartedPlayingTrig = false;
   bool mIsFileHovering = false;
   RainbowLookAndFeel mRainbowLookAndFeel;

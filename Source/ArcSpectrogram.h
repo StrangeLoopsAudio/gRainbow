@@ -30,16 +30,16 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   ArcSpectrogram(ParamsNote &paramsNote, ParamUI &paramUI);
   ~ArcSpectrogram() override;
 
-  // The logo is not a spec type as its just the default image until buffer is
-  // loaded
-  enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, COUNT };
-
   void update() override{};
   void paint(juce::Graphics &) override;
   void resized() override;
 
   void reset();
-  void loadBuffer(std::vector<std::vector<float>> *buffer, SpecType type);
+  bool shouldLoadImage(ParamUI::SpecType type) {
+    return mProcessType != type && !mImagesComplete[type];
+  }
+  void loadBuffer(Utils::SpecBuffer *buffer,
+                  ParamUI::SpecType type);
   void loadPreset();
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff() { mIsPlayingNote = false; }
@@ -84,14 +84,14 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   ParamUI &mParamUI;
 
   // Buffers used to generate the images
-  std::array<std::vector<std::vector<float>> *, SpecType::COUNT> mBuffers;
+  std::array<Utils::SpecBuffer *, ParamUI::SpecType::COUNT> mBuffers;
 
   // Bookkeeping
   Utils::PitchClass mCurPitchClass;
   juce::Array<ArcGrain> mArcGrains;
   bool mIsPlayingNote;
-  SpecType mProcessType;
-  bool mImagesComplete[SpecType::COUNT];
+  ParamUI::SpecType mProcessType;
+  bool mImagesComplete[ParamUI::SpecType::COUNT];
 
   std::random_device mRandomDevice{};
   std::mt19937 mGenRandom{mRandomDevice()};
@@ -100,7 +100,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   juce::Image mLogoImage;
   juce::ComboBox mSpecType;
 
-  void onImageComplete(SpecType specType);
+  void onImageComplete(ParamUI::SpecType specType);
   void grainCreatedCallback(int genIdx, float durationSec, float envGain);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)

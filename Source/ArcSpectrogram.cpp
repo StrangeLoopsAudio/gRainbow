@@ -19,7 +19,7 @@
 ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
     : mCurPitchClass(Utils::PitchClass::C),
       mIsPlayingNote(false),
-      mProcessType(SpecType::INVALID),
+      mProcessType(ParamUI::SpecType::INVALID),
       mParamsNote(paramsNote),
       mParamUI(paramUI),
       juce::Thread("spectrogram thread") {
@@ -31,24 +31,21 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
 
   // check if params has images, which would mean the plugin was reopened
   if (mParamUI.specComplete) {
-    mProcessType = (SpecType)mParamUI.specType;
+    mProcessType = (ParamUI::SpecType)mParamUI.specType;
     mSpecType.setVisible(true);
   } else {
-    // Only resize once if UI is open images have never beend done
-    mParamUI.specImages.resize((size_t)SpecType::COUNT);
-
     // if not complete, we assume all images will be remade, no "half way"
     // support currently
-    for (int i = 0; i < (int)SpecType::COUNT; i++) {
-      mImagesComplete[(SpecType)i] = false;
+    for (int i = 0; i < (int)ParamUI::SpecType::COUNT; i++) {
+      mImagesComplete[(ParamUI::SpecType)i] = false;
     }
   }
 
   // ComboBox for some reason is not zero indexed like the rest of JUCE and C++
   // for adding items we go by 'id' base but everything else is 'index' based
-  mSpecType.addItem("Spectrogram", (int)SpecType::SPECTROGRAM + 1);
-  mSpecType.addItem("Harmonic Profile", (int)SpecType::HPCP + 1);
-  mSpecType.addItem("Detected Pitches", (int)SpecType::DETECTED + 1);
+  mSpecType.addItem("Spectrogram", (int)ParamUI::SpecType::SPECTROGRAM + 1);
+  mSpecType.addItem("Harmonic Profile", (int)ParamUI::SpecType::HPCP + 1);
+  mSpecType.addItem("Detected Pitches", (int)ParamUI::SpecType::DETECTED + 1);
   mSpecType.setTooltip("Select different spectrum type");
   mSpecType.onChange = [this](void) {
     // Will get called from user using UI ComboBox and from inside this class
@@ -71,7 +68,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   // Draw selected type
   // if nothing has been loaded, want to keep drawing the logo
   juce::Image& drawImage = mLogoImage;
-  if (mProcessType != SpecType::INVALID) {
+  if (mProcessType != ParamUI::SpecType::INVALID) {
     int imageIndex = mSpecType.getSelectedItemIndex();
     // When loading up a plugin a second time, need to set the ComboBox state,
     // but can't in the constructor so there is the first spot we can enforce
@@ -142,14 +139,14 @@ void ArcSpectrogram::resized() {
 }
 
 void ArcSpectrogram::run() {
-  std::vector<std::vector<float>>& spec = *mBuffers[mProcessType];
+  Utils::SpecBuffer& spec = *mBuffers[mProcessType];
   if (spec.size() == 0 || threadShouldExit()) return;
 
   // Initialize rainbow parameters
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
-  int maxRow = (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 8
+  int maxRow = (mProcessType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8
                                                        : spec[0].size();
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mParamUI.specImages[mProcessType] =
@@ -197,10 +194,10 @@ void ArcSpectrogram::run() {
   onImageComplete(mProcessType);
 }
 
-void ArcSpectrogram::onImageComplete(SpecType specType) {
+void ArcSpectrogram::onImageComplete(ParamUI::SpecType specType) {
   mImagesComplete[specType] = true;
-  for (int i = 0; i < (int)SpecType::COUNT; i++) {
-    if (mImagesComplete[(SpecType)i] == false) {
+  for (int i = 0; i < (int)ParamUI::SpecType::COUNT; i++) {
+    if (mImagesComplete[(ParamUI::SpecType)i] == false) {
       return;
     }
   }
@@ -214,20 +211,19 @@ void ArcSpectrogram::reset() {
   for (int i = 0; i < mParamUI.specImages.size(); i++) {
     mParamUI.specImages[i].clear(mParamUI.specImages[i].getBounds());
   }
-  for (int i = 0; i < (int)SpecType::COUNT; i++) {
-    mImagesComplete[(SpecType)i] = false;
+  for (int i = 0; i < (int)ParamUI::SpecType::COUNT; i++) {
+    mImagesComplete[(ParamUI::SpecType)i] = false;
   }
   mParamUI.specComplete = false;
 }
 
-void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
-                                SpecType type) {
+void ArcSpectrogram::loadBuffer(Utils::SpecBuffer* buffer,
+                                ParamUI::SpecType type) {
   if (buffer == nullptr) return;
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
+  if (mImagesComplete[type]) return;
   mProcessType = type;
   mBuffers[mProcessType] = buffer;
-
-  const juce::MessageManagerLock lock;
 
   // make visible when loading the buffer if it isn't already
   mSpecType.setVisible(true);
@@ -246,7 +242,7 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
 void ArcSpectrogram::loadPreset() {
   // make visible if preset was loaded first
   mSpecType.setVisible(true);
-  mProcessType = (SpecType)mParamUI.specType;
+  mProcessType = (ParamUI::SpecType)mParamUI.specType;
   mSpecType.setSelectedItemIndex(mProcessType, juce::dontSendNotification);
   repaint();
 }
