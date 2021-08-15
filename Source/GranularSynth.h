@@ -20,21 +20,20 @@
 
 class GranularSynth : public juce::AudioProcessor {
  public:
-
   enum ParameterType {
     ENABLED,  // If position is enabled and playing grains
     SOLO,     // If position is solo'd
     PITCH_ADJUST,
     POSITION_ADJUST,
-    SHAPE,    // Grain env ramp width
-    TILT,    // Grain env center tilt
-    RATE,     // Grain rate
-    DURATION, // Grain duration
-    GAIN,     // Max amplitude
-    ATTACK,   // Position env attack
-    DECAY,    // Position env decay
-    SUSTAIN,  // Position env sustain
-    RELEASE   // Position env release
+    SHAPE,     // Grain env ramp width
+    TILT,      // Grain env center tilt
+    RATE,      // Grain rate
+    DURATION,  // Grain duration
+    GAIN,      // Max amplitude
+    ATTACK,    // Position env attack
+    DECAY,     // Position env decay
+    SUSTAIN,   // Position env sustain
+    RELEASE    // Position env release
   };
 
   GranularSynth();
@@ -83,8 +82,7 @@ class GranularSynth : public juce::AudioProcessor {
   std::function<void(std::vector<std::vector<float>>* buffer,
                      ArcSpectrogram::SpecType type)>
       onBufferProcessed = nullptr;
-  std::function<void(double progress)>
-      onProgressUpdated = nullptr;
+  std::function<void(double progress)> onProgressUpdated = nullptr;
 
   void processFile(juce::AudioBuffer<float>* audioBuffer, double sampleRate,
                    bool preset);
@@ -95,9 +93,6 @@ class GranularSynth : public juce::AudioProcessor {
   int incrementPosition(int boxNum, bool lookRight);
   std::vector<ParamCandidate*> getActiveCandidates();
 
-  void setNoteOn(Utils::PitchClass pitchClass);
-  void setNoteOff(Utils::PitchClass pitchClass);
-
  private:
   // DSP constants
   static constexpr auto FFT_SIZE = 4096;
@@ -107,25 +102,25 @@ class GranularSynth : public juce::AudioProcessor {
   static constexpr auto MIN_RATE_RATIO = .25f;
   static constexpr auto MAX_RATE_RATIO = 1.0f;
   static constexpr auto MIN_CANDIDATE_SALIENCE = 0.5f;
-  static constexpr auto MAX_GRAINS = 20; // Max grains active at once
+  static constexpr auto MAX_GRAINS = 20;  // Max grains active at once
 
   typedef struct GrainNote {
     Utils::PitchClass pitchClass;
+    float velocity;
     Utils::EnvelopeADSR ampEnv;
     std::array<Utils::EnvelopeADSR, NUM_GENERATORS> genAmpEnvs;
-    juce::Array<Grain> grains; // Active grains for note
-    std::vector<float>
-        grainTriggers;  // Keeps track of triggering grains from each
-                          // generator
-    GrainNote(Utils::PitchClass pitchClass,
+    juce::Array<Grain> grains;         // Active grains for note
+    std::vector<float> grainTriggers;  // Keeps track of triggering grains from
+                                       // each generator
+    GrainNote(Utils::PitchClass pitchClass, float velocity,
               Utils::EnvelopeADSR ampEnv)
-        : pitchClass(pitchClass),
-          ampEnv(ampEnv) {
+        : pitchClass(pitchClass), velocity(velocity), ampEnv(ampEnv) {
       grains.ensureStorageAllocated(MAX_GRAINS);
       // Initialize grain triggering timestamps
       for (int i = 0; i < NUM_GENERATORS; ++i) {
-        grainTriggers.push_back(-1); // Trigger first set of grains right away
-        genAmpEnvs[i].noteOn(ampEnv.noteOnTs); // Set note on for each position as well
+        grainTriggers.push_back(-1);  // Trigger first set of grains right away
+        genAmpEnvs[i].noteOn(
+            ampEnv.noteOnTs);  // Set note on for each position as well
       }
     }
   } GrainNote;
@@ -164,6 +159,8 @@ class GranularSynth : public juce::AudioProcessor {
   ParamGlobal mParamGlobal;
   ParamUI mParamUI;
 
+  void setNoteOn(Utils::PitchClass pitchClass, float velocity);
+  void setNoteOff(Utils::PitchClass pitchClass);
   void handleGrainAddRemove(int blockSize);
   void createCandidates(
       juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>&

@@ -196,7 +196,7 @@ RainbowKeyboard::Note RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
     for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
       if (mNoteRectangleMap[pitchClass].contains(pos)) {
         return RainbowKeyboard::Note(pitchClass,
-                                     juce::jmax(0.0f, pos.y / blackNoteLength),
+                                     juce::jmax(0.0f, 1.0f - (pos.y / blackNoteLength)),
                                      InputType::MOUSE);
       }
     }
@@ -205,7 +205,7 @@ RainbowKeyboard::Note RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
   for (Utils::PitchClass pitchClass : WHITE_KEYS_PITCH_CLASS) {
     if (mNoteRectangleMap[pitchClass].contains(pos)) {
       return RainbowKeyboard::Note(pitchClass,
-                                   juce::jmax(0.0f, pos.y / componentHeight),
+                                   juce::jmax(0.0f, 1.0f - (pos.y / componentHeight)),
                                    InputType::MOUSE);
     }
   }

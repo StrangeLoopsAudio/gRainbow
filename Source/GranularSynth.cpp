@@ -175,7 +175,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
           md.getMessage().getNoteNumber() % Utils::PitchClass::COUNT);
       if (md.getMessage().isNoteOn()) {
         if (onNoteChanged != nullptr) onNoteChanged(pc, true);
-        setNoteOn(pc);
+        setNoteOn(pc, md.getMessage().getVelocity() / 128.0f);
       } else if (md.getMessage().isNoteOff()) {
         if (onNoteChanged != nullptr) onNoteChanged(pc, false);
         setNoteOff(pc);
@@ -189,18 +189,22 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
       float noteGain = gNote.ampEnv.getAmplitude(
           mTotalSamps, mParamGlobal.attack->get() * mSampleRate,
           mParamGlobal.decay->get() * mSampleRate, mParamGlobal.sustain->get(),
-          mParamGlobal.release->get() * mSampleRate);
+          mParamGlobal.release->get() * mSampleRate) * gNote.velocity;
       // Add contributions from each grain
       for (Grain& grain : gNote.grains) {
         ParamGenerator* paramGenerator = mParamsNote.notes[gNote.pitchClass]
                                              ->generators[grain.generator]
                                              .get();
-        float genGain = gNote.genAmpEnvs[grain.generator].getAmplitude(
-            mTotalSamps, paramGenerator->attack->get() * mSampleRate,
-            paramGenerator->decay->get() * mSampleRate,
-            paramGenerator->sustain->get(),
-            paramGenerator->release->get() * mSampleRate);
-        grain.process(mFileBuffer, buffer, noteGain * genGain * mParamGlobal.gain->get(), mTotalSamps);
+        float genGain =
+            gNote.genAmpEnvs[grain.generator].getAmplitude(
+                mTotalSamps, paramGenerator->attack->get() * mSampleRate,
+                paramGenerator->decay->get() * mSampleRate,
+                paramGenerator->sustain->get(),
+                paramGenerator->release->get() * mSampleRate) *
+            paramGenerator->gain->get();
+        grain.process(mFileBuffer, buffer,
+                      noteGain * genGain * mParamGlobal.gain->get(),
+                      mTotalSamps);
       }
     }
     mTotalSamps++;
@@ -485,7 +489,7 @@ std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
   return candidates;
 }
 
-void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
+void GranularSynth::setNoteOn(Utils::PitchClass pitchClass, float velocity) {
   mCurPitchClass = pitchClass;
   bool isPlayingAlready = false;
   for (GrainNote& gNote : mActiveNotes) {
@@ -493,6 +497,7 @@ void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
       isPlayingAlready = true;
       // Start envelope over
       gNote.ampEnv.noteOn(mTotalSamps);
+      gNote.velocity = velocity;
       // Start position envs over as well
       for (Utils::EnvelopeADSR& genEnv : gNote.genAmpEnvs) {
         genEnv.noteOn(mTotalSamps);
@@ -500,7 +505,8 @@ void GranularSynth::setNoteOn(Utils::PitchClass pitchClass) {
     }
   }
   if (!isPlayingAlready) {
-    mActiveNotes.add(GrainNote(pitchClass, Utils::EnvelopeADSR(mTotalSamps)));
+    mActiveNotes.add(
+        GrainNote(pitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
   }
 }
 
