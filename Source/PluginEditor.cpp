@@ -377,8 +377,6 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
                      header.specImageDetectedSize);
       void* specImageData = malloc(maxSpecImageSize);
       jassert(specImageData != nullptr);
-      // resize incase the preset is the first thing loaded
-      mParamUI.specImages.resize((size_t)ArcSpectrogram::SpecType::COUNT);
       input.read(specImageData, header.specImageSpectrogramSize);
       mParamUI.specImages[ArcSpectrogram::SpecType::SPECTROGRAM] =
           juce::PNGImageFormat::loadFrom(specImageData,

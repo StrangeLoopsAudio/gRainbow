@@ -30,9 +30,18 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
                                               BinaryData::logo_pngSize);
 
   // check if params has images, which would mean the plugin was reopened
-  if (!mParamUI.specImages.empty()) {
+  if (mParamUI.specComplete) {
     mProcessType = (SpecType)mParamUI.specType;
     mSpecType.setVisible(true);
+  } else {
+    // Only resize once if UI is open images have never beend done
+    mParamUI.specImages.resize((size_t)SpecType::COUNT);
+
+    // if not complete, we assume all images will be remade, no "half way"
+    // support currently
+    for (int i = 0; i < (int)SpecType::COUNT; i++) {
+      mImagesComplete[(SpecType)i] = false;
+    }
   }
 
   // ComboBox for some reason is not zero indexed like the rest of JUCE and C++
@@ -182,6 +191,20 @@ void ArcSpectrogram::run() {
       g.fillPath(rectPath, rotation);
     }
   }
+
+  // pass type as another thread can change member variable right after run() is
+  // done
+  onImageComplete(mProcessType);
+}
+
+void ArcSpectrogram::onImageComplete(SpecType specType) {
+  mImagesComplete[specType] = true;
+  for (int i = 0; i < (int)SpecType::COUNT; i++) {
+    if (mImagesComplete[(SpecType)i] == false) {
+      return;
+    }
+  }
+  mParamUI.specComplete = true;
 }
 
 void ArcSpectrogram::reset() {
@@ -189,6 +212,10 @@ void ArcSpectrogram::reset() {
   for (int i = 0; i < mParamUI.specImages.size(); i++) {
     mParamUI.specImages[i].clear(mParamUI.specImages[i].getBounds());
   }
+  for (int i = 0; i < (int)SpecType::COUNT; i++) {
+    mImagesComplete[(SpecType)i] = false;
+  }
+  mParamUI.specComplete = false;
 }
 
 void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
@@ -197,13 +224,6 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   mProcessType = type;
   mBuffers[mProcessType] = buffer;
-
-  // Only resize once images are being loaded, this will allow the next opening
-  // of the plugin to know the logo is not needed anymore as the state is saved
-  // off in ParamUI
-  if (mParamUI.specImages.empty()) {
-    mParamUI.specImages.resize((size_t)SpecType::COUNT);
-  }
 
   const juce::MessageManagerLock lock;
 

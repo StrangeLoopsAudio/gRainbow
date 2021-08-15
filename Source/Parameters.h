@@ -253,7 +253,8 @@ struct ParamGlobal {
 
 /**
  * A representation of the last UI settings to restore it when loading the
- * editor
+ * editor. The Synth owns this and used to allow state to be saved properly as
+ * the UI is open and closed.
  */
 struct ParamUI {
   ParamUI() = default;
@@ -294,4 +295,7 @@ struct ParamUI {
   // ArcSpectrogram related items
   int specType = 0;
   std::vector<juce::Image> specImages;
+  // Where ArcSpectrogram can let others know when it is "complete"
+  // Makes no scenes to save to preset file
+  bool specComplete = false;
 };

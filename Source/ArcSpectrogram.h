@@ -88,6 +88,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   juce::Array<ArcGrain> mArcGrains;
   bool mIsPlayingNote;
   SpecType mProcessType;
+  bool mImagesComplete[SpecType::COUNT];
 
   std::random_device mRandomDevice{};
   std::mt19937 mGenRandom{mRandomDevice()};
@@ -96,6 +97,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   juce::Image mLogoImage;
   juce::ComboBox mSpecType;
 
+  void onImageComplete(SpecType specType);
   void grainCreatedCallback(int genIdx, float durationSec, float envGain);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
