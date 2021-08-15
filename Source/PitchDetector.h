@@ -67,8 +67,6 @@ class PitchDetector : juce::Thread {
       nullptr;
 
   void processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate);
-  std::vector<std::vector<float>>& getHPCP() { return mHPCP; }
-  std::vector<std::vector<float>>& getNotes() { return mSegmentedPitches; }
   juce::HashMap<Utils::PitchClass, std::vector<Pitch>>& getPitches() {
     return mPitches;
   }
