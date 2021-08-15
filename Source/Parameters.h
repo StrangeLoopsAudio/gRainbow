@@ -276,5 +276,8 @@ struct ParamUI {
 
   int generatorTab = 0;
   int pitchClass = 0;
+
+  // ArcSpectrogram related items
   int specType = 0;
+  std::vector<juce::Image> specImages;
 };

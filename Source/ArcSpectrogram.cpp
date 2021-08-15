@@ -17,26 +17,22 @@
 
 //==============================================================================
 ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
-    : mParamsNote(paramsNote),
+    : mCurPitchClass(Utils::PitchClass::C),
+      mIsPlayingNote(false),
+      mProcessType(SpecType::INVALID),
+      mParamsNote(paramsNote),
       mParamUI(paramUI),
       juce::Thread("spectrogram thread") {
   setFramesPerSecond(REFRESH_RATE_FPS);
   mBuffers.fill(nullptr);
 
-  mImages[SpecType::LOGO] = juce::PNGImageFormat::loadFrom(
-      BinaryData::logo_png, BinaryData::logo_pngSize);
-  auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  juce::File imageFile = parentDir.getChildFile(FILE_SPECTROGRAM);
-  if (imageFile.existsAsFile()) {
-    mImages[SpecType::SPECTROGRAM] = juce::PNGImageFormat::loadFrom(imageFile);
-  }
-  imageFile = parentDir.getChildFile(FILE_HPCP);
-  if (imageFile.existsAsFile()) {
-    mImages[SpecType::HPCP] = juce::PNGImageFormat::loadFrom(imageFile);
-  }
-  imageFile = parentDir.getChildFile(FILE_DETECTED);
-  if (imageFile.existsAsFile()) {
-    mImages[SpecType::DETECTED] = juce::PNGImageFormat::loadFrom(imageFile);
+  mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png,
+                                              BinaryData::logo_pngSize);
+
+  // check if params has images, which would mean the plugin was reopened
+  if (!mParamUI.specImages.empty()) {
+    mProcessType = (SpecType)mParamUI.specType;
+    mSpecType.setVisible(true);
   }
 
   // ComboBox for some reason is not zero indexed like the rest of JUCE and C++
@@ -58,25 +54,6 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
 ArcSpectrogram::~ArcSpectrogram() {
   mParamsNote.notes[mCurPitchClass]->onGrainCreated = nullptr;
   stopThread(4000);
-  // Save image files
-  juce::PNGImageFormat pngWriter;
-  auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  if (mImages[SpecType::SPECTROGRAM].isValid()) {
-    parentDir.getChildFile(FILE_SPECTROGRAM).deleteFile();
-    juce::FileOutputStream imageStream(
-        parentDir.getChildFile(FILE_SPECTROGRAM));
-    pngWriter.writeImageToStream(mImages[SpecType::SPECTROGRAM], imageStream);
-  }
-  if (mImages[SpecType::HPCP].isValid()) {
-    parentDir.getChildFile(FILE_HPCP).deleteFile();
-    juce::FileOutputStream imageStream(parentDir.getChildFile(FILE_HPCP));
-    pngWriter.writeImageToStream(mImages[SpecType::HPCP], imageStream);
-  }
-  if (mImages[SpecType::DETECTED].isValid()) {
-    parentDir.getChildFile(FILE_DETECTED).deleteFile();
-    juce::FileOutputStream imageStream(parentDir.getChildFile(FILE_DETECTED));
-    pngWriter.writeImageToStream(mImages[SpecType::DETECTED], imageStream);
-  }
 }
 
 void ArcSpectrogram::paint(juce::Graphics& g) {
@@ -84,14 +61,17 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
   // Draw selected type
   // if nothing has been loaded, want to keep drawing the logo
-  SpecType specType = (mProcessType == SpecType::LOGO)
-                          ? SpecType::LOGO
-                          : (SpecType)(mSpecType.getSelectedItemIndex());
-  if ((int)specType == -1) {
-    // TODO - sometimes the paint happens at a time which cause the ComboBox to
-    // return nothing was found, for now simply just show the LOGO a few more
-    // frames
-    specType = SpecType::LOGO;
+  juce::Image& drawImage = mLogoImage;
+  if (mProcessType != SpecType::INVALID) {
+    int imageIndex = mSpecType.getSelectedItemIndex();
+    // When loading up a plugin a second time, need to set the ComboBox state,
+    // but can't in the constructor so there is the first spot we can enforce
+    // it. Without this, the logo will appear when reopening the plugin
+    if (imageIndex == -1) {
+      mSpecType.setSelectedItemIndex(mProcessType, juce::dontSendNotification);
+      imageIndex = (int)mProcessType;
+    }
+    drawImage = mParamUI.specImages[imageIndex];
   }
 
   juce::Point<float> centerPoint =
@@ -101,7 +81,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   int bowWidth = endRadius - startRadius;
 
   g.drawImage(
-      mImages[specType], getLocalBounds().toFloat(),
+      drawImage, getLocalBounds().toFloat(),
       juce::RectanglePlacement(juce::RectanglePlacement::fillDestination),
       false);
 
@@ -161,9 +141,9 @@ void ArcSpectrogram::run() {
   int maxRow = (mProcessType == SpecType::SPECTROGRAM) ? spec[0].size() / 8
                                                        : spec[0].size();
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
-  mImages[mProcessType] =
+  mParamUI.specImages[mProcessType] =
       juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
-  juce::Graphics g(mImages[mProcessType]);
+  juce::Graphics g(mParamUI.specImages[mProcessType]);
 
   // Draw each column of frequencies
   for (auto i = 0; i < NUM_COLS; ++i) {
@@ -203,9 +183,9 @@ void ArcSpectrogram::run() {
 }
 
 void ArcSpectrogram::reset() {
-  // Reset all images except logo
-  for (int i = 1; i < mImages.size(); ++i) {
-    mImages[i].clear(mImages[i].getBounds());
+  // Reset all images
+  for (int i = 0; i < mParamUI.specImages.size(); i++) {
+    mParamUI.specImages[i].clear(mParamUI.specImages[i].getBounds());
   }
 }
 
@@ -215,6 +195,13 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   mProcessType = type;
   mBuffers[mProcessType] = buffer;
+
+  // Only resize once images are being loaded, this will allow the next opening
+  // of the plugin to know the logo is not needed anymore as the state is saved
+  // off in ParamUI
+  if (mParamUI.specImages.empty()) {
+    mParamUI.specImages.resize((size_t)SpecType::COUNT);
+  }
 
   const juce::MessageManagerLock lock;
 

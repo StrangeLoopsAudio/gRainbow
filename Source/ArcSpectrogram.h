@@ -30,8 +30,9 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   ArcSpectrogram(ParamsNote &paramsNote, ParamUI &paramUI);
   ~ArcSpectrogram() override;
 
-  // LOGO is always last since its not in the ComboBox
-  enum SpecType { SPECTROGRAM = 0, HPCP, DETECTED, LOGO, COUNT };
+  // The logo is not a spec type as its just the default image until buffer is
+  // loaded
+  enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, COUNT };
 
   void update() override{};
   void paint(juce::Graphics &) override;
@@ -77,25 +78,25 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   } ArcGrain;
 
   // Parameters
+  // Use to save state since if the plugin is closed and open, will need these
+  // to restore the state
   ParamsNote &mParamsNote;
   ParamUI &mParamUI;
 
-  // Buffers
-  std::array<std::vector<std::vector<float>> *, SpecType::COUNT - 1> mBuffers;
+  // Buffers used to generate the images
+  std::array<std::vector<std::vector<float>> *, SpecType::COUNT> mBuffers;
 
   // Bookkeeping
-  Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
+  Utils::PitchClass mCurPitchClass;
   juce::Array<ArcGrain> mArcGrains;
-  bool mIsPlayingNote = false;
-  SpecType mProcessType = SpecType::LOGO;  // if LOGO, nothing loaded yet
-  SpecType mFirstDisplayType =
-      SpecType::HPCP;  // To show when done loading first
+  bool mIsPlayingNote;
+  SpecType mProcessType;
 
   std::random_device mRandomDevice{};
   std::mt19937 mGenRandom{mRandomDevice()};
   std::normal_distribution<> mNormalRand{0.0f, 0.4f};
 
-  std::array<juce::Image, SpecType::COUNT> mImages;
+  juce::Image mLogoImage;
   juce::ComboBox mSpecType;
 
   void grainCreatedCallback(int genIdx, float envGain);
