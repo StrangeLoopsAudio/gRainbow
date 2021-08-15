@@ -129,8 +129,8 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   }
 
   // Remove arc grains that are completed
-  mArcGrains.removeIf([this](ArcGrain& g) {
-    return (g.numFramesActive * g.envIncSamples) > ENV_LUT_SIZE;
+  mArcGrains.removeIf([this](ArcGrain& grain) {
+    return (grain.numFramesActive * grain.envIncSamples) > ENV_LUT_SIZE;
   });
 }
 
