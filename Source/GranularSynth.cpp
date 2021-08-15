@@ -299,8 +299,6 @@ void GranularSynth::setPresetParamsXml(const void* data, int sizeInBytes) {
   auto xml = getXmlFromBinary(data, sizeInBytes);
 
   if (xml != nullptr) {
-    // To make sure nothing unwanted stays behind
-    resetParameters();
 
 #ifdef FDB_PRESET_XML
     DBG("setPresetParamsXml:\n" << xml->toString().toRawUTF8());
@@ -406,9 +404,9 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
 }
 
 void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer,
-                                double sampleRate) {
+                                double sampleRate, bool preset) {
+  // Only place that should reset params on loading files/presets
   resetParameters();
-  resetProcessStatus();
 
   // resamples the buffer from the file sampler rate to the the proper sampler
   // rate set from the DAW in prepareToPlay
@@ -425,8 +423,14 @@ void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer,
                        mFileBuffer.getNumSamples());
   }
 
-  mFft.processBuffer(&mFileBuffer);
-  mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
+  // preset don't need to generate things again
+  if (!preset) {
+    setProcessStatus(false);
+    mFft.processBuffer(&mFileBuffer);
+    mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
+  } else {
+    setProcessStatus(true);
+  }
 }
 
 int GranularSynth::incrementPosition(int boxNum, bool lookRight) {

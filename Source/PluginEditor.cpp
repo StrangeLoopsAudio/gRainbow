@@ -269,8 +269,9 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
 void GRainbowAudioProcessorEditor::processFile(juce::File file) {
   juce::AudioBuffer<float> fileAudioBuffer;
   double sampleRate;
+  bool preset = (file.getFileExtension() == ".gbow");
 
-  if (file.getFileExtension() == ".gbow") {
+  if (preset) {
     Preset::Header presetFileHeader;
     juce::FileInputStream input(file);
     if (input.openedOk()) {
@@ -306,7 +307,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     sampleRate = reader->sampleRate;
   }
 
-  mSynth.processFile(&fileAudioBuffer, sampleRate);
+  mSynth.processFile(&fileAudioBuffer, sampleRate, preset);
   mArcSpec.reset();
 
   mBtnPreset.setEnabled(true);  // if it wasn't already enabled

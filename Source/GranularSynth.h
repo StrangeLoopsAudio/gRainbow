@@ -86,7 +86,8 @@ class GranularSynth : public juce::AudioProcessor {
   std::function<void(double progress)>
       onProgressUpdated = nullptr;
 
-  void processFile(juce::AudioBuffer<float>* audioBuffer, double sampleRate);
+  void processFile(juce::AudioBuffer<float>* audioBuffer, double sampleRate,
+                   bool preset);
   ParamsNote& getParamsNote() { return mParamsNote; }
   ParamGlobal& getParamGlobal() { return mParamGlobal; }
   ParamUI& getParamUI() { return mParamUI; }
@@ -143,10 +144,10 @@ class GranularSynth : public juce::AudioProcessor {
   bool mFftDetectorComplete = false;
   bool mProcessingComplete = false;
 
-  inline void resetProcessStatus() {
-    mPitchDetectorComplete = false;
-    mFftDetectorComplete = false;
-    mProcessingComplete = false;
+  inline void setProcessStatus(bool status) {
+    mPitchDetectorComplete = status;
+    mFftDetectorComplete = status;
+    mProcessingComplete = status;
   }
   inline void checkProcessComplete() {
     mProcessingComplete = (mPitchDetectorComplete && mFftDetectorComplete);
