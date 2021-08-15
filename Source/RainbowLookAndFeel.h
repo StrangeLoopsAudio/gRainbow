@@ -54,10 +54,11 @@ private:
    // Draw text label inside arc
    juce::Rectangle<int> textRect =
        juce::Rectangle<int>(0, height / 2, width, height / 2);
-   g.drawFittedText(
-       juce::String(slider.getValue(), 2).trimCharactersAtEnd("0") +
-           (slider.getTextValueSuffix()),
-       textRect, juce::Justification::centredBottom, 1);
+   g.drawFittedText(slider.getTextFromValue(slider.getValue())
+                            .trimCharactersAtEnd(slider.getTextValueSuffix())
+                            .trimCharactersAtEnd("0") +
+                        slider.getTextValueSuffix(),
+                    textRect, juce::Justification::centredBottom, 1);
   }
 
   void drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn,

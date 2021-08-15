@@ -14,7 +14,10 @@
 
 //==============================================================================
 GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
-    : mParamsNote(paramsNote), mParamUI(paramUI) {
+    : mParamsNote(paramsNote),
+      mParamUI(paramUI),
+      mSliderRate(ParamRanges::GRAIN_RATE),
+      mSliderDuration(ParamRanges::GRAIN_DURATION) {
   mCurPitchClass = (Utils::PitchClass)paramUI.pitchClass;
   mCurSelectedGenerator = (Utils::GeneratorColour)paramUI.generatorTab;
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
@@ -68,8 +71,9 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderPitch.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderPitch.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderPitch.setRotaryParameters(rotaryParams);
+  mSliderPitch.setNumDecimalPlacesToDisplay(2);
   mSliderPitch.setRange(ParamRanges::PITCH_ADJUST.start,
-                        ParamRanges::PITCH_ADJUST.end);
+                        ParamRanges::PITCH_ADJUST.end, 0.01);
   mSliderPitch.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->pitchAdjust,
                           mSliderPitch.getValue());
@@ -84,8 +88,9 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderPosition.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderPosition.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderPosition.setRotaryParameters(rotaryParams);
+  mSliderPosition.setNumDecimalPlacesToDisplay(2);
   mSliderPosition.setRange(ParamRanges::POSITION_ADJUST.start,
-                           ParamRanges::POSITION_ADJUST.end);
+                           ParamRanges::POSITION_ADJUST.end, 0.01);
   mSliderPosition.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->positionAdjust,
                           mSliderPosition.getValue());
@@ -100,7 +105,8 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderShape.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderShape.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderShape.setRotaryParameters(rotaryParams);
-  mSliderShape.setRange(0.0, 1.0);
+  mSliderShape.setNumDecimalPlacesToDisplay(2);
+  mSliderShape.setRange(0.0, 1.0, 0.01);
   mSliderShape.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->grainShape,
                           mSliderShape.getValue());
@@ -115,7 +121,8 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderTilt.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderTilt.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderTilt.setRotaryParameters(rotaryParams);
-  mSliderTilt.setRange(0.0, 1.0);
+  mSliderTilt.setNumDecimalPlacesToDisplay(2);
+  mSliderTilt.setRange(0.0, 1.0, 0.01);
   mSliderTilt.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->grainTilt,
                           mSliderTilt.getValue());
@@ -126,12 +133,27 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mLabelTilt.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelTilt);
 
+  /* Sync */
+  mBtnSync.setButtonText("free");
+  mBtnSync.setColour(juce::TextButton::buttonColourId,
+                     juce::Colour(GRAIN_SYNC_COLOURS_HEX[0]));
+  mBtnSync.setColour(juce::TextButton::buttonOnColourId,
+                     juce::Colour(GRAIN_SYNC_COLOURS_HEX[1]));
+  mBtnSync.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+  mBtnSync.setColour(juce::TextButton::textColourOnId, juce::Colours::black);
+  mBtnSync.onClick = [this]() {
+    ParamHelper::setParam(getCurrentGenerator()->grainSync,
+                          !mBtnSync.getToggleState());
+  };
+  addAndMakeVisible(mBtnSync);
+
   /* Rate */
   mSliderRate.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderRate.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderRate.setRotaryParameters(rotaryParams);
+  mSliderRate.setNumDecimalPlacesToDisplay(2);
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start,
-                       ParamRanges::GRAIN_RATE.end);
+                       ParamRanges::GRAIN_RATE.end, 0.01);
   mSliderRate.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->grainRate,
                           mSliderRate.getValue());
@@ -146,8 +168,9 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderDuration.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderDuration.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderDuration.setRotaryParameters(rotaryParams);
+  mSliderDuration.setNumDecimalPlacesToDisplay(2);
   mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start,
-                           ParamRanges::GRAIN_DURATION.end);
+                           ParamRanges::GRAIN_DURATION.end, 0.01);
   mSliderDuration.setTextValueSuffix("s");
   mSliderDuration.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->grainDuration,
@@ -169,7 +192,9 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderAttack.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderAttack.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderAttack.setRotaryParameters(rotaryParams);
-  mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end);
+  mSliderAttack.setNumDecimalPlacesToDisplay(2);
+  mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end,
+                         0.01);
   mSliderAttack.setTextValueSuffix("s");
   mSliderAttack.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->attack,
@@ -185,7 +210,8 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderDecay.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderDecay.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderDecay.setRotaryParameters(rotaryParams);
-  mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end);
+  mSliderDecay.setNumDecimalPlacesToDisplay(2);
+  mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
   mSliderDecay.setTextValueSuffix("s");
   mSliderDecay.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->decay,
@@ -201,7 +227,8 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderSustain.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderSustain.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderSustain.setRotaryParameters(rotaryParams);
-  mSliderSustain.setRange(0.0, 1.0);
+  mSliderSustain.setNumDecimalPlacesToDisplay(2);
+  mSliderSustain.setRange(0.0, 1.0, 0.01);
   mSliderSustain.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->sustain,
                           mSliderSustain.getValue());
@@ -216,7 +243,9 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderRelease.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderRelease.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderRelease.setRotaryParameters(rotaryParams);
-  mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end);
+  mSliderRelease.setNumDecimalPlacesToDisplay(2);
+  mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end,
+                          0.01);
   mSliderRelease.setTextValueSuffix("s");
   mSliderRelease.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->release,
@@ -232,7 +261,8 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderGain.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderGain.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderGain.setRotaryParameters(rotaryParams);
-  mSliderGain.setRange(0.0, 1.0);
+  mSliderGain.setNumDecimalPlacesToDisplay(2);
+  mSliderGain.setRange(0.0, 1.0, 0.01);
   mSliderGain.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->gain,
                           mSliderGain.getValue());
@@ -248,7 +278,10 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   startTimer(33);  // 30 fps
 }
 
-GeneratorsBox::~GeneratorsBox() { stopTimer(); }
+GeneratorsBox::~GeneratorsBox() { 
+  mParamsNote.notes[mCurPitchClass]->removeListener(mCurSelectedGenerator,
+                                                    this);
+  stopTimer(); }
 
 void GeneratorsBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
@@ -402,7 +435,7 @@ void GeneratorsBox::resized() {
   mLabelGain.setBounds(gainPanel.removeFromBottom(LABEL_HEIGHT));
   mSliderGain.setBounds(
       gainPanel.withSizeKeepingCentre(gainPanel.getWidth(), gainPanel.getWidth() / 2.0f));
-  mEnvelopeAmp.setBounds(ampEnvPanel);
+  mEnvelopeAmp.setBounds(ampEnvPanel.withTrimmedRight(PADDING_SIZE));
   r.removeFromTop(PADDING_SIZE);
 
   // Amp env knobs
@@ -422,17 +455,21 @@ void GeneratorsBox::resized() {
 
   // Grain envelopes
   r.removeFromTop(SECTION_TITLE_HEIGHT);
-  mEnvelopeGrain.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
+  knobWidth = r.getWidth() / NUM_GRAIN_ENV_PARAMS;
+  auto grainPanel = r.removeFromTop(ENVELOPE_HEIGHT);
+  auto syncPanel = grainPanel.removeFromRight(knobWidth);
+  mBtnSync.changeWidthToFitText(LABEL_HEIGHT);
+  mBtnSync.setCentrePosition(syncPanel.getCentre());
+  mEnvelopeGrain.setBounds(grainPanel.withTrimmedRight(PADDING_SIZE));
   r.removeFromTop(PADDING_SIZE);
 
   // Grain env knobs
-  knobWidth = r.getWidth() / NUM_GRAIN_ENV_PARAMS;
   knobPanel = r.removeFromTop(knobWidth / 2);
   mSliderShape.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderTilt.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderDuration.setBounds(knobPanel.removeFromLeft(knobWidth));
-  
+
   labelPanel = r.removeFromTop(LABEL_HEIGHT);
   mLabelShape.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelTilt.setBounds(labelPanel.removeFromLeft(knobWidth));
@@ -508,9 +545,14 @@ void GeneratorsBox::timerCallback() {
     mEnvelopeGrain.setShape(gen->grainShape->get());
     mSliderTilt.setValue(gen->grainTilt->get(), juce::dontSendNotification);
     mEnvelopeGrain.setTilt(gen->grainTilt->get());
+    mBtnSync.setToggleState(gen->grainSync->get(), juce::dontSendNotification);
+    mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "free");
+    mSliderRate.setSync(gen->grainSync->get());
     mSliderRate.setValue(gen->grainRate->get(), juce::dontSendNotification);
     mEnvelopeGrain.setRate(
         ParamRanges::GRAIN_RATE.convertTo0to1(gen->grainRate->get()));
+    mSliderDuration.setSync(gen->grainSync->get());
+    mSliderDuration.setTextValueSuffix(gen->grainSync->get() ? "" : "s");
     mSliderDuration.setValue(gen->grainDuration->get(),
                              juce::dontSendNotification);
     mEnvelopeGrain.setDuration(

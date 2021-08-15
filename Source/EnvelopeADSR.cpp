@@ -70,6 +70,9 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
                         mRelease * getWidth() * 0.25f + getWidth() * 0.75f,
                         getHeight() - 1.0f),
       highlightWidth);
+
+  g.setColour(envColour);
+  g.drawRect(getLocalBounds(), 2.0f);
 }
 
 void EnvelopeADSR::resized() {}

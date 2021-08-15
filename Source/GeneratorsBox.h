@@ -49,6 +49,9 @@ class GeneratorsBox : public juce::Component,
   static constexpr auto NUM_GRAIN_ENV_PARAMS = 4;
 
   // UI Layout
+  static constexpr juce::int64 GRAIN_SYNC_COLOURS_HEX[2] = {0xFF20FFD4,
+                                                            0xFFFFD420};
+
   static constexpr auto TABS_HEIGHT = 30;
   static constexpr auto PADDING_SIZE = 6;
   static constexpr auto ADJUSTMENT_HEIGHT = 40;
@@ -70,6 +73,30 @@ class GeneratorsBox : public juce::Component,
   int mCurHoverGenerator = -1;
   std::atomic<bool> mParamHasChanged;
 
+  class QuantizedSlider : public juce::Slider {
+   public:
+    QuantizedSlider() : juce::Slider() {}
+    QuantizedSlider(juce::NormalisableRange<float> range) : mRange(range), juce::Slider() {}
+    void setSync(bool sync) { mSync = sync; }
+
+    juce::String getTextFromValue(double value) override {
+      if (mSync) {
+        float prog = mRange.convertTo0to1(getValue());
+        return juce::String("1/") +
+               juce::String(std::pow(2, (int)(MAX_SYNC_LOG * prog)));
+      } else {
+        return juce::String(getValue());
+      }
+    }
+
+   private:
+    static constexpr auto MAX_SYNC_LOG = 5;
+    bool mSync;
+    juce::NormalisableRange<float> mRange;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(QuantizedSlider)
+  };
+
   // UI Components
   // -- Generator Tabs
   std::array<juce::ToggleButton, Utils::GeneratorColour::NUM_GEN> mBtnsEnabled;
@@ -84,10 +111,11 @@ class GeneratorsBox : public juce::Component,
   juce::Label mLabelShape;
   juce::Slider mSliderTilt;
   juce::Label mLabelTilt;
-  juce::Slider mSliderRate;
+  QuantizedSlider mSliderRate;
   juce::Label mLabelRate;
-  juce::Slider mSliderDuration;
+  QuantizedSlider mSliderDuration;
   juce::Label mLabelDuration;
+  juce::TextButton mBtnSync;
   EnvelopeGrain mEnvelopeGrain;
   // -- ADSR Env
   juce::Slider mSliderAttack;

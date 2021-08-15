@@ -39,6 +39,7 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
         slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         slider.setRotaryParameters(rotaryParams);
+        slider.setNumDecimalPlacesToDisplay(2);
         slider.setRange(0.0, 1.0, 0.01);
       });
   mSliderGain->component.onValueChange = [this] {
@@ -49,6 +50,8 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
   addAndMakeVisible(mLabelGain);
 
   /* Attack */
+  mEnvelopeAmp.setAttack(
+      ParamRanges::ATTACK.convertTo0to1(mParamGlobal.attack->get()));
   mSliderAttack = std::make_unique<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
       *mParamGlobal.attack, *this,
@@ -60,6 +63,7 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
         slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         slider.setRotaryParameters(rotaryParams);
+        slider.setNumDecimalPlacesToDisplay(2);
         slider.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end,
                         0.01);
         slider.setTextValueSuffix("s");
@@ -72,6 +76,8 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
   addAndMakeVisible(mLabelAttack);
 
   /* Decay */
+  mEnvelopeAmp.setDecay(
+      ParamRanges::DECAY.convertTo0to1(mParamGlobal.decay->get()));
   mSliderDecay = std::make_unique<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
       *mParamGlobal.decay, *this,
@@ -83,6 +89,7 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
         slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         slider.setRotaryParameters(rotaryParams);
+        slider.setNumDecimalPlacesToDisplay(2);
         slider.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
         slider.setTextValueSuffix("s");
       });
@@ -94,6 +101,7 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
   addAndMakeVisible(mLabelDecay);
 
   /* Sustain */
+  mEnvelopeAmp.setSustain(mParamGlobal.sustain->get());
   mSliderSustain = std::make_unique<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
       *mParamGlobal.sustain, *this,
@@ -105,6 +113,7 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
         slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         slider.setRotaryParameters(rotaryParams);
+        slider.setNumDecimalPlacesToDisplay(2);
         slider.setRange(0.0, 1.0, 0.01);
       });
   mSliderSustain->component.onValueChange = [this] {
@@ -115,6 +124,8 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
   addAndMakeVisible(mLabelSustain);
 
   /* Release */
+  mEnvelopeAmp.setRelease(
+      ParamRanges::RELEASE.convertTo0to1(mParamGlobal.release->get()));
   mSliderRelease = std::make_unique<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
       *mParamGlobal.release, *this,
@@ -126,6 +137,7 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
         slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
         slider.setRotaryParameters(rotaryParams);
+        slider.setNumDecimalPlacesToDisplay(2);
         slider.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end,
                         0.01);
         slider.setTextValueSuffix("s");
@@ -138,7 +150,7 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal)
   addAndMakeVisible(mLabelRelease);
 }
 
-GlobalParamBox::~GlobalParamBox() {}
+GlobalParamBox::~GlobalParamBox() { }
 
 void GlobalParamBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
@@ -191,7 +203,7 @@ void GlobalParamBox::resized() {
   mLabelGain.setBounds(gainPanel.removeFromBottom(LABEL_HEIGHT));
   mSliderGain->component.setBounds(gainPanel.withSizeKeepingCentre(
       gainPanel.getWidth(), gainPanel.getWidth() / 2.0f));
-  mEnvelopeAmp.setBounds(ampEnvPanel);
+  mEnvelopeAmp.setBounds(ampEnvPanel.withTrimmedRight(PADDING_SIZE));
   r.removeFromTop(PADDING_SIZE);
 
   // Amp env knobs
