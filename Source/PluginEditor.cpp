@@ -90,8 +90,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
                        juce::Colours::transparentBlack);
   mBtnPreset.onClick = [this] { savePreset(); };
   addAndMakeVisible(mBtnPreset);
-  // don't enable until audio clip is loaded
-  mBtnPreset.setEnabled(mSynth.checkProcessComplete());
+  // if reloading and images are done, then enable right away
+  mBtnPreset.setEnabled(mParamUI.specComplete);
 
   // File info label
   mLabelFileName.setJustificationType(juce::Justification::centred);
@@ -111,6 +111,12 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mGlobalParamBox);
 
   // Arc spectrogram
+  mArcSpec.onImagesComplete = [this]() {
+    const juce::MessageManagerLock lock;
+    jassert(mParamUI.specComplete);
+    mBtnPreset.setEnabled(true);
+  };
+
   addAndMakeVisible(mArcSpec);
 
   addChildComponent(mProgressBar);
@@ -412,12 +418,14 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
                  true);
     sampleRate = reader->sampleRate;
 
+    // Reset any UI elements that will need to wait until processing
     mArcSpec.reset();
+    mBtnPreset.setEnabled(false);
   }
 
   mSynth.processFile(&fileAudioBuffer, sampleRate, preset);
 
-  mBtnPreset.setEnabled(true);  // if it wasn't already enabled
+  // Show users which file is being loaded/processed
   mParamUI.fileName = file.getFileName();
   mLabelFileName.setText(mParamUI.fileName, juce::dontSendNotification);
 }

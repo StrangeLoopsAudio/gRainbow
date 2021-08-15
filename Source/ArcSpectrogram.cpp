@@ -205,6 +205,8 @@ void ArcSpectrogram::onImageComplete(SpecType specType) {
     }
   }
   mParamUI.specComplete = true;
+  // Lets UI know it so it can enable other UI components
+  onImagesComplete();
 }
 
 void ArcSpectrogram::reset() {

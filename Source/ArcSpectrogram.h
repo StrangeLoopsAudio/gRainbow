@@ -47,6 +47,9 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   //============================================================================
   void run() override;
 
+  // Callback functions when all images are created
+  std::function<void(void)> onImagesComplete = nullptr;
+
  private:
   static constexpr auto MIN_FREQ = 100;
   static constexpr auto MAX_FREQ = 5000;
