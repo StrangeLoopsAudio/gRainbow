@@ -396,8 +396,8 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             float totalGain = gain * gNote.ampEnv.amplitude *
                               gNote.genAmpEnvs[i].amplitude * gNote.velocity *
                               mParamGlobal.gain->get();
-            mParamsNote.notes[gNote.pitchClass]->grainCreated(i, durSec,
-                                                              totalGain);
+            mParamsNote.notes[gNote.pitchClass]->grainCreated(
+                i, durSec / pbRate, totalGain);
             gNote.grains.add(grain);
           }
           // Reset trigger ts
