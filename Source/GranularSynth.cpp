@@ -349,7 +349,25 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
               mParamsNote.notes[gNote.pitchClass]->generators[i].get();
           ParamCandidate* paramCandidate =
               mParamsNote.notes[gNote.pitchClass]->getCandidate(i);
-          float durSec = paramGenerator->grainDuration->get();
+          float durSec;
+          if (paramGenerator->grainSync->get()) {
+            float div =
+                std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX *
+                                  paramGenerator->grainDuration->convertTo0to1(
+                                      paramGenerator->grainDuration->get())));
+            float bpm = DEFAULT_BPM;
+            int beatsPerBar = 4;
+            if (auto* playhead = getPlayHead()) {
+              juce::AudioPlayHead::CurrentPositionInfo info;
+              playhead->getCurrentPosition(info);
+              bpm = info.bpm;
+              beatsPerBar = info.timeSigNumerator;
+            }
+            // Find synced duration using bpm
+            durSec = (1.0f / bpm) * 60.0f * (beatsPerBar / div);
+          } else {
+            durSec = paramGenerator->grainDuration->get();
+          }
           // Skip adding new grain if not enabled or full of grains
           if (paramCandidate != nullptr &&
               mParamsNote.notes[gNote.pitchClass]->shouldPlayGenerator(i) &&
@@ -381,10 +399,21 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             gNote.grains.add(grain);
           }
           // Reset trigger ts
-          gNote.grainTriggers[i] +=
-              mSampleRate * juce::jmap(1.0f - paramGenerator->grainRate->get(),
-                                       durSec * MIN_RATE_RATIO,
-                                       durSec * MAX_RATE_RATIO);
+          if (paramGenerator->grainSync->get()) {
+            float div =
+                std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX *
+                                  paramGenerator->grainRate->convertTo0to1(
+                                      paramGenerator->grainRate->get())));
+            // Find synced rate interval using bpm
+            float intervalSamples = mSampleRate * durSec / div;
+            gNote.grainTriggers[i] += intervalSamples;
+          } else {
+            gNote.grainTriggers[i] +=
+                mSampleRate *
+                juce::jmap(paramGenerator->grainRate->convertTo0to1(
+                               paramGenerator->grainRate->get()),
+                           durSec * MIN_RATE_RATIO, durSec * MAX_RATE_RATIO);
+          }
         } else {
           gNote.grainTriggers[i] -= blockSize;
         }

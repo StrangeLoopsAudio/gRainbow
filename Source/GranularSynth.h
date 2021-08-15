@@ -102,6 +102,7 @@ class GranularSynth : public juce::AudioProcessor {
   // DSP constants
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 2048;
+  static constexpr auto DEFAULT_BPM = 120;
   // Param bounds
   static constexpr auto MIN_RATE_RATIO = .25f;
   static constexpr auto MAX_RATE_RATIO = 1.0f;
