@@ -45,9 +45,8 @@ static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
     PitchClass::E,  PitchClass::F,  PitchClass::Fs, PitchClass::G,
     PitchClass::Gs, PitchClass::A,  PitchClass::As, PitchClass::B};
 
-static constexpr auto MAX_CANDIDATES = 6;
-static constexpr auto TIMESTRETCH_RATIO =
-    1.0594f;  // Constant used for pitch shifting by semitones
+// Constant used for pitch shifting by semitones
+static constexpr auto TIMESTRETCH_RATIO = 1.0594f;  
 
 typedef struct EnvelopeADSR {
   // All adsr params are in samples (except for sustain amp)
