@@ -436,9 +436,6 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
 
 void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer,
                                 double sampleRate, bool preset) {
-  // Only place that should reset params on loading files/presets
-  resetParameters();
-
   // resamples the buffer from the file sampler rate to the the proper sampler
   // rate set from the DAW in prepareToPlay
   mFileBuffer.setSize(audioBuffer->getNumChannels(),
@@ -456,6 +453,8 @@ void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer,
 
   // preset don't need to generate things again
   if (!preset) {
+    // Only place that should reset params on loading files/presets
+    resetParameters();
     setProcessStatus(false);
     mFft.processBuffer(&mFileBuffer);
     mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
