@@ -27,7 +27,7 @@ class GlobalParamBox : public juce::Component {
   void resized() override;
 
  private:
-  /* UI Layout */
+  // UI Layout
   static constexpr auto NUM_AMP_ENV_PARAMS = 4;
   static constexpr auto PADDING_SIZE = 6;
   static constexpr auto MAIN_TITLE_HEIGHT = 30;
@@ -37,10 +37,10 @@ class GlobalParamBox : public juce::Component {
   static constexpr auto MAIN_TITLE = "global parameters";
   static constexpr auto SECTION_AMP_ENV_TITLE = "amplitude envelope";
 
-  /* Parameters */
+  // Parameters
   ParamGlobal& mParamGlobal;
 
-  /* UI Components */
+  // UI Components
   std::unique_ptr<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
       mSliderGain;
@@ -56,7 +56,7 @@ class GlobalParamBox : public juce::Component {
   std::unique_ptr<
       Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>>
       mSliderRelease;
-  /* -- ADSR Env */
+  // -- ADSR Env
   juce::Label mLabelGain;
   juce::Label mLabelAttack;
   juce::Label mLabelDecay;

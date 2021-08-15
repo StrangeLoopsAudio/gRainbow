@@ -44,11 +44,11 @@ class GeneratorsBox : public juce::Component,
   std::function<void(int gen, bool isRight)> onPositionChanged = nullptr;
 
  private:
-  /* Params */
+  // Params
   static constexpr auto NUM_AMP_ENV_PARAMS = 4;
   static constexpr auto NUM_GRAIN_ENV_PARAMS = 4;
 
-  /* UI Layout */
+  // UI Layout
   static constexpr auto TABS_HEIGHT = 30;
   static constexpr auto PADDING_SIZE = 6;
   static constexpr auto ADJUSTMENT_HEIGHT = 40;
@@ -60,26 +60,26 @@ class GeneratorsBox : public juce::Component,
   static constexpr auto SECTION_GRAIN_ENV_TITLE = "grain envelope";
   static constexpr auto SECTION_ADJUST_TITLE = "generator adjustments";
 
-  /* Parameters */
+  // Parameters
   ParamsNote& mParamsNote;
   ParamUI& mParamUI;
 
-  /* Bookkeeping */
+  // Bookkeeping
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
   Utils::GeneratorColour mCurSelectedGenerator = Utils::GeneratorColour::BLUE;
   int mCurHoverGenerator = -1;
   std::atomic<bool> mParamHasChanged;
 
-  /* UI Components */
-  /* -- Generator Tabs*/
+  // UI Components
+  // -- Generator Tabs
   std::array<juce::ToggleButton, Utils::GeneratorColour::NUM_GEN> mBtnsEnabled;
-  /* -- Generator Adjustments */
+  // -- Generator Adjustments
   PositionChanger mPositionChanger;
   juce::Slider mSliderPitch;
   juce::Label mLabelPitch;
   juce::Slider mSliderPosition;
   juce::Label mLabelPosition;
-  /* -- Grain Env */
+  // -- Grain Env
   juce::Slider mSliderShape;
   juce::Label mLabelShape;
   juce::Slider mSliderTilt;
@@ -89,7 +89,7 @@ class GeneratorsBox : public juce::Component,
   juce::Slider mSliderDuration;
   juce::Label mLabelDuration;
   EnvelopeGrain mEnvelopeGrain;
-  /* -- ADSR Env */
+  // -- ADSR Env
   juce::Slider mSliderAttack;
   juce::Label mLabelAttack;
   juce::Slider mSliderDecay;

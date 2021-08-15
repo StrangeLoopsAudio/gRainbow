@@ -42,7 +42,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void fastDebugMode();
 
  private:
-  /* UI Layout */
+  // UI Layout
   static constexpr auto BTN_PANEL_HEIGHT = 50;
   static constexpr auto BTN_PADDING = 5;
   static constexpr auto OPEN_FILE_WIDTH = 80;
@@ -53,11 +53,11 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   static constexpr auto NOTE_BULB_SIZE = 10;
   static constexpr auto NOTE_DISPLAY_HEIGHT = 20;
 
-  /* DSP Modules */
+  // DSP Modules
   GranularSynth& mSynth;
   AudioRecorder mRecorder;
 
-  /* UI Components */
+  // UI Components
   juce::ImageComponent mLogo;
   juce::ImageButton mBtnOpenFile;
   juce::ImageButton mBtnRecord;
@@ -70,7 +70,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
 
-  /* Bookkeeping */
+  // Bookkeeping
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::NONE;
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;

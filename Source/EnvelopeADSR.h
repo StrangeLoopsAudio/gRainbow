@@ -32,8 +32,7 @@ class EnvelopeADSR : public juce::Component {
   void setColour(juce::Colour colour);
 
  private:
-
-  /* Parameters */
+  // Parameters
   float mAttack = 0.2f;
   float mDecay = 0.2f;
   float mSustain = 0.8f;

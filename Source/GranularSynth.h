@@ -128,23 +128,23 @@ class GranularSynth : public juce::AudioProcessor {
     }
   } GrainNote;
 
-  /* DSP pre-processing */
+  // DSP pre-processing
   PitchDetector mPitchDetector;
   Fft mFft;
 
-  /* Bookkeeping */
+  // Bookkeeping
   juce::AudioBuffer<float> mFileBuffer;
   double mSampleRate;
   juce::MidiKeyboardState mKeyboardState;
   bool mIsProcessingComplete = false;
   double mLoadingProgress = 0.0;
 
-  /* Grain control */
+  // Grain control
   long mTotalSamps;
   juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
 
-  /* Parameters */
+  // Parameters
   ParamsNote mParamsNote;
   ParamGlobal mParamGlobal;
   ParamUI mParamUI;
