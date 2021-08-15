@@ -168,9 +168,9 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
   for (auto& generator : generators) {
     generator->addParams(p);
   }
+  juce::String soloId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genSolo;
   p.addParameter(soloIdx = new juce::AudioParameterInt(
-                     ParamIDs::genSolo + juce::String(noteIdx), "Gen Solo",
-                     SOLO_NONE, NUM_GENERATORS - 1, SOLO_NONE));
+                     soloId, soloId, SOLO_NONE, NUM_GENERATORS - 1, SOLO_NONE));
 }
 
 void ParamNote::addListener(int genIdx,

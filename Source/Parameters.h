@@ -14,7 +14,7 @@
 
 namespace ParamIDs {
 // Note params
-static juce::String genSolo{"_solo_gen_"};
+static juce::String genSolo{"_solo_gen"};
 // Generator params
 static juce::String genEnable{"_enable_gen_"};
 static juce::String genGain{"_gain_gen_"};
