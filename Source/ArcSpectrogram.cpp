@@ -87,6 +87,13 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   SpecType specType = (mProcessType == SpecType::LOGO)
                           ? SpecType::LOGO
                           : (SpecType)(mSpecType.getSelectedItemIndex());
+  if ((int)specType == -1) {
+    // TODO - sometimes the paint happens at a time which cause the ComboBox to
+    // return nothing was found, for now simply just show the LOGO a few more
+    // frames
+    specType = SpecType::LOGO;
+  }
+
   juce::Point<float> centerPoint =
       juce::Point<float>(getWidth() / 2.0f, getHeight());
   int startRadius = getHeight() / 4.0f;
