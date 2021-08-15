@@ -257,8 +257,10 @@ struct ParamGlobal {
  */
 struct ParamUI {
   ParamUI() = default;
+
   // Get it from the plugin state
-  ParamUI(juce::XmlElement* xml) {
+  // will only set xml-able items (floats/int/strings)
+  void setXml(juce::XmlElement* xml) {
     if (xml != nullptr) {
       fileName = xml->getStringAttribute("fileName");
       generatorTab = xml->getIntAttribute("generatorTab");

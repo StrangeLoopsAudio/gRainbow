@@ -269,7 +269,11 @@ void GranularSynth::setStateInformation(const void* data, int sizeInBytes) {
             ParamHelper::getParamID(param), param->getValue()));
       }
     }
-    mParamUI = ParamUI(xml->getChildByName("ParamUI"));
+
+    params = xml->getChildByName("ParamUI");
+    if (params != nullptr) {
+      mParamUI.setXml(params);
+    }
   }
 }
 
@@ -286,6 +290,7 @@ void GranularSynth::getPresetParamsXml(juce::MemoryBlock& destData) {
   }
   xml.addChildElement(audioParams);
   xml.addChildElement(mParamsNote.getUserStateXml());
+  xml.addChildElement(mParamUI.getXml());
 
 #ifdef FDB_PRESET_XML
   DBG("getPresetParamsXml:\n" << xml.toString().toRawUTF8());
@@ -303,17 +308,22 @@ void GranularSynth::setPresetParamsXml(const void* data, int sizeInBytes) {
     DBG("setPresetParamsXml:\n" << xml->toString().toRawUTF8());
 #endif  // FDB_PRESET_XML
 
-    auto audioParams = xml->getChildByName("AudioParams");
-    if (audioParams != nullptr) {
+    auto params = xml->getChildByName("AudioParams");
+    if (params != nullptr) {
       for (auto& param : getParameters()) {
-        param->setValueNotifyingHost(audioParams->getDoubleAttribute(
+        param->setValueNotifyingHost(params->getDoubleAttribute(
             ParamHelper::getParamID(param), param->getValue()));
       }
     }
 
-    auto notesParams = xml->getChildByName("NotesParams");
-    if (notesParams != nullptr) {
-      mParamsNote.setUserStateXml(notesParams);
+    params = xml->getChildByName("NotesParams");
+    if (params != nullptr) {
+      mParamsNote.setUserStateXml(params);
+    }
+
+    params = xml->getChildByName("ParamUI");
+    if (params != nullptr) {
+      mParamUI.setXml(params);
     }
   }
 }
