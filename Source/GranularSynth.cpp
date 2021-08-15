@@ -171,7 +171,10 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer,
           md.getMessage().getNoteNumber() % Utils::PitchClass::COUNT);
       if (md.getMessage().isNoteOn()) {
         if (onNoteChanged != nullptr) onNoteChanged(pc, true);
-        setNoteOn(pc, md.getMessage().getVelocity() / 128.0f);
+        // MIDI velocity is 0-127
+        // Dealing with floats allows for normalizing
+        setNoteOn(pc,
+                  static_cast<float>(md.getMessage().getVelocity()) / 128.0f);
       } else if (md.getMessage().isNoteOff()) {
         if (onNoteChanged != nullptr) onNoteChanged(pc, false);
         setNoteOff(pc);
