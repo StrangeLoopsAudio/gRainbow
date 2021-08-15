@@ -17,7 +17,7 @@ PitchDetector::PitchDetector()
     : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch detector thread") {
   initHarmonicWeights();
   mFft.onProcessingComplete =
-      [this](std::vector<std::vector<float>>& spectrum) { 
+      [this](std::vector<std::vector<float>>& spectrum) {
         stopThread(4000);
         startThread();
       };
@@ -42,8 +42,8 @@ void PitchDetector::run() {
   updateProgress(0.9);
   if (threadShouldExit()) return;
   getSegmentedPitchBuffer();
-  if (onPitchesUpdated != nullptr && !threadShouldExit()) {
-    onPitchesUpdated(mHPCP, mSegmentedPitches);
+  if (onProcessingComplete != nullptr && !threadShouldExit()) {
+    onProcessingComplete(mHPCP, mSegmentedPitches);
   }
   updateProgress(1.0);
 }

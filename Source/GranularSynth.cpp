@@ -38,7 +38,7 @@ GranularSynth::GranularSynth()
         }
       };
 
-  mPitchDetector.onPitchesUpdated =
+  mPitchDetector.onProcessingComplete =
       [this](std::vector<std::vector<float>>& hpcpBuffer,
              std::vector<std::vector<float>>& detectedBuffer) {
         if (onBufferProcessed != nullptr) {

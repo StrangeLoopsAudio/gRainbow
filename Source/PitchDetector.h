@@ -60,8 +60,7 @@ class PitchDetector : juce::Thread {
 
   std::function<void(std::vector<std::vector<float>>& hpcp,
                      std::vector<std::vector<float>>& segmentedPitches)>
-      onPitchesUpdated =
-      nullptr;
+      onProcessingComplete = nullptr;
 
   std::function<void(double progress)>
       onProgressUpdated =
