@@ -494,28 +494,14 @@ std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
 
 void GranularSynth::setNoteOn(Utils::PitchClass pitchClass, float velocity) {
   mCurPitchClass = pitchClass;
-  bool isPlayingAlready = false;
-  for (GrainNote& gNote : mActiveNotes) {
-    if (gNote.pitchClass == pitchClass) {
-      isPlayingAlready = true;
-      // Start envelope over
-      gNote.ampEnv.noteOn(mTotalSamps);
-      gNote.velocity = velocity;
-      // Start position envs over as well
-      for (Utils::EnvelopeADSR& genEnv : gNote.genAmpEnvs) {
-        genEnv.noteOn(mTotalSamps);
-      }
-    }
-  }
-  if (!isPlayingAlready) {
-    mActiveNotes.add(
-        GrainNote(pitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
-  }
+  mActiveNotes.add(
+      GrainNote(pitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
 }
 
 void GranularSynth::setNoteOff(Utils::PitchClass pitchClass) {
   for (GrainNote& gNote : mActiveNotes) {
-    if (gNote.pitchClass == pitchClass) {
+    if (gNote.pitchClass == pitchClass &&
+        gNote.ampEnv.state != Utils::EnvelopeState::RELEASE) {
       // Set note off timestamp and set env state to release for each pos
       gNote.ampEnv.noteOff(mTotalSamps);
       for (Utils::EnvelopeADSR& genEnv : gNote.genAmpEnvs) {
