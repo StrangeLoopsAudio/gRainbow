@@ -65,7 +65,7 @@ void PitchDetector::getSegmentedPitchBuffer() {
       auto pitch = pitchVec[j];
       auto duration = pitch.duration * mHPCP.size();
       int frame = pitch.posRatio * (mHPCP.size() - 1);
-      int bin = (int)(pitch.pitchClass * (NUM_HPCP_BINS / 12.0)) + 6;
+      int bin = (int)(pitch.pitchClass * (NUM_HPCP_BINS / 12.0));
       for (int j = 0; j < duration; ++j) {
         mSegmentedPitches[frame + j][bin] = pitch.gain;
       }

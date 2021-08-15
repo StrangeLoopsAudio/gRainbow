@@ -96,7 +96,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     float grainProg =
         (grain.numFramesActive * grain.envIncSamples) / ENV_LUT_SIZE;
     xRatio += candidate->duration * grainProg;
-    float yRatio = (grain.paramGenerator->noteIdx +
+    float yRatio = (grain.paramGenerator->noteIdx + 0.25f +
                     (grain.paramGenerator->pitchAdjust->get() * 6.0f)) /
                    (float)Utils::PitchClass::COUNT;
     int grainRad = startRadius + (yRatio * bowWidth);
