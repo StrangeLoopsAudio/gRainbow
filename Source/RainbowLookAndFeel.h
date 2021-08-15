@@ -54,10 +54,12 @@ private:
    // Draw text label inside arc
    juce::Rectangle<int> textRect =
        juce::Rectangle<int>(0, height / 2, width, height / 2);
-   g.drawFittedText(slider.getTextFromValue(slider.getValue())
-                            .trimCharactersAtEnd(slider.getTextValueSuffix())
-                            .trimCharactersAtEnd("0") +
-                        slider.getTextValueSuffix(),
+   juce::String text = slider.getTextFromValue(slider.getValue())
+                           .trimCharactersAtEnd(slider.getTextValueSuffix())
+                           .trimCharactersAtEnd("0") +
+                       slider.getTextValueSuffix();
+   if (text.getLastCharacter() == '.') text += "0";
+   g.drawFittedText(text,
                     textRect, juce::Justification::centredBottom, 1);
   }
 
