@@ -16,7 +16,7 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   juce::Colour mainColour = mIsActive ? mColour : juce::Colours::darkgrey;
 
   float minEnvWidth = getWidth() / 6.0f;
-  float maxEnvWidth = getWidth() / 2.0f;
+  float maxEnvWidth = getWidth();
   float envWidth;
   float envOffset;
   if (mSync) {
