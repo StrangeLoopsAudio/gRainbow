@@ -241,6 +241,7 @@ void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
 
 void ArcSpectrogram::grainCreatedCallback(int genIdx, float durationSec,
                                           float envGain) {
+  if (mArcGrains.size() >= MAX_NUM_GRAINS) return;
   ParamGenerator* gen =
       mParamsNote.notes[mCurPitchClass]->generators[genIdx].get();
   float envIncSamples;

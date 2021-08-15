@@ -525,7 +525,6 @@ void GranularSynth::createCandidates(
     juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>&
         detectedPitches) {
   // Add candidates for each pitch class
-  // TODO: check salience instead of blindly adding
   for (auto&& note : mParamsNote.notes) {
     // Look for detected pitches with correct pitch and good gain
     bool foundAll = false;
