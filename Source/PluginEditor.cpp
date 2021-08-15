@@ -206,6 +206,10 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
                   mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
                   NOTE_BULB_SIZE, NOTE_BULB_SIZE);
   }
+  if (mIsFileHovering) {
+    g.setColour(juce::Colours::white.withAlpha(0.2f));
+    g.fillRect(getLocalBounds());
+  }
 }
 
 void GRainbowAudioProcessorEditor::resized() {
@@ -249,6 +253,35 @@ void GRainbowAudioProcessorEditor::resized() {
       r.removeFromTop(r.getHeight() - NOTE_DISPLAY_HEIGHT)
           .reduced(NOTE_DISPLAY_HEIGHT, 0.0f);
   mKeyboard.setBounds(keyboardRect);
+}
+
+bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(
+    const juce::StringArray& files) {
+  // Only accept 1 file of wav/mp3/gbow at a time
+  if (files.size() == 1) {
+    juce::String extension = files[0].fromLastOccurrenceOf(".", false, false);
+    if (extension == "wav" || extension == "mp3" || extension == "gbow") {
+      return true;
+    }
+  }
+  return false;
+}
+void GRainbowAudioProcessorEditor::fileDragEnter(const juce::StringArray& files,
+                                                 int x, int y) {
+  mIsFileHovering = true;
+  repaint();
+}
+void GRainbowAudioProcessorEditor::fileDragExit(
+    const juce::StringArray& files) {
+  mIsFileHovering = false;
+  repaint();
+}
+void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files,
+                                                int x, int y) {
+  jassert(files.size() == 1);
+  mIsFileHovering = false;
+  repaint();
+  processFile(juce::File(files[0]));
 }
 
 /** Pauses audio to open file

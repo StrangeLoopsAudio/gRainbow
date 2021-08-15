@@ -24,6 +24,7 @@
 /**
  */
 class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                     public juce::FileDragAndDropTarget,
                                      public juce::Timer {
  public:
   GRainbowAudioProcessorEditor(GranularSynth& synth);
@@ -36,6 +37,11 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   bool keyStateChanged(bool isKeyDown) override;
   bool keyPressed(const juce::KeyPress& key) override;
+
+  bool isInterestedInFileDrag(const juce::StringArray& files) override;
+  void fileDragEnter(const juce::StringArray& files, int x, int y) override;
+  void fileDragExit(const juce::StringArray& files) override;
+  void filesDropped(const juce::StringArray& files, int x, int y) override;
 
   void timerCallback() override;
 
@@ -80,6 +86,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::AudioDeviceManager mAudioDeviceManager;
   double mLoadingProgress = 0.0;
   bool mStartedPlayingTrig = false;
+  bool mIsFileHovering = false;
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
 
