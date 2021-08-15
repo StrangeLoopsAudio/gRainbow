@@ -40,6 +40,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
 
   void reset();
   void loadBuffer(std::vector<std::vector<float>> *buffer, SpecType type);
+  void loadPreset();
   void setNoteOn(Utils::PitchClass pitchClass);
   void setNoteOff() { mIsPlayingNote = false; }
 

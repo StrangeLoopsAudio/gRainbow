@@ -220,6 +220,15 @@ void ArcSpectrogram::loadBuffer(std::vector<std::vector<float>>* buffer,
   if (getWidth() > 0 && getHeight() > 0) startThread();
 }
 
+// loadBuffer is never called when a preset is loaded
+void ArcSpectrogram::loadPreset() {
+  // make visible if preset was loaded first
+  mSpecType.setVisible(true);
+  mProcessType = (SpecType)mParamUI.specType;
+  mSpecType.setSelectedItemIndex(mProcessType, juce::dontSendNotification);
+  repaint();
+}
+
 void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
   mParamsNote.notes[mCurPitchClass]->onGrainCreated = nullptr;
   mParamsNote.notes[pitchClass]->onGrainCreated =

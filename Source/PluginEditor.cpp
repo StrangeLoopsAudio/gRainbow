@@ -364,6 +364,8 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       input.read(xmlData, xmlSize);
       mSynth.setPresetParamsXml(xmlData, xmlSize);
       free(xmlData);
+
+      mArcSpec.loadPreset();
     }
   } else {
     // loading audio clip
@@ -374,10 +376,11 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     reader->read(&fileAudioBuffer, 0, (int)reader->lengthInSamples, 0, true,
                  true);
     sampleRate = reader->sampleRate;
+
+    mArcSpec.reset();
   }
 
   mSynth.processFile(&fileAudioBuffer, sampleRate, preset);
-  mArcSpec.reset();
 
   mBtnPreset.setEnabled(true);  // if it wasn't already enabled
   mLabelFilenfo.setText(file.getFileName(), juce::dontSendNotification);
