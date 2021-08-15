@@ -93,6 +93,13 @@ class GranularSynth : public juce::AudioProcessor {
   int incrementPosition(int boxNum, bool lookRight);
   std::vector<ParamCandidate*> getActiveCandidates();
 
+  inline bool checkProcessComplete() {
+    // TODO - It would be better to have people subscribe when processing is
+    // done to prevent strange, mid processing bugs
+    mProcessingComplete = (mPitchDetectorComplete && mFftDetectorComplete);
+    return mProcessingComplete;
+  }
+
  private:
   // DSP constants
   static constexpr auto FFT_SIZE = 4096;
@@ -144,9 +151,6 @@ class GranularSynth : public juce::AudioProcessor {
     mPitchDetectorComplete = status;
     mFftDetectorComplete = status;
     mProcessingComplete = status;
-  }
-  inline void checkProcessComplete() {
-    mProcessingComplete = (mPitchDetectorComplete && mFftDetectorComplete);
   }
 
   // Grain control

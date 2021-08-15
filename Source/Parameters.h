@@ -260,6 +260,7 @@ struct ParamUI {
   // Get it from the plugin state
   ParamUI(juce::XmlElement* xml) {
     if (xml != nullptr) {
+      fileName = xml->getStringAttribute("fileName");
       generatorTab = xml->getIntAttribute("generatorTab");
       pitchClass = xml->getIntAttribute("pitchClass");
       specType = xml->getIntAttribute("specType");
@@ -269,6 +270,7 @@ struct ParamUI {
   // Build the XML representation to save in plugin state.
   juce::XmlElement* getXml() {
     juce::XmlElement* xml = new juce::XmlElement("ParamUI");
+    xml->setAttribute("fileName", fileName);
     xml->setAttribute("generatorTab", generatorTab);
     xml->setAttribute("pitchClass", pitchClass);
     xml->setAttribute("specType", specType);
@@ -283,6 +285,7 @@ struct ParamUI {
     return pngWriter.writeImageToStream(specImages[index], outputStream);
   }
 
+  juce::String fileName;
   int generatorTab = 0;
   int pitchClass = 0;
 

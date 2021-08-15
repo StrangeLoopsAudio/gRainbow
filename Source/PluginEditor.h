@@ -63,13 +63,16 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::ImageButton mBtnOpenFile;
   juce::ImageButton mBtnRecord;
   juce::ImageButton mBtnPreset;
-  juce::Label mLabelFilenfo;
+  juce::Label mLabelFileName;
   ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
   GlobalParamBox mGlobalParamBox;
   GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
+
+  // Synth owns, but need to grab params on reloading of plugin
+  ParamUI& mParamUI;
 
   // Bookkeeping
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::NONE;

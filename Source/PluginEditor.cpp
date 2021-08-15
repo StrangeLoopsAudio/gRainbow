@@ -14,12 +14,13 @@
 GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
-      mGlobalParamBox(synth.getParamGlobal()),
-      mGeneratorsBox(synth.getParamsNote(), synth.getParamUI()),
+      mGlobalParamBox(mSynth.getParamGlobal()),
+      mGeneratorsBox(mSynth.getParamsNote(), synth.getParamUI()),
       mArcSpec(synth.getParamsNote(), synth.getParamUI()),
-      mKeyboard(mSynth.getKeyboardState()),
-      mProgressBar(mLoadingProgress) {
-  mCurPitchClass = (Utils::PitchClass)synth.getParamUI().pitchClass;
+      mKeyboard(synth.getKeyboardState()),
+      mProgressBar(mLoadingProgress),
+      mParamUI(synth.getParamUI()) {
+  mCurPitchClass = (Utils::PitchClass)mParamUI.pitchClass;
 
   mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass,
                                     bool isNoteOn) {
@@ -90,11 +91,15 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mBtnPreset.onClick = [this] { savePreset(); };
   addAndMakeVisible(mBtnPreset);
   // don't enable until audio clip is loaded
-  mBtnPreset.setEnabled(false);
+  mBtnPreset.setEnabled(mSynth.checkProcessComplete());
 
   // File info label
-  mLabelFilenfo.setJustificationType(juce::Justification::centred);
-  addAndMakeVisible(mLabelFilenfo);
+  mLabelFileName.setJustificationType(juce::Justification::centred);
+  if (!mParamUI.fileName.isEmpty()) {
+    // Set if saved from reopening plugin
+    mLabelFileName.setText(mParamUI.fileName, juce::dontSendNotification);
+  }
+  addAndMakeVisible(mLabelFileName);
 
   // Generators box
   mGeneratorsBox.onPositionChanged = [this](int gen, bool isRight) {
@@ -227,7 +232,7 @@ void GRainbowAudioProcessorEditor::resized() {
   filePanel.removeFromRight(BTN_PADDING);
   filePanel.removeFromRight(OPEN_FILE_WIDTH);
   // remaining space on sides remaing is for file information
-  mLabelFilenfo.setBounds(filePanel.removeFromTop(BTN_PANEL_HEIGHT));
+  mLabelFileName.setBounds(filePanel.removeFromTop(BTN_PANEL_HEIGHT));
 
   r.removeFromTop(NOTE_DISPLAY_HEIGHT); // Just padding
 
@@ -340,18 +345,17 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       void* specImageData = malloc(maxSpecImageSize);
       jassert(specImageData != nullptr);
       // resize incase the preset is the first thing loaded
-      mSynth.getParamUI().specImages.resize(
-          (size_t)ArcSpectrogram::SpecType::COUNT);
+      mParamUI.specImages.resize((size_t)ArcSpectrogram::SpecType::COUNT);
       input.read(specImageData, header.specImageSpectrogramSize);
-      mSynth.getParamUI().specImages[ArcSpectrogram::SpecType::SPECTROGRAM] =
+      mParamUI.specImages[ArcSpectrogram::SpecType::SPECTROGRAM] =
           juce::PNGImageFormat::loadFrom(specImageData,
                                          header.specImageSpectrogramSize);
       input.read(specImageData, header.specImageHpcpSize);
-      mSynth.getParamUI().specImages[ArcSpectrogram::SpecType::HPCP] =
+      mParamUI.specImages[ArcSpectrogram::SpecType::HPCP] =
           juce::PNGImageFormat::loadFrom(specImageData,
                                          header.specImageHpcpSize);
       input.read(specImageData, header.specImageDetectedSize);
-      mSynth.getParamUI().specImages[ArcSpectrogram::SpecType::DETECTED] =
+      mParamUI.specImages[ArcSpectrogram::SpecType::DETECTED] =
           juce::PNGImageFormat::loadFrom(specImageData,
                                          header.specImageDetectedSize);
       free(specImageData);
@@ -383,7 +387,8 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
   mSynth.processFile(&fileAudioBuffer, sampleRate, preset);
 
   mBtnPreset.setEnabled(true);  // if it wasn't already enabled
-  mLabelFilenfo.setText(file.getFileName(), juce::dontSendNotification);
+  mParamUI.fileName = file.getFileName();
+  mLabelFileName.setText(mParamUI.fileName, juce::dontSendNotification);
 }
 
 void GRainbowAudioProcessorEditor::savePreset() {
@@ -416,18 +421,17 @@ void GRainbowAudioProcessorEditor::savePreset() {
       // internal memory object so the size is know prior to writtin the image
       // data to the stream.
       juce::MemoryOutputStream spectrogramStaging;
-      mSynth.getParamUI().saveSpecImage(spectrogramStaging,
-                                        ArcSpectrogram::SpecType::SPECTROGRAM);
+      mParamUI.saveSpecImage(spectrogramStaging,
+                             ArcSpectrogram::SpecType::SPECTROGRAM);
       header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
 
       juce::MemoryOutputStream hpcpStaging;
-      mSynth.getParamUI().saveSpecImage(hpcpStaging,
-                                        ArcSpectrogram::SpecType::HPCP);
+      mParamUI.saveSpecImage(hpcpStaging, ArcSpectrogram::SpecType::HPCP);
       header.specImageHpcpSize = hpcpStaging.getDataSize();
 
       juce::MemoryOutputStream detectedStaging;
-      mSynth.getParamUI().saveSpecImage(detectedStaging,
-                                        ArcSpectrogram::SpecType::DETECTED);
+      mParamUI.saveSpecImage(detectedStaging,
+                             ArcSpectrogram::SpecType::DETECTED);
       header.specImageDetectedSize = detectedStaging.getDataSize();
 
       // XML structure of preset contains all audio related information
