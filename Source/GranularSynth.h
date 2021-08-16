@@ -134,13 +134,6 @@ class GranularSynth : public juce::AudioProcessor {
   juce::MidiKeyboardState mKeyboardState;
   double mLoadingProgress = 0.0;
 
-  inline bool isProcessingComplete() {
-    for (Utils::SpecBuffer* buf : mProcessedSpecs) {
-      if (buf == nullptr) return false;
-    }
-    return true;
-  }
-
   // Grain control
   long mTotalSamps;
   juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;

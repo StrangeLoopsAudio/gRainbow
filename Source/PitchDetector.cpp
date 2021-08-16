@@ -25,6 +25,7 @@ PitchDetector::~PitchDetector() { stopThread(4000); }
 
 void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate) {
   cancelProcessing();
+  updateProgress(0.01);
   mFileBuffer = fileBuffer;
   mSampleRate = sampleRate;
   mFft.processBuffer(fileBuffer);
@@ -37,11 +38,9 @@ void PitchDetector::cancelProcessing() {
 
 void PitchDetector::run() {
   if (mFileBuffer == nullptr) return;
-  updateProgress(0.0);
   if (!computeHPCP()) return;
   if (onHarmonicProfileReady != nullptr) onHarmonicProfileReady(mHPCP);
   if (!segmentPitches()) return;
-  updateProgress(0.9);
   getSegmentedPitchBuffer();
   updateProgress(1.0);
   if (onPitchesReady != nullptr) onPitchesReady(mPitchMap, mSegmentedPitches);
@@ -78,7 +77,7 @@ bool PitchDetector::computeHPCP() {
   std::vector<std::vector<float>>& spec = mFft.getSpectrum();
   for (int frame = 0; frame < spec.size(); ++frame) {
     if (threadShouldExit()) return false;
-    updateProgress(0.1 + 0.8 * ((float)frame / spec.size()));
+    updateProgress(0.1 + 0.9 * ((float)frame / spec.size()));
     mHPCP.push_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
 
     std::vector<float>& specFrame = mFft.getSpectrum()[frame];

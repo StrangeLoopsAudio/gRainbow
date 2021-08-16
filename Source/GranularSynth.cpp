@@ -315,7 +315,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
 }
 
 void GranularSynth::handleGrainAddRemove(int blockSize) {
-  if (isProcessingComplete()) {
+  if (mLoadingProgress == 1.0) {
     // Add one grain per active note
     for (GrainNote& gNote : mActiveNotes) {
       for (int i = 0; i < gNote.grainTriggers.size(); ++i) {
@@ -395,6 +395,7 @@ void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer, double sa
   // Cancel processing if in progress
   mFft.stopThread(4000);
   mPitchDetector.cancelProcessing();
+  
 
   // resamples the buffer from the file sampler rate to the the proper sampler
   // rate set from the DAW in prepareToPlay
@@ -412,9 +413,12 @@ void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer, double sa
   if (!preset) {
     // Only place that should reset params on loading files/presets
     resetParameters();
+    mLoadingProgress = 0.0;
     mProcessedSpecs.fill(nullptr);
     mFft.processBuffer(&mFileBuffer);
     mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
+  } else {
+    mLoadingProgress = 1.0;
   }
 }
 
