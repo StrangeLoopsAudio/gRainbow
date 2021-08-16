@@ -95,7 +95,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   juce::ComboBox mSpecType;
 
   void onImageComplete(ParamUI::SpecType specType);
-  void grainCreatedCallback(int genIdx, float durationSec, float envGain);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcSpectrogram)
 };

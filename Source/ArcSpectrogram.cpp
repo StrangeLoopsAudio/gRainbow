@@ -222,21 +222,12 @@ void ArcSpectrogram::loadPreset() {
 void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
   mParamsNote.notes[mCurPitchClass]->onGrainCreated = nullptr;
   mParamsNote.notes[pitchClass]->onGrainCreated = [this](int genIdx, float durationSec, float envGain) {
-    grainCreatedCallback(genIdx, durationSec, envGain);
+    if (mArcGrains.size() >= MAX_NUM_GRAINS) return;
+    ParamGenerator* gen = mParamsNote.notes[mCurPitchClass]->generators[genIdx].get();
+    float envIncSamples = ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
+    mArcGrains.add(ArcGrain(gen, envGain, envIncSamples));
   };
+
   mIsPlayingNote = true;
   mCurPitchClass = pitchClass;
-}
-
-void ArcSpectrogram::grainCreatedCallback(int genIdx, float durationSec, float envGain) {
-  if (mArcGrains.size() >= MAX_NUM_GRAINS) return;
-  ParamGenerator* gen = mParamsNote.notes[mCurPitchClass]->generators[genIdx].get();
-  float envIncSamples;
-  if (gen->grainSync->get()) {
-    envIncSamples = ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
-  } else {
-    envIncSamples = ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
-  }
-
-  mArcGrains.add(ArcGrain(gen, envGain, envIncSamples));
 }
