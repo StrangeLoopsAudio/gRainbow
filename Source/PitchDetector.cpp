@@ -39,13 +39,12 @@ void PitchDetector::run() {
   if (mFileBuffer == nullptr) return;
   updateProgress(0.0);
   if (!computeHPCP()) return;
+  if (onHarmonicProfileReady != nullptr) onHarmonicProfileReady(mHPCP);
   if (!segmentPitches()) return;
   updateProgress(0.9);
   getSegmentedPitchBuffer();
-  if (onProcessingComplete != nullptr && !threadShouldExit()) {
-    onProcessingComplete(mHPCP, mSegmentedPitches);
-  }
   updateProgress(1.0);
+  if (onPitchesReady != nullptr) onPitchesReady(mPitchMap, mSegmentedPitches);
 }
 
 void PitchDetector::updateProgress(double progress) {
@@ -60,7 +59,7 @@ void PitchDetector::getSegmentedPitchBuffer() {
     mSegmentedPitches.push_back(std::vector<float>(mHPCP[frame].size(), 0.0f));
   }
   for (Utils::PitchClass i : Utils::ALL_PITCH_CLASS) {
-    std::vector<Pitch>& pitchVec = mPitches.getReference(i);
+    std::vector<Pitch>& pitchVec = mPitchMap.getReference(i);
     for (int j = 0; j < pitchVec.size(); ++j) {
       auto pitch = pitchVec[j];
       auto duration = pitch.duration * mHPCP.size();
@@ -130,7 +129,7 @@ bool PitchDetector::computeHPCP() {
 bool PitchDetector::segmentPitches() {
   if (mHPCP.empty()) return false;
 
-  mPitches.clear();
+  mPitchMap.clear();
   for (int i = 0; i < mSegments.size(); ++i) {
     mSegments[i].isAvailable = true;
   }
@@ -186,7 +185,7 @@ bool PitchDetector::segmentPitches() {
             // Push to completed segments
             float confidence = mSegments[i].salience / (frame - mSegments[i].startFrame);
             if (confidence > maxConfidence) maxConfidence = confidence;
-            mPitches.getReference(pc).push_back(Pitch(pc, (float)mSegments[i].startFrame / mHPCP.size(),
+            mPitchMap.getReference(pc).push_back(Pitch(pc, (float)mSegments[i].startFrame / mHPCP.size(),
                                                       (float)(frame - mSegments[i].startFrame) / mHPCP.size(), confidence));
           }
           // Replace segment with new peak
@@ -210,7 +209,7 @@ bool PitchDetector::segmentPitches() {
 
   // Normalize pitch saliences
   for (Utils::PitchClass i : Utils::ALL_PITCH_CLASS) {
-    std::vector<Pitch>& pitchVec = mPitches.getReference(i);
+    std::vector<Pitch>& pitchVec = mPitchMap.getReference(i);
     for (int j = 0; j < pitchVec.size(); ++j) {
       pitchVec[j].gain /= maxConfidence;
     }

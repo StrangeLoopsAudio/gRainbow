@@ -33,10 +33,13 @@ GranularSynth::GranularSynth()
 
   mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) { mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = &spectrum; };
 
-  mPitchDetector.onProcessingComplete = [this](Utils::SpecBuffer& hpcpBuffer, Utils::SpecBuffer& detectedBuffer) {
+  mPitchDetector.onHarmonicProfileReady = [this](Utils::SpecBuffer& hpcpBuffer) {
     mProcessedSpecs[ParamUI::SpecType::HPCP] = &hpcpBuffer;
-    mProcessedSpecs[ParamUI::SpecType::DETECTED] = &detectedBuffer;
-    createCandidates(mPitchDetector.getPitches());
+  };
+
+  mPitchDetector.onPitchesReady = [this](PitchDetector::PitchMap& pitchMap, std::vector<std::vector<float>>& pitchSpec) {
+    mProcessedSpecs[ParamUI::SpecType::DETECTED] = &pitchSpec;
+    createCandidates(pitchMap);
   };
 
   mPitchDetector.onProgressUpdated = [this](float progress) { mLoadingProgress = progress; };

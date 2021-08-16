@@ -165,6 +165,7 @@ void ArcSpectrogram::run() {
   // pass type as another thread can change member variable right after run() is
   // done
   onImageComplete(mProcessType);
+  mIsProcessing = false;
 }
 
 void ArcSpectrogram::onImageComplete(ParamUI::SpecType specType) {
@@ -194,6 +195,7 @@ void ArcSpectrogram::loadBuffer(Utils::SpecBuffer* buffer, ParamUI::SpecType typ
   if (buffer == nullptr) return;
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   if (mImagesComplete[type]) return;
+
   mProcessType = type;
   mBuffers[mProcessType] = buffer;
 
@@ -207,7 +209,10 @@ void ArcSpectrogram::loadBuffer(Utils::SpecBuffer* buffer, ParamUI::SpecType typ
     mSpecType.setSelectedItemIndex(mProcessType, juce::sendNotification);
   }
   // Only make image if component size has been set
-  if (getWidth() > 0 && getHeight() > 0) startThread();
+  if (getWidth() > 0 && getHeight() > 0) {
+    mIsProcessing = true;
+    startThread();
+  }
 }
 
 // loadBuffer is never called when a preset is loaded

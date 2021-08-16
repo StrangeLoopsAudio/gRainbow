@@ -36,6 +36,7 @@ class PitchDetector : juce::Thread {
  public:
   static constexpr auto MIN_MIDINOTE = 43;
   static constexpr auto MAX_MIDINOTE = 91;
+   
 
   PitchDetector();
   ~PitchDetector();
@@ -49,15 +50,15 @@ class PitchDetector : juce::Thread {
     Pitch(Utils::PitchClass pitchClass, float posRatio, float duration, float gain)
         : pitchClass(pitchClass), posRatio(posRatio), duration(duration), gain(gain) {}
   } Pitch;
+  
+  typedef juce::HashMap<Utils::PitchClass, std::vector<Pitch>> PitchMap;
 
-  std::function<void(std::vector<std::vector<float>>& hpcp, std::vector<std::vector<float>>& segmentedPitches)>
-      onProcessingComplete = nullptr;
-
+  std::function<void(std::vector<std::vector<float>>& hpcp)> onHarmonicProfileReady = nullptr;
+  std::function<void(PitchMap& pitchMap, std::vector<std::vector<float>>& pitchSpec)> onPitchesReady = nullptr;
   std::function<void(double progress)> onProgressUpdated = nullptr;
 
   void processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate);
   void cancelProcessing();
-  juce::HashMap<Utils::PitchClass, std::vector<Pitch>>& getPitches() { return mPitches; }
 
   void run() override;
 
@@ -123,7 +124,7 @@ class PitchDetector : juce::Thread {
   std::array<PitchSegment, NUM_ACTIVE_SEGMENTS> mSegments;
 
   // Hashmap of detected pitches
-  juce::HashMap<Utils::PitchClass, std::vector<Pitch>> mPitches;
+  PitchMap mPitchMap;
 
   void updateProgress(double progress);
   bool computeHPCP();
