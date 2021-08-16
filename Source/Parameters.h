@@ -77,7 +77,6 @@ struct ParamHelper {
 static constexpr auto MAX_CANDIDATES = 6;
 static constexpr auto NUM_NOTES = 12;
 static constexpr auto NUM_GENERATORS = 4;
-static constexpr auto ENV_LUT_SIZE = 128;
 static constexpr auto SOLO_NONE = -1;
 
 struct ParamCandidate {
@@ -116,13 +115,13 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
     grainTilt->removeListener(this);
   }
 
-  void parameterValueChanged(int, float) override { updateGrainEnvelope(); };
+  void parameterValueChanged(int, float) override { updateGrainEnvelopeLUT(); };
   void parameterGestureChanged(int, bool) override {}
 
   void addParams(juce::AudioProcessor& p);
   void addListener(juce::AudioProcessorParameter::Listener* listener);
   void removeListener(juce::AudioProcessorParameter::Listener* listener);
-  void updateGrainEnvelope();
+  void updateGrainEnvelopeLUT();
 
   int noteIdx;
   int genIdx;
@@ -141,7 +140,10 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* decay = nullptr;
   juce::AudioParameterFloat* sustain = nullptr;
   juce::AudioParameterFloat* release = nullptr;
-  std::vector<float> grainEnv;
+
+  // LUT of the grain envelope
+  static constexpr auto ENV_LUT_SIZE = 128;
+  std::vector<float> grainEnvLUT;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGenerator)
 };

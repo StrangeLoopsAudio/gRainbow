@@ -44,12 +44,15 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   p.addParameter(pitchAdjust = new juce::AudioParameterFloat(pitchId, pitchId, ParamRanges::PITCH_ADJUST, 0.0f));
   juce::String positionId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPositionAdjust + juce::String(genIdx);
   p.addParameter(positionAdjust = new juce::AudioParameterFloat(positionId, positionId, ParamRanges::POSITION_ADJUST, 0.0f));
+
+  // Shape and Tilt have listeners as changing then will change the envolope LUT
   juce::String shapeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainShape + juce::String(genIdx);
   p.addParameter(grainShape = new juce::AudioParameterFloat(shapeId, shapeId, juce::NormalisableRange<float>(0.0f, 1.0f), 0.5f));
   grainShape->addListener(this);
   juce::String tiltId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainTilt + juce::String(genIdx);
   p.addParameter(grainTilt = new juce::AudioParameterFloat(tiltId, tiltId, juce::NormalisableRange<float>(0.0f, 1.0f), 0.5f));
   grainTilt->addListener(this);
+
   juce::String rateId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainRate + juce::String(genIdx);
   p.addParameter(grainRate =
                      new juce::AudioParameterFloat(rateId, rateId, ParamRanges::GRAIN_RATE, ParamDefaults::GRAIN_RATE_DEFAULT));
@@ -69,7 +72,7 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String releaseId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genRelease + juce::String(genIdx);
   p.addParameter(release =
                      new juce::AudioParameterFloat(releaseId, releaseId, ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
-  updateGrainEnvelope();
+  updateGrainEnvelopeLUT();
 }
 
 void ParamGenerator::addListener(juce::AudioProcessorParameter::Listener* listener) {
@@ -104,22 +107,29 @@ void ParamGenerator::removeListener(juce::AudioProcessorParameter::Listener* lis
   release->removeListener(listener);
 }
 
-void ParamGenerator::updateGrainEnvelope() {
-  grainEnv.clear();
+void ParamGenerator::updateGrainEnvelopeLUT() {
+  grainEnvLUT.clear();
+  /* LUT divided into 3 parts
+
+               1.0
+              -----
+     rampUp  /     \  rampDown
+            /       \
+  */
   float scaledShape = (grainShape->get() * ENV_LUT_SIZE) / 2.0f;
   float scaledTilt = grainTilt->get() * ENV_LUT_SIZE;
   int rampUpEndSample = juce::jmax(0.0f, scaledTilt - scaledShape);
   int rampDownStartSample = juce::jmin((float)ENV_LUT_SIZE, scaledTilt + scaledShape);
   for (int i = 0; i < ENV_LUT_SIZE; i++) {
     if (i < rampUpEndSample) {
-      grainEnv.push_back((float)i / rampUpEndSample);
+      grainEnvLUT.push_back((float)i / rampUpEndSample);
     } else if (i > rampDownStartSample) {
-      grainEnv.push_back(1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample));
+      grainEnvLUT.push_back(1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample));
     } else {
-      grainEnv.push_back(1.0f);
+      grainEnvLUT.push_back(1.0f);
     }
   }
-  juce::FloatVectorOperations::clip(grainEnv.data(), grainEnv.data(), 0.0f, 1.0f, grainEnv.size());
+  juce::FloatVectorOperations::clip(grainEnvLUT.data(), grainEnvLUT.data(), 0.0f, 1.0f, grainEnvLUT.size());
 }
 
 void ParamNote::addParams(juce::AudioProcessor& p) {

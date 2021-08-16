@@ -357,7 +357,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             float gain = paramGenerator->gain->get();
             float pbRate = paramCandidate->pbRate + paramGenerator->pitchAdjust->get();
             jassert(paramCandidate->pbRate > 0.1f);
-            auto grain = Grain((Utils::GeneratorColour)i, paramGenerator->grainEnv, durSamples, pbRate, posSamples + posOffset,
+            auto grain = Grain((Utils::GeneratorColour)i, paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples + posOffset,
                                mTotalSamps, gain);
             float totalGain =
                 gain * gNote.ampEnv.amplitude * gNote.genAmpEnvs[i].amplitude * gNote.velocity * mParamGlobal.gain->get();

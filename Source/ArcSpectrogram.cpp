@@ -88,27 +88,36 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
   // Draw active grains
   for (ArcGrain& grain : mArcGrains) {
-    ParamCandidate* candidate = mParamsNote.notes[grain.paramGenerator->noteIdx]->getCandidate(grain.paramGenerator->genIdx);
-    float xRatio = candidate->posRatio + (candidate->duration * grain.paramGenerator->positionAdjust->get());
-    float grainProg = (grain.numFramesActive * grain.envIncSamples) / ENV_LUT_SIZE;
-    xRatio += (candidate->duration / candidate->pbRate) * grainProg;
-    float pitchClass = grain.paramGenerator->noteIdx - (std::log(candidate->pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
+    const int noteIdx = grain.paramGenerator->noteIdx;
+    const int genIdx = grain.paramGenerator->genIdx;
+    const ParamCandidate& candidate = *(mParamsNote.notes[noteIdx]->getCandidate(genIdx));
+
+    float xRatio = candidate.posRatio + (candidate.duration * grain.paramGenerator->positionAdjust->get());
+    float grainProg = (grain.numFramesActive * grain.envIncSamples) / ParamGenerator::ENV_LUT_SIZE;
+    xRatio += (candidate.duration / candidate.pbRate) * grainProg;
+    float pitchClass = noteIdx - (std::log(candidate.pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
     float yRatio = (pitchClass + 0.25f + (grain.paramGenerator->pitchAdjust->get() * 6.0f)) / (float)Utils::PitchClass::COUNT;
     int grainRad = startRadius + (yRatio * bowWidth);
     juce::Point<float> grainPoint = centerPoint.getPointOnCircumference(
-        grainRad, (1.5 * juce::MathConstants<float>::pi) + (xRatio * juce::MathConstants<float>::pi));
-    float envIdx = juce::jmin(ENV_LUT_SIZE - 1.0f, grain.numFramesActive * grain.envIncSamples);
-    float grainSize = grain.gain * grain.paramGenerator->grainEnv[envIdx] * MAX_GRAIN_SIZE;
+        grainRad, (1.5f * juce::MathConstants<float>::pi) + (xRatio * juce::MathConstants<float>::pi));
+    float envIdx = juce::jmin(ParamGenerator::ENV_LUT_SIZE - 1.0f, grain.numFramesActive * grain.envIncSamples);
+    float grainSize = grain.gain * grain.paramGenerator->grainEnvLUT[envIdx] * MAX_GRAIN_SIZE;
+
+    // Creates 2 ellipses, the outer ring is the generator color and the inner color is based on the position.
     juce::Rectangle<float> grainRect = juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
-    g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[grain.paramGenerator->genIdx]));
+    // outer ellipse
+    g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[genIdx]));
     g.fillEllipse(grainRect);
-    g.setColour(juce::Colour::fromHSV(yRatio, 1.0, 1.0f, 1.0f));
+    // inner ellipse
+    g.setColour(juce::Colour::fromHSV(yRatio, 1.0f, 1.0f, 1.0f));
     g.fillEllipse(grainRect.reduced(2));
+
     grain.numFramesActive++;
   }
 
   // Remove arc grains that are completed
-  mArcGrains.removeIf([this](ArcGrain& grain) { return (grain.numFramesActive * grain.envIncSamples) > ENV_LUT_SIZE; });
+  mArcGrains.removeIf(
+      [this](ArcGrain& grain) { return (grain.numFramesActive * grain.envIncSamples) > ParamGenerator::ENV_LUT_SIZE; });
 }
 
 void ArcSpectrogram::resized() {
@@ -229,7 +238,7 @@ void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
   mParamsNote.notes[pitchClass]->onGrainCreated = [this](int genIdx, float durationSec, float envGain) {
     if (mArcGrains.size() >= MAX_NUM_GRAINS) return;
     ParamGenerator* gen = mParamsNote.notes[mCurPitchClass]->generators[genIdx].get();
-    float envIncSamples = ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
+    float envIncSamples = ParamGenerator::ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
     mArcGrains.add(ArcGrain(gen, envGain, envIncSamples));
   };
 
