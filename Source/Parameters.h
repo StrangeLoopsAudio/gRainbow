@@ -50,6 +50,8 @@ static juce::NormalisableRange<float> GRAIN_DURATION(0.06f, 0.3f);
 static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
+static juce::NormalisableRange<float> CUTOFF(0.01f, 2.0f);
+static juce::NormalisableRange<float> STRENGTH(0.01f, 2.0f);
 static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
@@ -62,6 +64,8 @@ static float ATTACK_DEFAULT_SEC = 0.2f;
 static float DECAY_DEFAULT_SEC = 0.2f;
 static float SUSTAIN_DEFAULT = 0.8f;
 static float RELEASE_DEFAULT_SEC = 0.2f;
+static float STRENGTH_DEFAULT = 0.5f;
+static float CUTOFF_DEFAULT = 0.5f;
 }  // namespace ParamDefaults
 
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
