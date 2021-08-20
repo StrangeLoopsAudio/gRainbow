@@ -32,7 +32,7 @@ void FilterControl::paint(juce::Graphics& g) {
   g.setFont(14.0f);
 
   // draw filter type rectangles
-  float filterTypeHeight = 40;
+
   float filterTypeWidth = getWidth() / 3 - 1.0f;
   float curStart = 1.0f;
   for (int i = 0; i < 3; i++) {
@@ -40,7 +40,7 @@ void FilterControl::paint(juce::Graphics& g) {
     /*float tabHeight =
         (mCurSelectedTab == i) ? getHeight() + 20.0f : getHeight() - 2.0f;*/
     juce::Rectangle<float> filterTypeRect =
-        juce::Rectangle<float>(curStart, 1.0f, filterTypeWidth, filterTypeHeight);
+        juce::Rectangle<float>(curStart, 1.0f, filterTypeWidth, FILTER_TYPE_BUTTON_HEIGHT);
    /* if (mCurHoverTab == i && mCurSelectedTab != i) {
       g.setColour(tabColour.withAlpha(0.3f));
       g.fillRoundedRectangle(tabRect, 10.0f);
@@ -52,20 +52,17 @@ void FilterControl::paint(juce::Graphics& g) {
 
     switch (i) {
       case 0:
-        g.drawText(juce::String("Low-pass"),
-          filterTypeRect.withHeight(filterTypeHeight),
+        g.drawText(juce::String("Low-pass"), filterTypeRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT),
           juce::Justification::centred);
         break;
 
       case 1:
-        g.drawText(juce::String("Band-pass"),
-          filterTypeRect.withHeight(filterTypeHeight),
+        g.drawText(juce::String("Band-pass"), filterTypeRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT),
           juce::Justification::centred);
         break;
 
       case 2:
-        g.drawText(juce::String("High-pass"),
-          filterTypeRect.withHeight(filterTypeHeight),
+        g.drawText(juce::String("High-pass"), filterTypeRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT),
           juce::Justification::centred);
         break;
     }
@@ -78,12 +75,9 @@ void FilterControl::paint(juce::Graphics& g) {
                            getLocalBounds().getBottomLeft().toFloat(), false));
   // Draw Filter path
 
-  juce::Path filterPath;
-
   // low pass filter only for now
-  filterPath.startNewSubPath(juce::Point<float>(0, filterTypeHeight + 10));
-  filterPath.lineTo(
-      juce::Point<float>(getWidth() * mCutoff, filterTypeHeight + 10));
+  filterPath.startNewSubPath(juce::Point<float>(0, FILTER_TYPE_BUTTON_HEIGHT + 10));
+  filterPath.lineTo(juce::Point<float>(getWidth() * mCutoff, FILTER_TYPE_BUTTON_HEIGHT + 10));
   filterPath.lineTo(filterPath.getCurrentPosition()
                       .translated((1.0 - mStrength) * 0.5f * getWidth(), 0.0f)
                       .withY(getHeight()));
@@ -96,13 +90,13 @@ void FilterControl::paint(juce::Graphics& g) {
   float highlightWidth = 3.0f;
 
   g.setColour(mIsActive ? envColour.brighter() : juce::Colours::darkgrey);
-  g.drawLine(juce::Line<float>(0, filterTypeHeight + 10, 
-                               mCutoff * getWidth(), filterTypeHeight + 10), 
+  g.drawLine(juce::Line<float>(0, FILTER_TYPE_BUTTON_HEIGHT + 10, 
+                               mCutoff * getWidth(), FILTER_TYPE_BUTTON_HEIGHT + 10), 
                                highlightWidth);
 
   g.setColour(mIsActive ? envColour.brighter().brighter()
                         : juce::Colours::darkgrey);
-  g.drawLine(juce::Line<float>(mCutoff * getWidth(), filterTypeHeight + 10,
+  g.drawLine(juce::Line<float>(mCutoff * getWidth(), FILTER_TYPE_BUTTON_HEIGHT + 10,
                                (getWidth() * mCutoff) + (1.0f - mStrength) * 0.5f * getWidth(), getHeight() * 1.0f),
                                highlightWidth);
 }
