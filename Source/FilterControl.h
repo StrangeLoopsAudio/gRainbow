@@ -35,8 +35,9 @@ class FilterControl : public juce::Component {
   bool mIsActive = false;
   float mCutoff = 0.5f;
   float mStrength = 0.5f;
-
+  static constexpr auto FILTER_TYPE_BUTTON_HEIGHT = 40;
   juce::Colour mColour;
+  juce::Path filterPath;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterControl)
 };

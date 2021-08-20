@@ -252,10 +252,39 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mLabelGain.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelGain);
 
-  // FilterControl
-  mLabelFilter.setText("Filter", juce::dontSendNotification);
-  mLabelFilter.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelFilter);
+   /* Cutoff */
+  mSliderCutoff.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderCutoff.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderCutoff.setRotaryParameters(rotaryParams);
+  mSliderCutoff.setRange(0.0, 1.0, 0.01);
+  /*mSliderCutoff.onValueChange = [this] {
+    mEnvelopeAmp.setRelease(mSliderCutoff.getValue());
+    parameterChanged(GranularSynth::ParameterType::RELEASE,
+                     mSliderCutoff.getValue());
+  };*/
+  addAndMakeVisible(mSliderCutoff);
+
+  mLabelCutoff.setText("Cutoff", juce::dontSendNotification);
+  mLabelCutoff.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelCutoff);
+
+  /* Strength */
+  mSliderStrength.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderStrength.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderStrength.setRotaryParameters(rotaryParams);
+  mSliderStrength.setRange(0.0, 1.0, 0.01);
+  /* mSliderStrength.onValueChange = [this] {
+    mEnvelopeAmp.setRelease(mSliderStrength.getValue());
+    parameterChanged(GranularSynth::ParameterType::RELEASE,
+                     mSliderStrength.getValue());
+  }; */
+  addAndMakeVisible(mSliderStrength);
+
+  mLabelStrength.setText("Strength", juce::dontSendNotification);
+  mLabelStrength.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelStrength);
+
+  addAndMakeVisible(mFilterControl);
 
   // set default generator for initialization
   setPitchClass(mCurPitchClass);
@@ -450,9 +479,8 @@ void GeneratorsBox::resized() {
   // Filter Control
   r.removeFromTop(SECTION_TITLE_HEIGHT);
 
-  // Draw Rectangles for filter types
+  mFilterControl.setBounds(r.removeFromTop(FILTER_CONTROL_HEIGHT));
 
-  mFilterControl.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
   r.removeFromTop(PADDING_SIZE);
 
   // Filter env knobs
