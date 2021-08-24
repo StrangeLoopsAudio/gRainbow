@@ -54,6 +54,7 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   static constexpr auto ADJUSTMENT_HEIGHT = 40;
   static constexpr auto TOGGLE_SIZE = 16;
   static constexpr auto LABEL_HEIGHT = 20;
+  static constexpr auto HORIZONTAL_SLIDER_HEIGHT = 15;
   static constexpr auto ENVELOPE_HEIGHT = 60;
   static constexpr auto SECTION_TITLE_HEIGHT = 20;
   static constexpr auto SECTION_AMP_ENV_TITLE = "amplitude envelope";
@@ -97,10 +98,14 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   std::array<juce::ToggleButton, Utils::GeneratorColour::NUM_GEN> mBtnsEnabled;
   // -- Generator Adjustments
   PositionChanger mPositionChanger;
-  juce::Slider mSliderPitch;
-  juce::Label mLabelPitch;
-  juce::Slider mSliderPosition;
-  juce::Label mLabelPosition;
+  juce::Slider mSliderPitchAdjust;
+  juce::Label mLabelPitchAdjust;
+  juce::Slider mSliderPitchSpray;
+  juce::Label mLabelPitchSpray;
+  juce::Slider mSliderPosAdjust;
+  juce::Label mLabelPosAdjust;
+  juce::Slider mSliderPosSpray;
+  juce::Label mLabelPosSpray;
   // -- Grain Env
   juce::Slider mSliderShape;
   juce::Label mLabelShape;

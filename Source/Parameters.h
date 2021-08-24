@@ -20,7 +20,9 @@ static juce::String genEnable{"_enable_gen_"};
 static juce::String genGain{"_gain_gen_"};
 static juce::String genCandidate{"_candidate_gen_"};
 static juce::String genPitchAdjust{"_pitch_adjust_gen_"};
+static juce::String genPitchSpray{"_pitch_spray_gen_"};
 static juce::String genPositionAdjust{"_position_adjust_gen_"};
+static juce::String genPositionSpray{"_position_spray_gen_"};
 static juce::String genGrainShape{"_grain_shape_gen_"};
 static juce::String genGrainTilt{"_grain_tilt_gen_"};
 static juce::String genGrainRate{"_grain_rate_gen_"};
@@ -40,7 +42,9 @@ static juce::String globalRelease{"global_release"};
 
 namespace ParamRanges {
 static juce::NormalisableRange<float> PITCH_ADJUST(-0.25f, 0.25f);
+static juce::NormalisableRange<float> PITCH_SPRAY(0.0f, 0.1f);
 static juce::NormalisableRange<float> POSITION_ADJUST(-0.5f, 0.5f);
+static juce::NormalisableRange<float> POSITION_SPRAY(0.0f, 0.3f);
 static juce::NormalisableRange<float> GRAIN_RATE(0.25f, 1.0f);
 static juce::NormalisableRange<float> GRAIN_DURATION(0.06f, 0.3f);
 static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
@@ -50,6 +54,7 @@ static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
 namespace ParamDefaults {
+static float POSITION_SPRAY_DEFAULT = 0.01f;
 static float GRAIN_RATE_DEFAULT = 0.5f;
 static float GRAIN_DURATION_DEFAULT = 0.1f;
 static float GAIN_DEFAULT = 0.8f;
@@ -130,7 +135,9 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* gain = nullptr;
   juce::AudioParameterInt* candidate = nullptr;
   juce::AudioParameterFloat* pitchAdjust = nullptr;
+  juce::AudioParameterFloat* pitchSpray = nullptr;
   juce::AudioParameterFloat* positionAdjust = nullptr;
+  juce::AudioParameterFloat* positionSpray = nullptr;
   juce::AudioParameterFloat* grainShape = nullptr;
   juce::AudioParameterFloat* grainTilt = nullptr;
   juce::AudioParameterFloat* grainRate = nullptr;

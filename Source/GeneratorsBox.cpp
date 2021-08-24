@@ -61,32 +61,58 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mLabelGain.setEnabled(enabled);
 
   // Adjust pitch
-  mSliderPitch.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderPitch.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderPitch.setRotaryParameters(rotaryParams);
-  mSliderPitch.setNumDecimalPlacesToDisplay(2);
-  mSliderPitch.setRange(ParamRanges::PITCH_ADJUST.start, ParamRanges::PITCH_ADJUST.end, 0.01);
-  mSliderPitch.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->pitchAdjust, mSliderPitch.getValue()); };
-  addAndMakeVisible(mSliderPitch);
+  mSliderPitchAdjust.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderPitchAdjust.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderPitchAdjust.setRotaryParameters(rotaryParams);
+  mSliderPitchAdjust.setNumDecimalPlacesToDisplay(2);
+  mSliderPitchAdjust.setRange(ParamRanges::PITCH_ADJUST.start, ParamRanges::PITCH_ADJUST.end, 0.01);
+  mSliderPitchAdjust.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->pitchAdjust, mSliderPitchAdjust.getValue()); };
+  addAndMakeVisible(mSliderPitchAdjust);
 
-  mLabelPitch.setText("Pitch Adjust", juce::dontSendNotification);
-  mLabelPitch.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelPitch);
+  mLabelPitchAdjust.setText("Pitch Adjust", juce::dontSendNotification);
+  mLabelPitchAdjust.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelPitchAdjust);
+
+  // Pitch spray
+  mSliderPitchSpray.setTextValueSuffix("cents");
+  mSliderPitchSpray.setSliderStyle(juce::Slider::SliderStyle::LinearBar);
+  mSliderPitchSpray.setNumDecimalPlacesToDisplay(3);
+  mSliderPitchSpray.setRange(ParamRanges::PITCH_SPRAY.start, ParamRanges::PITCH_SPRAY.end, 0.005);
+  mSliderPitchSpray.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->pitchSpray, mSliderPitchSpray.getValue()); };
+  addAndMakeVisible(mSliderPitchSpray);
+
+  mLabelPitchSpray.setText("Pitch Spray", juce::dontSendNotification);
+  mLabelPitchSpray.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelPitchSpray);
 
   // Adjust position
-  mSliderPosition.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderPosition.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderPosition.setRotaryParameters(rotaryParams);
-  mSliderPosition.setNumDecimalPlacesToDisplay(2);
-  mSliderPosition.setRange(ParamRanges::POSITION_ADJUST.start, ParamRanges::POSITION_ADJUST.end, 0.01);
-  mSliderPosition.onValueChange = [this] {
-    ParamHelper::setParam(getCurrentGenerator()->positionAdjust, mSliderPosition.getValue());
+  mSliderPosAdjust.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderPosAdjust.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderPosAdjust.setRotaryParameters(rotaryParams);
+  mSliderPosAdjust.setNumDecimalPlacesToDisplay(2);
+  mSliderPosAdjust.setRange(ParamRanges::POSITION_ADJUST.start, ParamRanges::POSITION_ADJUST.end, 0.01);
+  mSliderPosAdjust.onValueChange = [this] {
+    ParamHelper::setParam(getCurrentGenerator()->positionAdjust, mSliderPosAdjust.getValue());
   };
-  addAndMakeVisible(mSliderPosition);
+  addAndMakeVisible(mSliderPosAdjust);
 
-  mLabelPosition.setText("Position Adjust", juce::dontSendNotification);
-  mLabelPosition.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelPosition);
+  mLabelPosAdjust.setText("Position Adjust", juce::dontSendNotification);
+  mLabelPosAdjust.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelPosAdjust);
+
+  // Position spray
+  mSliderPosSpray.setTextValueSuffix("s");
+  mSliderPosSpray.setSliderStyle(juce::Slider::SliderStyle::LinearBar);
+  mSliderPosSpray.setNumDecimalPlacesToDisplay(3);
+  mSliderPosSpray.setRange(ParamRanges::POSITION_SPRAY.start, ParamRanges::POSITION_SPRAY.end, 0.005);
+  mSliderPosSpray.onValueChange = [this] {
+    ParamHelper::setParam(getCurrentGenerator()->positionSpray, mSliderPosSpray.getValue());
+  };
+  addAndMakeVisible(mSliderPosSpray);
+
+  mLabelPosSpray.setText("Position Spray", juce::dontSendNotification);
+  mLabelPosSpray.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelPosSpray);
 
   // Shape
   mSliderShape.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
@@ -289,7 +315,7 @@ void GeneratorsBox::paint(juce::Graphics& g) {
 
   // Adjustments section title
   juce::Rectangle<int> adjustTitleRect =
-      juce::Rectangle<int>(0, mSliderPitch.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(), SECTION_TITLE_HEIGHT)
+      juce::Rectangle<int>(0, mSliderPitchAdjust.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(), SECTION_TITLE_HEIGHT)
           .reduced(PADDING_SIZE, PADDING_SIZE / 2);
   g.setColour(fillCol);
   g.fillRect(adjustTitleRect);
@@ -335,18 +361,22 @@ void GeneratorsBox::resized() {
   r.removeFromRight(PADDING_SIZE);
   r.removeFromBottom(PADDING_SIZE);
 
-  // Enable and solo buttons
+  // Generator adjustments
   r.removeFromTop(SECTION_TITLE_HEIGHT);
-  auto adjustmentsPanel = r.removeFromTop(ADJUSTMENT_HEIGHT + LABEL_HEIGHT);
+  auto adjustmentsPanel = r.removeFromTop(ADJUSTMENT_HEIGHT + 2 * LABEL_HEIGHT + HORIZONTAL_SLIDER_HEIGHT);
   int adjustKnobWidth = adjustmentsPanel.getWidth() / 3;
-  auto pitchKnobPanel = adjustmentsPanel.removeFromLeft(adjustKnobWidth);
-  mLabelPitch.setBounds(pitchKnobPanel.removeFromBottom(LABEL_HEIGHT));
-  mSliderPitch.setBounds(pitchKnobPanel.withSizeKeepingCentre(pitchKnobPanel.getHeight() * 2, pitchKnobPanel.getHeight()));
-  auto posKnobPanel = adjustmentsPanel.removeFromRight(adjustKnobWidth);
-  mLabelPosition.setBounds(posKnobPanel.removeFromBottom(LABEL_HEIGHT));
-  mSliderPosition.setBounds(posKnobPanel.withSizeKeepingCentre(posKnobPanel.getHeight() * 2, posKnobPanel.getHeight()));
+  auto pitchPanel = adjustmentsPanel.removeFromLeft(adjustKnobWidth);
+  mLabelPitchSpray.setBounds(pitchPanel.removeFromBottom(LABEL_HEIGHT));
+  mSliderPitchSpray.setBounds(pitchPanel.removeFromBottom(HORIZONTAL_SLIDER_HEIGHT));
+  mLabelPitchAdjust.setBounds(pitchPanel.removeFromBottom(LABEL_HEIGHT));
+  mSliderPitchAdjust.setBounds(pitchPanel.withSizeKeepingCentre(pitchPanel.getHeight() * 2, pitchPanel.getHeight()));
+  auto posPanel = adjustmentsPanel.removeFromRight(adjustKnobWidth);
+  mLabelPosSpray.setBounds(posPanel.removeFromBottom(LABEL_HEIGHT));
+  mSliderPosSpray.setBounds(posPanel.removeFromBottom(HORIZONTAL_SLIDER_HEIGHT));
+  mLabelPosAdjust.setBounds(posPanel.removeFromBottom(LABEL_HEIGHT));
+  mSliderPosAdjust.setBounds(posPanel.withSizeKeepingCentre(posPanel.getHeight() * 2, posPanel.getHeight()));
   mPositionChanger.setBounds(
-      adjustmentsPanel.withSizeKeepingCentre(adjustmentsPanel.getWidth(), adjustmentsPanel.getHeight() / 1.5f));
+      adjustmentsPanel.withSizeKeepingCentre(adjustmentsPanel.getWidth(), adjustmentsPanel.getHeight() / 2.0f));
 
   r.removeFromTop(PADDING_SIZE);
 
@@ -449,8 +479,10 @@ void GeneratorsBox::timerCallback() {
     }
     mPositionChanger.setSolo(mParamsNote.notes[mCurPitchClass]->soloIdx->get() == mCurSelectedGenerator);
     mPositionChanger.setPositionNumber(gen.candidate->get());
-    mSliderPitch.setValue(gen.pitchAdjust->get(), juce::dontSendNotification);
-    mSliderPosition.setValue(gen.positionAdjust->get(), juce::dontSendNotification);
+    mSliderPitchAdjust.setValue(gen.pitchAdjust->get(), juce::dontSendNotification);
+    mSliderPitchSpray.setValue(gen.pitchSpray->get(), juce::dontSendNotification);
+    mSliderPosAdjust.setValue(gen.positionAdjust->get(), juce::dontSendNotification);
+    mSliderPosSpray.setValue(gen.positionSpray->get(), juce::dontSendNotification);
     mSliderShape.setValue(gen.grainShape->get(), juce::dontSendNotification);
     mEnvelopeGrain.setShape(gen.grainShape->get());
     mSliderTilt.setValue(gen.grainTilt->get(), juce::dontSendNotification);
@@ -512,14 +544,24 @@ void GeneratorsBox::refreshState() {
   bool componentsLit = mParamsNote.notes[mCurPitchClass]->shouldPlayGenerator(mCurSelectedGenerator);
   juce::Colour knobColour =
       componentsLit ? juce::Colour(Utils::GENERATOR_COLOURS_HEX[mCurSelectedGenerator]) : juce::Colours::darkgrey;
-  mSliderPitch.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderPitch.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+  mSliderPitchAdjust.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
+  mSliderPitchAdjust.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                          componentsLit ? knobColour.brighter() : juce::Colours::darkgrey);
-  mLabelPitch.setEnabled(componentsLit);
-  mSliderPosition.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderPosition.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
+  mLabelPitchAdjust.setEnabled(componentsLit);
+  mSliderPitchSpray.setColour(juce::Slider::ColourIds::trackColourId, knobColour);
+  mSliderPitchSpray.setColour(juce::Slider::ColourIds::textBoxOutlineColourId, knobColour);
+  mSliderPitchSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId,
+                            componentsLit ? juce::Colours::white : juce::Colours::darkgrey);
+  mLabelPitchSpray.setEnabled(componentsLit);
+  mSliderPosAdjust.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
+  mSliderPosAdjust.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                             componentsLit ? knobColour.brighter() : juce::Colours::darkgrey);
-  mLabelPosition.setEnabled(componentsLit);
+  mLabelPosAdjust.setEnabled(componentsLit);
+  mSliderPosSpray.setColour(juce::Slider::ColourIds::trackColourId, knobColour);
+  mSliderPosSpray.setColour(juce::Slider::ColourIds::textBoxOutlineColourId, knobColour);
+  mSliderPosSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId,
+                            componentsLit ? juce::Colours::white : juce::Colours::darkgrey);
+  mLabelPosSpray.setEnabled(componentsLit);
   mPositionChanger.setActive(componentsLit);
 
   mEnvelopeAmp.setActive(componentsLit);

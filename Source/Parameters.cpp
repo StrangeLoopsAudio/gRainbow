@@ -40,10 +40,15 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
                                                       ParamDefaults::GAIN_DEFAULT));
   juce::String candidateId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genCandidate + juce::String(genIdx);
   p.addParameter(candidate = new juce::AudioParameterInt(candidateId, candidateId, 0, MAX_CANDIDATES - 1, genIdx));
-  juce::String pitchId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchAdjust + juce::String(genIdx);
-  p.addParameter(pitchAdjust = new juce::AudioParameterFloat(pitchId, pitchId, ParamRanges::PITCH_ADJUST, 0.0f));
-  juce::String positionId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPositionAdjust + juce::String(genIdx);
-  p.addParameter(positionAdjust = new juce::AudioParameterFloat(positionId, positionId, ParamRanges::POSITION_ADJUST, 0.0f));
+  juce::String pitchAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchAdjust + juce::String(genIdx);
+  p.addParameter(pitchAdjust = new juce::AudioParameterFloat(pitchAdjustId, pitchAdjustId, ParamRanges::PITCH_ADJUST, 0.0f));
+  juce::String pitchSprayId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchSpray + juce::String(genIdx);
+  p.addParameter(pitchSpray = new juce::AudioParameterFloat(pitchSprayId, pitchSprayId, ParamRanges::PITCH_SPRAY, 0.0f));
+  juce::String posAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPositionAdjust + juce::String(genIdx);
+  p.addParameter(positionAdjust = new juce::AudioParameterFloat(posAdjustId, posAdjustId, ParamRanges::POSITION_ADJUST, 0.0f));
+  juce::String posSprayId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPositionSpray + juce::String(genIdx);
+  p.addParameter(positionSpray = new juce::AudioParameterFloat(posSprayId, posSprayId, ParamRanges::POSITION_SPRAY,
+                                                               ParamDefaults::POSITION_SPRAY_DEFAULT));
 
   // Shape and Tilt have listeners as changing then will change the envolope LUT
   juce::String shapeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainShape + juce::String(genIdx);
@@ -79,7 +84,9 @@ void ParamGenerator::addListener(juce::AudioProcessorParameter::Listener* listen
   gain->addListener(listener);
   candidate->addListener(listener);
   pitchAdjust->addListener(listener);
+  pitchSpray->addListener(listener);
   positionAdjust->addListener(listener);
+  positionSpray->addListener(listener);
   grainShape->addListener(listener);
   grainTilt->addListener(listener);
   grainRate->addListener(listener);
@@ -95,7 +102,9 @@ void ParamGenerator::removeListener(juce::AudioProcessorParameter::Listener* lis
   gain->removeListener(listener);
   candidate->removeListener(listener);
   pitchAdjust->removeListener(listener);
+  pitchSpray->removeListener(listener);
   positionAdjust->removeListener(listener);
+  positionSpray->removeListener(listener);
   grainShape->removeListener(listener);
   grainTilt->removeListener(listener);
   grainRate->removeListener(listener);
@@ -178,7 +187,9 @@ void ParamsNote::resetParams() {
       ParamHelper::setParam(generator->gain, ParamDefaults::GAIN_DEFAULT);
       ParamHelper::setParam(generator->candidate, generator->genIdx);
       ParamHelper::setParam(generator->pitchAdjust, 0.0f);
+      ParamHelper::setParam(generator->pitchSpray, 0.0f);
       ParamHelper::setParam(generator->positionAdjust, 0.0f);
+      ParamHelper::setParam(generator->positionSpray, ParamDefaults::POSITION_SPRAY_DEFAULT);
       ParamHelper::setParam(generator->grainShape, 0.5f);
       ParamHelper::setParam(generator->grainTilt, 0.5f);
       ParamHelper::setParam(generator->grainRate, ParamDefaults::GRAIN_RATE_DEFAULT);

@@ -343,26 +343,31 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           if (paramCandidate != nullptr && mParamsNote.notes[gNote.pitchClass]->shouldPlayGenerator(i) &&
               gNote.grains.size() < MAX_GRAINS) {
             float durSamples = mSampleRate * durSec * (1.0f / paramCandidate->pbRate);
-            /* Commented out random spray for now to test consistency
+            /* Position calculation */
             juce::Random random;
-
-             = juce::jmap(random.nextFloat(), 0.0f,
-                                         (paramCandidate->duration->get() *
-                                          mFileBuffer.getNumSamples()) -
-                                             durSamples); */
-            float posSamples = paramCandidate->posRatio * mFileBuffer.getNumSamples();
-            float posOffset = paramGenerator->positionAdjust->get() * durSamples;
-
-            // TODO: normalize the gain or something
-            float gain = paramGenerator->gain->get();
-            float pbRate = paramCandidate->pbRate + paramGenerator->pitchAdjust->get();
+            float posSprayOffset =
+                juce::jmap(random.nextFloat(), ParamRanges::POSITION_SPRAY.start, paramGenerator->positionSpray->get()) *
+                mSampleRate;
+            if (random.nextFloat() > 0.5f) posSprayOffset = -posSprayOffset;
+            float posOffset = paramGenerator->positionAdjust->get() * durSamples + posSprayOffset;
+            float posSamples = paramCandidate->posRatio * mFileBuffer.getNumSamples() + posOffset;
+            
+            /* Pitch calculation */
+            float pitchSprayOffset = juce::jmap(random.nextFloat(), 0.0f, paramGenerator->pitchSpray->get());
+            if (random.nextFloat() > 0.5f) pitchSprayOffset = -pitchSprayOffset;
+            float pbRate = paramCandidate->pbRate + paramGenerator->pitchAdjust->get() + pitchSprayOffset;
             jassert(paramCandidate->pbRate > 0.1f);
-            auto grain = Grain((Utils::GeneratorColour)i, paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples + posOffset,
-                               mTotalSamps, gain);
-            float totalGain =
-                gain * gNote.ampEnv.amplitude * gNote.genAmpEnvs[i].amplitude * gNote.velocity * mParamGlobal.gain->get();
-            mParamsNote.notes[gNote.pitchClass]->grainCreated(i, durSec / pbRate, totalGain);
+
+            /* Add grain */
+            auto grain = Grain((Utils::GeneratorColour)i, paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples,
+                               mTotalSamps, paramGenerator->gain->get());
             gNote.grains.add(grain);
+
+            /* Trigger grain in arcspec */
+            float totalGain = paramGenerator->gain->get() * gNote.ampEnv.amplitude * gNote.genAmpEnvs[i].amplitude *
+                              gNote.velocity * mParamGlobal.gain->get();
+            mParamsNote.notes[gNote.pitchClass]->grainCreated(i, durSec / pbRate, totalGain);
+            
           }
           // Reset trigger ts
           if (paramGenerator->grainSync->get()) {
