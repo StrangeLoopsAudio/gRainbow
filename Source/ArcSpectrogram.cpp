@@ -103,9 +103,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     float envIdx = juce::jmin(ParamGenerator::ENV_LUT_SIZE - 1.0f, grain.numFramesActive * grain.envIncSamples);
     float grainSize = grain.gain * grain.paramGenerator->grainEnvLUT[envIdx] * MAX_GRAIN_SIZE;
 
-    // Creates 2 ellipses, the outer ring is the generator color and the inner color is based on the position.
     juce::Rectangle<float> grainRect = juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
-    // outer ellipse
     g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[genIdx]));
     g.drawEllipse(grainRect, 2.0f);
 
@@ -224,6 +222,7 @@ void ArcSpectrogram::loadBuffer(Utils::SpecBuffer* buffer, ParamUI::SpecType typ
 // loadBuffer is never called when a preset is loaded
 void ArcSpectrogram::loadPreset() {
   // make visible if preset was loaded first
+  mParamUI.specComplete = true;
   mSpecType.setVisible(true);
   mProcessType = (ParamUI::SpecType)mParamUI.specType;
   mSpecType.setSelectedItemIndex(mProcessType, juce::dontSendNotification);

@@ -359,6 +359,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       mSynth.setPresetParamsXml(xmlData, xmlSize);
       free(xmlData);
 
+      mBtnPreset.setEnabled(true);
       mArcSpec.loadPreset();
     }
   } else {
