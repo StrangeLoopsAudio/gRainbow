@@ -69,12 +69,14 @@ static float DECAY_DEFAULT_SEC = 0.2f;
 static float SUSTAIN_DEFAULT = 0.8f;
 static float RELEASE_DEFAULT_SEC = 0.2f;
 static float STRENGTH_DEFAULT = 0.5f;
-static float CUTOFF_DEFAULT = 50000.0f;
-static juce::String FILTER_TYPE_DEFAULT = "low_pass";
+static float LOW_PASS_CUTOFF_DEFAULT = 5000.0f;
+static float HIGH_PASS_CUTOFF_DEFAULT = 800.0f;
+static float BAND_PASS_CUTOFF_DEFAULT = 100.0f;
+static juce::String FILTER_TYPE_DEFAULT = "none";
 }  // namespace ParamDefaults
 
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
-static juce::Array<juce::String> FILTER_TYPE_NAMES{"low_pass", "high_pass", "band_pass"};
+static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "low_pass", "high_pass", "band_pass"};
 
 struct ParamHelper {
   static juce::String getParamID(juce::AudioProcessorParameter* param) {
