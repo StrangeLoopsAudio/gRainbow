@@ -107,10 +107,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     juce::Rectangle<float> grainRect = juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
     // outer ellipse
     g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[genIdx]));
-    g.fillEllipse(grainRect);
-    // inner ellipse
-    g.setColour(juce::Colour::fromHSV(yRatio, 1.0f, 1.0f, 1.0f));
-    g.fillEllipse(grainRect.reduced(2));
+    g.drawEllipse(grainRect, 2.0f);
 
     grain.numFramesActive++;
   }
