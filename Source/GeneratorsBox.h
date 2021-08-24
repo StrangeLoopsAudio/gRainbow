@@ -67,7 +67,7 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
 
   // Bookkeeping
   Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
-  Utils::GeneratorColour mCurSelectedGenerator = Utils::GeneratorColour::BLUE;
+  int mCurSelectedGenerator = 0;
   int mCurHoverGenerator = -1;
   std::atomic<bool> mParamHasChanged;
 
@@ -95,7 +95,7 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
 
   // UI Components
   // -- Generator Tabs
-  std::array<juce::ToggleButton, Utils::GeneratorColour::NUM_GEN> mBtnsEnabled;
+  std::array<juce::ToggleButton, NUM_GENERATORS> mBtnsEnabled;
   // -- Generator Adjustments
   PositionChanger mPositionChanger;
   juce::Slider mSliderPitchAdjust;
@@ -130,7 +130,7 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   juce::Slider mSliderGain;
   juce::Label mLabelGain;
 
-  void changeGenerator(Utils::GeneratorColour newGenerator);
+  void changeGenerator(int newGenerator);
   void refreshState();
   inline ParamGenerator* getCurrentGenerator() {
     return mParamsNote.notes[mCurPitchClass]->generators[mCurSelectedGenerator].get();

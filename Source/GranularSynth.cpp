@@ -359,7 +359,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             jassert(paramCandidate->pbRate > 0.1f);
 
             /* Add grain */
-            auto grain = Grain((Utils::GeneratorColour)i, paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples,
+            auto grain = Grain(i, paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples,
                                mTotalSamps, paramGenerator->gain->get());
             gNote.grains.add(grain);
 

@@ -17,7 +17,6 @@ namespace Utils {
 typedef std::vector<std::vector<float>> SpecBuffer;
 
 // Tetradic colours
-enum GeneratorColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_GEN };
 static constexpr juce::int64 GENERATOR_COLOURS_HEX[4] = {0xFF52C4FF, 0xFFE352FF, 0xFFFF8D52, 0xFF6EFF52};
 
 enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };

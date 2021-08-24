@@ -19,7 +19,7 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
       mSliderRate(ParamRanges::GRAIN_RATE),
       mSliderDuration(ParamRanges::GRAIN_DURATION) {
   mCurPitchClass = (Utils::PitchClass)paramUI.pitchClass;
-  mCurSelectedGenerator = (Utils::GeneratorColour)paramUI.generatorTab;
+  mCurSelectedGenerator = paramUI.generatorTab;
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
     ParamGenerator* gen = mParamsNote.notes[mCurPitchClass]->generators[i].get();
     mBtnsEnabled[i].setToggleState(gen->enable->get(), juce::dontSendNotification);
@@ -27,7 +27,7 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
     mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId, tabColour);
     mBtnsEnabled[i].onClick = [this, i] {
       if (!mParamsNote.notes[mCurPitchClass]->generators[i]->enable->get()) {
-        changeGenerator((Utils::GeneratorColour)i);
+        changeGenerator(i);
       }
       ParamHelper::setParam(mParamsNote.notes[mCurPitchClass]->generators[i]->enable,
                             !mParamsNote.notes[mCurPitchClass]->generators[i]->enable->get());
@@ -273,9 +273,9 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   g.setColour(juce::Colours::black);
   g.fillRect(0, 0, getWidth(), TABS_HEIGHT);
 
-  float tabWidth = getWidth() / Utils::GeneratorColour::NUM_GEN;
+  float tabWidth = getWidth() / NUM_GENERATORS;
   float curStart = 1.0f;
-  for (int i = 0; i < Utils::GeneratorColour::NUM_GEN; ++i) {
+  for (int i = 0; i < NUM_GENERATORS; ++i) {
     ParamGenerator* gen = mParamsNote.notes[mCurPitchClass]->generators[i].get();
     juce::Colour tabColour = mParamsNote.notes[mCurPitchClass]->shouldPlayGenerator(i)
                                  ? juce::Colour(Utils::GENERATOR_COLOURS_HEX[i])
@@ -309,7 +309,7 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   if (mCurSelectedGenerator > 0) {
     g.drawLine(1.0f, TABS_HEIGHT, mCurSelectedGenerator * tabWidth + 2.0f, TABS_HEIGHT, 2.0f);
   }
-  if (mCurSelectedGenerator < Utils::GeneratorColour::NUM_GEN - 1) {
+  if (mCurSelectedGenerator < NUM_GENERATORS - 1) {
     g.drawLine((mCurSelectedGenerator + 1) * tabWidth - 2.0f, TABS_HEIGHT, getWidth(), TABS_HEIGHT, 2.0f);
   }
 
@@ -347,7 +347,7 @@ void GeneratorsBox::resized() {
 
   // Enable/disable buttons
   juce::Rectangle<int> btnRect = juce::Rectangle<int>(TOGGLE_SIZE, TOGGLE_SIZE);
-  float tabWidth = getWidth() / Utils::GeneratorColour::NUM_GEN - 2.0f;
+  float tabWidth = getWidth() / NUM_GENERATORS - 2.0f;
   float curStart = 1.0f;
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
     mBtnsEnabled[i].setBounds(btnRect.withCentre(juce::Point<int>(curStart + (TOGGLE_SIZE / 2) + 5, TABS_HEIGHT / 2)));
@@ -449,7 +449,7 @@ void GeneratorsBox::mouseMove(const juce::MouseEvent& event) {
   if (event.y > TABS_HEIGHT) {
     mCurHoverGenerator = -1;
   } else {
-    int tabHover = (event.getEventRelativeTo(this).getPosition().getX() / (float)getWidth()) * Utils::GeneratorColour::NUM_GEN;
+    int tabHover = (event.getEventRelativeTo(this).getPosition().getX() / (float)getWidth()) * NUM_GENERATORS;
     mCurHoverGenerator = tabHover;
   }
   repaint();
@@ -464,8 +464,8 @@ void GeneratorsBox::mouseExit(const juce::MouseEvent& event) {
 void GeneratorsBox::mouseUp(const juce::MouseEvent& event) {
   if (event.y > TABS_HEIGHT) return;
   if (event.eventComponent != this) return;
-  int tabClick = (event.getEventRelativeTo(this).getPosition().getX() / (float)getWidth()) * Utils::GeneratorColour::NUM_GEN;
-  changeGenerator((Utils::GeneratorColour)tabClick);
+  int tabClick = (event.getEventRelativeTo(this).getPosition().getX() / (float)getWidth()) * NUM_GENERATORS;
+  changeGenerator(tabClick);
 }
 
 void GeneratorsBox::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
@@ -511,7 +511,7 @@ void GeneratorsBox::timerCallback() {
   }
 }
 
-void GeneratorsBox::changeGenerator(Utils::GeneratorColour newGenerator) {
+void GeneratorsBox::changeGenerator(int newGenerator) {
   if (newGenerator == mCurSelectedGenerator) return;
   // Remove listener from old generator
   getCurrentGenerator()->removeListener(this);

@@ -39,7 +39,7 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     juce::Colour outlineCol = slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
     g.setColour(outlineCol);
     rainbowPath.clear();
-    rainbowPath.addCentredArc(width / 2.0f, height, (width / 2.0f) - 2, (width / 2.0f) - 2, 0, startRadians, endRadians, true);
+    rainbowPath.addCentredArc(width / 2.0f, height, (width / 2.0f) - 2, (width / 2.0f) - 2, 0, startRadians, 2.5f * juce::MathConstants<float>::pi, true);
     g.strokePath(rainbowPath, juce::PathStrokeType(3));
 
     // Draw text label inside arc
