@@ -77,6 +77,17 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String releaseId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genRelease + juce::String(genIdx);
   p.addParameter(release =
                      new juce::AudioParameterFloat(releaseId, releaseId, ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
+  juce::String cutoffId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genCutoff + juce::String(genIdx);
+  p.addParameter(cutoff = 
+                     new juce::AudioParameterFloat(cutoffId, cutoffId, ParamRanges::CUTOFF, ParamDefaults::LOW_PASS_CUTOFF_DEFAULT));
+  juce::String strengthId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genStrength + juce::String(genIdx);
+  p.addParameter(strength =
+                     new juce::AudioParameterFloat(strengthId, strengthId, ParamRanges::STRENGTH, ParamDefaults::STRENGTH_DEFAULT));
+  juce::String filterTypeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genCutoff + juce::String(genIdx);
+  p.addParameter(filterType = 
+                     new juce::AudioParameterChoice(filterTypeId, filterTypeId, FILTER_TYPE_NAMES, 0));
+
+
   updateGrainEnvelopeLUT();
 }
 

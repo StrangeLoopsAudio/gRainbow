@@ -32,6 +32,9 @@ static juce::String genAttack{"_attack_gen_"};
 static juce::String genDecay{"_decay_gen_"};
 static juce::String genSustain{"_sustain_gen_"};
 static juce::String genRelease{"_release_gen_"};
+static juce::String genCutoff{"_cutoff_gen_"};
+static juce::String genStrength{"_strength_gen_"};
+static juce::String genFilterType{"_filter_type_gen_"};
 // Global params
 static juce::String globalGain{"global_gain"};
 static juce::String globalAttack{"global_attack"};
@@ -50,8 +53,8 @@ static juce::NormalisableRange<float> GRAIN_DURATION(0.06f, 0.3f);
 static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
-static juce::NormalisableRange<float> CUTOFF(0.01f, 2.0f);
-static juce::NormalisableRange<float> STRENGTH(0.01f, 2.0f);
+static juce::NormalisableRange<float> CUTOFF(100.0f, 10000.0f);
+static juce::NormalisableRange<float> STRENGTH(0.01f, 1.0f);
 static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
@@ -65,10 +68,12 @@ static float DECAY_DEFAULT_SEC = 0.2f;
 static float SUSTAIN_DEFAULT = 0.8f;
 static float RELEASE_DEFAULT_SEC = 0.2f;
 static float STRENGTH_DEFAULT = 0.5f;
-static float CUTOFF_DEFAULT = 0.5f;
+static float CUTOFF_DEFAULT = 50000.0f;
+static juce::String FILTER_TYPE_DEFAULT = "low_pass";
 }  // namespace ParamDefaults
 
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
+static juce::Array<juce::String> FILTER_TYPE_NAMES{"low_pass", "high_pass", "band_pass"};
 
 struct ParamHelper {
   static juce::String getParamID(juce::AudioProcessorParameter* param) {
@@ -151,6 +156,9 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* decay = nullptr;
   juce::AudioParameterFloat* sustain = nullptr;
   juce::AudioParameterFloat* release = nullptr;
+  juce::AudioParameterFloat* strength = nullptr;
+  juce::AudioParameterFloat* cutoff = nullptr;
+  juce::AudioParameterChoice* filterType = nullptr;
 
   // LUT of the grain envelope
   static constexpr auto ENV_LUT_SIZE = 128;
