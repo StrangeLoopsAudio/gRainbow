@@ -20,9 +20,7 @@ static juce::String genEnable{"_enable_gen_"};
 static juce::String genGain{"_gain_gen_"};
 static juce::String genCandidate{"_candidate_gen_"};
 static juce::String genPitchAdjust{"_pitch_adjust_gen_"};
-static juce::String genPitchSpray{"_pitch_spray_gen_"};
 static juce::String genPositionAdjust{"_position_adjust_gen_"};
-static juce::String genPositionSpray{"_position_spray_gen_"};
 static juce::String genGrainShape{"_grain_shape_gen_"};
 static juce::String genGrainTilt{"_grain_tilt_gen_"};
 static juce::String genGrainRate{"_grain_rate_gen_"};
@@ -45,9 +43,7 @@ static juce::String globalRelease{"global_release"};
 
 namespace ParamRanges {
 static juce::NormalisableRange<float> PITCH_ADJUST(-0.25f, 0.25f);
-static juce::NormalisableRange<float> PITCH_SPRAY(0.0f, 0.1f);
 static juce::NormalisableRange<float> POSITION_ADJUST(-0.5f, 0.5f);
-static juce::NormalisableRange<float> POSITION_SPRAY(0.0f, 0.3f);
 static juce::NormalisableRange<float> GRAIN_RATE(0.25f, 1.0f);
 static juce::NormalisableRange<float> GRAIN_DURATION(0.06f, 0.3f);
 static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
@@ -69,12 +65,14 @@ static float DECAY_DEFAULT_SEC = 0.2f;
 static float SUSTAIN_DEFAULT = 0.8f;
 static float RELEASE_DEFAULT_SEC = 0.2f;
 static float STRENGTH_DEFAULT = 0.5f;
-static float CUTOFF_DEFAULT = 50000.0f;
-static juce::String FILTER_TYPE_DEFAULT = "low_pass";
+static float LOW_PASS_CUTOFF_DEFAULT = 5000.0f;
+static float HIGH_PASS_CUTOFF_DEFAULT = 800.0f;
+static float BAND_PASS_CUTOFF_DEFAULT = 100.0f;
+static juce::String FILTER_TYPE_DEFAULT = "none";
 }  // namespace ParamDefaults
 
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
-static juce::Array<juce::String> FILTER_TYPE_NAMES{"low_pass", "high_pass", "band_pass"};
+static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "low_pass", "high_pass", "band_pass"};
 
 struct ParamHelper {
   static juce::String getParamID(juce::AudioProcessorParameter* param) {
@@ -145,9 +143,7 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* gain = nullptr;
   juce::AudioParameterInt* candidate = nullptr;
   juce::AudioParameterFloat* pitchAdjust = nullptr;
-  juce::AudioParameterFloat* pitchSpray = nullptr;
   juce::AudioParameterFloat* positionAdjust = nullptr;
-  juce::AudioParameterFloat* positionSpray = nullptr;
   juce::AudioParameterFloat* grainShape = nullptr;
   juce::AudioParameterFloat* grainTilt = nullptr;
   juce::AudioParameterFloat* grainRate = nullptr;
