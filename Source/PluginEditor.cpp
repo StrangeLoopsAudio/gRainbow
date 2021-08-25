@@ -15,6 +15,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
       mGlobalParamBox(mSynth.getParamGlobal()),
+      mNoteGrid(mSynth.getParamsNote()),
       mGeneratorsBox(mSynth.getParamsNote(), synth.getParamUI()),
       mArcSpec(synth.getParamsNote(), synth.getParamUI()),
       mKeyboard(synth.getKeyboardState()),
@@ -79,6 +80,9 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   // Global parameter box
   addAndMakeVisible(mGlobalParamBox);
+
+  // Note grid
+  addAndMakeVisible(mNoteGrid);
 
   // Arc spectrogram
   mArcSpec.onImagesComplete = [this]() {
@@ -204,7 +208,8 @@ void GRainbowAudioProcessorEditor::resized() {
   mGeneratorsBox.setBounds(leftPanel);
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
-  mGlobalParamBox.setBounds(rightPanel);
+  mGlobalParamBox.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2));
+  mNoteGrid.setBounds(rightPanel);
 
   // Open and record buttons
   auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT + BTN_PADDING);

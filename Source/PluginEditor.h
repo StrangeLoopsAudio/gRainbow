@@ -15,6 +15,7 @@
 #include "Fft.h"
 #include "GeneratorsBox.h"
 #include "GlobalParamBox.h"
+#include "NoteGrid.h"
 #include "RainbowKeyboard.h"
 #include "RainbowLookAndFeel.h"
 #include "TransientDetector.h"
@@ -72,6 +73,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor, public j
   RainbowKeyboard mKeyboard;
   juce::ProgressBar mProgressBar;
   GlobalParamBox mGlobalParamBox;
+  NoteGrid mNoteGrid;
   GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
 

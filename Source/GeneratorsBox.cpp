@@ -273,6 +273,7 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   g.setColour(juce::Colours::black);
   g.fillRect(0, 0, getWidth(), TABS_HEIGHT);
 
+  // Generator tabs
   float tabWidth = getWidth() / NUM_GENERATORS;
   float curStart = 1.0f;
   for (int i = 0; i < NUM_GENERATORS; ++i) {
@@ -302,15 +303,15 @@ void GeneratorsBox::paint(juce::Graphics& g) {
 
   // Black out extended tabs with black rect
   g.setColour(juce::Colours::black);
-  g.fillRect(2.0f, (float)TABS_HEIGHT, (float)getWidth() - 4.0f, 30.0f);
+  g.fillRect(2.0f, TABS_HEIGHT + 1.0f, (float)getWidth() - 4.0f, 30.0f);
 
   // Lines to connect to tab
   g.setColour(fillCol);
   if (mCurSelectedGenerator > 0) {
-    g.drawLine(1.0f, TABS_HEIGHT, mCurSelectedGenerator * tabWidth + 2.0f, TABS_HEIGHT, 2.0f);
+    g.drawLine(0.0f, TABS_HEIGHT + 1.0f, mCurSelectedGenerator * tabWidth + 2.0f, TABS_HEIGHT + 1.0f, 2.0f);
   }
   if (mCurSelectedGenerator < NUM_GENERATORS - 1) {
-    g.drawLine((mCurSelectedGenerator + 1) * tabWidth - 2.0f, TABS_HEIGHT, getWidth(), TABS_HEIGHT, 2.0f);
+    g.drawLine((mCurSelectedGenerator + 1) * tabWidth - 2.0f, TABS_HEIGHT + 1.0f, getWidth(), TABS_HEIGHT + 1.0f, 2.0f);
   }
 
   // Adjustments section title

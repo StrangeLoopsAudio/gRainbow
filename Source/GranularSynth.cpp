@@ -428,8 +428,9 @@ void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer, double sa
 }
 
 int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
-  int pos = mParamsNote.notes[mCurPitchClass]->generators[boxNum]->candidate->get();
   int numCandidates = mParamsNote.notes[mCurPitchClass]->candidates.size();
+  int pos = mParamsNote.notes[mCurPitchClass]->generators[boxNum]->candidate->get();
+  if (numCandidates == 0) return pos;
   int newPos = lookRight ? pos + 1 : pos - 1;
   newPos = (newPos + numCandidates) % numCandidates;
   ParamHelper::setParam(mParamsNote.notes[mCurPitchClass]->generators[boxNum]->candidate, newPos);

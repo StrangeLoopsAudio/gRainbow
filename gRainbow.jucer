@@ -7,6 +7,8 @@
   <MAINGROUP id="SNaS8k" name="gRainbow">
     <GROUP id="{595D4325-C686-1839-D048-A225A7FE150A}" name="Source">
       <GROUP id="{5E1AB70E-1865-A28B-6DCD-3168747A76FD}" name="Components">
+        <FILE id="GqrDVH" name="NoteGrid.cpp" compile="1" resource="0" file="Source/NoteGrid.cpp"/>
+        <FILE id="gsT0kQ" name="NoteGrid.h" compile="0" resource="0" file="Source/NoteGrid.h"/>
         <FILE id="KGvt5z" name="GlobalParamBox.cpp" compile="1" resource="0"
               file="Source/GlobalParamBox.cpp"/>
         <FILE id="B9m0eJ" name="GlobalParamBox.h" compile="0" resource="0"
