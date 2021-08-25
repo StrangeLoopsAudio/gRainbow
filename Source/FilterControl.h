@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 #include "Utils.h"
+#include "Parameters.h"
 
 //==============================================================================
 /*

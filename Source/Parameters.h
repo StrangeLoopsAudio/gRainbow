@@ -54,7 +54,7 @@ static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
 static juce::NormalisableRange<float> CUTOFF(100.0f, 10000.0f);
-static juce::NormalisableRange<float> STRENGTH(0.01f, 1.0f);
+static juce::NormalisableRange<float> STRENGTH(0.0f, 1.0f);
 static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
@@ -76,7 +76,8 @@ static juce::String FILTER_TYPE_DEFAULT = "none";
 }  // namespace ParamDefaults
 
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
-static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "low_pass", "high_pass", "band_pass"};
+static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "lowpass", "highpass", "bandpass"};
+static enum FilterTypes {NONE, LOWPASS, HIGHPASS, BANDPASS};
 
 struct ParamHelper {
   static juce::String getParamID(juce::AudioProcessorParameter* param) {
@@ -89,12 +90,14 @@ struct ParamHelper {
   static void setParam(juce::AudioParameterFloat* param, float newValue) { *param = newValue; }
   static void setParam(juce::AudioParameterInt* param, int newValue) { *param = newValue; }
   static void setParam(juce::AudioParameterBool* param, bool newValue) { *param = newValue; }
+  static void setParam(juce::AudioParameterChoice* param, int newValue) { *param = newValue; }
 };
 
 static constexpr auto MAX_CANDIDATES = 6;
 static constexpr auto NUM_NOTES = 12;
 static constexpr auto NUM_GENERATORS = 4;
 static constexpr auto SOLO_NONE = -1;
+static constexpr auto NUM_FILTER_TYPES = 3;
 
 struct ParamCandidate {
   float posRatio;
