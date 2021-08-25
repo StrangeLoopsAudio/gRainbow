@@ -107,6 +107,9 @@ void ParamGenerator::addListener(juce::AudioProcessorParameter::Listener* listen
   decay->addListener(listener);
   sustain->addListener(listener);
   release->addListener(listener);
+  cutoff->addListener(listener);
+  strength->addListener(listener);
+  filterType->addListener(listener);
 }
 
 void ParamGenerator::removeListener(juce::AudioProcessorParameter::Listener* listener) {
@@ -125,6 +128,9 @@ void ParamGenerator::removeListener(juce::AudioProcessorParameter::Listener* lis
   decay->removeListener(listener);
   sustain->removeListener(listener);
   release->removeListener(listener);
+  cutoff->removeListener(listener);
+  strength->removeListener(listener);
+  filterType->removeListener(listener);
 }
 
 void ParamGenerator::updateGrainEnvelopeLUT() {
@@ -210,6 +216,9 @@ void ParamsNote::resetParams() {
       ParamHelper::setParam(generator->decay, ParamDefaults::DECAY_DEFAULT_SEC);
       ParamHelper::setParam(generator->sustain, ParamDefaults::SUSTAIN_DEFAULT);
       ParamHelper::setParam(generator->release, ParamDefaults::RELEASE_DEFAULT_SEC);
+      ParamHelper::setParam(generator->cutoff, ParamDefaults::LOW_PASS_CUTOFF_DEFAULT);
+      ParamHelper::setParam(generator->strength, ParamDefaults::STRENGTH_DEFAULT);
+      ParamHelper::setParam(generator->filterType, 0);
     }
     note->candidates.clear();
     ParamHelper::setParam(note->soloIdx, SOLO_NONE);
