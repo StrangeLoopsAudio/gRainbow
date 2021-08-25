@@ -83,7 +83,7 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String strengthId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genStrength + juce::String(genIdx);
   p.addParameter(strength =
                      new juce::AudioParameterFloat(strengthId, strengthId, ParamRanges::STRENGTH, ParamDefaults::STRENGTH_DEFAULT));
-  juce::String filterTypeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genCutoff + juce::String(genIdx);
+  juce::String filterTypeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterType + juce::String(genIdx);
   p.addParameter(filterType = 
                      new juce::AudioParameterChoice(filterTypeId, filterTypeId, FILTER_TYPE_NAMES, 0));
 
