@@ -49,23 +49,9 @@ void FilterControl::paint(juce::Graphics& g) {
     g.drawRoundedRectangle(filterTypeRect, 10.0f, 2.0f);
 
     g.setColour(juce::Colours::white);
-
-    switch (i) {
-      case 0:
-        g.drawText(juce::String("Low-pass"), filterTypeRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT),
-          juce::Justification::centred);
-        break;
-
-      case 1:
-        g.drawText(juce::String("Band-pass"), filterTypeRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT),
-          juce::Justification::centred);
-        break;
-
-      case 2:
-        g.drawText(juce::String("High-pass"), filterTypeRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT),
-          juce::Justification::centred);
-        break;
-    }
+    g.drawText(FILTER_TYPE_NAMES[i+1], filterTypeRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT),
+      juce::Justification::centred);
+    
     curStart += filterTypeWidth + 1.0f;
   }
 
@@ -121,5 +107,9 @@ void FilterControl::setStrength(float strength) {
 
 void FilterControl::setColour(juce::Colour colour) {
   mColour = colour;
+  repaint();
+
+}void FilterControl::setFilterType(FilterType filterType) {
+  mFilterType = filterType;
   repaint();
 }

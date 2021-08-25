@@ -77,7 +77,6 @@ static juce::String FILTER_TYPE_DEFAULT = "none";
 
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
 static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "lowpass", "highpass", "bandpass"};
-static enum FilterTypes {NONE, LOWPASS, HIGHPASS, BANDPASS};
 
 struct ParamHelper {
   static juce::String getParamID(juce::AudioProcessorParameter* param) {

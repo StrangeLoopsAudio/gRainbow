@@ -25,17 +25,20 @@ class FilterControl : public juce::Component {
   void paint(juce::Graphics&) override;
   void resized() override;
 
+  //static enum FilterType { NONE, LOWPASS, HIGHPASS, BANDPASS };
   void setActive(bool isActive);
   void setCutoff(float cutoff);
   void setStrength(float strength);
   void setColour(juce::Colour colour);
-  
+  void setFilterType(Utils::FilterType filterType);
+
  private:
 
    /* Parameters */
   bool mIsActive = false;
-  float mCutoff = 0.5f;
-  float mStrength = 0.5f;
+  float mCutoff = ParamDefaults::LOW_PASS_CUTOFF_DEFAULT;
+  float mStrength = ParamDefaults::STRENGTH_DEFAULT;
+  Utils::FilterType mFilterType = Utils::FilterType::NONE;
   static constexpr auto FILTER_TYPE_BUTTON_HEIGHT = 40;
   juce::Colour mColour;
   juce::Path filterPath;
