@@ -36,9 +36,9 @@ class FilterControl : public juce::Component {
 
    /* Parameters */
   bool mIsActive = false;
-  float mCutoff = ParamDefaults::LOW_PASS_CUTOFF_DEFAULT;
+  float mCutoff = 0.5f;
   float mStrength = ParamDefaults::STRENGTH_DEFAULT;
-  Utils::FilterType mFilterType = Utils::FilterType::NONE;
+  Utils::FilterType mFilterType = Utils::FilterType::EMPTY;
   static constexpr auto FILTER_TYPE_BUTTON_HEIGHT = 40;
   juce::Colour mColour;
   juce::Path filterPath;
