@@ -33,44 +33,54 @@ void FilterControl::paint(juce::Graphics& g) {
 
   // draw filter type rectangles
 
-  float filterTypeWidth = getWidth() / 3 - 1.0f;
-  float curStart = 1.0f;
-  for (int i = 0; i < 3; i++) {
+  float totalButtonWidth = getWidth() - 4 * PADDING_SIZE;
+  float filterTypeWidth = totalButtonWidth / 3;
+
     juce::Colour tabColour = juce::Colours::darkgrey;
     /*float tabHeight =
         (mCurSelectedTab == i) ? getHeight() + 20.0f : getHeight() - 2.0f;*/
-    juce::Rectangle<float> filterTypeRect =
-        juce::Rectangle<float>(curStart, 1.0f, filterTypeWidth, FILTER_TYPE_BUTTON_HEIGHT);
+
+      mLowPassRect = juce::Rectangle<float>(PADDING_SIZE, 1.0f, filterTypeWidth, FILTER_TYPE_BUTTON_HEIGHT);
+      g.setColour(tabColour);
+      g.drawRoundedRectangle(mLowPassRect, 10.0f, 2.0f);
+      g.setColour(juce::Colours::white);
+      g.drawText(FILTER_TYPE_NAMES[1], mLowPassRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT), juce::Justification::centred);
+      g.drawRoundedRectangle(mLowPassRect, 10.0f, 2.0f);
+
+      mHighPassRect = juce::Rectangle<float>(2*PADDING_SIZE + filterTypeWidth, 1.0f, filterTypeWidth, FILTER_TYPE_BUTTON_HEIGHT);
+      g.setColour(tabColour);
+      g.drawRoundedRectangle(mHighPassRect, 10.0f, 2.0f);
+      g.setColour(juce::Colours::white);
+      g.drawText(FILTER_TYPE_NAMES[2], mHighPassRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT), juce::Justification::centred);
+      g.drawRoundedRectangle(mHighPassRect, 10.0f, 2.0f);
+
+      mBandPassRect = juce::Rectangle<float>(3*PADDING_SIZE + 2*filterTypeWidth, 1.0f, filterTypeWidth, FILTER_TYPE_BUTTON_HEIGHT);
+      g.setColour(tabColour);
+      g.drawRoundedRectangle(mBandPassRect, 10.0f, 2.0f);
+      g.setColour(juce::Colours::white);
+      g.drawText(FILTER_TYPE_NAMES[3], mBandPassRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT), juce::Justification::centred);
+      g.drawRoundedRectangle(mBandPassRect, 10.0f, 2.0f);
+
    /* if (mCurHoverTab == i && mCurSelectedTab != i) {
       g.setColour(tabColour.withAlpha(0.3f));
       g.fillRoundedRectangle(tabRect, 10.0f);
     }*/
-    g.setColour(tabColour);
-    g.drawRoundedRectangle(filterTypeRect, 10.0f, 2.0f);
-
-    g.setColour(juce::Colours::white);
-    g.drawText(FILTER_TYPE_NAMES[i+1], filterTypeRect.withHeight(FILTER_TYPE_BUTTON_HEIGHT),
-      juce::Justification::centred);
-    
-    curStart += filterTypeWidth + 1.0f;
-  }
 
   g.setFillType(
       juce::ColourGradient(envColour, getLocalBounds().getTopLeft().toFloat(),
                            envColour.withAlpha(0.4f),
                            getLocalBounds().getBottomLeft().toFloat(), false));
   // Draw Filter path
-
-  // low pass filter only for now
-  filterPath.startNewSubPath(juce::Point<float>(0, FILTER_TYPE_BUTTON_HEIGHT + 10));
-  filterPath.lineTo(juce::Point<float>(getWidth() * mCutoff, FILTER_TYPE_BUTTON_HEIGHT + 10));
- /* filterPath.lineTo(filterPath.getCurrentPosition()
-                      .translated((1.0 - mStrength) * 0.5f * getWidth(), 0.0f)
+  juce::Path mFilterPath;
+  mFilterPath.startNewSubPath(juce::Point<float>(0, FILTER_TYPE_BUTTON_HEIGHT + 10));
+  mFilterPath.lineTo(juce::Point<float>(getWidth() * mCutoff, FILTER_TYPE_BUTTON_HEIGHT + 10));
+  mFilterPath.lineTo(mFilterPath.getCurrentPosition()
+                      .translated((1.0 - mResonance) * 0.5f * getWidth(), 0.0f)
                       .withY(getHeight()));
-  filterPath.lineTo(juce::Point<float>(0, getHeight()));
-  filterPath.lineTo(juce::Point<float>(0, 0));*/
-  filterPath.closeSubPath();
-  //g.fillPath(filterPath);
+  mFilterPath.lineTo(juce::Point<float>(0, getHeight()));
+  mFilterPath.lineTo(juce::Point<float>(0, 0));
+  mFilterPath.closeSubPath();
+  g.fillPath(mFilterPath);
 
   // Draw highlights on top of path
   float highlightWidth = 3.0f;
@@ -83,12 +93,16 @@ void FilterControl::paint(juce::Graphics& g) {
   g.setColour(mIsActive ? envColour.brighter().brighter()
                         : juce::Colours::darkgrey);
   g.drawLine(juce::Line<float>(mCutoff * getWidth(), FILTER_TYPE_BUTTON_HEIGHT + 10,
-                               (getWidth() * mCutoff) + (1.0f - mStrength) * 0.5f * getWidth(), getHeight() * 1.0f),
+                               (getWidth() * mCutoff) + (1.0f - mResonance) * 0.5f * getWidth(), getHeight() * 1.0f),
                                highlightWidth);
 }
 
 void FilterControl::resized() {
 }
+
+void FilterControl::mouseMove(const juce::MouseEvent& event) { repaint(); }
+void FilterControl::mouseExit(const juce::MouseEvent& event) { repaint(); }
+void FilterControl::mouseUp(const juce::MouseEvent& event) { repaint(); }
 
 void FilterControl::setActive(bool isActive) {
   mIsActive = isActive;
@@ -100,8 +114,8 @@ void FilterControl::setCutoff(float cutoff) {
   repaint();
 }
 
-void FilterControl::setStrength(float strength) {
-  mStrength = strength; 
+void FilterControl::setResonance(float Resonance) {
+  mResonance = Resonance; 
   repaint();
 }
 
