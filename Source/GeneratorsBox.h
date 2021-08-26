@@ -135,8 +135,8 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   FilterControl mFilterControl;
   juce::Slider mSliderCutoff;
   juce::Label mLabelCutoff;
-  juce::Slider mSliderStrength;
-  juce::Label mLabelStrength;
+  juce::Slider mSliderResonance;
+  juce::Label mLabelResonance;
 
   void changeGenerator(int newGenerator);
   void refreshState();

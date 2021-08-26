@@ -266,21 +266,21 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mLabelCutoff.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelCutoff);
 
-  /* Strength */
-  mSliderStrength.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderStrength.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderStrength.setRotaryParameters(rotaryParams);
-  mSliderStrength.setRange(0.0, 1.0, 0.01);
-  /* mSliderStrength.onValueChange = [this] {
-    mEnvelopeAmp.setRelease(mSliderStrength.getValue());
+  /* Resonance */
+  mSliderResonance.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderResonance.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderResonance.setRotaryParameters(rotaryParams);
+  mSliderResonance.setRange(0.0, 1.0, 0.01);
+  /* mSliderResonance.onValueChange = [this] {
+    mEnvelopeAmp.setRelease(mSliderResonance.getValue());
     parameterChanged(GranularSynth::ParameterType::RELEASE,
-                     mSliderStrength.getValue());
+                     mSliderResonance.getValue());
   }; */
-  addAndMakeVisible(mSliderStrength);
+  addAndMakeVisible(mSliderResonance);
 
-  mLabelStrength.setText("Strength", juce::dontSendNotification);
-  mLabelStrength.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelStrength);
+  mLabelResonance.setText("Resonance", juce::dontSendNotification);
+  mLabelResonance.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelResonance);
 
   addAndMakeVisible(mFilterControl);
 
@@ -486,13 +486,13 @@ void GeneratorsBox::resized() {
   knobPanel = r.removeFromTop(knobWidth / 2);
   knobPanel.removeFromLeft(knobWidth);
   mSliderCutoff.setBounds(knobPanel.removeFromLeft(knobWidth));
-  mSliderStrength.setBounds(knobPanel.removeFromLeft(knobWidth));
+  mSliderResonance.setBounds(knobPanel.removeFromLeft(knobWidth));
   knobPanel.removeFromLeft(knobWidth);
 
   labelPanel = r.removeFromTop(LABEL_HEIGHT);
   labelPanel.removeFromLeft(knobWidth);
   mLabelCutoff.setBounds(labelPanel.removeFromLeft(knobWidth));
-  mLabelStrength.setBounds(labelPanel.removeFromLeft(knobWidth));
+  mLabelResonance.setBounds(labelPanel.removeFromLeft(knobWidth));
   labelPanel.removeFromLeft(knobWidth);
 }
 
@@ -665,7 +665,7 @@ void GeneratorsBox::refreshState() {
   mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderGain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  mSliderStrength.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
+  mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mLabelShape.setEnabled(componentsLit);
   mLabelTilt.setEnabled(componentsLit);
   mLabelRate.setEnabled(componentsLit);

@@ -257,7 +257,7 @@ PitchDetector::Peak PitchDetector::interpolatePeak(int frame, int bin) {
 // From essentia:
 // Builds a weighting table of harmonic contribution. Higher harmonics
 // contribute less and the fundamental frequency has a full harmonic
-// strength of 1.0.
+// Strength of 1.0.
 void PitchDetector::initHarmonicWeights() {
   mHarmonicWeights.clear();
 

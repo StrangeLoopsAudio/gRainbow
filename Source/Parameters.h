@@ -33,7 +33,7 @@ static juce::String genDecay{"_decay_gen_"};
 static juce::String genSustain{"_sustain_gen_"};
 static juce::String genRelease{"_release_gen_"};
 static juce::String genCutoff{"_cutoff_gen_"};
-static juce::String genStrength{"_strength_gen_"};
+static juce::String genResonance{"_Resonance_gen_"};
 static juce::String genFilterType{"_filter_type_gen_"};
 // Global params
 static juce::String globalGain{"global_gain"};
@@ -54,7 +54,7 @@ static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
 static juce::NormalisableRange<float> CUTOFF(100.0f, 10000.0f);
-static juce::NormalisableRange<float> STRENGTH(0.0f, 1.0f);
+static juce::NormalisableRange<float> Resonance(0.0f, 1.0f);
 static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
@@ -68,7 +68,7 @@ static float ATTACK_DEFAULT_SEC = 0.2f;
 static float DECAY_DEFAULT_SEC = 0.2f;
 static float SUSTAIN_DEFAULT = 0.8f;
 static float RELEASE_DEFAULT_SEC = 0.2f;
-static float STRENGTH_DEFAULT = 0.5f;
+static float Resonance_DEFAULT = 0.5f;
 static float LOW_PASS_CUTOFF_DEFAULT = 5000.0f;
 static float HIGH_PASS_CUTOFF_DEFAULT = 800.0f;
 static float BAND_PASS_CUTOFF_DEFAULT = 100.0f;
@@ -161,7 +161,7 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* decay = nullptr;
   juce::AudioParameterFloat* sustain = nullptr;
   juce::AudioParameterFloat* release = nullptr;
-  juce::AudioParameterFloat* strength = nullptr;
+  juce::AudioParameterFloat* Resonance = nullptr;
   juce::AudioParameterFloat* cutoff = nullptr;
   juce::AudioParameterChoice* filterType = nullptr;
 

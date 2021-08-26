@@ -80,9 +80,9 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String cutoffId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genCutoff + juce::String(genIdx);
   p.addParameter(cutoff = 
                      new juce::AudioParameterFloat(cutoffId, cutoffId, ParamRanges::CUTOFF, ParamDefaults::LOW_PASS_CUTOFF_DEFAULT));
-  juce::String strengthId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genStrength + juce::String(genIdx);
-  p.addParameter(strength =
-                     new juce::AudioParameterFloat(strengthId, strengthId, ParamRanges::STRENGTH, ParamDefaults::STRENGTH_DEFAULT));
+  juce::String ResonanceId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genResonance + juce::String(genIdx);
+  p.addParameter(Resonance =
+                     new juce::AudioParameterFloat(ResonanceId, ResonanceId, ParamRanges::Resonance, ParamDefaults::Resonance_DEFAULT));
   juce::String filterTypeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterType + juce::String(genIdx);
   p.addParameter(filterType = 
                      new juce::AudioParameterChoice(filterTypeId, filterTypeId, FILTER_TYPE_NAMES, 0));
@@ -108,7 +108,7 @@ void ParamGenerator::addListener(juce::AudioProcessorParameter::Listener* listen
   sustain->addListener(listener);
   release->addListener(listener);
   cutoff->addListener(listener);
-  strength->addListener(listener);
+  Resonance->addListener(listener);
   filterType->addListener(listener);
 }
 
@@ -129,7 +129,7 @@ void ParamGenerator::removeListener(juce::AudioProcessorParameter::Listener* lis
   sustain->removeListener(listener);
   release->removeListener(listener);
   cutoff->removeListener(listener);
-  strength->removeListener(listener);
+  Resonance->removeListener(listener);
   filterType->removeListener(listener);
 }
 
@@ -217,7 +217,7 @@ void ParamsNote::resetParams() {
       ParamHelper::setParam(generator->sustain, ParamDefaults::SUSTAIN_DEFAULT);
       ParamHelper::setParam(generator->release, ParamDefaults::RELEASE_DEFAULT_SEC);
       ParamHelper::setParam(generator->cutoff, ParamDefaults::LOW_PASS_CUTOFF_DEFAULT);
-      ParamHelper::setParam(generator->strength, ParamDefaults::STRENGTH_DEFAULT);
+      ParamHelper::setParam(generator->Resonance, ParamDefaults::Resonance_DEFAULT);
       ParamHelper::setParam(generator->filterType, 0);
     }
     note->candidates.clear();
