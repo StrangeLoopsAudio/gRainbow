@@ -256,12 +256,10 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderCutoff.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderCutoff.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderCutoff.setRotaryParameters(rotaryParams);
-  mSliderCutoff.setRange(0.0, 1.0, 0.01);
-  /*mSliderCutoff.onValueChange = [this] {
-    mEnvelopeAmp.setRelease(mSliderCutoff.getValue());
-    parameterChanged(GranularSynth::ParameterType::RELEASE,
-                     mSliderCutoff.getValue());
-  };*/
+  mSliderCutoff.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, 0.01);
+  mSliderCutoff.onValueChange = [this] {
+    ParamHelper::setParam(getCurrentGenerator()->cutoff, mSliderCutoff.getValue());
+  };
   addAndMakeVisible(mSliderCutoff);
 
   mLabelCutoff.setText("Cutoff", juce::dontSendNotification);
@@ -576,8 +574,10 @@ void GeneratorsBox::timerCallback() {
     mEnvelopeAmp.setRelease(ParamRanges::RELEASE.convertTo0to1(gen.release->get()));
     mSliderGain.setValue(gen.gain->get(), juce::dontSendNotification);
     mEnvelopeAmp.setGain(gen.gain->get());
-    mFilterControl.setCutoff(gen.cutoff->get());
-    mFilterControl.setFilterType(gen.filterType->get());
+    mSliderCutoff.setValue(gen.cutoff->get(), juce::dontSendNotification);
+    mFilterControl.setCutoff(ParamRanges::CUTOFF.convertTo0to1(gen.cutoff->get()));
+    //mFilterControl.setCutoff(gen.cutoff->get());
+    //mFilterControl.setFilterType(gen.filterType->getCurrentChoiceName());
     refreshState();
   }
 }
@@ -664,6 +664,8 @@ void GeneratorsBox::refreshState() {
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderGain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
+  mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
+  mSliderStrength.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mLabelShape.setEnabled(componentsLit);
   mLabelTilt.setEnabled(componentsLit);
   mLabelRate.setEnabled(componentsLit);

@@ -32,7 +32,7 @@ enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
 // All util logic around the notes/pitchClasses
 enum PitchClass { NONE = -1, C = 0, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, COUNT };
 
-static enum FilterType { NONE, LOWPASS, HIGHPASS, BANDPASS };
+enum FilterType { EMPTY, LOWPASS, HIGHPASS, BANDPASS };
 
 // Use initializer_list to do "for (PitchClass key : ALL_PITCH_CLASS)" logic
 static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
