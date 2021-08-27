@@ -253,10 +253,11 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   addAndMakeVisible(mLabelGain);
 
    /* Cutoff */
+  //mSliderCutoff.setTextValueSuffix("Hz");
   mSliderCutoff.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderCutoff.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderCutoff.setRotaryParameters(rotaryParams);
-  mSliderCutoff.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, 0.01);
+  mSliderCutoff.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, 1.00f);
   mSliderCutoff.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->cutoff, mSliderCutoff.getValue());
   };
