@@ -42,9 +42,9 @@ class FilterControl : public juce::Component {
    /* Parameters */
   bool mIsActive = false;
   float mCutoff = 50000.0f;
-  float mResonance = ParamDefaults::Resonance_DEFAULT;
+  float mResonance = ParamDefaults::RESONANCE_DEFAULT;
   Utils::FilterType mFilterType = Utils::FilterType::NO_FILTER;
-  static constexpr auto FILTER_TYPE_BUTTON_HEIGHT = 40;
+  static constexpr auto FILTER_TYPE_BUTTON_HEIGHT = 30;
   juce::Colour mColour;
   
   juce::Rectangle<float> mLowPassRect;
@@ -53,6 +53,7 @@ class FilterControl : public juce::Component {
   int mFilter = 0;
   Utils::FilterType mCurHoverFilterType = Utils::NO_FILTER;
   Utils::FilterType mCurSelectedFilterType = Utils::NO_FILTER;
+
   static constexpr auto PADDING_SIZE = 6;
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterControl)
 };
