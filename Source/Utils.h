@@ -20,12 +20,10 @@ typedef std::vector<std::vector<float>> SpecBuffer;
 // american gold, light silver, metallic bronze, rich purple
 static constexpr juce::int64 GENERATOR_COLOURS_HEX[4] = {0xFFD6AF36, 0xFFD7D7D7, 0xFFA77044, 0xFFA34827};
 
-enum FilterType { LOWPASS, HIGHPASS, BANDPASS };
+//enum FilterType { LOWPASS, HIGHPASS, BANDPASS };
 
 // Tetradic colours
 enum GeneratorColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_GEN };
-
-
 
 enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
 
