@@ -168,6 +168,17 @@ void FilterControl::mouseUp(const juce::MouseEvent& event) {
     mFilterType = Utils::FilterType::NO_FILTER;
   } else {
     mFilterType = newFilterType;
+    switch (mFilterType) { 
+      case (Utils::FilterType::LOWPASS):
+        mCutoff = ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::LOW_PASS_CUTOFF_DEFAULT);
+        break;
+      case (Utils::FilterType::HIGHPASS):
+        mCutoff = ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::HIGH_PASS_CUTOFF_DEFAULT);
+        break;
+      case (Utils::FilterType::BANDPASS):
+        mCutoff = ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::BAND_PASS_CUTOFF_DEFAULT);
+        break;
+    }
   }
   repaint(); 
 }
