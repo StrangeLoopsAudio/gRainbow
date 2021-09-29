@@ -46,9 +46,6 @@ class FilterControl : public juce::Component {
   Utils::FilterType mFilterType = Utils::FilterType::NO_FILTER;
   static constexpr auto FILTER_TYPE_BUTTON_HEIGHT = 30;
   juce::Colour mColour;
-  /*LP: 5000Hz
-BP: 800Hz
-HP: 100Hz*/
   juce::Rectangle<float> mLowPassRect;
   juce::Rectangle<float> mHighPassRect;
   juce::Rectangle<float> mBandPassRect;
