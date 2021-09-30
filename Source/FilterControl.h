@@ -37,6 +37,7 @@ class FilterControl : public juce::Component {
   //void setFilterType(Utils::FilterType filterType);
   void setFilterType(int filterTypeIndex);
 
+  std::function<void(Utils::FilterType filterType)> onFilterTypeChange = nullptr;
   
  private:
 

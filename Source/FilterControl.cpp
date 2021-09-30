@@ -159,6 +159,9 @@ void FilterControl::paint(juce::Graphics& g) {
       g.fillPath(mHighlightPath);
       break;
   }
+
+  g.setColour(envColour);
+  g.drawRect(juce::Rectangle<float>(0, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE, getWidth(), getHeight()), 2.0f);
 }
 
 void FilterControl::resized() {
@@ -199,6 +202,7 @@ void FilterControl::mouseUp(const juce::MouseEvent& event) {
         break;
     }
   }
+  if (onFilterTypeChange != nullptr) onFilterTypeChange(mFilterType);
   repaint(); 
 }
 
@@ -222,6 +226,6 @@ void FilterControl::setColour(juce::Colour colour) {
   repaint();
 }
 void FilterControl::setFilterType(int filterTypeIndex) {
-  mFilterType = static_cast<Utils::FilterType>(filterTypeIndex);
+  mFilterType = static_cast<Utils::FilterType>(filterTypeIndex);  
   repaint();
 }
