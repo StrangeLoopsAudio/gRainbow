@@ -253,7 +253,7 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   addAndMakeVisible(mLabelGain);
 
    /* Cutoff */
-  //mSliderCutoff.setTextValueSuffix("Hz");
+  mSliderCutoff.setTextValueSuffix("Hz");
   mSliderCutoff.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   mSliderCutoff.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderCutoff.setRotaryParameters(rotaryParams);
@@ -272,17 +272,21 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderResonance.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderResonance.setRotaryParameters(rotaryParams);
   mSliderResonance.setRange(0.0, 1.0, 0.01);
-  /* mSliderResonance.onValueChange = [this] {
-    mEnvelopeAmp.setRelease(mSliderResonance.getValue());
-    parameterChanged(GranularSynth::ParameterType::RELEASE,
-                     mSliderResonance.getValue());
-  }; */
+  //mSliderResonance.onValueChange = [this] {
+  //  /*mEnvelopeAmp.setRelease(mSliderResonance.getValue());
+  //  parameterChanged(GranularSynth::ParameterType::RELEASE,
+  //                   mSliderResonance.getValue());*/
+  //  ParamHelper::setParam(getCurrentGenerator()->resonance, mSliderResonance.getValue());
+  //}; 
   addAndMakeVisible(mSliderResonance);
 
   mLabelResonance.setText("Resonance", juce::dontSendNotification);
   mLabelResonance.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelResonance);
 
+  mFilterControl.onFilterTypeChange = [this](Utils::FilterType filterType) {
+    ParamHelper::setParam(getCurrentGenerator()->filterType, filterType);
+  };
   addAndMakeVisible(mFilterControl);
 
   // set default generator for initialization
