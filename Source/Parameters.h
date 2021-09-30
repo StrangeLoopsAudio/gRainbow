@@ -54,7 +54,7 @@ static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
 static juce::NormalisableRange<float> CUTOFF(100.0f, 10000.0f);
-static juce::NormalisableRange<float> Resonance(0.0f, 1.0f);
+static juce::NormalisableRange<float> RESONANCE(0.0f, 1.0f);
 static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
@@ -160,7 +160,7 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* decay = nullptr;
   juce::AudioParameterFloat* sustain = nullptr;
   juce::AudioParameterFloat* release = nullptr;
-  juce::AudioParameterFloat* Resonance = nullptr;
+  juce::AudioParameterFloat* resonance = nullptr;
   juce::AudioParameterFloat* cutoff = nullptr;
   juce::AudioParameterChoice* filterType = nullptr;
 

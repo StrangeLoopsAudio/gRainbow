@@ -128,11 +128,7 @@ void FilterControl::paint(juce::Graphics& g) {
       mHighlightPath.addLineSegment(
           juce::Line<float>(getWidth() * mCutoff, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE, 
                             (getWidth() * mCutoff) - (1.0f - mResonance) * 0.1f * getWidth(), getHeight()), highlightWidth);
-  /*    mHighlightPath.addLineSegment(juce::Line<float>(mCutoff * getWidth(), getHeight() * 1.0f, 
-        (getWidth() * mCutoff) + (1.0f - mResonance) * 0.5f * getWidth(), FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE), highlightWidth);
-      mHighlightPath.addLineSegment(juce::Line<float>((getWidth() * mCutoff) + (1.0f - mResonance) * 0.5f * getWidth(),
-                                                      FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE, getWidth(),
-                                                      FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE), highlightWidth);*/
+
       mHighlightPath.closeSubPath();
       g.fillPath(mHighlightPath);
       break;
@@ -224,8 +220,8 @@ void FilterControl::setResonance(float Resonance) {
 void FilterControl::setColour(juce::Colour colour) {
   mColour = colour;
   repaint();
-
-}void FilterControl::setFilterType(Utils::FilterType filterType) {
-  mFilterType = filterType;
+}
+void FilterControl::setFilterType(int filterTypeIndex) {
+  mFilterType = static_cast<Utils::FilterType>(filterTypeIndex);
   repaint();
 }

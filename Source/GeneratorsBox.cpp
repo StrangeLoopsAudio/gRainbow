@@ -577,8 +577,7 @@ void GeneratorsBox::timerCallback() {
     mEnvelopeAmp.setGain(gen.gain->get());
     mSliderCutoff.setValue(gen.cutoff->get(), juce::dontSendNotification);
     mFilterControl.setCutoff(ParamRanges::CUTOFF.convertTo0to1(gen.cutoff->get()));
-    //mFilterControl.setCutoff(gen.cutoff->get());
-    //mFilterControl.setFilterType(gen.filterType->getCurrentChoiceName());
+    mFilterControl.setFilterType(gen.filterType->getIndex());
     refreshState();
   }
 }

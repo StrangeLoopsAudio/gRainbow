@@ -34,7 +34,8 @@ class FilterControl : public juce::Component {
   void setCutoff(float cutoff);
   void setResonance(float Resonance);
   void setColour(juce::Colour colour);
-  void setFilterType(Utils::FilterType filterType);
+  //void setFilterType(Utils::FilterType filterType);
+  void setFilterType(int filterTypeIndex);
 
   
  private:
@@ -43,7 +44,7 @@ class FilterControl : public juce::Component {
   bool mIsActive = false;
   float mCutoff = 0.0f;
   float mResonance = ParamDefaults::RESONANCE_DEFAULT;
-  Utils::FilterType mFilterType = Utils::FilterType::NO_FILTER;
+  Utils::FilterType mFilterType = Utils::FilterType::LOWPASS;
   static constexpr auto FILTER_TYPE_BUTTON_HEIGHT = 30;
   juce::Colour mColour;
   juce::Rectangle<float> mLowPassRect;
