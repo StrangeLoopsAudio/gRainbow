@@ -71,7 +71,7 @@ static float RELEASE_DEFAULT_SEC = 0.2f;
 static float RESONANCE_DEFAULT = 0.5f;
 static float LOW_PASS_CUTOFF_DEFAULT = 5000.0f;
 static float HIGH_PASS_CUTOFF_DEFAULT = 800.0f;
-static float BAND_PASS_CUTOFF_DEFAULT = 100.0f;
+static float BAND_PASS_CUTOFF_DEFAULT = 1200.0f;
 static juce::String FILTER_TYPE_DEFAULT = "none";
 }  // namespace ParamDefaults
 

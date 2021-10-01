@@ -272,12 +272,9 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderResonance.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderResonance.setRotaryParameters(rotaryParams);
   mSliderResonance.setRange(0.0, 1.0, 0.01);
-  //mSliderResonance.onValueChange = [this] {
-  //  /*mEnvelopeAmp.setRelease(mSliderResonance.getValue());
-  //  parameterChanged(GranularSynth::ParameterType::RELEASE,
-  //                   mSliderResonance.getValue());*/
-  //  ParamHelper::setParam(getCurrentGenerator()->resonance, mSliderResonance.getValue());
-  //}; 
+  mSliderResonance.onValueChange = [this] {
+    ParamHelper::setParam(getCurrentGenerator()->resonance, mSliderResonance.getValue());
+  }; 
   addAndMakeVisible(mSliderResonance);
 
   mLabelResonance.setText("Resonance", juce::dontSendNotification);
@@ -286,6 +283,18 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
 
   mFilterControl.onFilterTypeChange = [this](Utils::FilterType filterType) {
     ParamHelper::setParam(getCurrentGenerator()->filterType, filterType);
+    switch (filterType) {
+      case (Utils::FilterType::LOWPASS):
+        ParamHelper::setParam(getCurrentGenerator()->cutoff, ParamDefaults::LOW_PASS_CUTOFF_DEFAULT);
+        break;
+      case (Utils::FilterType::HIGHPASS):
+        ParamHelper::setParam(getCurrentGenerator()->cutoff, ParamDefaults::HIGH_PASS_CUTOFF_DEFAULT);
+        break;
+      case (Utils::FilterType::BANDPASS):
+        ParamHelper::setParam(getCurrentGenerator()->cutoff, ParamDefaults::BAND_PASS_CUTOFF_DEFAULT);
+        break;
+    }   
+    ParamHelper::setParam(getCurrentGenerator()->resonance, ParamDefaults::RESONANCE_DEFAULT);
   };
   addAndMakeVisible(mFilterControl);
 
@@ -580,7 +589,9 @@ void GeneratorsBox::timerCallback() {
     mSliderGain.setValue(gen.gain->get(), juce::dontSendNotification);
     mEnvelopeAmp.setGain(gen.gain->get());
     mSliderCutoff.setValue(gen.cutoff->get(), juce::dontSendNotification);
+    mSliderResonance.setValue(gen.resonance->get(), juce::dontSendNotification);
     mFilterControl.setCutoff(ParamRanges::CUTOFF.convertTo0to1(gen.cutoff->get()));
+    mFilterControl.setResonance(gen.resonance->get());
     mFilterControl.setFilterType(gen.filterType->getIndex());
     refreshState();
   }
