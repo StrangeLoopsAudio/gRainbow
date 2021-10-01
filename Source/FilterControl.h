@@ -36,6 +36,7 @@ class FilterControl : public juce::Component {
   void setColour(juce::Colour colour);
   //void setFilterType(Utils::FilterType filterType);
   void setFilterType(int filterTypeIndex);
+  float filterTypeToCutoff(Utils::FilterType filterType);
 
   std::function<void(Utils::FilterType filterType)> onFilterTypeChange = nullptr;
   
@@ -56,5 +57,6 @@ class FilterControl : public juce::Component {
   Utils::FilterType mCurSelectedFilterType = Utils::NO_FILTER;
 
   static constexpr auto PADDING_SIZE = 6;
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterControl)
 };

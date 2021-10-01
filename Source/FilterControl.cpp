@@ -109,8 +109,8 @@ void FilterControl::paint(juce::Graphics& g) {
       g.setColour(envColour.withAlpha(0.5f));
       g.fillRoundedRectangle(mHighPassRect, 10.0f);
 
-    /*  g.setFillType(juce::ColourGradient(envColour, getLocalBounds().getTopLeft().toFloat(), envColour.withAlpha(0.4f),
-                                         getLocalBounds().getBottomLeft().toFloat(), false));*/
+      g.setFillType(juce::ColourGradient(envColour, getLocalBounds().getTopLeft().toFloat(), envColour.withAlpha(0.4f),
+                                         getLocalBounds().getBottomLeft().toFloat(), false));
       
       mFilterPath.startNewSubPath(getWidth() * 1.0f, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE);
       mFilterPath.lineTo(getWidth() * mCutoff, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE);
@@ -123,20 +123,52 @@ void FilterControl::paint(juce::Graphics& g) {
       // Draw highlights on top of path
       g.setColour(mIsActive ? envColour.brighter().brighter() : juce::Colours::darkgrey);
 
-      mHighlightPath.addLineSegment(juce::Line<float>(getWidth(), FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE,
-                                                      getWidth() * mCutoff,FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE), highlightWidth);
+     mHighlightPath.addLineSegment(juce::Line<float>(getWidth(), FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE,
+                                                      getWidth() * mCutoff, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE), highlightWidth);
       mHighlightPath.addLineSegment(
           juce::Line<float>(getWidth() * mCutoff, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE, 
                             (getWidth() * mCutoff) - (1.0f - mResonance) * 0.1f * getWidth(), getHeight()), highlightWidth);
-
+      
+      
       mHighlightPath.closeSubPath();
       g.fillPath(mHighlightPath);
       break;
     case (Utils::FilterType::BANDPASS):
       g.setFillType(juce::ColourGradient(envColour, getLocalBounds().getTopLeft().toFloat(), envColour.withAlpha(0.4f),
                                          getLocalBounds().getBottomLeft().toFloat(), false));
+
+      mFilterPath.startNewSubPath(0, getHeight());
+      mFilterPath.lineTo(getWidth() * mCutoff - (1.0f - mResonance) * 0.1f * getWidth(), getHeight());
+      mFilterPath.lineTo(mFilterPath.getCurrentPosition().translated(((1.0f - mResonance) * 0.1f * getWidth()),
+                                                                     0).withY(FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE));
+      mFilterPath.lineTo(
+          mFilterPath.getCurrentPosition().translated(0.25f * getWidth(), 0).withY(FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE));
+      mFilterPath.lineTo(
+          mFilterPath.getCurrentPosition().translated((1.0f - mResonance) * 0.1f * getWidth(), 0).withY(getHeight()));
+      mFilterPath.lineTo(getWidth(), getHeight());
+      mFilterPath.lineTo(0, getHeight());
+      mFilterPath.closeSubPath();
+      g.fillPath(mFilterPath);
+
+      // Draw highlights on top of path
+      g.setColour(mIsActive ? envColour.brighter().brighter() : juce::Colours::darkgrey);
+
+      mHighlightPath.addLineSegment(juce::Line<float>(getWidth() * mCutoff - (1.0f - mResonance) * 0.1f * getWidth(), getHeight(),
+                                                      getWidth() * mCutoff, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE),
+                                    highlightWidth);
+      mHighlightPath.addLineSegment(juce::Line<float>(getWidth() * mCutoff, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE,
+                            getWidth() * mCutoff + 0.25f * getWidth(), FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE),
+                                    highlightWidth);
+      mHighlightPath.addLineSegment(
+          juce::Line<float>(getWidth() * mCutoff + 0.25f * getWidth(), FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE,
+                            getWidth() * mCutoff + 0.25f * getWidth() + (1.0f - mResonance) * 0.1f * getWidth(), getHeight()),
+                                    highlightWidth);
+      mHighlightPath.closeSubPath();
+      g.fillPath(mHighlightPath);
+
       g.setColour(envColour.withAlpha(0.5f));
       g.fillRoundedRectangle(mBandPassRect, 10.0f);
+      break;
     case (Utils::FilterType::NO_FILTER):
       g.setFillType(juce::ColourGradient(envColour, getLocalBounds().getTopLeft().toFloat(), envColour.withAlpha(0.4f),
                                          getLocalBounds().getBottomLeft().toFloat(), false));
@@ -190,17 +222,7 @@ void FilterControl::mouseUp(const juce::MouseEvent& event) {
     mFilterType = Utils::FilterType::NO_FILTER;
   } else {
     mFilterType = newFilterType;
-    switch (mFilterType) { 
-      case (Utils::FilterType::LOWPASS):
-        mCutoff = ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::LOW_PASS_CUTOFF_DEFAULT);
-        break;
-      case (Utils::FilterType::HIGHPASS):
-        mCutoff = ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::HIGH_PASS_CUTOFF_DEFAULT);
-        break;
-      case (Utils::FilterType::BANDPASS):
-        mCutoff = ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::BAND_PASS_CUTOFF_DEFAULT);
-        break;
-    }
+    mCutoff = filterTypeToCutoff(mFilterType);
   }
   if (onFilterTypeChange != nullptr) onFilterTypeChange(mFilterType);
   repaint(); 
@@ -228,4 +250,15 @@ void FilterControl::setColour(juce::Colour colour) {
 void FilterControl::setFilterType(int filterTypeIndex) {
   mFilterType = static_cast<Utils::FilterType>(filterTypeIndex);  
   repaint();
+}
+
+float FilterControl::filterTypeToCutoff(Utils::FilterType filterType) {
+  switch (filterType) {
+    case (Utils::FilterType::LOWPASS):
+      return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::LOW_PASS_CUTOFF_DEFAULT);
+    case (Utils::FilterType::HIGHPASS):
+      return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::HIGH_PASS_CUTOFF_DEFAULT);
+    case (Utils::FilterType::BANDPASS):
+      return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::BAND_PASS_CUTOFF_DEFAULT);
+  }   
 }
