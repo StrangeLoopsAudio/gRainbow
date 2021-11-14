@@ -58,7 +58,7 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   static constexpr auto HORIZONTAL_SLIDER_HEIGHT = 15;
   static constexpr auto ENVELOPE_HEIGHT = 60;
   static constexpr auto SECTION_TITLE_HEIGHT = 20;
-  static constexpr auto FILTER_CONTROL_HEIGHT = 100; // buttons 40, graph 60
+  static constexpr auto FILTER_CONTROL_HEIGHT = 110;
   static constexpr auto SECTION_AMP_ENV_TITLE = "amplitude envelope";
   static constexpr auto SECTION_GRAIN_ENV_TITLE = "grain envelope";
   static constexpr auto SECTION_ADJUST_TITLE = "generator adjustments";
