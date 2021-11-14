@@ -56,7 +56,7 @@ class FilterControl : public juce::Component {
   Utils::FilterType mCurHoverFilterType = Utils::NO_FILTER;
   Utils::FilterType mCurSelectedFilterType = Utils::NO_FILTER;
 
-  static constexpr auto PADDING_SIZE = 6;
+  static constexpr auto PADDING_SIZE = 5;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterControl)
 };
