@@ -77,12 +77,15 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String releaseId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genRelease + juce::String(genIdx);
   p.addParameter(release =
                      new juce::AudioParameterFloat(releaseId, releaseId, ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
-  juce::String cutoffId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genCutoff + juce::String(genIdx);
-  p.addParameter(cutoff = 
-                     new juce::AudioParameterFloat(cutoffId, cutoffId, ParamRanges::CUTOFF, ParamDefaults::LOW_PASS_CUTOFF_DEFAULT));
-  juce::String resonanceId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genResonance + juce::String(genIdx);
-  p.addParameter(resonance = new juce::AudioParameterFloat(resonanceId, resonanceId, ParamRanges::RESONANCE,
-                                                           ParamDefaults::RESONANCE_DEFAULT));
+  juce::String cutoffId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterCutoff + juce::String(genIdx);
+  p.addParameter(filterCutoff = 
+                     new juce::AudioParameterFloat(cutoffId, cutoffId, ParamRanges::CUTOFF, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
+  juce::String resonanceId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterResonance + juce::String(genIdx);
+  p.addParameter(filterResonance = new juce::AudioParameterFloat(resonanceId, resonanceId, ParamRanges::RESONANCE,
+                                                           ParamDefaults::FILTER_RESONANCE_DEFAULT));
+  juce::String strengthId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterStrength + juce::String(genIdx);
+  p.addParameter(filterStrength = new juce::AudioParameterFloat(strengthId, strengthId, ParamRanges::STRENGTH,
+                                                           ParamDefaults::FILTER_STRENGTH_DEFAULT));
   juce::String filterTypeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterType + juce::String(genIdx);
   p.addParameter(filterType = 
                      new juce::AudioParameterChoice(filterTypeId, filterTypeId, FILTER_TYPE_NAMES, 0));
@@ -105,8 +108,9 @@ void ParamGenerator::addListener(juce::AudioProcessorParameter::Listener* listen
   decay->addListener(listener);
   sustain->addListener(listener);
   release->addListener(listener);
-  cutoff->addListener(listener);
-  resonance->addListener(listener);
+  filterCutoff->addListener(listener);
+  filterResonance->addListener(listener);
+  filterStrength->addListener(listener);
   filterType->addListener(listener);
 }
 
@@ -126,8 +130,9 @@ void ParamGenerator::removeListener(juce::AudioProcessorParameter::Listener* lis
   decay->removeListener(listener);
   sustain->removeListener(listener);
   release->removeListener(listener);
-  cutoff->removeListener(listener);
-  resonance->removeListener(listener);
+  filterCutoff->removeListener(listener);
+  filterResonance->removeListener(listener);
+  filterStrength->removeListener(listener);
   filterType->removeListener(listener);
 }
 
@@ -214,8 +219,9 @@ void ParamsNote::resetParams() {
       ParamHelper::setParam(generator->decay, ParamDefaults::DECAY_DEFAULT_SEC);
       ParamHelper::setParam(generator->sustain, ParamDefaults::SUSTAIN_DEFAULT);
       ParamHelper::setParam(generator->release, ParamDefaults::RELEASE_DEFAULT_SEC);
-      ParamHelper::setParam(generator->cutoff, ParamDefaults::LOW_PASS_CUTOFF_DEFAULT);
-      ParamHelper::setParam(generator->resonance, ParamDefaults::RESONANCE_DEFAULT);
+      ParamHelper::setParam(generator->filterCutoff, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+      ParamHelper::setParam(generator->filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
+      ParamHelper::setParam(generator->filterStrength, ParamDefaults::FILTER_STRENGTH_DEFAULT);
       ParamHelper::setParam(generator->filterType, 0);
     }
     note->candidates.clear();
