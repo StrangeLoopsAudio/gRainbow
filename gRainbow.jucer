@@ -104,8 +104,8 @@
     </LINUX_MAKE>
     <VS2019 targetFolder="Builds/VisualStudio2019">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../../../../../JUCE/modules"/>
@@ -125,8 +125,8 @@
     </VS2019>
     <XCODE_MAC targetFolder="Builds/MacOSX">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../../../../../JUCE/modules"/>
