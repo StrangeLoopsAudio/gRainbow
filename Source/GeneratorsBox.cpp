@@ -252,6 +252,11 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mLabelGain.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelGain);
 
+  // FilterControl
+  mLabelFilter.setText("Filter", juce::dontSendNotification);
+  mLabelFilter.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelFilter);
+
   // set default generator for initialization
   setPitchClass(mCurPitchClass);
   startTimer(33);  // 30 fps
@@ -341,6 +346,19 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   g.fillRect(grainEnvTitleRect);
   g.setColour(juce::Colours::black);
   g.drawText(juce::String(SECTION_GRAIN_ENV_TITLE), grainEnvTitleRect, juce::Justification::centred);
+
+  // Filter Control env section title
+  juce::Rectangle<int> filterEnvTitleRect =
+      juce::Rectangle<int>(0, mFilterControl.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(),
+                           SECTION_TITLE_HEIGHT)
+          .reduced(PADDING_SIZE, PADDING_SIZE / 2);
+  g.setColour(fillCol);
+  g.fillRect(filterEnvTitleRect);
+  g.setColour(juce::Colours::black);
+  g.drawText(juce::String(SECTION_FILTER_ENV_TITLE), filterEnvTitleRect, juce::Justification::centred);
+
+  g.setColour(fillCol);
+  g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.0f), 10.0f, 2.0f);
 }
 
 void GeneratorsBox::resized() {
@@ -428,6 +446,28 @@ void GeneratorsBox::resized() {
   mLabelTilt.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelRate.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelDuration.setBounds(labelPanel.removeFromLeft(knobWidth));
+
+  // Filter Control
+  r.removeFromTop(SECTION_TITLE_HEIGHT);
+
+  // Draw Rectangles for filter types
+
+  mFilterControl.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
+  r.removeFromTop(PADDING_SIZE);
+
+  // Filter env knobs
+  knobWidth = r.getWidth() / NUM_GRAIN_ENV_PARAMS;
+  knobPanel = r.removeFromTop(knobWidth / 2);
+  knobPanel.removeFromLeft(knobWidth);
+  mSliderCutoff.setBounds(knobPanel.removeFromLeft(knobWidth));
+  mSliderStrength.setBounds(knobPanel.removeFromLeft(knobWidth));
+  knobPanel.removeFromLeft(knobWidth);
+
+  labelPanel = r.removeFromTop(LABEL_HEIGHT);
+  labelPanel.removeFromLeft(knobWidth);
+  mLabelCutoff.setBounds(labelPanel.removeFromLeft(knobWidth));
+  mLabelStrength.setBounds(labelPanel.removeFromLeft(knobWidth));
+  labelPanel.removeFromLeft(knobWidth);
 }
 
 void GeneratorsBox::setPitchClass(Utils::PitchClass pitchClass) {
