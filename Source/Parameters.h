@@ -55,13 +55,15 @@ static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 
 namespace ParamDefaults {
 static float POSITION_SPRAY_DEFAULT = 0.01f;
-static float GRAIN_RATE_DEFAULT = 0.5f;
-static float GRAIN_DURATION_DEFAULT = 0.1f;
+static float GRAIN_SHAPE_DEFAULT = 0.75f;
+static float GRAIN_RATE_DEFAULT = 0.33f;
+static float GRAIN_DURATION_DEFAULT = 0.2f;
 static float GAIN_DEFAULT = 0.8f;
 static float ATTACK_DEFAULT_SEC = 0.2f;
 static float DECAY_DEFAULT_SEC = 0.2f;
 static float SUSTAIN_DEFAULT = 0.8f;
 static float RELEASE_DEFAULT_SEC = 0.2f;
+
 }  // namespace ParamDefaults
 
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};

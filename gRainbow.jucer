@@ -3,7 +3,7 @@
 <JUCERPROJECT id="eC9OsA" name="gRainbow" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
               pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
-              companyName="b-team">
+              companyName="strangeloops">
   <MAINGROUP id="SNaS8k" name="gRainbow">
     <GROUP id="{595D4325-C686-1839-D048-A225A7FE150A}" name="Source">
       <GROUP id="{5E1AB70E-1865-A28B-6DCD-3168747A76FD}" name="Components">
