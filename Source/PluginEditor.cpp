@@ -86,9 +86,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   addAndMakeVisible(mKeyboard);
 
-  // The Editor is incharge of knowing if a note is being played. If being played it will repaint all the component
-  synth.getKeyboardState().addListener(this);
-
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
 
   mAudioDeviceManager.addAudioCallback(&mRecorder);
@@ -103,7 +100,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     mSynth.resetParameters();
   }
 
-  startTimer(50);
+  startTimer(33);  // 30 fps
 
   setSize(1200, 650);
 }
@@ -117,7 +114,7 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
 }
 
 void GRainbowAudioProcessorEditor::timerCallback() {
-  // Update progress bar
+  // Update progress bar when loading audio clip
   double loadingProgress = mSynth.getLoadingProgress();
   if (loadingProgress < 1.0 && loadingProgress > 0.0) {
     mProgressBar.setVisible(true);
@@ -133,6 +130,18 @@ void GRainbowAudioProcessorEditor::timerCallback() {
         mArcSpec.loadBuffer(specs[i], (ParamUI::SpecType)i);
     }
   }
+
+  // Get notes being played, send off to each children and then redraw.
+  // Grab the notes from the Synth instead of MidiKeyboardState::Listener to not block the thread to draw.
+  // There is a chance notes are pressed and released inbetween timer callback if they are super short, but can always increase the
+  // callback timer
+  const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
+  // Each component has has a different use for the midi notes, so just give them the notes and have them do what logic they want
+  // with it
+  mKeyboard.setMidiNotes(midiNotes);
+  mArcSpec.setMidiNotes(midiNotes);
+  mGeneratorsBox.setMidiNotes(midiNotes);
+  repaint();
 }
 
 //==============================================================================
@@ -152,32 +161,48 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   g.fillRoundedRectangle(mBtnPreset.getBounds().toFloat(), 14);
 }
 
+/**
+  @brief Draw note display (the small section between the keyboard and arc spectrogram)
+*/
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
-  // Draw note display
-  Utils::PitchClass pitchClass = mSynth.getPitchClass();
-  if (pitchClass != Utils::PitchClass::NONE) {
+  // Right now just give last note played, not truely polyphony yet
+  const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
+  if (!midiNotes.isEmpty()) {
+    // If there are not candidates, will just not draw any arrows/lines
     std::vector<ParamCandidate*> candidates = mSynth.getActiveCandidates();
-    // Draw position arrows
-    for (int i = 0; i < candidates.size(); ++i) {
-      if (candidates[i] == nullptr) continue;
-      g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[i]));
-      auto middlePos = candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
-      float angleRad = (juce::MathConstants<float>::pi * middlePos) - (juce::MathConstants<float>::pi / 2.0f);
-      juce::Point<float> startPoint = juce::Point<float>(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
-      juce::Point<float> endPoint = startPoint.getPointOnCircumference(mArcSpec.getHeight() / 4.5f, angleRad);
-      g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
+    if (!candidates.empty()) {
+      // Draw position arrows
+      for (int i = 0; i < candidates.size(); ++i) {
+        if (candidates[i] == nullptr) continue;
+        g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[i]));
+        auto middlePos = candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
+        float angleRad = (juce::MathConstants<float>::pi * middlePos) - (juce::MathConstants<float>::pi / 2.0f);
+        juce::Point<float> startPoint = juce::Point<float>(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
+        juce::Point<float> endPoint = startPoint.getPointOnCircumference(mArcSpec.getHeight() / 4.5f, angleRad);
+        g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
+      }
+
+      // Draw path from rainbow key to the arrow's base
+      for (const Utils::MidiNote& midiNote : midiNotes) {
+        const Utils::PitchClass pitchClass = midiNote.pitch;
+        // if more than 1 note played, the last note will be empathized
+        const bool empathized = (midiNote == midiNotes.getLast());
+
+        float noteX = mKeyboard.getBounds().getX() + (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(pitchClass));
+        juce::Path displayPath;
+        displayPath.startNewSubPath(noteX, mNoteDisplayRect.getBottom());
+        displayPath.lineTo(noteX, mNoteDisplayRect.getBottom() - (NOTE_DISPLAY_HEIGHT / 2.0f));
+        displayPath.lineTo(mNoteDisplayRect.getCentre());
+        displayPath.lineTo(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
+        const float alpha = (empathized) ? 1.0f : 0.3f;
+        g.setColour(Utils::getRainbow12Colour(pitchClass).withAlpha(alpha));
+        g.strokePath(displayPath, juce::PathStrokeType(4.0f));
+        if (empathized) {
+          g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
+                        NOTE_BULB_SIZE, NOTE_BULB_SIZE);
+        }
+      }
     }
-    // Draw path to positions
-    float noteX = mKeyboard.getBounds().getX() + (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(pitchClass));
-    juce::Path displayPath;
-    displayPath.startNewSubPath(noteX, mNoteDisplayRect.getBottom());
-    displayPath.lineTo(noteX, mNoteDisplayRect.getBottom() - (NOTE_DISPLAY_HEIGHT / 2.0f));
-    displayPath.lineTo(mNoteDisplayRect.getCentre());
-    displayPath.lineTo(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
-    g.setColour(Utils::getRainbow12Colour(pitchClass));
-    g.strokePath(displayPath, juce::PathStrokeType(4.0f));
-    g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
-                  NOTE_BULB_SIZE, NOTE_BULB_SIZE);
   }
 
   // When dragging a file over, give feedback it will be accepted when released
@@ -429,22 +454,6 @@ void GRainbowAudioProcessorEditor::savePreset() {
       // TODO - let users know we can't write here
     }
   }
-}
-
-void GRainbowAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber,
-                                                float velocity) {
-  const Utils::PitchClass pitchClass = Utils::getPitchClass(midiNoteNumber);
-  mKeyboard.setNoteOn(pitchClass, velocity);
-  mArcSpec.setNoteOn(pitchClass);
-  mGeneratorsBox.setNoteOn(pitchClass);
-  repaint();
-}
-
-void GRainbowAudioProcessorEditor::handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber,
-                                                 float velocity) {
-  const Utils::PitchClass pitchClass = Utils::getPitchClass(midiNoteNumber);
-  mKeyboard.setNoteOff(pitchClass);
-  repaint();
 }
 
 /** Fast Debug Mode is used to speed up iterations of testing

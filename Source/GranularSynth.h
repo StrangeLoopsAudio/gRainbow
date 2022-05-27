@@ -12,11 +12,11 @@
 
 #include <JuceHeader.h>
 
-#include "ArcSpectrogram.h"
 #include "Grain.h"
 #include "Parameters.h"
 #include "PitchDetector.h"
 #include "Utils.h"
+#include <bitset>
 
 class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::Listener {
  public:
@@ -84,7 +84,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   ParamsNote& getParamsNote() { return mParamsNote; }
   ParamGlobal& getParamGlobal() { return mParamGlobal; }
   double& getLoadingProgress() { return mLoadingProgress; }
-  Utils::PitchClass getPitchClass() { return mCurPitchClass; }
+  const juce::Array<Utils::MidiNote>& getMidiNotes() { return mMidiNotes; }
 
   ParamUI& getParamUI() { return mParamUI; }
   void resetParameters();
@@ -135,7 +135,11 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   // Grain control
   long mTotalSamps;
   juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
-  Utils::PitchClass mCurPitchClass = Utils::PitchClass::NONE;
+  Utils::PitchClass mLastPitchClass;
+  // Holes all the notes being played. The synth is the only class who will write to it so no need to worrying about multiple
+  // threads writing to it.
+  // Currently the difference between "midiNotes" and "grainNotes" are midi is a subset mainly for the UI
+  juce::Array<Utils::MidiNote> mMidiNotes;
 
   // Parameters
   ParamsNote mParamsNote;

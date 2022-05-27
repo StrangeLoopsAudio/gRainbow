@@ -350,7 +350,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             /* Trigger grain in arcspec */
             float totalGain = paramGenerator->gain->get() * gNote.ampEnv.amplitude * gNote.genAmpEnvs[i].amplitude *
                               gNote.velocity * mParamGlobal.gain->get();
-            mParamsNote.notes[gNote.pitchClass]->grainCreated(i, durSec / pbRate, totalGain);
+            mParamsNote.grainCreated(gNote.pitchClass, i, durSec / pbRate, totalGain);
           }
           // Reset trigger ts
           if (paramGenerator->grainSync->get()) {
@@ -410,20 +410,20 @@ void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer, double sa
 }
 
 int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
-  int numCandidates = mParamsNote.notes[mCurPitchClass]->candidates.size();
-  int pos = mParamsNote.notes[mCurPitchClass]->generators[boxNum]->candidate->get();
+  int numCandidates = mParamsNote.notes[mLastPitchClass]->candidates.size();
+  int pos = mParamsNote.notes[mLastPitchClass]->generators[boxNum]->candidate->get();
   if (numCandidates == 0) return pos;
   int newPos = lookRight ? pos + 1 : pos - 1;
   newPos = (newPos + numCandidates) % numCandidates;
-  ParamHelper::setParam(mParamsNote.notes[mCurPitchClass]->generators[boxNum]->candidate, newPos);
+  ParamHelper::setParam(mParamsNote.notes[mLastPitchClass]->generators[boxNum]->candidate, newPos);
   return newPos;
 }
 
 std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
   std::vector<ParamCandidate*> candidates;
   for (int i = 0; i < NUM_GENERATORS; ++i) {
-    if (mParamsNote.notes[mCurPitchClass]->shouldPlayGenerator(i)) {
-      candidates.push_back(mParamsNote.notes[mCurPitchClass]->getCandidate(i));
+    if (mParamsNote.notes[mLastPitchClass]->shouldPlayGenerator(i)) {
+      candidates.push_back(mParamsNote.notes[mLastPitchClass]->getCandidate(i));
     } else {
       candidates.push_back(nullptr);
     }
@@ -432,13 +432,21 @@ std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
 }
 
 void GranularSynth::handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) {
-  mCurPitchClass = Utils::getPitchClass(midiNoteNumber);
-  mActiveNotes.add(GrainNote(mCurPitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
+  mLastPitchClass = Utils::getPitchClass(midiNoteNumber);
+  mMidiNotes.add(Utils::MidiNote(mLastPitchClass, velocity));
+  mActiveNotes.add(GrainNote(mLastPitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
 }
 
 void GranularSynth::handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) {
-  mCurPitchClass = Utils::PitchClass::NONE;
-  Utils::PitchClass pitchClass = Utils::getPitchClass(midiNoteNumber);
+  const Utils::PitchClass pitchClass = Utils::getPitchClass(midiNoteNumber);
+
+  for (Utils::MidiNote* it = mMidiNotes.begin(); it != mMidiNotes.end(); it++) {
+    if (it->pitch == pitchClass) {
+      mMidiNotes.remove(it);
+      break;  // will only be at most 1 note (TODO assuming mouse and midi aren't set at same tim)
+    }
+  }
+
   for (GrainNote& gNote : mActiveNotes) {
     if (gNote.pitchClass == pitchClass && gNote.ampEnv.state != Utils::EnvelopeState::RELEASE) {
       // Set note off timestamp and set env state to release for each pos

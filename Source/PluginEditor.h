@@ -26,7 +26,6 @@
  */
 class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
                                      juce::FileDragAndDropTarget,
-                                     juce::MidiKeyboardState::Listener,
                                      juce::Timer {
  public:
   GRainbowAudioProcessorEditor(GranularSynth& synth);
@@ -92,9 +91,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void startRecording();
   void stopRecording();
   void savePreset();
-
-  void handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
-  void handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GRainbowAudioProcessorEditor)
 };

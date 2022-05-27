@@ -17,6 +17,7 @@
 #include <JuceHeader.h>
 
 #include <random>
+#include <bitset>
 
 #include "Fft.h"
 #include "Parameters.h"
@@ -38,7 +39,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   bool shouldLoadImage(ParamUI::SpecType type) { return !mIsProcessing && !mImagesComplete[type]; }
   void loadBuffer(Utils::SpecBuffer *buffer, ParamUI::SpecType type);
   void loadPreset();
-  void setNoteOn(Utils::PitchClass pitchClass);
+  void setMidiNotes(const juce::Array<Utils::MidiNote> &midiNotes);
 
   //============================================================================
   void run() override;
@@ -80,7 +81,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   std::array<Utils::SpecBuffer *, ParamUI::SpecType::COUNT> mBuffers;
 
   // Bookkeeping
-  Utils::PitchClass mCurPitchClass;
+  std::bitset<Utils::PitchClass::COUNT> mActivePitchClass;
   juce::Array<ArcGrain> mArcGrains;
   ParamUI::SpecType mProcessType;
   bool mIsProcessing = false;

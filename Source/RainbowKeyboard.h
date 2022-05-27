@@ -35,8 +35,7 @@ class RainbowKeyboard : public juce::Component {
   void mouseEnter(const juce::MouseEvent&) override;
   void mouseExit(const juce::MouseEvent&) override;
 
-  void setNoteOn(Utils::PitchClass pitchClass, float velocity);
-  void setNoteOff(Utils::PitchClass pitchClass);
+  void setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes);
 
   // Returns a value between 0.0-1.0 representing the note's x position on the
   // keyboard
@@ -48,22 +47,16 @@ class RainbowKeyboard : public juce::Component {
 
   juce::MidiKeyboardState& mState;
 
-  struct Note {
-    Utils::PitchClass pitch;
-    float velocity;
-
-    Note() : pitch(Utils::PitchClass::NONE), velocity(0.0f) {}
-    Note(Utils::PitchClass pitch, float velocity) : pitch(pitch), velocity(velocity) {}
-  };
-
-  // Since only one note can be pressed at once, only need on instance of Note
-  RainbowKeyboard::Note mCurrentNote;
+  // holds the velocity of each pitch class, if zero, then note is not played
+  std::array<float, Utils::PitchClass::COUNT> mNoteVelocity;
 
   // These allow using the mouse to click a key
   void updateMouseState(const juce::MouseEvent& e, bool isDown);
-  RainbowKeyboard::Note xyMouseToNote(juce::Point<float> pos);
+  Utils::MidiNote xyMouseToNote(juce::Point<float> pos);
   // Note being currently hovered by the mouse
-  RainbowKeyboard::Note mHoverNote;
+  Utils::MidiNote mHoverNote;
+  // Keeps track of the note being played because of the mouse injected input
+  Utils::MidiNote mMouseNote;
 
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectangleMap[Utils::PitchClass::COUNT];

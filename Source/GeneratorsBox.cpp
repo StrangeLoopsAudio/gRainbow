@@ -314,8 +314,6 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   };
   addAndMakeVisible(mFilterControl);
 
-  // set default generator for initialization
-  setNoteOn(mCurPitchClass);
   startTimer(33);  // 30 fps
 }
 
@@ -524,7 +522,11 @@ void GeneratorsBox::resized() {
   mLabelStrength.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
-void GeneratorsBox::setNoteOn(Utils::PitchClass pitchClass) {
+void GeneratorsBox::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes) {
+  if (midiNotes.isEmpty()) return;
+  // Grab the last note played
+  const Utils::PitchClass pitchClass = midiNotes.getLast().pitch;
+
   // Remove listeners from old generator and note
   mParamsNote.notes[mCurPitchClass]->removeListener(mCurSelectedGenerator, this);
 

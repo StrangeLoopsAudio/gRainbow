@@ -38,7 +38,7 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
 
   void timerCallback() override;
 
-  void setNoteOn(Utils::PitchClass pitchClass);
+  void setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes);
 
   std::function<void(int gen, bool isRight)> onPositionChanged = nullptr;
 
@@ -69,7 +69,7 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   ParamUI& mParamUI;
 
   // Bookkeeping
-  Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
+  Utils::PitchClass mCurPitchClass;
   int mCurSelectedGenerator = 0;
   int mCurHoverGenerator = -1;
   std::atomic<bool> mParamHasChanged;
