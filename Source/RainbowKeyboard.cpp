@@ -13,13 +13,7 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state) : mState(state) {
-  // Currently, only need to set mapping once at start
-  const char keyboardMapping[Utils::PitchClass::COUNT + 1] = "awsedftgyhuj";
-  for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
-    mKeyPresses[pitchClass] = juce::KeyPress(keyboardMapping[pitchClass], 0, 0);
-  }
-}
+RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state) : mState(state) {}
 
 RainbowKeyboard::~RainbowKeyboard() {}
 
@@ -84,8 +78,8 @@ void RainbowKeyboard::fillNoteRectangleMap() {
 }
 
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
-  auto keyColor = Utils::getRainbow12Colour(pitchClass);
-  bool isDown = pitchClass == mCurrentNote.pitch;
+  juce::Colour keyColor = Utils::getRainbow12Colour(pitchClass);
+  const bool isDown = pitchClass == mCurrentNote.pitch;
 
   // if down, extra dark
   // if no note is down, lightly darken if mouse is hovering it
@@ -95,22 +89,24 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     keyColor = keyColor.darker();
   }
 
-  juce::Rectangle<float> area = mNoteRectangleMap[pitchClass];
   g.setColour(keyColor);
-  if (isDown) {
-    g.setFillType(juce::ColourGradient(keyColor.brighter(), juce::Point<float>(0.0f, 0.0f), keyColor,
-                                       juce::Point<float>(0, getHeight()), false));
-  } else {
-    g.setFillType(juce::ColourGradient(keyColor, juce::Point<float>(0.0f, 0.0f), keyColor.brighter(),
-                                       juce::Point<float>(0, getHeight()), false));
-  }
+  juce::Colour color1 = (isDown) ? keyColor.brighter() : keyColor;
+  juce::Colour color2 = (isDown) ? keyColor : keyColor.brighter();
+  g.setFillType(juce::ColourGradient(color1, juce::Point<float>(0.0f, 0.0f), color2, juce::Point<float>(0, getHeight()), false));
 
+  juce::Rectangle<float> area = mNoteRectangleMap[pitchClass];
   g.fillRect(area);
   g.setColour(juce::Colours::black);
   g.drawRect(area, isBlackKey(pitchClass) ? 2 : 1);
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
+
+void RainbowKeyboard::setNoteOn(Utils::PitchClass pitchClass, float velocity) {
+  mCurrentNote = RainbowKeyboard::Note(pitchClass, velocity);
+}
+
+void RainbowKeyboard::setNoteOff(Utils::PitchClass pitchClass) { mCurrentNote = RainbowKeyboard::Note(); }
 
 void RainbowKeyboard::mouseMove(const juce::MouseEvent& e) { updateMouseState(e, false); }
 
@@ -130,13 +126,16 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
   updateMouseState(e, false);
 }
 
-void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown) {
-  auto pos = e.getEventRelativeTo(this).position;
-  mHoverNote = xyMouseToNote(pos);
+/**
+  @brief Only used to inject a note into the midiKeyboard state. The listener
+  will set the rainbowKeyboard state
 
-  if (mCurrentNote.input != InputType::MOUSE && mCurrentNote.input != InputType::NONE) {
-    return;
-  }
+  Takes input of Component::keyStateChanged from parent component due to lack
+  of always having focus on this component
+*/
+void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown) {
+  juce::Point<float> pos = e.getEventRelativeTo(this).position;
+  mHoverNote = xyMouseToNote(pos);
 
   // Will be invalid if mouse is dragged outside of keyboard
   bool isValidNote = mHoverNote.pitch != Utils::PitchClass::NONE;
@@ -145,24 +144,17 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown) {
     // Will turn off also if mouse exit keyboard
     if (mCurrentNote.pitch != Utils::PitchClass::NONE) {
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-      mCurrentNote = RainbowKeyboard::Note();
     }
     if (isDown && isValidNote) {
       mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch, mHoverNote.velocity);
-      mCurrentNote = mHoverNote;
     }
   } else {
     if (isDown && (mCurrentNote.pitch == Utils::PitchClass::NONE) && isValidNote) {
       // Note on if pressing current note
       mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch, mHoverNote.velocity);
-      mCurrentNote = mHoverNote;
     } else if ((mCurrentNote.pitch != Utils::PitchClass::NONE) && !isDown) {
       // Note off if released current note
       mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-      mCurrentNote = RainbowKeyboard::Note();
-    } else {
-      // still update state
-      mCurrentNote = mHoverNote;
     }
   }
   repaint();
@@ -179,88 +171,17 @@ RainbowKeyboard::Note RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
   if (pos.getY() < blackNoteLength) {
     for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
       if (mNoteRectangleMap[pitchClass].contains(pos)) {
-        return RainbowKeyboard::Note(pitchClass, juce::jmax(0.0f, 1.0f - (pos.y / blackNoteLength)), InputType::MOUSE);
+        return RainbowKeyboard::Note(pitchClass, juce::jmax(0.0f, 1.0f - (pos.y / blackNoteLength)));
       }
     }
   }
 
   for (Utils::PitchClass pitchClass : WHITE_KEYS_PITCH_CLASS) {
     if (mNoteRectangleMap[pitchClass].contains(pos)) {
-      return RainbowKeyboard::Note(pitchClass, juce::jmax(0.0f, 1.0f - (pos.y / componentHeight)), InputType::MOUSE);
+      return RainbowKeyboard::Note(pitchClass, juce::jmax(0.0f, 1.0f - (pos.y / componentHeight)));
     }
   }
 
   // note not found
   return RainbowKeyboard::Note();
-}
-
-void RainbowKeyboard::updateKeyState(const juce::KeyPress* pKey, bool isKeyDown) {
-  if (mCurrentNote.input != InputType::KEYBOARD && mCurrentNote.input != InputType::NONE) {
-    // if other input types are being used, ignore keyboard inputs all together
-    return;
-  }
-
-  const bool notePlaying = mCurrentNote.pitch != Utils::PitchClass::NONE;
-  bool stateChange = false;
-
-  // Get the last pressed note
-  if (pKey != nullptr) {
-    jassert(isKeyDown == true);  // juce::KeyListener only gives key on presses
-    int keyCode = pKey->getKeyCode();
-    // The JUCE KeyPress constructor is adding lower-case char, but some
-    // keyboards will use the capital letter as input keycode, if that is the
-    // case, just read as lowercase
-    if (keyCode < 97) {
-      // 97 is 'a'
-      // 65 is 'A'
-      keyCode += 32;
-    }
-
-    if (notePlaying && mKeyPresses[mLastPressedKey].isKeyCode(keyCode)) {
-      return;  // same note being played is being held down
-    }
-
-    // look for new key being pressed
-    bool validKey = false;
-    for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
-      if (mKeyPresses[pitchClass].isKeyCode(keyCode)) {
-        mLastPressedKey = pitchClass;
-        validKey = true;
-        break;
-      }
-    }
-
-    if (!validKey) {
-      // another key, that is not related to keyboard, was pressed
-      return;
-    }
-  } else if (isKeyDown) {
-    // if pKey is null and note is down, then its just
-    // juce::KeyListener::keyStateChanged giving redundant information
-    return;
-  }
-
-  if (isKeyDown) {
-    // new key is pressed
-    if (notePlaying) {
-      // two keys were pressed, so need to turn off old one first
-      mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-    }
-    mCurrentNote = RainbowKeyboard::Note(mLastPressedKey, 0.5f, InputType::KEYBOARD);
-    mState.noteOn(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-    stateChange = true;
-  } else {
-    if (!mKeyPresses[mCurrentNote.pitch].isCurrentlyDown()) {
-      // key has been released
-      mState.noteOff(MIDI_CHANNEL, mCurrentNote.pitch, mCurrentNote.velocity);
-      mCurrentNote = RainbowKeyboard::Note();
-      stateChange = true;
-    }
-  }
-
-  // if note is pressed or release, want to repaint only. Avoid painting every
-  // keyboard input
-  if (stateChange) {
-    repaint();
-  }
 }

@@ -274,7 +274,7 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderResonance.setRange(0.0, 1.0, 0.01);
   mSliderResonance.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->filterResonance, mSliderResonance.getValue());
-  }; 
+  };
   addAndMakeVisible(mSliderResonance);
 
   mLabelResonance.setText("Resonance", juce::dontSendNotification);
@@ -308,14 +308,14 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
       case (Utils::FilterType::BANDPASS):
         ParamHelper::setParam(getCurrentGenerator()->filterCutoff, ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
         break;
-    }   
+    }
     ParamHelper::setParam(getCurrentGenerator()->filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
     ParamHelper::setParam(getCurrentGenerator()->filterStrength, ParamDefaults::FILTER_STRENGTH_DEFAULT);
   };
   addAndMakeVisible(mFilterControl);
 
   // set default generator for initialization
-  setPitchClass(mCurPitchClass);
+  setNoteOn(mCurPitchClass);
   startTimer(33);  // 30 fps
 }
 
@@ -524,7 +524,7 @@ void GeneratorsBox::resized() {
   mLabelStrength.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
-void GeneratorsBox::setPitchClass(Utils::PitchClass pitchClass) {
+void GeneratorsBox::setNoteOn(Utils::PitchClass pitchClass) {
   // Remove listeners from old generator and note
   mParamsNote.notes[mCurPitchClass]->removeListener(mCurSelectedGenerator, this);
 
@@ -723,7 +723,7 @@ void GeneratorsBox::refreshState() {
   mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderStrength.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  
+
   mLabelShape.setEnabled(componentsLit);
   mLabelTilt.setEnabled(componentsLit);
   mLabelRate.setEnabled(componentsLit);

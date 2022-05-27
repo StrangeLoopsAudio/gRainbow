@@ -24,7 +24,10 @@
 //==============================================================================
 /**
  */
-class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::FileDragAndDropTarget, public juce::Timer {
+class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                     juce::FileDragAndDropTarget,
+                                     juce::MidiKeyboardState::Listener,
+                                     juce::Timer {
  public:
   GRainbowAudioProcessorEditor(GranularSynth& synth);
   ~GRainbowAudioProcessorEditor() override;
@@ -33,9 +36,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor, public j
   void paint(juce::Graphics&) override;
   void paintOverChildren(juce::Graphics& g) override;
   void resized() override;
-
-  bool keyStateChanged(bool isKeyDown) override;
-  bool keyPressed(const juce::KeyPress& key) override;
 
   bool isInterestedInFileDrag(const juce::StringArray& files) override;
   void fileDragEnter(const juce::StringArray& files, int x, int y) override;
@@ -81,10 +81,8 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor, public j
   ParamUI& mParamUI;
 
   // Bookkeeping
-  Utils::PitchClass mCurPitchClass = Utils::PitchClass::NONE;
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
-  bool mStartedPlayingTrig = false;
   bool mIsFileHovering = false;
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
@@ -94,6 +92,9 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor, public j
   void startRecording();
   void stopRecording();
   void savePreset();
+
+  void handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
+  void handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GRainbowAudioProcessorEditor)
 };

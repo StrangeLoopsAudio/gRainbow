@@ -18,7 +18,7 @@
 #include "PitchDetector.h"
 #include "Utils.h"
 
-class GranularSynth : public juce::AudioProcessor {
+class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::Listener {
  public:
   enum ParameterType {
     ENABLED,  // If position is enabled and playing grains
@@ -76,9 +76,6 @@ class GranularSynth : public juce::AudioProcessor {
   const juce::AudioBuffer<float>& getAudioBuffer() { return mFileBuffer; }
   juce::MidiKeyboardState& getKeyboardState() { return mKeyboardState; }
 
-  // Callback functions
-  std::function<void(Utils::PitchClass pitchClass, bool isNoteOn)> onNoteChanged = nullptr;
-
   void processFile(juce::AudioBuffer<float>* audioBuffer, double sampleRate, bool preset);
   std::vector<Utils::SpecBuffer*> getProcessedSpecs() {
     return std::vector<Utils::SpecBuffer*>(mProcessedSpecs.begin(), mProcessedSpecs.end());
@@ -87,6 +84,7 @@ class GranularSynth : public juce::AudioProcessor {
   ParamsNote& getParamsNote() { return mParamsNote; }
   ParamGlobal& getParamGlobal() { return mParamGlobal; }
   double& getLoadingProgress() { return mLoadingProgress; }
+  Utils::PitchClass getPitchClass() { return mCurPitchClass; }
 
   ParamUI& getParamUI() { return mParamUI; }
   void resetParameters();
@@ -137,15 +135,15 @@ class GranularSynth : public juce::AudioProcessor {
   // Grain control
   long mTotalSamps;
   juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
-  Utils::PitchClass mCurPitchClass = Utils::PitchClass::C;
+  Utils::PitchClass mCurPitchClass = Utils::PitchClass::NONE;
 
   // Parameters
   ParamsNote mParamsNote;
   ParamGlobal mParamGlobal;
   ParamUI mParamUI;
 
-  void setNoteOn(Utils::PitchClass pitchClass, float velocity);
-  void setNoteOff(Utils::PitchClass pitchClass);
+  void handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
+  void handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
   void handleGrainAddRemove(int blockSize);
   void createCandidates(juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>& detectedPitches);
 };

@@ -38,7 +38,7 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
 
   void timerCallback() override;
 
-  void setPitchClass(Utils::PitchClass pitchClass);
+  void setNoteOn(Utils::PitchClass pitchClass);
 
   std::function<void(int gen, bool isRight)> onPositionChanged = nullptr;
 

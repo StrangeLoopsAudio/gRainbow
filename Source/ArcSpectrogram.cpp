@@ -18,7 +18,6 @@
 //==============================================================================
 ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
     : mCurPitchClass(Utils::PitchClass::C),
-      mIsPlayingNote(false),
       mProcessType(ParamUI::SpecType::INVALID),
       mParamsNote(paramsNote),
       mParamUI(paramUI),
@@ -238,6 +237,5 @@ void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
     mArcGrains.add(ArcGrain(gen, envGain, envIncSamples));
   };
 
-  mIsPlayingNote = true;
   mCurPitchClass = pitchClass;
 }

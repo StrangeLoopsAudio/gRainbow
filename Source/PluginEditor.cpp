@@ -21,17 +21,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mKeyboard(synth.getKeyboardState()),
       mProgressBar(synth.getLoadingProgress()),
       mParamUI(synth.getParamUI()) {
-  mCurPitchClass = (Utils::PitchClass)mParamUI.pitchClass;
-
-  mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass, bool isNoteOn) {
-    if (isNoteOn) {
-      mCurPitchClass = pitchClass;
-      mStartedPlayingTrig = true;
-    } else {
-      mArcSpec.setNoteOff();
-    }
-  };
-
   setLookAndFeel(&mRainbowLookAndFeel);
 
   // Open file button
@@ -97,6 +86,9 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   addAndMakeVisible(mKeyboard);
 
+  // The Editor is incharge of knowing if a note is being played. If being played it will repaint all the component
+  synth.getKeyboardState().addListener(this);
+
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
 
   mAudioDeviceManager.addAudioCallback(&mRecorder);
@@ -117,7 +109,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 }
 
 GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
-  mSynth.onNoteChanged = nullptr;
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   auto recordFile = parentDir.getChildFile(FILE_RECORDING);
   recordFile.deleteFile();
@@ -142,13 +133,6 @@ void GRainbowAudioProcessorEditor::timerCallback() {
         mArcSpec.loadBuffer(specs[i], (ParamUI::SpecType)i);
     }
   }
-
-  if (mStartedPlayingTrig && mCurPitchClass != Utils::PitchClass::NONE) {
-    mArcSpec.setNoteOn(mCurPitchClass);
-    mGeneratorsBox.setPitchClass(mCurPitchClass);
-    mStartedPlayingTrig = false;
-    repaint();  // Update note display
-  }
 }
 
 //==============================================================================
@@ -170,7 +154,8 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
 
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
   // Draw note display
-  if (mCurPitchClass != Utils::PitchClass::NONE) {
+  Utils::PitchClass pitchClass = mSynth.getPitchClass();
+  if (pitchClass != Utils::PitchClass::NONE) {
     std::vector<ParamCandidate*> candidates = mSynth.getActiveCandidates();
     // Draw position arrows
     for (int i = 0; i < candidates.size(); ++i) {
@@ -183,17 +168,19 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
       g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
     }
     // Draw path to positions
-    float noteX = mKeyboard.getBounds().getX() + (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(mCurPitchClass));
+    float noteX = mKeyboard.getBounds().getX() + (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(pitchClass));
     juce::Path displayPath;
     displayPath.startNewSubPath(noteX, mNoteDisplayRect.getBottom());
     displayPath.lineTo(noteX, mNoteDisplayRect.getBottom() - (NOTE_DISPLAY_HEIGHT / 2.0f));
     displayPath.lineTo(mNoteDisplayRect.getCentre());
     displayPath.lineTo(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
-    g.setColour(Utils::getRainbow12Colour(mCurPitchClass));
+    g.setColour(Utils::getRainbow12Colour(pitchClass));
     g.strokePath(displayPath, juce::PathStrokeType(4.0f));
     g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
                   NOTE_BULB_SIZE, NOTE_BULB_SIZE);
   }
+
+  // When dragging a file over, give feedback it will be accepted when released
   if (mIsFileHovering) {
     g.setColour(juce::Colours::white.withAlpha(0.2f));
     g.fillRect(getLocalBounds());
@@ -444,27 +431,20 @@ void GRainbowAudioProcessorEditor::savePreset() {
   }
 }
 
-/**
- * @brief To properly handle all keyboard input, the main component is used as
- * it will always be "in focus". From here it can pass through and decide what
- * keyboard inputs are sent to each child component
- */
-bool GRainbowAudioProcessorEditor::keyStateChanged(bool isKeyDown) {
-  if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
-    mKeyboard.updateKeyState(nullptr, isKeyDown);
-  }
-  return false;
+void GRainbowAudioProcessorEditor::handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber,
+                                                float velocity) {
+  const Utils::PitchClass pitchClass = Utils::getPitchClass(midiNoteNumber);
+  mKeyboard.setNoteOn(pitchClass, velocity);
+  mArcSpec.setNoteOn(pitchClass);
+  mGeneratorsBox.setNoteOn(pitchClass);
+  repaint();
 }
 
-/**
- * @brief keyPressed is called after keyStateChanged, but know which key was
- * pressed
- */
-bool GRainbowAudioProcessorEditor::keyPressed(const juce::KeyPress& key) {
-  if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
-    mKeyboard.updateKeyState(&key, true);
-  }
-  return false;
+void GRainbowAudioProcessorEditor::handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber,
+                                                 float velocity) {
+  const Utils::PitchClass pitchClass = Utils::getPitchClass(midiNoteNumber);
+  mKeyboard.setNoteOff(pitchClass);
+  repaint();
 }
 
 /** Fast Debug Mode is used to speed up iterations of testing

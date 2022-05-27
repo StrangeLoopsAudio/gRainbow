@@ -39,7 +39,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void loadBuffer(Utils::SpecBuffer *buffer, ParamUI::SpecType type);
   void loadPreset();
   void setNoteOn(Utils::PitchClass pitchClass);
-  void setNoteOff() { mIsPlayingNote = false; }
 
   //============================================================================
   void run() override;
@@ -83,7 +82,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   // Bookkeeping
   Utils::PitchClass mCurPitchClass;
   juce::Array<ArcGrain> mArcGrains;
-  bool mIsPlayingNote;
   ParamUI::SpecType mProcessType;
   bool mIsProcessing = false;
   bool mImagesComplete[ParamUI::SpecType::COUNT];
