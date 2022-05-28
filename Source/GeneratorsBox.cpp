@@ -34,6 +34,8 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
       refreshState();
     };
     mBtnsEnabled[i].addMouseListener(this, false);
+    // TODO - Only shows on tiny button and not the whole tab
+    mBtnsEnabled[i].setTooltip("Generator " + juce::String(i + 1));
     addAndMakeVisible(mBtnsEnabled[i]);
   }
 

@@ -40,6 +40,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mBtnOpenFile.setImages(false, true, true, openFileNormal, 1.0f, juce::Colours::transparentBlack, openFileOver, 1.0f,
                          juce::Colours::transparentBlack, openFileOver, 1.0f, juce::Colours::transparentBlack);
   mBtnOpenFile.onClick = [this] { openNewFile(); };
+  mBtnOpenFile.setTooltip("Load new sample from file or preset");
   addAndMakeVisible(mBtnOpenFile);
 
   // Recording button
@@ -54,14 +55,16 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       startRecording();
     }
   };
+  mBtnRecord.setTooltip("Record to add new sample");
   addAndMakeVisible(mBtnRecord);
 
-  // Present button
+  // Preset button
   juce::Image presetNormal = juce::PNGImageFormat::loadFrom(BinaryData::presetNormal_png, BinaryData::presetNormal_pngSize);
   juce::Image presetOver = juce::PNGImageFormat::loadFrom(BinaryData::presetOver_png, BinaryData::presetOver_pngSize);
   mBtnPreset.setImages(false, true, true, presetNormal, 1.0f, juce::Colours::transparentBlack, presetOver, 1.0f,
                        juce::Colours::transparentBlack, presetOver, 1.0f, juce::Colours::transparentBlack);
   mBtnPreset.onClick = [this] { savePreset(); };
+  mBtnPreset.setTooltip("Save everything as a preset");
   addAndMakeVisible(mBtnPreset);
   // if reloading and images are done, then enable right away
   mBtnPreset.setEnabled(mParamUI.specComplete);
@@ -110,6 +113,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     // Standalone will persist between usages
     mSynth.resetParameters();
   }
+
+  mTooltipWindow->setMillisecondsBeforeTipAppears(500);  // default is 700ms
 
   startTimer(50);
 

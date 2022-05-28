@@ -76,6 +76,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor, public j
   NoteGrid mNoteGrid;
   GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
+  juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
 
   // Synth owns, but need to grab params on reloading of plugin
   ParamUI& mParamUI;
