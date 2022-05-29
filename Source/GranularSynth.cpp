@@ -403,15 +403,20 @@ void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer, double sa
   
 
   // resamples the buffer from the file sampler rate to the the proper sampler
-  // rate set from the DAW in prepareToPlay
-  mFileBuffer.setSize(audioBuffer->getNumChannels(), audioBuffer->getNumSamples());
-  std::unique_ptr<juce::LagrangeInterpolator> resampler = std::make_unique<juce::LagrangeInterpolator>();
-  double ratio = sampleRate / mSampleRate;
+  // rate set from the DAW in prepareToPlay.
+  const double ratioToInput = sampleRate / mSampleRate;   // input / output
+  const double ratioToOutput = mSampleRate / sampleRate;  // output / input
+  // The output buffer needs to be size that matches the new sample rate
+  const int resampleSize = static_cast<int>(static_cast<double>(audioBuffer->getNumSamples()) * ratioToOutput);
+  mFileBuffer.setSize(audioBuffer->getNumChannels(), resampleSize);
+
   const float** inputs = audioBuffer->getArrayOfReadPointers();
   float** outputs = mFileBuffer.getArrayOfWritePointers();
+
+  std::unique_ptr<juce::LagrangeInterpolator> resampler = std::make_unique<juce::LagrangeInterpolator>();
   for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
     resampler->reset();
-    resampler->process(ratio, inputs[c], outputs[c], mFileBuffer.getNumSamples());
+    resampler->process(ratioToInput, inputs[c], outputs[c], mFileBuffer.getNumSamples());
   }
 
   // preset don't need to generate things again
