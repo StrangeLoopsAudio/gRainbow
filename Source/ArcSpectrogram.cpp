@@ -47,6 +47,7 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
     mParamUI.specType = mSpecType.getSelectedItemIndex();
     repaint();
   };
+  mSpecType.setTooltip("Change Spectrogram type to view");
 
   mActivePitchClass.reset(false);
 
