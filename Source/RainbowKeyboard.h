@@ -14,9 +14,12 @@
 
 #include "Utils.h"
 
-//==============================================================================
-/*
- */
+/**
+  @brief The RainbowKeyboard is for displaying the keys being pressed, but all the actual listening of midi inputs will come from
+  editor.
+
+  The RainbowKeyboard is able to detect mouse input and inject midi inputs
+*/
 class RainbowKeyboard : public juce::Component {
  public:
   RainbowKeyboard(juce::MidiKeyboardState& state);
@@ -24,6 +27,7 @@ class RainbowKeyboard : public juce::Component {
 
   void paint(juce::Graphics&) override;
   void resized() override;
+
   void mouseMove(const juce::MouseEvent&) override;
   void mouseDrag(const juce::MouseEvent&) override;
   void mouseDown(const juce::MouseEvent&) override;
@@ -31,9 +35,7 @@ class RainbowKeyboard : public juce::Component {
   void mouseEnter(const juce::MouseEvent&) override;
   void mouseExit(const juce::MouseEvent&) override;
 
-  // Takes input of Component::keyStateChanged from parent component due to lack
-  // of always having focus on this component
-  void updateKeyState(const juce::KeyPress* pKey, bool isKeyDown);
+  void setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes);
 
   // Returns a value between 0.0-1.0 representing the note's x position on the
   // keyboard
@@ -44,31 +46,23 @@ class RainbowKeyboard : public juce::Component {
   static constexpr int MIDI_CHANNEL = 1;
 
   juce::MidiKeyboardState& mState;
-  juce::KeyPress mKeyPresses[Utils::PitchClass::COUNT];
-  Utils::PitchClass mLastPressedKey = Utils::PitchClass::NONE;
 
-  enum class InputType { NONE, MOUSE, KEYBOARD, MIDI, PLUGIN };
-  struct Note {
-    Utils::PitchClass pitch;
-    float velocity;
-    InputType input;  // prevents other inputs from stepping on each other
+  // holds the velocity of each pitch class, if zero, then note is not played
+  std::array<float, Utils::PitchClass::COUNT> mNoteVelocity;
 
-    Note() : pitch(Utils::PitchClass::NONE), velocity(0.0f), input(InputType::NONE) {}
-    Note(Utils::PitchClass pitch, float velocity, InputType input) : pitch(pitch), velocity(velocity), input(input) {}
-  };
-
-  // Since only one note can be pressed at once, only need on instance of Note
-  RainbowKeyboard::Note mCurrentNote;
+  // These allow using the mouse to click a key
+  void updateMouseState(const juce::MouseEvent& e, bool isDown);
+  Utils::MidiNote xyMouseToNote(juce::Point<float> pos);
   // Note being currently hovered by the mouse
-  RainbowKeyboard::Note mHoverNote;
+  Utils::MidiNote mHoverNote;
+  // Keeps track of the note being played because of the mouse injected input
+  Utils::MidiNote mMouseNote;
 
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectangleMap[Utils::PitchClass::COUNT];
   void fillNoteRectangleMap();
 
   void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);
-  void updateMouseState(const juce::MouseEvent& e, bool isDown);
-  RainbowKeyboard::Note xyMouseToNote(juce::Point<float> pos);
 
   // if a key is black or white is only a keyboard UI issue
   Utils::PitchClass WHITE_KEYS_PITCH_CLASS[7] = {Utils::PitchClass::C, Utils::PitchClass::D, Utils::PitchClass::E,

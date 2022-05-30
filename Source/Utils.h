@@ -29,6 +29,18 @@ enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
 
 // All util logic around the notes/pitchClasses
 enum PitchClass { NONE = -1, C = 0, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, COUNT };
+static inline PitchClass getPitchClass(int midiNoteNumber) { return (PitchClass)(midiNoteNumber % PitchClass::COUNT); }
+// A "Note" is a wrapper to hold all the information about notes from a MidiMessage we care about sharing around classes
+struct MidiNote {
+  PitchClass pitch;
+  float velocity;
+
+  MidiNote() : pitch(PitchClass::NONE), velocity(0.0f) {}
+  MidiNote(PitchClass pitch, float velocity) : pitch(pitch), velocity(velocity) {}
+
+  bool operator==(const MidiNote& other) const { return pitch == other.pitch; }
+  bool operator!=(const MidiNote& other) const { return pitch != other.pitch; }
+};
 
 enum FilterType { NO_FILTER, LOWPASS, HIGHPASS, BANDPASS };
 

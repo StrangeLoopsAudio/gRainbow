@@ -12,6 +12,8 @@
 
 #include <JuceHeader.h>
 
+#include "Utils.h"
+
 namespace ParamIDs {
 // Note params
 static juce::String genSolo{"_solo_gen"};
@@ -96,7 +98,6 @@ struct ParamHelper {
 };
 
 static constexpr auto MAX_CANDIDATES = 6;
-static constexpr auto NUM_NOTES = 12;
 static constexpr auto NUM_GENERATORS = 4;
 static constexpr auto SOLO_NONE = -1;
 static constexpr auto NUM_FILTER_TYPES = 3;
@@ -189,11 +190,6 @@ struct ParamNote {
   bool shouldPlayGenerator(int genIdx);
   ParamCandidate* getCandidate(int genIdx);
 
-  void grainCreated(int genIdx, float durationSec, float envGain) {
-    if (onGrainCreated != nullptr) onGrainCreated(genIdx, durationSec, envGain);
-  }
-  std::function<void(int genIdx, float durationSec, float envGain)> onGrainCreated = nullptr;
-
   int noteIdx;
   std::vector<std::unique_ptr<ParamGenerator>> generators;
   std::vector<ParamCandidate> candidates;
@@ -222,15 +218,23 @@ struct ParamNote {
 
 struct ParamsNote {
   ParamsNote() {
-    for (int i = 0; i < NUM_NOTES; ++i) {
-      notes.emplace_back(new ParamNote(i));
+    for (int i = 0; i < Utils::PitchClass::COUNT; ++i) {
+      notes[i] = std::unique_ptr<ParamNote>(new ParamNote(i));
     }
   }
 
   void addParams(juce::AudioProcessor& p);
   void resetParams();
 
-  std::vector<std::unique_ptr<ParamNote>> notes;
+  // always send creation and have callback scope decide if valid or not
+  void grainCreated(Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain) {
+    if (onGrainCreated != nullptr) {
+      onGrainCreated(pitchClass, genIdx, durationSec, envGain);
+    }
+  }
+  std::function<void(Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain)> onGrainCreated = nullptr;
+
+  std::array<std::unique_ptr<ParamNote>, Utils::PitchClass::COUNT> notes;
 
   juce::XmlElement* getUserStateXml() {
     juce::XmlElement* xml = new juce::XmlElement("NotesParams");
@@ -307,7 +311,8 @@ struct ParamUI {
 
   juce::String fileName;
   int generatorTab = 0;
-  int pitchClass = 0;
+  // default when new instance is loaded
+  int pitchClass = Utils::PitchClass::C;
 
   // ArcSpectrogram related items
   int specType = 0;

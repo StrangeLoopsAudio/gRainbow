@@ -13,9 +13,7 @@
 #include "Utils.h"
 
 //==============================================================================
-NoteGrid::NoteGrid(ParamsNote& paramsNote) : mParamsNote(paramsNote) { 
-  setFramesPerSecond(REFRESH_RATE_FPS); 
-}
+NoteGrid::NoteGrid(ParamsNote& paramsNote) : mParamsNote(paramsNote) { setFramesPerSecond(REFRESH_RATE_FPS); }
 
 NoteGrid::~NoteGrid() {}
 
@@ -26,7 +24,7 @@ void NoteGrid::paint(juce::Graphics& g) {
 
   // Note grid
   juce::Rectangle<int> gridRect = getLocalBounds().reduced(PADDING_SIZE);
-  float squareSize = gridRect.getWidth() / (float)NUM_NOTES;
+  float squareSize = gridRect.getWidth() / static_cast<float>(Utils::PitchClass::COUNT);
   juce::Rectangle<int> square = juce::Rectangle<int>(squareSize, squareSize);
   juce::Rectangle<int> column = juce::Rectangle<int>(squareSize, squareSize * NUM_GENERATORS);
 
@@ -39,7 +37,7 @@ void NoteGrid::paint(juce::Graphics& g) {
 
   juce::Rectangle<int> noteNamesRect = gridRect.removeFromTop(TITLE_HEIGHT);
 
-  for (int i = 0; i < NUM_NOTES; ++i) {
+  for (int i = 0; i < Utils::PitchClass::COUNT; ++i) {
     // Note column
     juce::Colour noteColour = Utils::getRainbow12Colour(i);
     g.setColour(noteColour);
@@ -57,7 +55,7 @@ void NoteGrid::paint(juce::Graphics& g) {
       // Clear rect area first to eliminate note colour
       g.setColour(juce::Colours::black);
       g.fillRect(square.withPosition(squarePos).reduced(2.0f));
-      
+
       // Fill and label candidate if enabled, draw frame if not
       g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[j]));
       if (mParamsNote.notes[i]->generators[j]->enable->get()) {
