@@ -44,6 +44,7 @@ class RainbowKeyboard : public juce::Component {
  private:
   static constexpr float BLACK_NOTE_SIZE_RATIO = 0.7f;
   static constexpr int MIDI_CHANNEL = 1;
+  juce::Random mRandom;
 
   juce::MidiKeyboardState& mState;
 
@@ -73,6 +74,17 @@ class RainbowKeyboard : public juce::Component {
                                                  Utils::PitchClass::Gs, Utils::PitchClass::As};
 
   static inline bool isBlackKey(Utils::PitchClass pitchClass) { return ((1 << (pitchClass)) & 0x054a) != 0; }
+
+  // LUT for animation values to save from recomputing each frame
+  static constexpr int ANIMATION_BLOCK_DIVISOR = 12;
+  struct AnimationLUT {
+    float velocityLine;
+    float inverseVelocityLine;
+    float noteWidthSplit;
+    float blockCount;
+    float yDelta;
+  };
+  std::array<AnimationLUT, Utils::PitchClass::COUNT> mAnimationLUT;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowKeyboard)
 };
