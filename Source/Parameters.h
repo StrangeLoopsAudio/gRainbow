@@ -228,7 +228,9 @@ struct ParamsNote {
 
   // always send creation and have callback scope decide if valid or not
   void grainCreated(Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain) {
-    onGrainCreated(pitchClass, genIdx, durationSec, envGain);
+    if (onGrainCreated != nullptr) {
+      onGrainCreated(pitchClass, genIdx, durationSec, envGain);
+    }
   }
   std::function<void(Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain)> onGrainCreated = nullptr;
 
