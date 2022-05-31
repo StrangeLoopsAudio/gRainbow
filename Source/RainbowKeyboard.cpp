@@ -13,7 +13,10 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state) : mState(state) { mNoteVelocity.fill(0.0f); }
+RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state) : mState(state) {
+  mNoteVelocity.fill(0.0f);
+  mRandom.setSeed(juce::Time::currentTimeMillis());
+}
 
 RainbowKeyboard::~RainbowKeyboard() {}
 
@@ -99,6 +102,22 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   g.fillRect(area);
   g.setColour(juce::Colours::black);
   g.drawRect(area, isBlackKey(pitchClass) ? 2 : 1);
+
+  // display animation to show the velocity level of the note
+  if (isDown) {
+    AnimationLUT& lut = mAnimationLUT[pitchClass];
+    juce::Rectangle<float> block = juce::Rectangle<float>(lut.noteWidthSplit, lut.noteWidthSplit);
+    g.setColour(juce::Colours::white);
+    g.drawLine(area.getX(), lut.velocityLine, area.getRight(), lut.velocityLine, 2.0f);
+    for (int i = 0; i < lut.blockCount; i++) {
+      // (i * 2) to spread out the blocks across if at a low velocity
+      // Tried using random() to get X pos, but looked a little too random IMO
+      const float x = area.getX() + (static_cast<float>((i * 2) % ANIMATION_BLOCK_DIVISOR) * lut.noteWidthSplit);
+      const float y = lut.yDelta + (lut.inverseVelocityLine * mRandom.nextFloat());
+      block.setPosition(x, y);
+      g.drawRect(block);
+    }
+  }
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
@@ -107,6 +126,20 @@ void RainbowKeyboard::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes
   mNoteVelocity.fill(0.0f);
   for (const Utils::MidiNote& midiNote : midiNotes) {
     mNoteVelocity[midiNote.pitch] = midiNote.velocity;
+
+    // if note is pressed, update animation LUT
+    if (midiNote.velocity > 0.0f) {
+      juce::Rectangle<float> area = mNoteRectangleMap[midiNote.pitch];
+      AnimationLUT& lut = mAnimationLUT[midiNote.pitch];
+      lut.noteWidthSplit = area.getWidth() / static_cast<float>(ANIMATION_BLOCK_DIVISOR);
+      lut.inverseVelocityLine = (area.getHeight() * midiNote.velocity);
+      lut.velocityLine = area.getHeight() - lut.inverseVelocityLine;
+      // velocity^2 to give non linear feel
+      // if velocity is low, will be 1 row of blocks
+      lut.blockCount = (ANIMATION_BLOCK_DIVISOR / 2) + static_cast<int>(20.0f * midiNote.velocity * midiNote.velocity);
+      // substract clip bottom of key
+      lut.yDelta = lut.velocityLine - (lut.noteWidthSplit / 2.0f);
+    }
   }
 }
 
