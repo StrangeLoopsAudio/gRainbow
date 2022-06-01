@@ -414,13 +414,13 @@ void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer, double sa
   }
 }
 
-int GranularSynth::incrementPosition(int boxNum, bool lookRight) {
+int GranularSynth::incrementPosition(int genIdx, bool lookRight) {
   int numCandidates = mParamsNote.notes[mLastPitchClass]->candidates.size();
-  int pos = mParamsNote.notes[mLastPitchClass]->generators[boxNum]->candidate->get();
+  int pos = mParamsNote.notes[mLastPitchClass]->generators[genIdx]->candidate->get();
   if (numCandidates == 0) return pos;
   int newPos = lookRight ? pos + 1 : pos - 1;
   newPos = (newPos + numCandidates) % numCandidates;
-  ParamHelper::setParam(mParamsNote.notes[mLastPitchClass]->generators[boxNum]->candidate, newPos);
+  ParamHelper::setParam(mParamsNote.notes[mLastPitchClass]->generators[genIdx]->candidate, newPos);
   return newPos;
 }
 
@@ -509,5 +509,7 @@ void GranularSynth::createCandidates(juce::HashMap<Utils::PitchClass, std::vecto
       numSearches++;
       if (numSearches >= 6 || foundAll) break;
     }
+
+    note->setStartingCandidatePosition();
   }
 }

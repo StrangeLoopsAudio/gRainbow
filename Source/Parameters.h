@@ -189,6 +189,7 @@ struct ParamNote {
   void removeListener(int genIdx, juce::AudioProcessorParameter::Listener* listener);
   bool shouldPlayGenerator(int genIdx);
   ParamCandidate* getCandidate(int genIdx);
+  void setStartingCandidatePosition();
 
   int noteIdx;
   std::vector<std::unique_ptr<ParamGenerator>> generators;

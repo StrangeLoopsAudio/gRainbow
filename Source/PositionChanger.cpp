@@ -64,12 +64,15 @@ void PositionChanger::paint(juce::Graphics& g) {
   g.drawRect(titleRect, 2);
 
   /* Draw position text */
+  juce::String posString;
   if (mPosition >= 0 && mNumPositions > 0) {
     int posNum = (mPosition >= 0) ? mPosition + 1 : 0;
-    juce::String posString = juce::String(posNum) + juce::String(" / ") + juce::String(mNumPositions);
-    g.setColour(bgColour);
-    g.drawText(posString, titleRect, juce::Justification::centred);
+    posString = juce::String(posNum) + juce::String(" / ") + juce::String(mNumPositions);
+  } else {
+    posString = "EMPTY";  // only can fit 5 letters in box, better then a blank boxs
   }
+  g.setColour(bgColour);
+  g.drawText(posString, titleRect, juce::Justification::centred);
 
   /* Solo button */
   mSoloRect = titleRect.translated(0, selectorHeight).withHeight(soloHeight - 2).toFloat();
