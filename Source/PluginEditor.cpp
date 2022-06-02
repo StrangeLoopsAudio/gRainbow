@@ -20,6 +20,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mArcSpec(synth.getParamsNote(), synth.getParamUI()),
       mKeyboard(synth.getKeyboardState()),
       mProgressBar(synth.getLoadingProgress()),
+      mFrameCount(0),
       mParamUI(synth.getParamUI()) {
   setLookAndFeel(&mRainbowLookAndFeel);
 
@@ -94,6 +95,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mAudioDeviceManager.addAudioCallback(&mRecorder);
 
   mFormatManager.registerBasicFormats();
+
+  mHalfSun = juce::PNGImageFormat::loadFrom(BinaryData::half_sun_png, BinaryData::half_sun_pngSize);
 
   // Only want keyboard input focus for standalone as DAW will have own input
   // mappings
@@ -180,11 +183,30 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
       for (int i = 0; i < candidates.size(); ++i) {
         if (candidates[i] == nullptr) continue;
         g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[i]));
-        auto middlePos = candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
+        float middlePos = candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
         float angleRad = (juce::MathConstants<float>::pi * middlePos) - (juce::MathConstants<float>::pi / 2.0f);
-        juce::Point<float> startPoint = juce::Point<float>(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
-        juce::Point<float> endPoint = startPoint.getPointOnCircumference(mArcSpec.getHeight() / 4.5f, angleRad);
-        g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
+        juce::Point<float> arrowStartPoint = juce::Point<float>(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
+        juce::Point<float> arrowEndPoint = arrowStartPoint.getPointOnCircumference(mArcSpec.getHeight() / 4.5f, angleRad);
+        g.drawArrow(juce::Line<float>(arrowStartPoint, arrowEndPoint), 4.0f, 10.0f, 6.0f);
+
+        // Draw light ray from arrow to grain
+        // There are a few frames where the grains are calculated yet
+        if (!candidates[i]->grainPoint.isOrigin()) {
+          juce::Point<float> rayEndPoint = getLocalPoint(&mArcSpec, candidates[i]->grainPoint);
+          juce::Line<float> rayLine = juce::Line<float>(arrowEndPoint, rayEndPoint);
+          const float rayLineLength = rayLine.getLength();
+          juce::Point<float> rayLine1_4 = rayLine.getPointAlongLine((1.0f * rayLineLength) / 4.0f);
+          juce::Point<float> rayLine2_4 = rayLine.getPointAlongLine((2.0f * rayLineLength) / 4.0f);
+          juce::Point<float> rayLine3_4 = rayLine.getPointAlongLine((3.0f * rayLineLength) / 4.0f);
+          const uint32_t normalizedFrameCount = mFrameCount % 3;
+          if (normalizedFrameCount == 1) {
+            g.drawLine(juce::Line<float>(arrowEndPoint, rayLineFirstThird));
+          } else if (normalizedFrameCount == 2) {
+            g.drawLine(juce::Line<float>(rayLineFirstThird, rayLineSecondThird));
+          } else {
+            g.drawLine(juce::Line<float>(rayLineSecondThird, rayEndPoint));
+          }
+        }
       }
 
       // Draw path from rainbow key to the arrow's base
@@ -203,9 +225,20 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
         g.setColour(Utils::getRainbow12Colour(pitchClass).withAlpha(alpha));
         g.strokePath(displayPath, juce::PathStrokeType(4.0f));
         if (empathized) {
-          g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
-                        NOTE_BULB_SIZE, NOTE_BULB_SIZE);
+          g.fillEllipse(mNoteDisplayBulb);
         }
+      }
+
+      // rotates the sun back and forth
+      const uint32_t normalizedFrameCount = mFrameCount % 4;
+      if (normalizedFrameCount == 1) {
+        g.drawImageTransformed(mHalfSun, mSunTransformBase);
+      } else if (normalizedFrameCount == 2) {
+        g.drawImageTransformed(mHalfSun, mSunTransformLeft);
+      } else if (normalizedFrameCount == 3) {
+        g.drawImageTransformed(mHalfSun, mSunTransformBase);
+      } else {
+        g.drawImageTransformed(mHalfSun, mSunTransformRight);
       }
     }
   }
@@ -215,6 +248,8 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
     g.setColour(juce::Colours::white.withAlpha(0.2f));
     g.fillRect(getLocalBounds());
   }
+
+  mFrameCount++;
 }
 
 void GRainbowAudioProcessorEditor::resized() {
@@ -252,6 +287,16 @@ void GRainbowAudioProcessorEditor::resized() {
 
   // Space for note display
   mNoteDisplayRect = r.removeFromTop(NOTE_DISPLAY_HEIGHT).toFloat();
+  mNoteDisplayBulb = juce::Rectangle<float>(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f),
+                                            mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f), NOTE_BULB_SIZE, NOTE_BULB_SIZE);
+  mNoteDisplaySun = mNoteDisplayBulb;
+  mNoteDisplaySun.expand(5.0f, 5.0f);
+  // mNoteDisplaySun.translate(0.0f, -0.5f);
+  juce::RectanglePlacement placement = juce::RectanglePlacement(juce::RectanglePlacement::stretchToFit);
+  mSunTransformBase = placement.getTransformToFit(mHalfSun.getBounds().toFloat(), mNoteDisplaySun);
+  const float roation = juce::degreesToRadians(7.0f);
+  mSunTransformLeft = mSunTransformBase.rotated(roation * -1.0f, mNoteDisplaySun.getCentre().x, mNoteDisplaySun.getCentre().y);
+  mSunTransformRight = mSunTransformBase.rotated(roation, mNoteDisplaySun.getCentre().x, mNoteDisplaySun.getCentre().y);
 
   // Keyboard
   juce::Rectangle<int> keyboardRect = r.removeFromTop(r.getHeight() - NOTE_DISPLAY_HEIGHT).reduced(NOTE_DISPLAY_HEIGHT, 0.0f);

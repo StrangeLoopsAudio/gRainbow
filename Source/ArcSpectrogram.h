@@ -87,6 +87,12 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   bool mIsProcessing = false;
   bool mImagesComplete[ParamUI::SpecType::COUNT];
 
+  // UI values saved on resize
+  juce::Point<float> mCenterPoint;
+  int mStartRadius;
+  int mEndRadius;
+  int mBowWidth;
+
   std::random_device mRandomDevice{};
   std::mt19937 mGenRandom{mRandomDevice()};
   std::normal_distribution<> mNormalRand{0.0f, 0.4f};
