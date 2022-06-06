@@ -111,8 +111,7 @@ struct ParamCandidate {
   ParamCandidate(float posRatio, float pbRate, float duration, float salience)
       : posRatio(posRatio), pbRate(pbRate), duration(duration), salience(salience) {}
 
-  // setUserStateXml equivalent since we always need a valid candidate param
-  // value
+  // setXml equivalent since we always need a valid candidate param  value
   ParamCandidate(juce::XmlElement* xml) {
     jassert(xml->hasTagName("ParamCandidate"));
     posRatio = xml->getDoubleAttribute("posRatio");
@@ -121,7 +120,7 @@ struct ParamCandidate {
     salience = xml->getDoubleAttribute("salience");
   }
 
-  juce::XmlElement* getUserStateXml() {
+  juce::XmlElement* getXml() {
     juce::XmlElement* xml = new juce::XmlElement("ParamCandidate");
     xml->setAttribute("posRatio", posRatio);
     xml->setAttribute("pbRate", pbRate);
@@ -195,15 +194,15 @@ struct ParamNote {
   std::vector<ParamCandidate> candidates;
   juce::AudioParameterInt* soloIdx = nullptr;
 
-  juce::XmlElement* getUserStateXml() {
+  juce::XmlElement* getXml() {
     juce::XmlElement* xml = new juce::XmlElement("ParamNote");
     for (ParamCandidate& candidate : candidates) {
-      xml->addChildElement(candidate.getUserStateXml());
+      xml->addChildElement(candidate.getXml());
     }
     return xml;
   }
 
-  void setUserStateXml(juce::XmlElement* xml) {
+  void setXml(juce::XmlElement* xml) {
     jassert(xml->hasTagName("ParamNote"));
     candidates.clear();
     for (auto* children : xml->getChildIterator()) {
@@ -236,19 +235,19 @@ struct ParamsNote {
 
   std::array<std::unique_ptr<ParamNote>, Utils::PitchClass::COUNT> notes;
 
-  juce::XmlElement* getUserStateXml() {
+  juce::XmlElement* getXml() {
     juce::XmlElement* xml = new juce::XmlElement("NotesParams");
     for (auto&& note : notes) {
-      xml->addChildElement(note->getUserStateXml());
+      xml->addChildElement(note->getXml());
     }
     return xml;
   }
 
-  void setUserStateXml(juce::XmlElement* xml) {
+  void setXml(juce::XmlElement* xml) {
     jassert(xml->hasTagName("NotesParams"));
     // Currently all child elements are NotesParam elements
     for (size_t i = 0; i < notes.size(); i++) {
-      notes[i].get()->setUserStateXml(xml->getChildElement(i));
+      notes[i].get()->setXml(xml->getChildElement(i));
     }
   }
 
@@ -302,8 +301,10 @@ struct ParamUI {
   // Save image files
   bool saveSpecImage(juce::OutputStream& outputStream, size_t index) {
     juce::PNGImageFormat pngWriter;
-    jassert(index < specImages.size());
-    jassert(specImages[index].isValid());
+    if (index >= specImages.size() || !specImages[index].isValid()) {
+      DBG("saveSpecImage failed\nindex = " << index << "\nspecImage.size = " << specImages.size());
+      return false;
+    }
     return pngWriter.writeImageToStream(specImages[index], outputStream);
   }
 

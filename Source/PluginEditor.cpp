@@ -111,6 +111,12 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 }
 
 GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
+  // can't wait for the message manager to eventually delete this
+  if (mDialogWindow != nullptr) {
+    mDialogWindow->exitModalState(0);
+    delete mDialogWindow;
+  }
+
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   auto recordFile = parentDir.getChildFile(FILE_RECORDING);
   recordFile.deleteFile();
@@ -348,38 +354,47 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     juce::FileInputStream input(file);
     if (input.openedOk()) {
       input.read(&header, sizeof(header));
-      // TODO - give better warnings
-      jassert(header.magic == Preset::MAGIC);
-      jassert(header.versionMajor == Preset::VERSION_MAJOR);
-      jassert(header.versionMinor == Preset::VERSION_MINOR);
 
-      // Get Audio Buffer blob
-      fileAudioBuffer.setSize(header.audioBufferChannel, header.audioBufferNumberOfSamples);
-      input.read(fileAudioBuffer.getWritePointer(0), header.audioBufferSize);
-      sampleRate = header.audioBufferSamplerRate;
+      if (header.magic != Preset::MAGIC) {
+        displayError("The file is not recognize as a valid .gbow preset file.");
+        return;
+      }
 
-      // Get offsets and load all png for spec images
-      uint32_t maxSpecImageSize =
-          juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize, header.specImageDetectedSize);
-      void* specImageData = malloc(maxSpecImageSize);
-      jassert(specImageData != nullptr);
-      input.read(specImageData, header.specImageSpectrogramSize);
-      mParamUI.specImages[ParamUI::SpecType::SPECTROGRAM] =
-          juce::PNGImageFormat::loadFrom(specImageData, header.specImageSpectrogramSize);
-      input.read(specImageData, header.specImageHpcpSize);
-      mParamUI.specImages[ParamUI::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(specImageData, header.specImageHpcpSize);
-      input.read(specImageData, header.specImageDetectedSize);
-      mParamUI.specImages[ParamUI::SpecType::DETECTED] =
-          juce::PNGImageFormat::loadFrom(specImageData, header.specImageDetectedSize);
-      free(specImageData);
+      // Currently there is only a VERSION_MAJOR of 0
+      if (header.versionMajor == 0) {
+        // Get Audio Buffer blob
+        fileAudioBuffer.setSize(header.audioBufferChannel, header.audioBufferNumberOfSamples);
+        input.read(fileAudioBuffer.getWritePointer(0), header.audioBufferSize);
+        sampleRate = header.audioBufferSamplerRate;
 
-      // juce::FileInputStream uses 'int' to read
-      int xmlSize = static_cast<int>(input.getTotalLength() - input.getPosition());
-      void* xmlData = malloc(xmlSize);
-      jassert(xmlData != nullptr);
-      input.read(xmlData, xmlSize);
-      mSynth.setPresetParamsXml(xmlData, xmlSize);
-      free(xmlData);
+        // Get offsets and load all png for spec images
+        uint32_t maxSpecImageSize =
+            juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize, header.specImageDetectedSize);
+        void* specImageData = malloc(maxSpecImageSize);
+        jassert(specImageData != nullptr);
+        input.read(specImageData, header.specImageSpectrogramSize);
+        mParamUI.specImages[ParamUI::SpecType::SPECTROGRAM] =
+            juce::PNGImageFormat::loadFrom(specImageData, header.specImageSpectrogramSize);
+        input.read(specImageData, header.specImageHpcpSize);
+        mParamUI.specImages[ParamUI::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(specImageData, header.specImageHpcpSize);
+        input.read(specImageData, header.specImageDetectedSize);
+        mParamUI.specImages[ParamUI::SpecType::DETECTED] =
+            juce::PNGImageFormat::loadFrom(specImageData, header.specImageDetectedSize);
+        free(specImageData);
+
+        // juce::FileInputStream uses 'int' to read
+        int xmlSize = static_cast<int>(input.getTotalLength() - input.getPosition());
+        void* xmlData = malloc(xmlSize);
+        jassert(xmlData != nullptr);
+        input.read(xmlData, xmlSize);
+        mSynth.setPresetParamsXml(xmlData, xmlSize);
+        free(xmlData);
+      } else {
+        displayError(
+            juce::String::formatted("The file is gbow version is %u.%u and is not supported. The latest gbow version is %u.%u",
+                                    header.versionMajor, header.versionMinor, Preset::VERSION_MAJOR, Preset::VERSION_MINOR));
+        return;
+      }
 
       mBtnPreset.setEnabled(true);
       mArcSpec.loadPreset();
@@ -387,7 +402,11 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
   } else {
     // loading audio clip
     std::unique_ptr<juce::AudioFormatReader> reader(mFormatManager.createReaderFor(file));
-    jassert(reader.get() != nullptr);
+    if (reader.get() == nullptr) {
+      displayError("Unable to read the file.");
+      return;
+    }
+
     fileAudioBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
     reader->read(&fileAudioBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
     sampleRate = reader->sampleRate;
@@ -431,16 +450,25 @@ void GRainbowAudioProcessorEditor::savePreset() {
       // internal memory object so the size is know prior to writtin the image
       // data to the stream.
       juce::MemoryOutputStream spectrogramStaging;
-      mParamUI.saveSpecImage(spectrogramStaging, ParamUI::SpecType::SPECTROGRAM);
+      if (!mParamUI.saveSpecImage(spectrogramStaging, ParamUI::SpecType::SPECTROGRAM)) {
+        displayError("Unable to write spectrogram image out the file");
+        return;
+      }
       header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
 
       juce::MemoryOutputStream hpcpStaging;
-      mParamUI.saveSpecImage(hpcpStaging, ParamUI::SpecType::HPCP);
+      if (!mParamUI.saveSpecImage(hpcpStaging, ParamUI::SpecType::HPCP)) {
+        displayError("Unable to write HPCP image out the file");
+        return;
+      }
       header.specImageHpcpSize = hpcpStaging.getDataSize();
 
       juce::MemoryOutputStream detectedStaging;
-      mParamUI.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED);
       header.specImageDetectedSize = detectedStaging.getDataSize();
+      if (!mParamUI.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED)) {
+        displayError("Unable to write Detected image out the file");
+        return;
+      }
 
       // XML structure of preset contains all audio related information
       // These include not just AudioParams but also other params not exposes to
@@ -456,8 +484,30 @@ void GRainbowAudioProcessorEditor::savePreset() {
       outputStream.write(detectedStaging.getData(), header.specImageDetectedSize);
       outputStream.write(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
     } else {
-      // TODO - let users know we can't write here
+      displayError(juce::String::formatted("Unable to open %s to write", file.getFullPathName().toRawUTF8()));
+      return;
     }
+  }
+}
+
+void GRainbowAudioProcessorEditor::displayError(juce::String message) {
+  juce::DialogWindow::LaunchOptions options;
+  juce::Label* label = new juce::Label();
+  label->setText(message, juce::dontSendNotification);
+  label->setColour(juce::Label::textColourId, juce::Colours::whitesmoke);
+  options.content.setOwned(label);
+
+  juce::Rectangle<int> area(0, 0, 400, 300);
+  options.content->setSize(area.getWidth(), area.getHeight());
+  options.dialogTitle = "gRainbow Error Message";
+  options.dialogBackgroundColour = juce::Colour(0xff0e345a);
+  options.escapeKeyTriggersCloseButton = true;
+  options.useNativeTitleBar = false;
+  options.resizable = true;
+
+  mDialogWindow = options.launchAsync();
+  if (mDialogWindow != nullptr) {
+    mDialogWindow->centreWithSize(300, 200);
   }
 }
 
