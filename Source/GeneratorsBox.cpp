@@ -339,7 +339,6 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   float tabWidth = getWidth() / NUM_GENERATORS;
   float curStart = 1.0f;
   for (int i = 0; i < NUM_GENERATORS; ++i) {
-    ParamGenerator* gen = mParamsNote.notes[mCurPitchClass]->generators[i].get();
     juce::Colour tabColour = mParamsNote.notes[mCurPitchClass]->shouldPlayGenerator(i)
                                  ? juce::Colour(Utils::GENERATOR_COLOURS_HEX[i])
                                  : juce::Colours::darkgrey;

@@ -88,7 +88,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
 
   ParamUI& getParamUI() { return mParamUI; }
   void resetParameters();
-  int incrementPosition(int boxNum, bool lookRight);
+  int incrementPosition(int genIdx, bool lookRight);
   std::vector<ParamCandidate*> getActiveCandidates();
 
  private:
@@ -108,14 +108,13 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
     Utils::EnvelopeADSR ampEnv;
     std::array<Utils::EnvelopeADSR, NUM_GENERATORS> genAmpEnvs;
     juce::Array<Grain> grains;         // Active grains for note
-    std::vector<float> grainTriggers;  // Keeps track of triggering grains from
-                                       // each generator
+    std::array<float, NUM_GENERATORS> grainTriggers;  // Keeps track of triggering grains from each generator
     GrainNote(Utils::PitchClass pitchClass, float velocity, Utils::EnvelopeADSR ampEnv)
         : pitchClass(pitchClass), velocity(velocity), ampEnv(ampEnv) {
       grains.ensureStorageAllocated(MAX_GRAINS);
       // Initialize grain triggering timestamps
+      grainTriggers.fill(-1.0f);  // Trigger first set of grains right away
       for (int i = 0; i < NUM_GENERATORS; ++i) {
-        grainTriggers.push_back(-1);            // Trigger first set of grains right away
         genAmpEnvs[i].noteOn(ampEnv.noteOnTs);  // Set note on for each position as well
       }
     }
