@@ -17,12 +17,7 @@
 
 //==============================================================================
 ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
-    : mCurPitchClass(Utils::PitchClass::C),
-      mIsPlayingNote(false),
-      mProcessType(ParamUI::SpecType::INVALID),
-      mParamsNote(paramsNote),
-      mParamUI(paramUI),
-      juce::Thread("spectrogram thread") {
+    : mProcessType(ParamUI::SpecType::INVALID), mParamsNote(paramsNote), mParamUI(paramUI), juce::Thread("spectrogram thread") {
   setFramesPerSecond(REFRESH_RATE_FPS);
   mBuffers.fill(nullptr);
 
@@ -52,12 +47,25 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
     mParamUI.specType = mSpecType.getSelectedItemIndex();
     repaint();
   };
+  mSpecType.setTooltip("Change Spectrogram type to view");
+
+  mActivePitchClass.reset(false);
+
+  mParamsNote.onGrainCreated = [this](Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain) {
+    // always get the callback, but ignore it if note was released or over grain max
+    if (!mActivePitchClass[pitchClass] || mArcGrains.size() >= MAX_NUM_GRAINS) {
+      return;
+    }
+    ParamGenerator* gen = mParamsNote.notes[pitchClass]->generators[genIdx].get();
+    float envIncSamples = ParamGenerator::ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
+    mArcGrains.add(ArcGrain(gen, envGain, envIncSamples));
+  };
 
   addChildComponent(mSpecType);
 }
 
 ArcSpectrogram::~ArcSpectrogram() {
-  mParamsNote.notes[mCurPitchClass]->onGrainCreated = nullptr;
+  mParamsNote.onGrainCreated = nullptr;
   stopThread(4000);
 }
 
@@ -229,15 +237,9 @@ void ArcSpectrogram::loadPreset() {
   repaint();
 }
 
-void ArcSpectrogram::setNoteOn(Utils::PitchClass pitchClass) {
-  mParamsNote.notes[mCurPitchClass]->onGrainCreated = nullptr;
-  mParamsNote.notes[pitchClass]->onGrainCreated = [this](int genIdx, float durationSec, float envGain) {
-    if (mArcGrains.size() >= MAX_NUM_GRAINS) return;
-    ParamGenerator* gen = mParamsNote.notes[mCurPitchClass]->generators[genIdx].get();
-    float envIncSamples = ParamGenerator::ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
-    mArcGrains.add(ArcGrain(gen, envGain, envIncSamples));
-  };
-
-  mIsPlayingNote = true;
-  mCurPitchClass = pitchClass;
+void ArcSpectrogram::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes) {
+  mActivePitchClass.reset(false);
+  for (const Utils::MidiNote note : midiNotes) {
+    mActivePitchClass.set(note.pitch, true);
+  }
 }

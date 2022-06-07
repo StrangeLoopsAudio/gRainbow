@@ -21,17 +21,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mKeyboard(synth.getKeyboardState()),
       mProgressBar(synth.getLoadingProgress()),
       mParamUI(synth.getParamUI()) {
-  mCurPitchClass = (Utils::PitchClass)mParamUI.pitchClass;
-
-  mSynth.onNoteChanged = [this](Utils::PitchClass pitchClass, bool isNoteOn) {
-    if (isNoteOn) {
-      mCurPitchClass = pitchClass;
-      mStartedPlayingTrig = true;
-    } else {
-      mArcSpec.setNoteOff();
-    }
-  };
-
   setLookAndFeel(&mRainbowLookAndFeel);
 
   // Open file button
@@ -40,6 +29,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mBtnOpenFile.setImages(false, true, true, openFileNormal, 1.0f, juce::Colours::transparentBlack, openFileOver, 1.0f,
                          juce::Colours::transparentBlack, openFileOver, 1.0f, juce::Colours::transparentBlack);
   mBtnOpenFile.onClick = [this] { openNewFile(); };
+  mBtnOpenFile.setTooltip("Load new sample from file or preset");
   addAndMakeVisible(mBtnOpenFile);
 
   // Recording button
@@ -54,14 +44,16 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       startRecording();
     }
   };
+  mBtnRecord.setTooltip("Record to add new sample");
   addAndMakeVisible(mBtnRecord);
 
-  // Present button
+  // Preset button
   juce::Image presetNormal = juce::PNGImageFormat::loadFrom(BinaryData::presetNormal_png, BinaryData::presetNormal_pngSize);
   juce::Image presetOver = juce::PNGImageFormat::loadFrom(BinaryData::presetOver_png, BinaryData::presetOver_pngSize);
   mBtnPreset.setImages(false, true, true, presetNormal, 1.0f, juce::Colours::transparentBlack, presetOver, 1.0f,
                        juce::Colours::transparentBlack, presetOver, 1.0f, juce::Colours::transparentBlack);
   mBtnPreset.onClick = [this] { savePreset(); };
+  mBtnPreset.setTooltip("Save everything as a preset");
   addAndMakeVisible(mBtnPreset);
   // if reloading and images are done, then enable right away
   mBtnPreset.setEnabled(mParamUI.specComplete);
@@ -111,13 +103,20 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     mSynth.resetParameters();
   }
 
+  mTooltipWindow->setMillisecondsBeforeTipAppears(500);  // default is 700ms
+
   startTimer(50);
 
   setSize(1200, 650);
 }
 
 GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
-  mSynth.onNoteChanged = nullptr;
+  // can't wait for the message manager to eventually delete this
+  if (mDialogWindow != nullptr) {
+    mDialogWindow->exitModalState(0);
+    delete mDialogWindow;
+  }
+
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   auto recordFile = parentDir.getChildFile(FILE_RECORDING);
   recordFile.deleteFile();
@@ -126,7 +125,7 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
 }
 
 void GRainbowAudioProcessorEditor::timerCallback() {
-  // Update progress bar
+  // Update progress bar when loading audio clip
   double loadingProgress = mSynth.getLoadingProgress();
   if (loadingProgress < 1.0 && loadingProgress > 0.0) {
     mProgressBar.setVisible(true);
@@ -143,12 +142,17 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     }
   }
 
-  if (mStartedPlayingTrig && mCurPitchClass != Utils::PitchClass::NONE) {
-    mArcSpec.setNoteOn(mCurPitchClass);
-    mGeneratorsBox.setPitchClass(mCurPitchClass);
-    mStartedPlayingTrig = false;
-    repaint();  // Update note display
-  }
+  // Get notes being played, send off to each children and then redraw.
+  // Grab the notes from the Synth instead of MidiKeyboardState::Listener to not block the thread to draw.
+  // There is a chance notes are pressed and released inbetween timer callback if they are super short, but can always increase the
+  // callback timer
+  const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
+  // Each component has has a different use for the midi notes, so just give them the notes and have them do what logic they want
+  // with it
+  mKeyboard.setMidiNotes(midiNotes);
+  mArcSpec.setMidiNotes(midiNotes);
+  mGeneratorsBox.setMidiNotes(midiNotes);
+  repaint();
 }
 
 //==============================================================================
@@ -168,32 +172,51 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   g.fillRoundedRectangle(mBtnPreset.getBounds().toFloat(), 14);
 }
 
+/**
+  @brief Draw note display (the small section between the keyboard and arc spectrogram)
+*/
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
-  // Draw note display
-  if (mCurPitchClass != Utils::PitchClass::NONE) {
+  // Right now just give last note played, not truely polyphony yet
+  const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
+  if (!midiNotes.isEmpty()) {
+    // If there are not candidates, will just not draw any arrows/lines
     std::vector<ParamCandidate*> candidates = mSynth.getActiveCandidates();
-    // Draw position arrows
-    for (int i = 0; i < candidates.size(); ++i) {
-      if (candidates[i] == nullptr) continue;
-      g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[i]));
-      auto middlePos = candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
-      float angleRad = (juce::MathConstants<float>::pi * middlePos) - (juce::MathConstants<float>::pi / 2.0f);
-      juce::Point<float> startPoint = juce::Point<float>(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
-      juce::Point<float> endPoint = startPoint.getPointOnCircumference(mArcSpec.getHeight() / 4.5f, angleRad);
-      g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
+    if (!candidates.empty()) {
+      // Draw position arrows
+      for (int i = 0; i < candidates.size(); ++i) {
+        if (candidates[i] == nullptr) continue;
+        g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[i]));
+        auto middlePos = candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
+        float angleRad = (juce::MathConstants<float>::pi * middlePos) - (juce::MathConstants<float>::pi / 2.0f);
+        juce::Point<float> startPoint = juce::Point<float>(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
+        juce::Point<float> endPoint = startPoint.getPointOnCircumference(mArcSpec.getHeight() / 4.5f, angleRad);
+        g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
+      }
+
+      // Draw path from rainbow key to the arrow's base
+      for (const Utils::MidiNote& midiNote : midiNotes) {
+        const Utils::PitchClass pitchClass = midiNote.pitch;
+        // if more than 1 note played, the last note will be empathized
+        const bool empathized = (midiNote == midiNotes.getLast());
+
+        float noteX = mKeyboard.getBounds().getX() + (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(pitchClass));
+        juce::Path displayPath;
+        displayPath.startNewSubPath(noteX, mNoteDisplayRect.getBottom());
+        displayPath.lineTo(noteX, mNoteDisplayRect.getBottom() - (NOTE_DISPLAY_HEIGHT / 2.0f));
+        displayPath.lineTo(mNoteDisplayRect.getCentre());
+        displayPath.lineTo(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
+        const float alpha = (empathized) ? 1.0f : 0.3f;
+        g.setColour(Utils::getRainbow12Colour(pitchClass).withAlpha(alpha));
+        g.strokePath(displayPath, juce::PathStrokeType(4.0f));
+        if (empathized) {
+          g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
+                        NOTE_BULB_SIZE, NOTE_BULB_SIZE);
+        }
+      }
     }
-    // Draw path to positions
-    float noteX = mKeyboard.getBounds().getX() + (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(mCurPitchClass));
-    juce::Path displayPath;
-    displayPath.startNewSubPath(noteX, mNoteDisplayRect.getBottom());
-    displayPath.lineTo(noteX, mNoteDisplayRect.getBottom() - (NOTE_DISPLAY_HEIGHT / 2.0f));
-    displayPath.lineTo(mNoteDisplayRect.getCentre());
-    displayPath.lineTo(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
-    g.setColour(Utils::getRainbow12Colour(mCurPitchClass));
-    g.strokePath(displayPath, juce::PathStrokeType(4.0f));
-    g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
-                  NOTE_BULB_SIZE, NOTE_BULB_SIZE);
   }
+
+  // When dragging a file over, give feedback it will be accepted when released
   if (mIsFileHovering) {
     g.setColour(juce::Colours::white.withAlpha(0.2f));
     g.fillRect(getLocalBounds());
@@ -331,38 +354,47 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     juce::FileInputStream input(file);
     if (input.openedOk()) {
       input.read(&header, sizeof(header));
-      // TODO - give better warnings
-      jassert(header.magic == Preset::MAGIC);
-      jassert(header.versionMajor == Preset::VERSION_MAJOR);
-      jassert(header.versionMinor == Preset::VERSION_MINOR);
 
-      // Get Audio Buffer blob
-      fileAudioBuffer.setSize(header.audioBufferChannel, header.audioBufferNumberOfSamples);
-      input.read(fileAudioBuffer.getWritePointer(0), header.audioBufferSize);
-      sampleRate = header.audioBufferSamplerRate;
+      if (header.magic != Preset::MAGIC) {
+        displayError("The file is not recognized as a valid .gbow preset file.");
+        return;
+      }
 
-      // Get offsets and load all png for spec images
-      uint32_t maxSpecImageSize =
-          juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize, header.specImageDetectedSize);
-      void* specImageData = malloc(maxSpecImageSize);
-      jassert(specImageData != nullptr);
-      input.read(specImageData, header.specImageSpectrogramSize);
-      mParamUI.specImages[ParamUI::SpecType::SPECTROGRAM] =
-          juce::PNGImageFormat::loadFrom(specImageData, header.specImageSpectrogramSize);
-      input.read(specImageData, header.specImageHpcpSize);
-      mParamUI.specImages[ParamUI::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(specImageData, header.specImageHpcpSize);
-      input.read(specImageData, header.specImageDetectedSize);
-      mParamUI.specImages[ParamUI::SpecType::DETECTED] =
-          juce::PNGImageFormat::loadFrom(specImageData, header.specImageDetectedSize);
-      free(specImageData);
+      // Currently there is only a VERSION_MAJOR of 0
+      if (header.versionMajor == 0) {
+        // Get Audio Buffer blob
+        fileAudioBuffer.setSize(header.audioBufferChannel, header.audioBufferNumberOfSamples);
+        input.read(fileAudioBuffer.getWritePointer(0), header.audioBufferSize);
+        sampleRate = header.audioBufferSamplerRate;
 
-      // juce::FileInputStream uses 'int' to read
-      int xmlSize = static_cast<int>(input.getTotalLength() - input.getPosition());
-      void* xmlData = malloc(xmlSize);
-      jassert(xmlData != nullptr);
-      input.read(xmlData, xmlSize);
-      mSynth.setPresetParamsXml(xmlData, xmlSize);
-      free(xmlData);
+        // Get offsets and load all png for spec images
+        uint32_t maxSpecImageSize =
+            juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize, header.specImageDetectedSize);
+        void* specImageData = malloc(maxSpecImageSize);
+        jassert(specImageData != nullptr);
+        input.read(specImageData, header.specImageSpectrogramSize);
+        mParamUI.specImages[ParamUI::SpecType::SPECTROGRAM] =
+            juce::PNGImageFormat::loadFrom(specImageData, header.specImageSpectrogramSize);
+        input.read(specImageData, header.specImageHpcpSize);
+        mParamUI.specImages[ParamUI::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(specImageData, header.specImageHpcpSize);
+        input.read(specImageData, header.specImageDetectedSize);
+        mParamUI.specImages[ParamUI::SpecType::DETECTED] =
+            juce::PNGImageFormat::loadFrom(specImageData, header.specImageDetectedSize);
+        free(specImageData);
+
+        // juce::FileInputStream uses 'int' to read
+        int xmlSize = static_cast<int>(input.getTotalLength() - input.getPosition());
+        void* xmlData = malloc(xmlSize);
+        jassert(xmlData != nullptr);
+        input.read(xmlData, xmlSize);
+        mSynth.setPresetParamsXml(xmlData, xmlSize);
+        free(xmlData);
+      } else {
+        displayError(
+            juce::String::formatted("The file is gbow version %u.%u and is not supported. This copy of gRainbow can open files up to version %u.%u",
+                                    header.versionMajor, header.versionMinor, Preset::VERSION_MAJOR, Preset::VERSION_MINOR));
+        return;
+      }
 
       mBtnPreset.setEnabled(true);
       mArcSpec.loadPreset();
@@ -370,7 +402,11 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
   } else {
     // loading audio clip
     std::unique_ptr<juce::AudioFormatReader> reader(mFormatManager.createReaderFor(file));
-    jassert(reader.get() != nullptr);
+    if (reader.get() == nullptr) {
+      displayError("Unable to read the file.");
+      return;
+    }
+
     fileAudioBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
     reader->read(&fileAudioBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
     sampleRate = reader->sampleRate;
@@ -414,16 +450,25 @@ void GRainbowAudioProcessorEditor::savePreset() {
       // internal memory object so the size is know prior to writtin the image
       // data to the stream.
       juce::MemoryOutputStream spectrogramStaging;
-      mParamUI.saveSpecImage(spectrogramStaging, ParamUI::SpecType::SPECTROGRAM);
+      if (!mParamUI.saveSpecImage(spectrogramStaging, ParamUI::SpecType::SPECTROGRAM)) {
+        displayError("Unable to write spectrogram image out the file");
+        return;
+      }
       header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
 
       juce::MemoryOutputStream hpcpStaging;
-      mParamUI.saveSpecImage(hpcpStaging, ParamUI::SpecType::HPCP);
+      if (!mParamUI.saveSpecImage(hpcpStaging, ParamUI::SpecType::HPCP)) {
+        displayError("Unable to write HPCP image out the file");
+        return;
+      }
       header.specImageHpcpSize = hpcpStaging.getDataSize();
 
       juce::MemoryOutputStream detectedStaging;
-      mParamUI.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED);
       header.specImageDetectedSize = detectedStaging.getDataSize();
+      if (!mParamUI.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED)) {
+        displayError("Unable to write Detected image out the file");
+        return;
+      }
 
       // XML structure of preset contains all audio related information
       // These include not just AudioParams but also other params not exposes to
@@ -439,32 +484,31 @@ void GRainbowAudioProcessorEditor::savePreset() {
       outputStream.write(detectedStaging.getData(), header.specImageDetectedSize);
       outputStream.write(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
     } else {
-      // TODO - let users know we can't write here
+      displayError(juce::String::formatted("Unable to open %s to write", file.getFullPathName().toRawUTF8()));
+      return;
     }
   }
 }
 
-/**
- * @brief To properly handle all keyboard input, the main component is used as
- * it will always be "in focus". From here it can pass through and decide what
- * keyboard inputs are sent to each child component
- */
-bool GRainbowAudioProcessorEditor::keyStateChanged(bool isKeyDown) {
-  if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
-    mKeyboard.updateKeyState(nullptr, isKeyDown);
-  }
-  return false;
-}
+void GRainbowAudioProcessorEditor::displayError(juce::String message) {
+  juce::DialogWindow::LaunchOptions options;
+  juce::Label* label = new juce::Label();
+  label->setText(message, juce::dontSendNotification);
+  label->setColour(juce::Label::textColourId, juce::Colours::whitesmoke);
+  options.content.setOwned(label);
 
-/**
- * @brief keyPressed is called after keyStateChanged, but know which key was
- * pressed
- */
-bool GRainbowAudioProcessorEditor::keyPressed(const juce::KeyPress& key) {
-  if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
-    mKeyboard.updateKeyState(&key, true);
+  juce::Rectangle<int> area(0, 0, 400, 300);
+  options.content->setSize(area.getWidth(), area.getHeight());
+  options.dialogTitle = "gRainbow Error Message";
+  options.dialogBackgroundColour = juce::Colour(0xff0e345a);
+  options.escapeKeyTriggersCloseButton = true;
+  options.useNativeTitleBar = false;
+  options.resizable = true;
+
+  mDialogWindow = options.launchAsync();
+  if (mDialogWindow != nullptr) {
+    mDialogWindow->centreWithSize(300, 200);
   }
-  return false;
 }
 
 /** Fast Debug Mode is used to speed up iterations of testing

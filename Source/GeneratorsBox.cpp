@@ -34,6 +34,8 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
       refreshState();
     };
     mBtnsEnabled[i].addMouseListener(this, false);
+    // TODO - Only shows on tiny button and not the whole tab
+    mBtnsEnabled[i].setTooltip("Generator " + juce::String(i + 1));
     addAndMakeVisible(mBtnsEnabled[i]);
   }
 
@@ -274,7 +276,7 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mSliderResonance.setRange(0.0, 1.0, 0.01);
   mSliderResonance.onValueChange = [this] {
     ParamHelper::setParam(getCurrentGenerator()->filterResonance, mSliderResonance.getValue());
-  }; 
+  };
   addAndMakeVisible(mSliderResonance);
 
   mLabelResonance.setText("Resonance", juce::dontSendNotification);
@@ -294,13 +296,11 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
       case (Utils::FilterType::BANDPASS):
         ParamHelper::setParam(getCurrentGenerator()->filterCutoff, ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
         break;
-    }   
+    }
     ParamHelper::setParam(getCurrentGenerator()->filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
   };
   addAndMakeVisible(mFilterControl);
 
-  // set default generator for initialization
-  setPitchClass(mCurPitchClass);
   startTimer(33);  // 30 fps
 }
 
@@ -324,7 +324,6 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   float tabWidth = getWidth() / NUM_GENERATORS;
   float curStart = 1.0f;
   for (int i = 0; i < NUM_GENERATORS; ++i) {
-    ParamGenerator* gen = mParamsNote.notes[mCurPitchClass]->generators[i].get();
     juce::Colour tabColour = mParamsNote.notes[mCurPitchClass]->shouldPlayGenerator(i)
                                  ? juce::Colour(Utils::GENERATOR_COLOURS_HEX[i])
                                  : juce::Colours::darkgrey;
@@ -509,7 +508,11 @@ void GeneratorsBox::resized() {
   mLabelResonance.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
-void GeneratorsBox::setPitchClass(Utils::PitchClass pitchClass) {
+void GeneratorsBox::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes) {
+  if (midiNotes.isEmpty()) return;
+  // Grab the last note played
+  const Utils::PitchClass pitchClass = midiNotes.getLast().pitch;
+
   // Remove listeners from old generator and note
   mParamsNote.notes[mCurPitchClass]->removeListener(mCurSelectedGenerator, this);
 
@@ -698,7 +701,7 @@ void GeneratorsBox::refreshState() {
                              componentsLit ? knobColour.brighter().brighter().brighter().brighter() : juce::Colours::darkgrey);
   mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  
+
   mLabelShape.setEnabled(componentsLit);
   mLabelTilt.setEnabled(componentsLit);
   mLabelRate.setEnabled(componentsLit);

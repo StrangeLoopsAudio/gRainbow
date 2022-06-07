@@ -19,6 +19,12 @@ namespace Preset {
 const uint32_t MAGIC = 0x67626f77;
 
 // current version
+// if (backward compatible change) {
+//   VERSION_MINOR++;
+// } else {
+//   VERSION_MAJOR++;
+//   VERSION_MINOR = 0;
+// }
 const uint32_t VERSION_MAJOR = 0;
 const uint32_t VERSION_MINOR = 0;
 

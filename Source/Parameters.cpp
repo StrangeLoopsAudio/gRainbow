@@ -39,7 +39,7 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   p.addParameter(gain = new juce::AudioParameterFloat(gainId, gainId, juce::NormalisableRange<float>(0.0f, 1.0f),
                                                       ParamDefaults::GAIN_DEFAULT));
   juce::String candidateId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genCandidate + juce::String(genIdx);
-  p.addParameter(candidate = new juce::AudioParameterInt(candidateId, candidateId, 0, MAX_CANDIDATES - 1, genIdx));
+  p.addParameter(candidate = new juce::AudioParameterInt(candidateId, candidateId, 0, MAX_CANDIDATES - 1, 0));
   juce::String pitchAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchAdjust + juce::String(genIdx);
   p.addParameter(pitchAdjust = new juce::AudioParameterFloat(pitchAdjustId, pitchAdjustId, ParamRanges::PITCH_ADJUST, 0.0f));
   juce::String pitchSprayId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchSpray + juce::String(genIdx);
@@ -185,8 +185,17 @@ void ParamNote::removeListener(int genIdx, juce::AudioProcessorParameter::Listen
 }
 
 ParamCandidate* ParamNote::getCandidate(int genIdx) {
-  if (genIdx >= candidates.size()) return nullptr;
+  if (candidates.empty()) return nullptr;
   return &candidates[generators[genIdx]->candidate->get()];
+}
+
+void ParamNote::setStartingCandidatePosition() {
+  // We start each candidate position at zero and here update it to start each generator at a unique position.
+  // If there are only 2 candidate and 4 generators, we want genIdx 3 and 4 to also get candidate[1]
+  const int maxPosition = candidates.size() - 1;
+  for (int i = 0; i < NUM_GENERATORS; ++i) {
+    ParamHelper::setParam(generators[i].get()->candidate, (i > maxPosition) ? maxPosition : i);
+  }
 }
 
 bool ParamNote::shouldPlayGenerator(int genIdx) {
@@ -204,7 +213,7 @@ void ParamsNote::resetParams() {
     for (auto& generator : note->generators) {
       ParamHelper::setParam(generator->enable, generator->genIdx == 0);
       ParamHelper::setParam(generator->gain, ParamDefaults::GAIN_DEFAULT);
-      ParamHelper::setParam(generator->candidate, generator->genIdx);
+      ParamHelper::setParam(generator->candidate, 0);
       ParamHelper::setParam(generator->pitchAdjust, 0.0f);
       ParamHelper::setParam(generator->pitchSpray, 0.0f);
       ParamHelper::setParam(generator->positionAdjust, 0.0f);
