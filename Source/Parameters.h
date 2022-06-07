@@ -162,7 +162,7 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
           break;
       }
     } else if (paramIdx == filterCutoff->getParameterIndex() || paramIdx == filterResonance->getParameterIndex()) {
-      filter.parameters->setCutOffFrequency(sampleRate, filterCutoff->get(), filterResonance->get()); // TODO: resonance
+      filter.parameters->setCutOffFrequency(sampleRate, filterCutoff->get(), filterResonance->get());
     }
     
   };
