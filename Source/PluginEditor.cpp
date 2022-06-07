@@ -356,7 +356,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       input.read(&header, sizeof(header));
 
       if (header.magic != Preset::MAGIC) {
-        displayError("The file is not recognize as a valid .gbow preset file.");
+        displayError("The file is not recognized as a valid .gbow preset file.");
         return;
       }
 
@@ -391,7 +391,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
         free(xmlData);
       } else {
         displayError(
-            juce::String::formatted("The file is gbow version is %u.%u and is not supported. The latest gbow version is %u.%u",
+            juce::String::formatted("The file is gbow version %u.%u and is not supported. This copy of gRainbow can open files up to version %u.%u",
                                     header.versionMajor, header.versionMinor, Preset::VERSION_MAJOR, Preset::VERSION_MINOR));
         return;
       }
