@@ -93,5 +93,8 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void stopRecording();
   void savePreset();
 
+  SafePointer<juce::DialogWindow> mDialogWindow;
+  void displayError(juce::String message);
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GRainbowAudioProcessorEditor)
 };
