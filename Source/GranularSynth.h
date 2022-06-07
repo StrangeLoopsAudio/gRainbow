@@ -109,21 +109,21 @@ class GranularSynth : public juce::AudioProcessor {
     float velocity;
     Utils::EnvelopeADSR ampEnv;
     std::array<Utils::EnvelopeADSR, NUM_GENERATORS> genAmpEnvs;
-    juce::Array<Grain> grains;         // Active grains for note
-    std::vector<float> grainTriggers;  // Keeps track of triggering grains from
-                                       // each generator
+    std::array<juce::Array<Grain>, NUM_GENERATORS> genGrains;  // Active grains for note per generator
+    std::vector<float> grainTriggers;                       // Keeps track of triggering grains from
+                                                            // each generator
     GrainNote(Utils::PitchClass pitchClass, float velocity, Utils::EnvelopeADSR ampEnv)
         : pitchClass(pitchClass), velocity(velocity), ampEnv(ampEnv) {
-      grains.ensureStorageAllocated(MAX_GRAINS);
       // Initialize grain triggering timestamps
       for (int i = 0; i < NUM_GENERATORS; ++i) {
+        genGrains[i].ensureStorageAllocated(MAX_GRAINS);
         grainTriggers.push_back(-1);            // Trigger first set of grains right away
         genAmpEnvs[i].noteOn(ampEnv.noteOnTs);  // Set note on for each position as well
       }
     }
   } GrainNote;
 
-  // DSP pre-processing
+  // DSP-preprocessing
   PitchDetector mPitchDetector;
   Fft mFft;
 
@@ -131,6 +131,7 @@ class GranularSynth : public juce::AudioProcessor {
   juce::AudioBuffer<float> mFileBuffer;
   std::array<Utils::SpecBuffer*, ParamUI::SpecType::COUNT> mProcessedSpecs;
   double mSampleRate;
+  double mBlockSize;
   juce::MidiKeyboardState mKeyboardState;
   double mLoadingProgress = 0.0;
 

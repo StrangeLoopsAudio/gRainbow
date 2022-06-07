@@ -77,18 +77,22 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String releaseId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genRelease + juce::String(genIdx);
   p.addParameter(release =
                      new juce::AudioParameterFloat(releaseId, releaseId, ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
+  // Filter params have listeners to set juce::dsp::StateVariableFilter parameters when changed
   juce::String cutoffId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterCutoff + juce::String(genIdx);
   p.addParameter(filterCutoff = 
                      new juce::AudioParameterFloat(cutoffId, cutoffId, ParamRanges::CUTOFF, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
+  filterCutoff->addListener(this);
   juce::String resonanceId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterResonance + juce::String(genIdx);
   p.addParameter(filterResonance = new juce::AudioParameterFloat(resonanceId, resonanceId, ParamRanges::RESONANCE,
                                                            ParamDefaults::FILTER_RESONANCE_DEFAULT));
+  filterResonance->addListener(this);
   juce::String strengthId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterStrength + juce::String(genIdx);
   p.addParameter(filterStrength = new juce::AudioParameterFloat(strengthId, strengthId, ParamRanges::STRENGTH,
                                                            ParamDefaults::FILTER_STRENGTH_DEFAULT));
   juce::String filterTypeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterType + juce::String(genIdx);
   p.addParameter(filterType = 
                      new juce::AudioParameterChoice(filterTypeId, filterTypeId, FILTER_TYPE_NAMES, 0));
+  filterType->addListener(this);
   updateGrainEnvelopeLUT(); 
 }
 

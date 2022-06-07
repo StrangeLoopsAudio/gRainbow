@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Utils.h"
 
 namespace ParamIDs {
 // Note params
@@ -131,13 +132,43 @@ struct ParamCandidate {
 };
 
 struct ParamGenerator : juce::AudioProcessorParameter::Listener {
-  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {}
+  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {
+    filter.parameters->type = juce::dsp::StateVariableFilter::StateVariableFilterType::lowPass;
+    filter.parameters->setCutOffFrequency(sampleRate, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+  }
   ~ParamGenerator() {
     grainShape->removeListener(this);
     grainTilt->removeListener(this);
+    filterType->removeListener(this);
+    filterCutoff->removeListener(this);
+    filterResonance->removeListener(this);
   }
 
-  void parameterValueChanged(int, float) override { updateGrainEnvelopeLUT(); };
+  void parameterValueChanged(int paramIdx, float newValue) override {
+    if (paramIdx == grainShape->getParameterIndex() || paramIdx == grainTilt->getParameterIndex()) {
+      updateGrainEnvelopeLUT(); 
+    } else if (paramIdx == filterType->getParameterIndex()) {
+      switch (filterType->getIndex()) { 
+        case Utils::FilterType::LOWPASS: {
+          filter.parameters->type = juce::dsp::StateVariableFilter::StateVariableFilterType::lowPass;
+          break;
+        }
+        case Utils::FilterType::HIGHPASS: {
+          filter.parameters->type = juce::dsp::StateVariableFilter::StateVariableFilterType::highPass;
+          break;
+        }
+        case Utils::FilterType::BANDPASS: {
+          filter.parameters->type = juce::dsp::StateVariableFilter::StateVariableFilterType::bandPass;
+          break;
+        }
+        default:
+          break;
+      }
+    } else if (paramIdx == filterCutoff->getParameterIndex() || paramIdx == filterResonance->getParameterIndex()) {
+      filter.parameters->setCutOffFrequency(sampleRate, filterCutoff->get()); // TODO: resonance
+    }
+    
+  };
   void parameterGestureChanged(int, bool) override {}
 
   void addParams(juce::AudioProcessor& p);
@@ -172,6 +203,10 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   // LUT of the grain envelope
   static constexpr auto ENV_LUT_SIZE = 128;
   std::vector<float> grainEnvLUT;
+
+  // State variable filter for generator
+  double sampleRate = 48000;
+  juce::dsp::StateVariableFilter::Filter<float> filter;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGenerator)
 };
