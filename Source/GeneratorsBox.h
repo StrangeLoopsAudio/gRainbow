@@ -46,7 +46,7 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   // Params
   static constexpr auto NUM_AMP_ENV_PARAMS = 4;
   static constexpr auto NUM_GRAIN_ENV_PARAMS = 4;
-  static constexpr auto NUM_GRAIN_FILT_PARAMS = 3;
+  static constexpr auto NUM_GRAIN_FILT_PARAMS = 2;
 
   // UI Layout
   static constexpr juce::int64 GRAIN_SYNC_COLOURS_HEX[2] = {0xFF20FFD4, 0xFFFFD420};
@@ -138,8 +138,6 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   juce::Label mLabelCutoff;
   juce::Slider mSliderResonance;
   juce::Label mLabelResonance;
-  juce::Slider mSliderStrength;
-  juce::Label mLabelStrength;
 
   void changeGenerator(int newGenerator);
   void refreshState();

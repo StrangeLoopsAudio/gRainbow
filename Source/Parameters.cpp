@@ -86,9 +86,6 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   p.addParameter(filterResonance = new juce::AudioParameterFloat(resonanceId, resonanceId, ParamRanges::RESONANCE,
                                                            ParamDefaults::FILTER_RESONANCE_DEFAULT));
   filterResonance->addListener(this);
-  juce::String strengthId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterStrength + juce::String(genIdx);
-  p.addParameter(filterStrength = new juce::AudioParameterFloat(strengthId, strengthId, ParamRanges::STRENGTH,
-                                                           ParamDefaults::FILTER_STRENGTH_DEFAULT));
   juce::String filterTypeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterType + juce::String(genIdx);
   p.addParameter(filterType = 
                      new juce::AudioParameterChoice(filterTypeId, filterTypeId, FILTER_TYPE_NAMES, 0));
@@ -114,7 +111,6 @@ void ParamGenerator::addListener(juce::AudioProcessorParameter::Listener* listen
   release->addListener(listener);
   filterCutoff->addListener(listener);
   filterResonance->addListener(listener);
-  filterStrength->addListener(listener);
   filterType->addListener(listener);
 }
 
@@ -136,7 +132,6 @@ void ParamGenerator::removeListener(juce::AudioProcessorParameter::Listener* lis
   release->removeListener(listener);
   filterCutoff->removeListener(listener);
   filterResonance->removeListener(listener);
-  filterStrength->removeListener(listener);
   filterType->removeListener(listener);
 }
 
@@ -225,7 +220,6 @@ void ParamsNote::resetParams() {
       ParamHelper::setParam(generator->release, ParamDefaults::RELEASE_DEFAULT_SEC);
       ParamHelper::setParam(generator->filterCutoff, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
       ParamHelper::setParam(generator->filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
-      ParamHelper::setParam(generator->filterStrength, ParamDefaults::FILTER_STRENGTH_DEFAULT);
       ParamHelper::setParam(generator->filterType, 0);
     }
     note->candidates.clear();

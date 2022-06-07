@@ -89,7 +89,7 @@ void FilterControl::paint(juce::Graphics& g) {
       mFilterPath.lineTo(juce::Point<float>(getWidth() * mCutoff,
                                             FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE + (1.0f - mResonance) * MAX_RES_HEIGHT));
       mFilterPath.lineTo(
-          mFilterPath.getCurrentPosition().translated(mStrength * 0.1f * getWidth(), 0.0f).withY(getHeight()));
+          mFilterPath.getCurrentPosition().translated(.5f * 0.1f * getWidth(), 0.0f).withY(getHeight()));
       mFilterPath.lineTo(juce::Point<float>(0, getHeight()));
       mFilterPath.lineTo(juce::Point<float>(0, 0));
       mFilterPath.closeSubPath();
@@ -108,7 +108,7 @@ void FilterControl::paint(juce::Graphics& g) {
       mHighlightPath.addLineSegment(
           juce::Line<float>(mCutoff * getWidth(),
                             FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE + (1.0f - mResonance) * MAX_RES_HEIGHT,
-                            (getWidth() * mCutoff) + mStrength * 0.1f * getWidth(), getHeight() * 1.0f),
+                            (getWidth() * mCutoff) + 0.5f * 0.1f * getWidth(), getHeight() * 1.0f),
           highlightWidth);
       mHighlightPath.closeSubPath();
       g.fillPath(mHighlightPath);
@@ -124,7 +124,7 @@ void FilterControl::paint(juce::Graphics& g) {
       mFilterPath.lineTo(getWidth() * mCutoff + RES_WIDTH, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE + MAX_RES_HEIGHT);
       mFilterPath.lineTo(getWidth() * mCutoff, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE + (1.0f - mResonance) * MAX_RES_HEIGHT);
       mFilterPath.lineTo(
-          mFilterPath.getCurrentPosition().translated(-(mStrength * 0.1f * getWidth()), 0).withY(getHeight()));
+          mFilterPath.getCurrentPosition().translated(-(0.5f * 0.1f * getWidth()), 0).withY(getHeight()));
       mFilterPath.lineTo(juce::Point<float>(getWidth() * 1.0f, getHeight() * 1.0f));
       mFilterPath.lineTo(juce::Point<float>(getWidth() * 1.0f, FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE));
       mFilterPath.closeSubPath();
@@ -145,7 +145,7 @@ void FilterControl::paint(juce::Graphics& g) {
       mHighlightPath.addLineSegment(
           juce::Line<float>(getWidth() * mCutoff,
                             FILTER_TYPE_BUTTON_HEIGHT + 2 * PADDING_SIZE + (1.0f - mResonance) * MAX_RES_HEIGHT,
-                                                      (getWidth() * mCutoff) - mStrength * 0.1f * getWidth(), getHeight()),
+                                                      (getWidth() * mCutoff) - 0.5f * 0.1f * getWidth(), getHeight()),
           highlightWidth);
 
       mHighlightPath.closeSubPath();
@@ -261,11 +261,6 @@ void FilterControl::setCutoff(float cutoff) {
 
 void FilterControl::setResonance(float resonance) {
   mResonance = resonance;
-  repaint();
-}
-
-void FilterControl::setStrength(float strength) {
-  mStrength = strength;
   repaint();
 }
 
