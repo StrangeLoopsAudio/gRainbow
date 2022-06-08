@@ -172,7 +172,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         }
 
         // Process filter and optionally use for output
-        float filterOutput = paramGenerator->filter.processSample(genSample);
+        float filterOutput = paramGenerator->filter.processSample(0, genSample);
 
         // If filter type isn't "none", use its output
         if (paramGenerator->filterType->getIndex() != Utils::FilterType::NO_FILTER) {

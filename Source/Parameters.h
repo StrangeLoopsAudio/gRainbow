@@ -130,8 +130,8 @@ struct ParamCandidate {
 
 struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {
-    filter.parameters->type = juce::dsp::StateVariableFilter::StateVariableFilterType::lowPass;
-    filter.parameters->setCutOffFrequency(sampleRate, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+    filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
+    filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
   }
   ~ParamGenerator() {
     grainShape->removeListener(this);
@@ -147,22 +147,24 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
     } else if (paramIdx == filterType->getParameterIndex()) {
       switch (filterType->getIndex()) { 
         case Utils::FilterType::LOWPASS: {
-          filter.parameters->type = juce::dsp::StateVariableFilter::StateVariableFilterType::lowPass;
+          filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
           break;
         }
         case Utils::FilterType::HIGHPASS: {
-          filter.parameters->type = juce::dsp::StateVariableFilter::StateVariableFilterType::highPass;
+          filter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
           break;
         }
         case Utils::FilterType::BANDPASS: {
-          filter.parameters->type = juce::dsp::StateVariableFilter::StateVariableFilterType::bandPass;
+          filter.setType(juce::dsp::StateVariableTPTFilterType::bandpass);
           break;
         }
         default:
           break;
       }
-    } else if (paramIdx == filterCutoff->getParameterIndex() || paramIdx == filterResonance->getParameterIndex()) {
-      filter.parameters->setCutOffFrequency(sampleRate, filterCutoff->get(), filterResonance->get());
+    } else if (paramIdx == filterCutoff->getParameterIndex()) {
+      filter.setCutoffFrequency(filterCutoff->get());
+    } else if (paramIdx == filterResonance->getParameterIndex()) {
+      filter.setResonance(filterResonance->get());
     }
     
   };
@@ -202,7 +204,7 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
 
   // State variable filter for generator
   double sampleRate = 48000;
-  juce::dsp::StateVariableFilter::Filter<float> filter;
+  juce::dsp::StateVariableTPTFilter<float> filter;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGenerator)
 };
