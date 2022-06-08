@@ -25,7 +25,6 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     float endRadians = startRadians + (pos * juce::MathConstants<float>::pi);
 
     int curStripeStart = height / 2.5;
-    int stripeInc = (height - curStripeStart) / 7;
     juce::Colour rainbowCol = slider.findColour(juce::Slider::ColourIds::rotarySliderFillColourId);
 
     // Draw main arc
