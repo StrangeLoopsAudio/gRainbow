@@ -11,6 +11,7 @@
 #include "GranularSynth.h"
 
 #include "PluginEditor.h"
+#include "Settings.h"
 
 GranularSynth::GranularSynth()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -313,7 +314,9 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
     jassertfalse;
   }
 
-  return new GranularSynth();
+  GranularSynth* synth = new GranularSynth();
+  PowerUserSettings::get().setSynth(synth);
+  return synth;
 }
 
 void GranularSynth::handleGrainAddRemove(int blockSize) {
@@ -484,8 +487,8 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState* state, int midiChanne
   }
 }
 
-void GranularSynth::resetParameters() {
-  mParamsNote.resetParams();
+void GranularSynth::resetParameters(bool fullClear) {
+  mParamsNote.resetParams(fullClear);
   mParamGlobal.resetParams();
 }
 

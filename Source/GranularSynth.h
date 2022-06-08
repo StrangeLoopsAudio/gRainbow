@@ -87,7 +87,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   const juce::Array<Utils::MidiNote>& getMidiNotes() { return mMidiNotes; }
 
   ParamUI& getParamUI() { return mParamUI; }
-  void resetParameters();
+  void resetParameters(bool fullClear = true);
   int incrementPosition(int genIdx, bool lookRight);
   std::vector<ParamCandidate*> getActiveCandidates();
 

@@ -7,6 +7,8 @@
   <MAINGROUP id="SNaS8k" name="gRainbow">
     <GROUP id="{595D4325-C686-1839-D048-A225A7FE150A}" name="Source">
       <GROUP id="{5E1AB70E-1865-A28B-6DCD-3168747A76FD}" name="Components">
+        <FILE id="wfqhFs" name="Settings.cpp" compile="1" resource="0" file="Source/Settings.cpp"/>
+        <FILE id="nrOvLX" name="Settings.h" compile="0" resource="0" file="Source/Settings.h"/>
         <FILE id="GqrDVH" name="NoteGrid.cpp" compile="1" resource="0" file="Source/NoteGrid.cpp"/>
         <FILE id="gsT0kQ" name="NoteGrid.h" compile="0" resource="0" file="Source/NoteGrid.h"/>
         <FILE id="BHxSYv" name="FilterControl.cpp" compile="1" resource="0"
@@ -88,6 +90,8 @@
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1,CFLAGS='-Wunused-variable'"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1,CFLAGS='-Wunused-variable'"/>
+        <CONFIGURATION isDebug="0" name="Production" targetName="gRainbow" defines="GRAINBOW_PRODUCTION=1,JUCE_MODAL_LOOPS_PERMITTED=1,CFLAGS='-Wunused-variable'"
+                       userNotes="Same as release with developer configurations removed"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../../../../../JUCE/modules"/>
@@ -130,6 +134,8 @@
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
+        <CONFIGURATION isDebug="0" name="Production" targetName="gRainbow" defines="GRAINBOW_PRODUCTION=1,JUCE_MODAL_LOOPS_PERMITTED=1"
+                       userNotes="Same as release with developer configurations removed"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../../../../../JUCE/modules"/>
@@ -151,6 +157,8 @@
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
+        <CONFIGURATION isDebug="0" name="Production" targetName="gRainbow" defines="GRAINBOW_PRODUCTION=1,JUCE_MODAL_LOOPS_PERMITTED=1"
+                       userNotes="Same as release with developer configurations removed"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../../../../../JUCE/modules"/>

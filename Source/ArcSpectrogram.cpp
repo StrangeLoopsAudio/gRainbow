@@ -10,10 +10,10 @@
 
 #include "ArcSpectrogram.h"
 
-#include <JuceHeader.h>
 #include <limits.h>
 
 #include "Utils.h"
+#include "Settings.h"
 
 //==============================================================================
 ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
@@ -95,27 +95,34 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   g.drawImage(drawImage, getLocalBounds().toFloat(), juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
 
   // Draw active grains
-  for (ArcGrain& grain : mArcGrains) {
-    const int noteIdx = grain.paramGenerator->noteIdx;
-    const int genIdx = grain.paramGenerator->genIdx;
-    const ParamCandidate& candidate = *(mParamsNote.notes[noteIdx]->getCandidate(genIdx));
+  if (PowerUserSettings::get().getAnimated()) {
+    for (ArcGrain& grain : mArcGrains) {
+      const int noteIdx = grain.paramGenerator->noteIdx;
+      const int genIdx = grain.paramGenerator->genIdx;
+      const ParamCandidate& candidate = *(mParamsNote.notes[noteIdx]->getCandidate(genIdx));
 
-    float xRatio = candidate.posRatio + (candidate.duration * grain.paramGenerator->positionAdjust->get());
-    float grainProg = (grain.numFramesActive * grain.envIncSamples) / ParamGenerator::ENV_LUT_SIZE;
-    xRatio += (candidate.duration / candidate.pbRate) * grainProg;
-    float pitchClass = noteIdx - (std::log(candidate.pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
-    float yRatio = (pitchClass + 0.25f + (grain.paramGenerator->pitchAdjust->get() * 6.0f)) / (float)Utils::PitchClass::COUNT;
-    int grainRad = startRadius + (yRatio * bowWidth);
-    juce::Point<float> grainPoint = centerPoint.getPointOnCircumference(
-        grainRad, (1.5f * juce::MathConstants<float>::pi) + (xRatio * juce::MathConstants<float>::pi));
-    float envIdx = juce::jmin(ParamGenerator::ENV_LUT_SIZE - 1.0f, grain.numFramesActive * grain.envIncSamples);
-    float grainSize = grain.gain * grain.paramGenerator->grainEnvLUT[envIdx] * MAX_GRAIN_SIZE;
+      float xRatio = candidate.posRatio + (candidate.duration * grain.paramGenerator->positionAdjust->get());
+      float grainProg = (grain.numFramesActive * grain.envIncSamples) / ParamGenerator::ENV_LUT_SIZE;
+      xRatio += (candidate.duration / candidate.pbRate) * grainProg;
+      float pitchClass = noteIdx - (std::log(candidate.pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
+      float yRatio = (pitchClass + 0.25f + (grain.paramGenerator->pitchAdjust->get() * 6.0f)) / (float)Utils::PitchClass::COUNT;
+      int grainRad = startRadius + (yRatio * bowWidth);
+      juce::Point<float> grainPoint = centerPoint.getPointOnCircumference(
+          grainRad, (1.5f * juce::MathConstants<float>::pi) + (xRatio * juce::MathConstants<float>::pi));
+      float envIdx = juce::jmin(ParamGenerator::ENV_LUT_SIZE - 1.0f, grain.numFramesActive * grain.envIncSamples);
+      float grainSize = grain.gain * grain.paramGenerator->grainEnvLUT[envIdx] * MAX_GRAIN_SIZE;
 
-    juce::Rectangle<float> grainRect = juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
-    g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[genIdx]));
-    g.drawEllipse(grainRect, 2.0f);
+      juce::Rectangle<float> grainRect = juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
+      g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[genIdx]));
+      g.drawEllipse(grainRect, 2.0f);
 
-    grain.numFramesActive++;
+      grain.numFramesActive++;
+    }
+  } else {
+    // still increment frames if not animating
+    for (ArcGrain& grain : mArcGrains) {
+      grain.numFramesActive++;
+    }
   }
 
   // Remove arc grains that are completed

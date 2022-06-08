@@ -416,10 +416,7 @@ void GeneratorsBox::resized() {
   r.removeFromTop(TABS_HEIGHT);
 
   // Add insets
-  r.removeFromTop(PADDING_SIZE);
-  r.removeFromLeft(PADDING_SIZE);
-  r.removeFromRight(PADDING_SIZE);
-  r.removeFromBottom(PADDING_SIZE);
+  r.reduce(PADDING_SIZE, PADDING_SIZE);
 
   // Generator adjustments
   r.removeFromTop(SECTION_TITLE_HEIGHT);
