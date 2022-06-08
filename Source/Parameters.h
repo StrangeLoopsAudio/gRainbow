@@ -143,9 +143,9 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
 
   void parameterValueChanged(int paramIdx, float newValue) override {
     if (paramIdx == grainShape->getParameterIndex() || paramIdx == grainTilt->getParameterIndex()) {
-      updateGrainEnvelopeLUT(); 
+      updateGrainEnvelopeLUT();
     } else if (paramIdx == filterType->getParameterIndex()) {
-      switch (filterType->getIndex()) { 
+      switch (filterType->getIndex()) {
         case Utils::FilterType::LOWPASS: {
           filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
           break;
@@ -166,7 +166,6 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
     } else if (paramIdx == filterResonance->getParameterIndex()) {
       filter.setResonance(filterResonance->get());
     }
-    
   };
   void parameterGestureChanged(int, bool) override {}
 

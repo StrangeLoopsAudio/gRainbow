@@ -361,8 +361,8 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             jassert(paramCandidate->pbRate > 0.1f);
 
             /* Add grain */
-            auto grain = Grain(paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples,
-                               mTotalSamps, paramGenerator->gain->get());
+            auto grain =
+                Grain(paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples, mTotalSamps, paramGenerator->gain->get());
             gNote.genGrains[i].add(grain);
 
             /* Trigger grain in arcspec */
@@ -391,7 +391,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
   // Delete expired grains
   for (GrainNote& gNote : mActiveNotes) {
     for (int genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
-        gNote.genGrains[genIdx].removeIf([this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
+      gNote.genGrains[genIdx].removeIf([this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
     }
   }
 
