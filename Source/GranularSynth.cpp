@@ -97,7 +97,15 @@ const juce::String GranularSynth::getProgramName(int index) { return {}; }
 void GranularSynth::changeProgramName(int index, const juce::String& newName) {}
 
 //==============================================================================
-void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) { mSampleRate = sampleRate; }
+void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
+  mSampleRate = sampleRate;
+  for (auto&& note : mParamsNote.notes) {
+    for (auto&& gen : note->generators) {
+      gen->filter.prepare({sampleRate, (juce::uint32)samplesPerBlock, 1});
+      gen->sampleRate = sampleRate;
+    }
+  }
+}
 
 void GranularSynth::releaseResources() {
   // When playback stops, you can use this as an opportunity to free up any
@@ -131,6 +139,8 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   auto totalNumInputChannels = getTotalNumInputChannels();
   auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+  mKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
+
   // In case we have more outputs than inputs, this code clears any output
   // channels that didn't contain input data, (because these aren't
   // guaranteed to be empty - they may contain garbage).
@@ -141,23 +151,39 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     buffer.clear(i, 0, buffer.getNumSamples());
   }
 
-  mKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
-
   // Add contributions from each note
+  auto bufferChannels = buffer.getArrayOfWritePointers();
   for (int i = 0; i < buffer.getNumSamples(); ++i) {
     for (GrainNote& gNote : mActiveNotes) {
       float noteGain =
           gNote.ampEnv.getAmplitude(mTotalSamps, mParamGlobal.attack->get() * mSampleRate, mParamGlobal.decay->get() * mSampleRate,
                                     mParamGlobal.sustain->get(), mParamGlobal.release->get() * mSampleRate) *
           gNote.velocity;
-      // Add contributions from each grain
-      for (Grain& grain : gNote.grains) {
-        ParamGenerator* paramGenerator = mParamsNote.notes[gNote.pitchClass]->generators[grain.generator].get();
-        float genGain = gNote.genAmpEnvs[grain.generator].getAmplitude(
-                            mTotalSamps, paramGenerator->attack->get() * mSampleRate, paramGenerator->decay->get() * mSampleRate,
-                            paramGenerator->sustain->get(), paramGenerator->release->get() * mSampleRate) *
-                        paramGenerator->gain->get();
-        grain.process(mFileBuffer, buffer, noteGain * genGain * mParamGlobal.gain->get(), mTotalSamps);
+      // Add contributions from the grains in this generator
+      float genSample = 0.0f;
+      for (int genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
+        ParamGenerator* paramGenerator = mParamsNote.notes[gNote.pitchClass]->generators[genIdx].get();
+        for (Grain& grain : gNote.genGrains[genIdx]) {
+          float genGain = gNote.genAmpEnvs[genIdx].getAmplitude(
+                              mTotalSamps, paramGenerator->attack->get() * mSampleRate, paramGenerator->decay->get() * mSampleRate,
+                              paramGenerator->sustain->get(), paramGenerator->release->get() * mSampleRate) *
+                          paramGenerator->gain->get();
+          genSample += grain.process(mFileBuffer, buffer, noteGain * genGain * mParamGlobal.gain->get(), mTotalSamps);
+        }
+
+        // Process filter and optionally use for output
+        float filterOutput = paramGenerator->filter.processSample(0, genSample);
+
+        // If filter type isn't "none", use its output
+        if (paramGenerator->filterType->getIndex() != Utils::FilterType::NO_FILTER) {
+          genSample = filterOutput;
+        }
+
+        // Add sample to all channels
+        // TODO: panning here
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+          bufferChannels[ch][i] += genSample;
+        }
       }
     }
     mTotalSamps++;
@@ -317,7 +343,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           }
           // Skip adding new grain if not enabled or full of grains
           if (paramCandidate != nullptr && mParamsNote.notes[gNote.pitchClass]->shouldPlayGenerator(i) &&
-              gNote.grains.size() < MAX_GRAINS) {
+              gNote.genGrains.size() < MAX_GRAINS) {
             float durSamples = mSampleRate * durSec * (1.0f / paramCandidate->pbRate);
             /* Position calculation */
             juce::Random random;
@@ -335,9 +361,9 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             jassert(paramCandidate->pbRate > 0.1f);
 
             /* Add grain */
-            auto grain = Grain(i, paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples,
-                               mTotalSamps, paramGenerator->gain->get());
-            gNote.grains.add(grain);
+            auto grain =
+                Grain(paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples, mTotalSamps, paramGenerator->gain->get());
+            gNote.genGrains[i].add(grain);
 
             /* Trigger grain in arcspec */
             float totalGain = paramGenerator->gain->get() * gNote.ampEnv.amplitude * gNote.genAmpEnvs[i].amplitude *
@@ -364,7 +390,9 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
   }
   // Delete expired grains
   for (GrainNote& gNote : mActiveNotes) {
-    gNote.grains.removeIf([this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
+    for (int genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
+      gNote.genGrains[genIdx].removeIf([this](Grain& g) { return mTotalSamps > (g.trigTs + g.duration); });
+    }
   }
 
   // Delete expired notes

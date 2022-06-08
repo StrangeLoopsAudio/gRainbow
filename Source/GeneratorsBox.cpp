@@ -283,20 +283,6 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
   mLabelResonance.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelResonance);
 
-  /* Filter Strength */
-  mSliderStrength.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderStrength.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderStrength.setRotaryParameters(rotaryParams);
-  mSliderStrength.setRange(0.0, 1.0, 0.01);
-  mSliderStrength.onValueChange = [this] {
-    ParamHelper::setParam(getCurrentGenerator()->filterStrength, mSliderStrength.getValue());
-  };
-  addAndMakeVisible(mSliderStrength);
-
-  mLabelStrength.setText("Strength", juce::dontSendNotification);
-  mLabelStrength.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelStrength);
-
   /* Filter type */
   mFilterControl.onFilterTypeChange = [this](Utils::FilterType filterType) {
     ParamHelper::setParam(getCurrentGenerator()->filterType, filterType);
@@ -312,7 +298,6 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
         break;
     }
     ParamHelper::setParam(getCurrentGenerator()->filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
-    ParamHelper::setParam(getCurrentGenerator()->filterStrength, ParamDefaults::FILTER_STRENGTH_DEFAULT);
   };
   addAndMakeVisible(mFilterControl);
 
@@ -511,16 +496,16 @@ void GeneratorsBox::resized() {
   r.removeFromTop(PADDING_SIZE);
 
   // Filter env knobs
-  knobWidth = r.getWidth() / NUM_GRAIN_FILT_PARAMS;
+  knobWidth = r.getWidth() / 3;
   knobPanel = r.removeFromTop(PADDING_SIZE + knobWidth / 2);
-  mSliderCutoff.setBounds(knobPanel.removeFromLeft(knobWidth));
+  auto cutoffPanel = knobPanel.removeFromLeft(knobPanel.getWidth() / 2);
+  mSliderCutoff.setBounds(cutoffPanel.removeFromRight(knobWidth));
   mSliderResonance.setBounds(knobPanel.removeFromLeft(knobWidth));
-  mSliderStrength.setBounds(knobPanel.removeFromLeft(knobWidth));
 
   labelPanel = r.removeFromTop(LABEL_HEIGHT);
-  mLabelCutoff.setBounds(labelPanel.removeFromLeft(knobWidth));
+  cutoffPanel = labelPanel.removeFromLeft(labelPanel.getWidth() / 2);
+  mLabelCutoff.setBounds(cutoffPanel.removeFromRight(knobWidth));
   mLabelResonance.setBounds(labelPanel.removeFromLeft(knobWidth));
-  mLabelStrength.setBounds(labelPanel.removeFromLeft(knobWidth));
 }
 
 void GeneratorsBox::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes) {
@@ -607,10 +592,8 @@ void GeneratorsBox::timerCallback() {
     mEnvelopeAmp.setGain(gen.gain->get());
     mSliderCutoff.setValue(gen.filterCutoff->get(), juce::dontSendNotification);
     mSliderResonance.setValue(gen.filterResonance->get(), juce::dontSendNotification);
-    mSliderStrength.setValue(gen.filterStrength->get(), juce::dontSendNotification);
     mFilterControl.setCutoff(ParamRanges::CUTOFF.convertTo0to1(gen.filterCutoff->get()));
     mFilterControl.setResonance(gen.filterResonance->get());
-    mFilterControl.setStrength(gen.filterStrength->get());
     mFilterControl.setFilterType(gen.filterType->getIndex());
     refreshState();
   }
@@ -687,11 +670,8 @@ void GeneratorsBox::refreshState() {
                            componentsLit ? knobColour.brighter().brighter().brighter().brighter() : juce::Colours::darkgrey);
   mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                            componentsLit ? knobColour.brighter().brighter().brighter().brighter() : juce::Colours::darkgrey);
-  mSliderStrength.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
-                             componentsLit ? knobColour.brighter().brighter().brighter().brighter() : juce::Colours::darkgrey);
   mLabelCutoff.setEnabled(componentsLit);
   mLabelResonance.setEnabled(componentsLit);
-  mLabelStrength.setEnabled(componentsLit);
 
   mLabelAttack.setEnabled(componentsLit);
   mLabelDecay.setEnabled(componentsLit);
@@ -711,7 +691,6 @@ void GeneratorsBox::refreshState() {
   mSliderGain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  mSliderStrength.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
 
   mFilterControl.setActive(componentsLit);
   mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
@@ -720,12 +699,8 @@ void GeneratorsBox::refreshState() {
   mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
   mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                              componentsLit ? knobColour.brighter().brighter().brighter().brighter() : juce::Colours::darkgrey);
-  mSliderStrength.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderStrength.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
-                            componentsLit ? knobColour.brighter().brighter().brighter().brighter() : juce::Colours::darkgrey);
   mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  mSliderStrength.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
 
   mLabelShape.setEnabled(componentsLit);
   mLabelTilt.setEnabled(componentsLit);

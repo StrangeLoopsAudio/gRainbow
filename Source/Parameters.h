@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Utils.h"
 
 #include "Utils.h"
 
@@ -36,7 +37,6 @@ static juce::String genSustain{"_sustain_gen_"};
 static juce::String genRelease{"_release_gen_"};
 static juce::String genFilterCutoff{"_filt_cutoff_gen_"};
 static juce::String genFilterResonance{"_filt_resonance_gen_"};
-static juce::String genFilterStrength{"_filt_strength_gen_"};
 static juce::String genFilterType{"_filter_type_gen_"};
 // Global params
 static juce::String globalGain{"global_gain"};
@@ -57,8 +57,7 @@ static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
 static juce::NormalisableRange<float> CUTOFF(100.0f, 10000.0f);
-static juce::NormalisableRange<float> RESONANCE(0.0f, 1.0f);
-static juce::NormalisableRange<float> STRENGTH(0.0f, 1.0f);
+static juce::NormalisableRange<float> RESONANCE(0.01f, 1.0f);
 static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
@@ -72,8 +71,7 @@ static float ATTACK_DEFAULT_SEC = 0.2f;
 static float DECAY_DEFAULT_SEC = 0.2f;
 static float SUSTAIN_DEFAULT = 0.8f;
 static float RELEASE_DEFAULT_SEC = 0.2f;
-static float FILTER_RESONANCE_DEFAULT = 0.2f;
-static float FILTER_STRENGTH_DEFAULT = 0.5f;
+static float FILTER_RESONANCE_DEFAULT = 0.707f;
 static float FILTER_LP_CUTOFF_DEFAULT_HZ = 5000.0f;
 static float FILTER_HP_CUTOFF_DEFAULT_HZ = 800.0f;
 static float FILTER_BP_CUTOFF_DEFAULT_HZ = 1200.0f;
@@ -131,13 +129,44 @@ struct ParamCandidate {
 };
 
 struct ParamGenerator : juce::AudioProcessorParameter::Listener {
-  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {}
+  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {
+    filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
+    filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+  }
   ~ParamGenerator() {
     grainShape->removeListener(this);
     grainTilt->removeListener(this);
+    filterType->removeListener(this);
+    filterCutoff->removeListener(this);
+    filterResonance->removeListener(this);
   }
 
-  void parameterValueChanged(int, float) override { updateGrainEnvelopeLUT(); };
+  void parameterValueChanged(int paramIdx, float newValue) override {
+    if (paramIdx == grainShape->getParameterIndex() || paramIdx == grainTilt->getParameterIndex()) {
+      updateGrainEnvelopeLUT();
+    } else if (paramIdx == filterType->getParameterIndex()) {
+      switch (filterType->getIndex()) {
+        case Utils::FilterType::LOWPASS: {
+          filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
+          break;
+        }
+        case Utils::FilterType::HIGHPASS: {
+          filter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
+          break;
+        }
+        case Utils::FilterType::BANDPASS: {
+          filter.setType(juce::dsp::StateVariableTPTFilterType::bandpass);
+          break;
+        }
+        default:
+          break;
+      }
+    } else if (paramIdx == filterCutoff->getParameterIndex()) {
+      filter.setCutoffFrequency(filterCutoff->get());
+    } else if (paramIdx == filterResonance->getParameterIndex()) {
+      filter.setResonance(filterResonance->get());
+    }
+  };
   void parameterGestureChanged(int, bool) override {}
 
   void addParams(juce::AudioProcessor& p);
@@ -166,12 +195,15 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* release = nullptr;
   juce::AudioParameterFloat* filterResonance = nullptr;
   juce::AudioParameterFloat* filterCutoff = nullptr;
-  juce::AudioParameterFloat* filterStrength = nullptr;
   juce::AudioParameterChoice* filterType = nullptr;
 
   // LUT of the grain envelope
   static constexpr auto ENV_LUT_SIZE = 128;
   std::vector<float> grainEnvLUT;
+
+  // State variable filter for generator
+  double sampleRate = 48000;
+  juce::dsp::StateVariableTPTFilter<float> filter;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGenerator)
 };
