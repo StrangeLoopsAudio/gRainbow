@@ -11,11 +11,11 @@ jobs:
         fetch-depth: 0
     - name: clone JUCE
       run:
-        git clone --depth 1 --branch 6.1.4 https://github.com/juce-framework/JUCE.git
+        git clone --depth 1 --branch 6.1.6 https://github.com/juce-framework/JUCE.git
     - name: clone and install FRUT
       run:
         sudo apt-get update -y
-        && sudo apt-get install -y libasound2-dev libjack-jackd2-dev \ ladspa-sdk \ libcurl4-openssl-dev  \ libfreetype6-dev \ libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev \ libwebkit2gtk-4.0-dev \ libglu1-mesa-dev mesa-common-dev
+        && sudo apt-get install -y libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype6-dev libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev mesa-common-dev
         && git clone --depth 1 https://github.com/McMartin/FRUT.git
         && cd ./FRUT/
         && mkdir build && cd build/
@@ -46,7 +46,7 @@ jobs:
         fetch-depth: 0
     - name: clone JUCE
       run:
-        git clone --depth 1 --branch 6.1.4 https://github.com/juce-framework/JUCE.git
+        git clone --depth 1 --branch 6.1.6 https://github.com/juce-framework/JUCE.git
     - name: clone and install FRUT
       run:
         git clone --depth 1 https://github.com/McMartin/FRUT.git
@@ -77,7 +77,7 @@ jobs:
         fetch-depth: 0
     - name: clone JUCE
       run:
-        git clone --depth 1 --branch 6.1.4 https://github.com/juce-framework/JUCE.git
+        git clone --depth 1 --branch 6.1.6 https://github.com/juce-framework/JUCE.git
     - name: clone and install FRUT
       run:
         git clone --depth 1 https://github.com/McMartin/FRUT.git
