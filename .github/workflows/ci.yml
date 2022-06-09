@@ -39,7 +39,6 @@ jobs:
       CC: clang
       CXX: clang++
     steps:
-    steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
