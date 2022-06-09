@@ -58,7 +58,7 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
     }
     ParamGenerator* gen = mParamsNote.notes[pitchClass]->generators[genIdx].get();
     float envIncSamples = ParamGenerator::ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
-    mArcGrains.add(ArcGrain(gen, envGain, envIncSamples));
+    mArcGrains.add(ArcGrain(gen, envGain, envIncSamples, pitchClass));
   };
 
   addChildComponent(mSpecType);
@@ -112,7 +112,9 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     float grainSize = grain.gain * grain.paramGenerator->grainEnvLUT[envIdx] * MAX_GRAIN_SIZE;
 
     juce::Rectangle<float> grainRect = juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
-    g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[genIdx]));
+    juce::Colour pitchColour = Utils::getRainbow12Colour(grain.pitchClass);
+    // TODO - get if selected generator to darken/brighten
+    g.setColour(pitchColour);
     g.drawEllipse(grainRect, 2.0f);
 
     grain.numFramesActive++;
