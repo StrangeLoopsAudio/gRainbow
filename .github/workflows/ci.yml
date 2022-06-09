@@ -73,10 +73,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
     - name: clone JUCE
       run:
         git clone --depth 1 --branch 6.1.4 https://github.com/juce-framework/JUCE.git
