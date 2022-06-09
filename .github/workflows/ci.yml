@@ -14,7 +14,9 @@ jobs:
         git clone --depth 1 --branch 6.1.4 https://github.com/juce-framework/JUCE.git
     - name: clone and install FRUT
       run:
-        git clone --depth 1 https://github.com/McMartin/FRUT.git
+        sudo apt update
+        && sudo apt install libasound2-dev libjack-jackd2-dev \ ladspa-sdk \ libcurl4-openssl-dev  \ libfreetype6-dev \ libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev \ libwebkit2gtk-4.0-dev \ libglu1-mesa-dev mesa-common-dev
+        && git clone --depth 1 https://github.com/McMartin/FRUT.git
         && cd ./FRUT/
         && mkdir build && cd build/
         && cmake .. -DCMAKE_INSTALL_PREFIX="../prefix" -DJUCE_ROOT="../../JUCE"
@@ -22,7 +24,7 @@ jobs:
         && cd ../../
     - name: generate cmake from jucer
       run:
-        ./FRUT/prefix/FRUT/bin/Jucer2CMake reprojucer gRainbow.jucer ./FRUT/prefix/FRUT/cmake/Reprojucer.cmake
+        ./FRUT/prefix/FRUT/bin/Jucer2CMake reprojucer gRainbow.jucer ./FRUT/prefix/FRUT/cmake/Reprojucer.cmake --juce-modules="${GITHUB_WORKSPACE}/JUCE/modules"
     - name: build gRainbow using cmake
       run:
         mkdir build
@@ -55,7 +57,7 @@ jobs:
         && cd ../../
     - name: generate cmake from jucer
       run:
-        ./FRUT/prefix/FRUT/bin/Jucer2CMake reprojucer gRainbow.jucer ./FRUT/prefix/FRUT/cmake/Reprojucer.cmake
+        ./FRUT/prefix/FRUT/bin/Jucer2CMake reprojucer gRainbow.jucer ./FRUT/prefix/FRUT/cmake/Reprojucer.cmake --juce-modules="${GITHUB_WORKSPACE}/JUCE/modules"
     - name: build gRainbow using cmake
       run:
         mkdir build
@@ -86,7 +88,7 @@ jobs:
         && cd ../../
     - name: generate cmake from jucer
       run:
-        ./FRUT/prefix/FRUT/bin/Jucer2CMake reprojucer gRainbow.jucer ./FRUT/prefix/FRUT/cmake/Reprojucer.cmake
+        ./FRUT/prefix/FRUT/bin/Jucer2CMake reprojucer gRainbow.jucer ./FRUT/prefix/FRUT/cmake/Reprojucer.cmake --juce-modules="${GITHUB_WORKSPACE}/JUCE/modules"
     - name: build gRainbow using cmake
       run:
         mkdir build
