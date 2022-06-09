@@ -63,7 +63,7 @@ jobs:
         mkdir build
         && cd ./build
         && cmake ..
-        && cmake --build . --parallel --config Release
+        && cmake --build . --parallel -DCMAKE_BUILD_TYPE=Release
         && cd ..
     - uses: actions/upload-artifact@v3
       with:
