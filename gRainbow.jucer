@@ -105,7 +105,7 @@
         <MODULEPATH id="juce_dsp" path="../../../../../JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
-    <VS2019 targetFolder="Builds/VisualStudio2019">
+    <VS2019 targetFolder="Builds/VisualStudio2019" extraCompilerFlags="/bigobj">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="gRainbow" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
