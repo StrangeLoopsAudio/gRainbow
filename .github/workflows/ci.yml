@@ -65,7 +65,7 @@ jobs:
         && cd ..
     - uses: actions/upload-artifact@v3
       with:
-        path: ./build/*.vst3
+        path: ./build/VST3/gRainbow.vst3
 
   Windows-Latest:
     runs-on: windows-latest
