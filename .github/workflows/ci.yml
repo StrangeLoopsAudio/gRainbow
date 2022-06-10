@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 jobs:
   Linux:
+    if: ${{ false }}  # disable for now
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -37,9 +38,6 @@ jobs:
         path: ./build/Release/VST3/gRainbow.vst3
   MacOS-Latest:
     runs-on: macOS-latest
-    env:
-      CC: clang
-      CXX: clang++
     steps:
     - uses: actions/checkout@v2
       with:
@@ -63,7 +61,7 @@ jobs:
         mkdir build
         && cd ./build
         && cmake ..
-        && cmake --build . --parallel -DCMAKE_BUILD_TYPE=Release
+        && cmake --build . --parallel --config Release
         && cd ..
     - uses: actions/upload-artifact@v3
       with:
