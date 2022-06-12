@@ -62,12 +62,12 @@ jobs:
         && cd ./build
         && cmake .. -DCMAKE_BUILD_TYPE=Release
         && cmake --build . --parallel
-        && ls
+        && ls /Users/runner/Library/Audio/Plug-Ins/VST3/
         && cd ..
     - uses: actions/upload-artifact@v3
       with:
         name: gRainbowVST-MacOS
-        path: ./build/gRainbow.vst3
+        path: /Users/runner/Library/Audio/Plug-Ins/VST3/gRainbow.vst3
 
   Windows-Latest:
     runs-on: windows-latest
