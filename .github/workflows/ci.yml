@@ -66,6 +66,7 @@ jobs:
         && cd ..
     - uses: actions/upload-artifact@v3
       with:
+        name: gRainbowVST-Ubuntu
         path: ./build/gRainbow.vst3
 
   Windows-Latest:
@@ -97,4 +98,5 @@ jobs:
         && cd ..
     - uses: actions/upload-artifact@v3
       with:
+        name: gRainbowVST-Windows
         path: ./build/Release/VST3/gRainbow.vst3
