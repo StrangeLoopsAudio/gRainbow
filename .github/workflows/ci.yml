@@ -20,8 +20,8 @@ jobs:
         && git clone --depth 1 https://github.com/McMartin/FRUT.git
         && cd ./FRUT/
         && mkdir build && cd build/
-        && cmake .. -DCMAKE_INSTALL_PREFIX="../prefix" -DJUCE_ROOT="../../JUCE"
-        && cmake --build . --target install
+        && cmake .. -DCMAKE_INSTALL_PREFIX="../prefix" -DJUCE_ROOT="../../JUCE" -DCMAKE_CXX_FLAGS="-Wno-extra-semi-stmt "
+        && cmake --build . --parallel --target install
         && cd ../../
     - name: generate cmake from jucer
       run:
