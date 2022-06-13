@@ -59,6 +59,7 @@
       </GROUP>
       <GROUP id="{686FB61F-2127-074F-B6C7-E25843969006}" name="Resources">
         <FILE id="deOQaC" name="appicon.png" compile="0" resource="1" file="Source/Resources/appicon.png"/>
+        <FILE id="MYjEPC" name="half_sun.png" compile="0" resource="1" file="Source/Resources/half_sun.png"/>
         <FILE id="FIxQc8" name="logo.png" compile="0" resource="1" file="Source/Resources/logo.png"/>
         <FILE id="qEeUXc" name="microphone.png" compile="0" resource="1" file="Source/Resources/microphone.png"/>
         <FILE id="gQZuVv" name="microphoneOver.png" compile="0" resource="1"

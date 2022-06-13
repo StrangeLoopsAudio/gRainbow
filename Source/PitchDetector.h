@@ -36,7 +36,6 @@ class PitchDetector : juce::Thread {
  public:
   static constexpr auto MIN_MIDINOTE = 43;
   static constexpr auto MAX_MIDINOTE = 91;
-   
 
   PitchDetector();
   ~PitchDetector();
@@ -50,7 +49,7 @@ class PitchDetector : juce::Thread {
     Pitch(Utils::PitchClass pitchClass, float posRatio, float duration, float gain)
         : pitchClass(pitchClass), posRatio(posRatio), duration(duration), gain(gain) {}
   } Pitch;
-  
+
   typedef juce::HashMap<Utils::PitchClass, std::vector<Pitch>> PitchMap;
 
   std::function<void(std::vector<std::vector<float>>& hpcp)> onHarmonicProfileReady = nullptr;

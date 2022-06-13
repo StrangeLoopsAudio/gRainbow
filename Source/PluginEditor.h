@@ -64,6 +64,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   // UI Components
   juce::ImageComponent mLogo;
+  juce::Image mHalfSun;
   juce::ImageButton mBtnOpenFile;
   juce::ImageButton mBtnRecord;
   juce::ImageButton mBtnPreset;
@@ -75,6 +76,12 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   NoteGrid mNoteGrid;
   GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
+  juce::Rectangle<float> mNoteDisplayBulb;
+  juce::Rectangle<float> mNoteDisplaySun;
+  juce::AffineTransform mSunTransformBase;
+  juce::AffineTransform mSunTransformLeft;
+  juce::AffineTransform mSunTransformRight;
+  uint32_t mFrameCount;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
 
   // Synth owns, but need to grab params on reloading of plugin

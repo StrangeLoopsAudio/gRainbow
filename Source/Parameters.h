@@ -105,9 +105,11 @@ struct ParamCandidate {
   float pbRate;
   float duration;
   float salience;
+  // for UI and is updated at paint time, so don't save in preset XML
+  juce::Point<float> grainPoint;
 
   ParamCandidate(float posRatio, float pbRate, float duration, float salience)
-      : posRatio(posRatio), pbRate(pbRate), duration(duration), salience(salience) {}
+      : posRatio(posRatio), pbRate(pbRate), duration(duration), salience(salience), grainPoint(0.0f, 0.0f) {}
 
   // setXml equivalent since we always need a valid candidate param  value
   ParamCandidate(juce::XmlElement* xml) {
