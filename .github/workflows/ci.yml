@@ -1,6 +1,12 @@
 name: JUCE and FRUT CI
 
-on: [push, pull_request]
+on: 
+  push:
+    branches:
+      - master
+    tags:
+      - v2.*
+      - v1.*
 
 jobs:
   Linux:
