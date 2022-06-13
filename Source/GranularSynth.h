@@ -80,6 +80,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   std::vector<Utils::SpecBuffer*> getProcessedSpecs() {
     return std::vector<Utils::SpecBuffer*>(mProcessedSpecs.begin(), mProcessedSpecs.end());
   }
+  juce::AudioBuffer<float>& getFileBuffer() { return mFileBuffer; }
 
   ParamsNote& getParamsNote() { return mParamsNote; }
   ParamGlobal& getParamGlobal() { return mParamGlobal; }
