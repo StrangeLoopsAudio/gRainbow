@@ -136,15 +136,14 @@ void ArcSpectrogram::run() {
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
+  mParamUI.specImages[mProcessType] = juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
+  juce::Graphics g(mParamUI.specImages[mProcessType]);
 
   // Audio waveform (1D) is handled a bit differently than its 2D spectrograms
   if (mProcessType == ParamUI::SpecType::WAVEFORM) {
     juce::AudioBuffer<float>* fileBuffer = (juce::AudioBuffer<float>*)mBuffers[mProcessType];
     const float* bufferSamples = fileBuffer->getReadPointer(0);
     float maxMagnitude = fileBuffer->getMagnitude(0, fileBuffer->getNumSamples());
-
-    mParamUI.specImages[mProcessType] = juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
-    juce::Graphics g(mParamUI.specImages[mProcessType]);
 
     // Draw NUM_COLS worth of audio samples
     juce::Point<float> prevPoint = startPoint.getPointOnCircumference(startRadius + bowWidth / 2.0f, startRadius + bowWidth / 2.0f,
@@ -175,8 +174,6 @@ void ArcSpectrogram::run() {
     if (spec.size() == 0 || threadShouldExit()) return;
 
     int maxRow = (mProcessType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size();
-    mParamUI.specImages[mProcessType] = juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
-    juce::Graphics g(mParamUI.specImages[mProcessType]);
 
     // Draw each column of frequencies
     for (auto i = 0; i < NUM_COLS; ++i) {

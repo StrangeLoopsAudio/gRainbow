@@ -88,7 +88,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   ParamUI::SpecType mProcessType;
   bool mIsProcessing = false;
   bool mImagesComplete[ParamUI::SpecType::COUNT];
-  int mNumSamples;
 
   std::random_device mRandomDevice{};
   std::mt19937 mGenRandom{mRandomDevice()};
