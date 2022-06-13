@@ -256,7 +256,7 @@ struct ParamsNote {
   }
 
   void addParams(juce::AudioProcessor& p);
-  void resetParams();
+  void resetParams(bool fullClear = true);
 
   // always send creation and have callback scope decide if valid or not
   void grainCreated(Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain) {

@@ -9,8 +9,7 @@
 */
 
 #include "RainbowKeyboard.h"
-
-#include <JuceHeader.h>
+#include "Settings.h"
 
 //==============================================================================
 RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state) : mState(state) {
@@ -104,7 +103,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   g.drawRect(area, isBlackKey(pitchClass) ? 2 : 1);
 
   // display animation to show the velocity level of the note
-  if (isDown) {
+  if (isDown && PowerUserSettings::get().getAnimated()) {
     AnimationLUT& lut = mAnimationLUT[pitchClass];
     juce::Rectangle<float> block = juce::Rectangle<float>(lut.noteWidthSplit, lut.noteWidthSplit);
     g.setColour(juce::Colours::white);

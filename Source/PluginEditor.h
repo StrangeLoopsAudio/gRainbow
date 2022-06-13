@@ -20,10 +20,8 @@
 #include "RainbowLookAndFeel.h"
 #include "TransientDetector.h"
 #include "Utils.h"
+#include "Settings.h"
 
-//==============================================================================
-/**
- */
 class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
                                      juce::FileDragAndDropTarget,
                                      juce::Timer {
@@ -31,7 +29,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   GRainbowAudioProcessorEditor(GranularSynth& synth);
   ~GRainbowAudioProcessorEditor() override;
 
-  //==============================================================================
   void paint(juce::Graphics&) override;
   void paintOverChildren(juce::Graphics& g) override;
   void resized() override;
@@ -76,6 +73,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
+  SettingsComponent mSettings;
 
   // Synth owns, but need to grab params on reloading of plugin
   ParamUI& mParamUI;
