@@ -40,6 +40,7 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
   mSpecType.addItem("Spectrogram", (int)ParamUI::SpecType::SPECTROGRAM + 1);
   mSpecType.addItem("Harmonic Profile", (int)ParamUI::SpecType::HPCP + 1);
   mSpecType.addItem("Detected Pitches", (int)ParamUI::SpecType::DETECTED + 1);
+  mSpecType.addItem("Audio Waveform", (int)ParamUI::SpecType::WAVEFORM + 1);
   mSpecType.setTooltip("Select different spectrum type");
   mSpecType.onChange = [this](void) {
     // Will get called from user using UI ComboBox and from inside this class
@@ -130,47 +131,80 @@ void ArcSpectrogram::resized() {
 }
 
 void ArcSpectrogram::run() {
-  Utils::SpecBuffer& spec = *mBuffers[mProcessType];
-  if (spec.size() == 0 || threadShouldExit()) return;
-
   // Initialize rainbow parameters
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
-  int maxRow = (mProcessType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size();
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mParamUI.specImages[mProcessType] = juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
   juce::Graphics g(mParamUI.specImages[mProcessType]);
 
-  // Draw each column of frequencies
-  for (auto i = 0; i < NUM_COLS; ++i) {
-    if (threadShouldExit()) return;
-    auto specCol = ((float)i / NUM_COLS) * spec.size();
-    // Draw each row of frequencies
-    for (auto curRadius = startRadius; curRadius < endRadius; curRadius += 1) {
-      float radPerc = (curRadius - startRadius) / (float)bowWidth;
-      auto specRow = radPerc * maxRow;
+  // Audio waveform (1D) is handled a bit differently than its 2D spectrograms
+  if (mProcessType == ParamUI::SpecType::WAVEFORM) {
+    juce::AudioBuffer<float>* fileBuffer = (juce::AudioBuffer<float>*)mBuffers[mProcessType];
+    const float* bufferSamples = fileBuffer->getReadPointer(0);
+    float maxMagnitude = fileBuffer->getMagnitude(0, fileBuffer->getNumSamples());
+
+    // Draw NUM_COLS worth of audio samples
+    juce::Point<float> prevPoint = startPoint.getPointOnCircumference(startRadius + bowWidth / 2.0f, startRadius + bowWidth / 2.0f,
+                                                                      -(juce::MathConstants<float>::pi / 2.0f));
+    juce::Colour prevColour = juce::Colours::black;
+    for (auto i = 0; i < NUM_COLS; ++i) {
+      if (threadShouldExit()) return;
+      int sampleIdx = ((float)i / NUM_COLS) * fileBuffer->getNumSamples();
+      float sampleRadius = juce::jmap(bufferSamples[sampleIdx], -maxMagnitude, maxMagnitude, (float)startRadius, (float)endRadius);
 
       // Choose rainbow color depending on radius
-      auto level = juce::jlimit(0.0f, 1.0f, spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
-      auto rainbowColour = juce::Colour::fromHSV(radPerc, 1.0, 1.0f, level);
-      g.setColour(rainbowColour);
+      auto rainbowColour =
+          juce::Colour::fromHSV(juce::jmap(bufferSamples[sampleIdx], -maxMagnitude, maxMagnitude, 0.0f, 1.0f), 1.0, 1.0f, 1.0f);
 
-      float xPerc = (float)specCol / spec.size();
+      // Draw a line connecting to the previous point, blending colours between them
+      float xPerc = ((float)i / NUM_COLS);
       float angleRad = (juce::MathConstants<float>::pi * xPerc) - (juce::MathConstants<float>::pi / 2.0f);
+      juce::Point<float> p = startPoint.getPointOnCircumference(sampleRadius, sampleRadius, angleRad);
+      juce::ColourGradient gradient = juce::ColourGradient(prevColour, prevPoint, rainbowColour, p, false);
+      g.setGradientFill(gradient);
+      g.drawLine(juce::Line<float>(prevPoint, p), 2.0f);
+      prevPoint = p;
+      prevColour = rainbowColour;
+    }
+  } else {
+    // All other types of spectrograms
+    Utils::SpecBuffer& spec = *(Utils::SpecBuffer*)mBuffers[mProcessType];  // cast to SpecBuffer
+    if (spec.size() == 0 || threadShouldExit()) return;
 
-      // Create and rotate a rectangle to represent the "pixel"
-      juce::Point<float> p = startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
-      juce::AffineTransform rotation = juce::AffineTransform();
-      rotation = rotation.rotated(angleRad, p.x, p.y);
-      juce::Rectangle<float> rect = juce::Rectangle<float>(2, 2);
-      rect = rect.withCentre(p);
-      rect = rect.transformedBy(rotation);
-      juce::Path rectPath;
-      rectPath.addRectangle(rect);
+    int maxRow = (mProcessType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size();
 
-      // Finally, draw the rectangle
-      g.fillPath(rectPath, rotation);
+    // Draw each column of frequencies
+    for (auto i = 0; i < NUM_COLS; ++i) {
+      if (threadShouldExit()) return;
+      auto specCol = ((float)i / NUM_COLS) * spec.size();
+      // Draw each row of frequencies
+      for (auto curRadius = startRadius; curRadius < endRadius; curRadius += 1) {
+        float radPerc = (curRadius - startRadius) / (float)bowWidth;
+        auto specRow = radPerc * maxRow;
+
+        // Choose rainbow color depending on radius
+        auto level = juce::jlimit(0.0f, 1.0f, spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
+        auto rainbowColour = juce::Colour::fromHSV(radPerc, 1.0, 1.0f, level);
+        g.setColour(rainbowColour);
+
+        float xPerc = (float)specCol / spec.size();
+        float angleRad = (juce::MathConstants<float>::pi * xPerc) - (juce::MathConstants<float>::pi / 2.0f);
+
+        // Create and rotate a rectangle to represent the "pixel"
+        juce::Point<float> p = startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
+        juce::AffineTransform rotation = juce::AffineTransform();
+        rotation = rotation.rotated(angleRad, p.x, p.y);
+        juce::Rectangle<float> rect = juce::Rectangle<float>(2, 2);
+        rect = rect.withCentre(p);
+        rect = rect.transformedBy(rotation);
+        juce::Path rectPath;
+        rectPath.addRectangle(rect);
+
+        // Finally, draw the rectangle
+        g.fillPath(rectPath, rotation);
+      }
     }
   }
 
@@ -220,6 +254,24 @@ void ArcSpectrogram::loadBuffer(Utils::SpecBuffer* buffer, ParamUI::SpecType typ
   if ((int)mProcessType < mSpecType.getNumItems()) {
     mSpecType.setSelectedItemIndex(mProcessType, juce::sendNotification);
   }
+  // Only make image if component size has been set
+  if (getWidth() > 0 && getHeight() > 0) {
+    mIsProcessing = true;
+    startThread();
+  }
+}
+
+void ArcSpectrogram::loadBuffer(juce::AudioBuffer<float>* fileBuffer) {
+  if (fileBuffer == nullptr) return;
+  waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
+  if (mImagesComplete[ParamUI::SpecType::WAVEFORM]) return;
+
+  mProcessType = ParamUI::SpecType::WAVEFORM;
+  mBuffers[mProcessType] = fileBuffer;
+
+  // make visible when loading the buffer if it isn't already
+  mSpecType.setVisible(true);
+
   // Only make image if component size has been set
   if (getWidth() > 0 && getHeight() > 0) {
     mIsProcessing = true;

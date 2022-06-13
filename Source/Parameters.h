@@ -341,7 +341,7 @@ struct ParamUI {
     return pngWriter.writeImageToStream(specImages[index], outputStream);
   }
 
-  enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, COUNT };
+  enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, WAVEFORM, COUNT };
 
   juce::String fileName;
   int generatorTab = 0;

@@ -80,6 +80,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mArcSpec.onImagesComplete = [this]() {
     const juce::MessageManagerLock lock;
     jassert(mParamUI.specComplete);
+    mArcSpec.setSpecType(ParamUI::SpecType::WAVEFORM);
     mBtnPreset.setEnabled(true);
   };
 
@@ -417,6 +418,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
   }
 
   mSynth.processFile(&fileAudioBuffer, sampleRate, preset);
+  mArcSpec.loadBuffer(&mSynth.getFileBuffer());
 
   // Show users which file is being loaded/processed
   mParamUI.fileName = file.getFileName();
