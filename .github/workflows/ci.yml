@@ -1,0 +1,108 @@
+name: JUCE and FRUT CI
+
+on: 
+  push:
+    branches:
+      - master
+    tags:
+      - v2.*
+      - v1.*
+
+jobs:
+  Linux:
+    if: ${{ false }}  # disable for now
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: clone JUCE
+      run:
+        git clone --depth 1 --branch 6.1.6 https://github.com/juce-framework/JUCE.git
+    - name: clone and install FRUT
+      run:
+        sudo apt-get update -y
+        && sudo apt-get install -y libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype6-dev libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev mesa-common-dev
+        && git clone --depth 1 https://github.com/McMartin/FRUT.git
+        && cd ./FRUT/
+        && mkdir build && cd build/
+        && cmake .. -DCMAKE_INSTALL_PREFIX="../prefix" -DJUCE_ROOT="../../JUCE" -DCMAKE_CXX_FLAGS="-Wno-extra-semi-stmt "
+        && cmake --build . --parallel --target install
+        && cd ../../
+    - name: generate cmake from jucer
+      run:
+        ./FRUT/prefix/FRUT/bin/Jucer2CMake reprojucer gRainbow.jucer ./FRUT/prefix/FRUT/cmake/Reprojucer.cmake --juce-modules="$GITHUB_WORKSPACE/JUCE/modules"
+    - name: build gRainbow using cmake
+      run:
+        mkdir build
+        && cd ./build
+        && cmake ..
+        && cmake --build . --parallel --config Release
+        && cd ..
+    - uses: actions/upload-artifact@v3
+      with:
+        path: ./build/Release/VST3/gRainbow.vst3
+  MacOS-Latest:
+    runs-on: macOS-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: clone JUCE
+      run:
+        git clone --depth 1 --branch 6.1.6 https://github.com/juce-framework/JUCE.git
+    - name: clone and install FRUT
+      run:
+        git clone --depth 1 https://github.com/McMartin/FRUT.git
+        && cd ./FRUT/
+        && mkdir build && cd build/
+        && cmake .. -DCMAKE_INSTALL_PREFIX="../prefix" -DJUCE_ROOT="../../JUCE"
+        && cmake --build . --target install
+        && cd ../../
+    - name: generate cmake from jucer
+      run:
+        ./FRUT/prefix/FRUT/bin/Jucer2CMake reprojucer gRainbow.jucer ./FRUT/prefix/FRUT/cmake/Reprojucer.cmake --juce-modules="$GITHUB_WORKSPACE/JUCE/modules"
+    - name: build gRainbow using cmake
+      run:
+        mkdir build
+        && cd ./build
+        && cmake .. -DCMAKE_BUILD_TYPE=Release
+        && cmake --build . --parallel
+        && zip gRainbow-macOS.zip gRainbow.vst3 -r
+        && cd ..
+    - uses: actions/upload-artifact@v3
+      with:
+        name: gRainbow-MacOS
+        path: ./build/gRainbow-macOS.zip
+
+  Windows-Latest:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: clone JUCE
+      run:
+        git clone --depth 1 --branch 6.1.6 https://github.com/juce-framework/JUCE.git
+    - name: clone and install FRUT
+      run:
+        git clone --depth 1 https://github.com/McMartin/FRUT.git
+        && cd ./FRUT/
+        && mkdir build && cd build/
+        && cmake .. -DCMAKE_INSTALL_PREFIX="../prefix" -DJUCE_ROOT="../../JUCE"
+        && cmake --build . --target install
+        && cd ../../
+    - name: generate cmake from jucer
+      run:
+        ./FRUT/prefix/FRUT/bin/Jucer2CMake reprojucer gRainbow.jucer ./FRUT/prefix/FRUT/cmake/Reprojucer.cmake --juce-modules="$env:GITHUB_WORKSPACE/JUCE/modules"
+    - name: build gRainbow using cmake
+      run:
+        mkdir build
+        && cd ./build
+        && cmake ..
+        && cmake --build . --parallel --config Release
+        && cd ..
+    - uses: actions/upload-artifact@v3
+      with:
+        name: gRainbow-Windows
+        path: ./build/Release/VST3/gRainbow.vst3
