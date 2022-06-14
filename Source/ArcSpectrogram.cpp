@@ -21,8 +21,6 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
   setFramesPerSecond(REFRESH_RATE_FPS);
   mBuffers.fill(nullptr);
 
-  mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize);
-
   // check if params has images, which would mean the plugin was reopened
   if (mParamUI.specComplete) {
     mProcessType = (ParamUI::SpecType)mParamUI.specType;
@@ -73,9 +71,7 @@ ArcSpectrogram::~ArcSpectrogram() {
 void ArcSpectrogram::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
 
-  // Draw selected type
-  // if nothing has been loaded, want to keep drawing the logo
-  juce::Image& drawImage = mLogoImage;
+  // if nothing has been loaded skip image, progress bar will fill in void space
   if (mProcessType != ParamUI::SpecType::INVALID) {
     int imageIndex = mSpecType.getSelectedItemIndex();
     // When loading up a plugin a second time, need to set the ComboBox state,
@@ -85,15 +81,14 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
       mSpecType.setSelectedItemIndex(mProcessType, juce::dontSendNotification);
       imageIndex = (int)mProcessType;
     }
-    drawImage = mParamUI.specImages[imageIndex];
+    g.drawImage(mParamUI.specImages[imageIndex], getLocalBounds().toFloat(),
+                juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
   }
 
   juce::Point<float> centerPoint = juce::Point<float>(getWidth() / 2.0f, getHeight());
   int startRadius = getHeight() / 4.0f;
   int endRadius = getHeight();
   int bowWidth = endRadius - startRadius;
-
-  g.drawImage(drawImage, getLocalBounds().toFloat(), juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
 
   // Draw active grains
   if (PowerUserSettings::get().getAnimated()) {
