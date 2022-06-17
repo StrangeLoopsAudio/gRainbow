@@ -38,8 +38,10 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void reset();
   bool shouldLoadImage(ParamUI::SpecType type) { return !mIsProcessing && !mImagesComplete[type]; }
   void loadBuffer(Utils::SpecBuffer *buffer, ParamUI::SpecType type);
+  void loadBuffer(juce::AudioBuffer<float> *fileBuffer); // Raw audio samples from file
   void loadPreset();
   void setMidiNotes(const juce::Array<Utils::MidiNote> &midiNotes);
+  void setSpecType(ParamUI::SpecType type) { mSpecType.setSelectedItemIndex(type, juce::dontSendNotification); }
 
   //============================================================================
   void run() override;
@@ -79,7 +81,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   ParamUI &mParamUI;
 
   // Buffers used to generate the images
-  std::array<Utils::SpecBuffer *, ParamUI::SpecType::COUNT> mBuffers;
+  std::array<void *, ParamUI::SpecType::COUNT> mBuffers;
 
   // Bookkeeping
   std::bitset<Utils::PitchClass::COUNT> mActivePitchClass;

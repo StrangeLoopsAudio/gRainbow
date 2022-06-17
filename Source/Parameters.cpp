@@ -207,7 +207,7 @@ void ParamsNote::addParams(juce::AudioProcessor& p) {
   }
 }
 
-void ParamsNote::resetParams() {
+void ParamsNote::resetParams(bool fullClear) {
   for (auto& note : notes) {
     for (auto& generator : note->generators) {
       ParamHelper::setParam(generator->enable, generator->genIdx == 0);
@@ -230,7 +230,9 @@ void ParamsNote::resetParams() {
       ParamHelper::setParam(generator->filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
       ParamHelper::setParam(generator->filterType, 0);
     }
-    note->candidates.clear();
+    if (fullClear) {
+      note->candidates.clear();
+    }
     ParamHelper::setParam(note->soloIdx, SOLO_NONE);
   }
 }

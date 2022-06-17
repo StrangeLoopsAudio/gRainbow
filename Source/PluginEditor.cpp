@@ -80,6 +80,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mArcSpec.onImagesComplete = [this]() {
     const juce::MessageManagerLock lock;
     jassert(mParamUI.specComplete);
+    mArcSpec.setSpecType(ParamUI::SpecType::WAVEFORM);
     mBtnPreset.setEnabled(true);
   };
 
@@ -107,7 +108,15 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   startTimer(50);
 
-  setSize(1200, 650);
+  int editorWidth = 1200;
+  int editorHeight = 650;
+
+#ifndef GRAINBOW_PRODUCTION
+  addAndMakeVisible(mSettings);
+  editorHeight += mSettings.getHeight();
+#endif
+
+  setSize(editorWidth, editorHeight);
 }
 
 GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
@@ -176,6 +185,10 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   @brief Draw note display (the small section between the keyboard and arc spectrogram)
 */
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
+  if (!PowerUserSettings::get().getAnimated()) {
+    return;
+  }
+
   // Right now just give last note played, not truely polyphony yet
   const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
   if (!midiNotes.isEmpty()) {
@@ -226,6 +239,10 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
 
 void GRainbowAudioProcessorEditor::resized() {
   auto r = getLocalBounds();
+
+#ifndef GRAINBOW_PRODUCTION
+  mSettings.setBounds(r.removeFromBottom(mSettings.getHeight()));
+#endif
 
   // Generators box
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
@@ -418,6 +435,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
   }
 
   mSynth.processFile(&fileAudioBuffer, sampleRate, preset);
+  mArcSpec.loadBuffer(&mSynth.getFileBuffer());
 
   // Show users which file is being loaded/processed
   mParamUI.fileName = file.getFileName();

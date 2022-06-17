@@ -80,6 +80,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   std::vector<Utils::SpecBuffer*> getProcessedSpecs() {
     return std::vector<Utils::SpecBuffer*>(mProcessedSpecs.begin(), mProcessedSpecs.end());
   }
+  juce::AudioBuffer<float>& getFileBuffer() { return mFileBuffer; }
 
   ParamsNote& getParamsNote() { return mParamsNote; }
   ParamGlobal& getParamGlobal() { return mParamGlobal; }
@@ -87,7 +88,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   const juce::Array<Utils::MidiNote>& getMidiNotes() { return mMidiNotes; }
 
   ParamUI& getParamUI() { return mParamUI; }
-  void resetParameters();
+  void resetParameters(bool fullClear = true);
   int incrementPosition(int genIdx, bool lookRight);
   std::vector<ParamCandidate*> getActiveCandidates();
   Utils::PitchClass getLastPitchClass() { return mLastPitchClass; }
