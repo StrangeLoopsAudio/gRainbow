@@ -94,7 +94,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   std::mt19937 mGenRandom{mRandomDevice()};
   std::normal_distribution<> mNormalRand{0.0f, 0.4f};
 
-  juce::Image mLogoImage;
   juce::ComboBox mSpecType;
 
   void onImageComplete(ParamUI::SpecType specType);

@@ -19,9 +19,28 @@
 #include "RainbowKeyboard.h"
 #include "RainbowLookAndFeel.h"
 #include "TransientDetector.h"
+#include "TrimSelection.h"
 #include "Utils.h"
 #include "Settings.h"
 
+/**
+ * @brief Used on startup to fill unused area with the logo
+ */
+class GRainbowLogo : public juce::Component {
+ public:
+  GRainbowLogo();
+  ~GRainbowLogo(){};
+  void paint(juce::Graphics& g) override;
+  void resized() override{};
+
+ private:
+  juce::Image mLogoImage;
+};
+
+//==============================================================================
+/**
+ * @brief The "Main component" that parents all UI elements.
+ */
 class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
                                      juce::FileDragAndDropTarget,
                                      juce::Timer {
@@ -60,20 +79,23 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   AudioRecorder mRecorder;
 
   // UI Components
-  juce::ImageComponent mLogo;
   juce::ImageButton mBtnOpenFile;
   juce::ImageButton mBtnRecord;
   juce::ImageButton mBtnPreset;
   juce::Label mLabelFileName;
-  ArcSpectrogram mArcSpec;
   RainbowKeyboard mKeyboard;
-  juce::ProgressBar mProgressBar;
   GlobalParamBox mGlobalParamBox;
   NoteGrid mNoteGrid;
   GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;
+
+  // main center UI component
+  GRainbowLogo mLogo;
+  ArcSpectrogram mArcSpec;
+  TrimSelection mTrimSelection;
+  juce::ProgressBar mProgressBar;
 
   // Synth owns, but need to grab params on reloading of plugin
   ParamUI& mParamUI;
@@ -84,12 +106,16 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   bool mIsFileHovering = false;
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
+  juce::AudioFormatReader* mFormatReader;
 
   void openNewFile(const char* path = nullptr);
   void processFile(juce::File file);
+  void processPreset(juce::File file);
+  void processNewSample(juce::Range<juce::int64> range, bool setSelection);
   void startRecording();
   void stopRecording();
   void savePreset();
+  void updateCenterComponent(ParamUI::CenterComponent component);
 
   SafePointer<juce::DialogWindow> mDialogWindow;
   void displayError(juce::String message);

@@ -343,7 +343,7 @@ struct ParamUI {
 
   enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, WAVEFORM, COUNT };
 
-  juce::String fileName;
+  juce::String fileName = "";
   int generatorTab = 0;
   // default when new instance is loaded
   int pitchClass = Utils::PitchClass::C;
@@ -354,4 +354,8 @@ struct ParamUI {
   // Where ArcSpectrogram can let others know when it is "complete"
   // Makes no scenes to save to preset file
   bool specComplete = false;
+
+  // Tracks what component is being displayed
+  enum class CenterComponent { LOGO, ARC_SPEC, TRIM_SELECTION };
+  CenterComponent centerComponent = CenterComponent::LOGO;
 };
