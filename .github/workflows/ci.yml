@@ -68,12 +68,13 @@ jobs:
         && cd ./build
         && cmake .. -DCMAKE_BUILD_TYPE=Release
         && cmake --build . --parallel
-        && zip gRainbow-macOS.zip gRainbow.vst3 -r
         && cd ..
     - uses: actions/upload-artifact@v3
       with:
         name: gRainbow-MacOS
-        path: ./build/gRainbow-macOS.zip
+        path: |
+          ./build/gRainbow.vst3
+          ./build/gRainbow.app
 
   Windows-Latest:
     runs-on: windows-latest
@@ -105,4 +106,6 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: gRainbow-Windows
-        path: ./build/Release/VST3/gRainbow.vst3
+        path: |
+          ./build/Release/VST3/gRainbow.vst3
+          ./build/Release/Standalone Plugin/gRainbow.exe
