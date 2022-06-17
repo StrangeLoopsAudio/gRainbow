@@ -196,9 +196,10 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
     std::vector<ParamCandidate*> candidates = mSynth.getActiveCandidates();
     if (!candidates.empty()) {
       // Draw position arrows
+      juce::Colour pitchColour = Utils::getRainbow12Colour(mSynth.getLastPitchClass());
       for (int i = 0; i < candidates.size(); ++i) {
         if (candidates[i] == nullptr) continue;
-        g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[i]));
+        g.setColour((i == mGeneratorsBox.getSelectedGenerator()) ? pitchColour.brighter() : pitchColour.darker().darker());
         auto middlePos = candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
         float angleRad = (juce::MathConstants<float>::pi * middlePos) - (juce::MathConstants<float>::pi / 2.0f);
         juce::Point<float> startPoint = juce::Point<float>(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());

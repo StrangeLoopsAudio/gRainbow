@@ -91,6 +91,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   void resetParameters(bool fullClear = true);
   int incrementPosition(int genIdx, bool lookRight);
   std::vector<ParamCandidate*> getActiveCandidates();
+  Utils::PitchClass getLastPitchClass() { return mLastPitchClass; }
 
  private:
   // DSP constants

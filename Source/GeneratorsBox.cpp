@@ -9,8 +9,7 @@
 */
 
 #include "GeneratorsBox.h"
-
-#include <JuceHeader.h>
+#include "Utils.h"
 
 //==============================================================================
 GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
@@ -20,10 +19,11 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
       mSliderDuration(ParamRanges::GRAIN_DURATION) {
   mCurPitchClass = (Utils::PitchClass)paramUI.pitchClass;
   mCurSelectedGenerator = paramUI.generatorTab;
+  juce::Colour pitchColour = Utils::getRainbow12Colour(mCurPitchClass);
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
     ParamGenerator* gen = mParamsNote.notes[mCurPitchClass]->generators[i].get();
     mBtnsEnabled[i].setToggleState(gen->enable->get(), juce::dontSendNotification);
-    juce::Colour tabColour = gen->enable->get() ? juce::Colour(Utils::GENERATOR_COLOURS_HEX[i]) : juce::Colours::darkgrey;
+    juce::Colour tabColour = gen->enable->get() ? pitchColour : juce::Colours::darkgrey;
     mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId, tabColour);
     mBtnsEnabled[i].onClick = [this, i] {
       if (!mParamsNote.notes[mCurPitchClass]->generators[i]->enable->get()) {
@@ -311,42 +311,51 @@ GeneratorsBox::~GeneratorsBox() {
 
 void GeneratorsBox::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
+  juce::Colour pitchColour = Utils::getRainbow12Colour(mCurPitchClass);
 
   bool borderLit = mParamsNote.notes[mCurPitchClass]->shouldPlayGenerator(mCurSelectedGenerator);
-  juce::Colour fillCol = borderLit ? juce::Colour(Utils::GENERATOR_COLOURS_HEX[mCurSelectedGenerator]) : juce::Colours::darkgrey;
+  juce::Colour fillCol = borderLit ? pitchColour : juce::Colours::darkgrey;
   g.setColour(fillCol);
   g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.0f), 10.0f, 2.0f);
 
+  // Black out extended lines for tabs
   g.setColour(juce::Colours::black);
   g.fillRect(0, 0, getWidth(), TABS_HEIGHT);
-
+  
   // Generator tabs
   float tabWidth = getWidth() / NUM_GENERATORS;
   float curStart = 1.0f;
   for (int i = 0; i < NUM_GENERATORS; ++i) {
-    juce::Colour tabColour = mParamsNote.notes[mCurPitchClass]->shouldPlayGenerator(i)
-                                 ? juce::Colour(Utils::GENERATOR_COLOURS_HEX[i])
-                                 : juce::Colours::darkgrey;
+    juce::Colour tabColour = mParamsNote.notes[mCurPitchClass]->shouldPlayGenerator(i) ? pitchColour : juce::Colours::darkgrey;
     float tabHeight = (mCurSelectedGenerator == i) ? TABS_HEIGHT + 20.0f : TABS_HEIGHT - 2.0f;
     juce::Rectangle<float> tabRect = juce::Rectangle<float>(curStart, 1.0f, tabWidth - 2.0f, tabHeight);
-    if (mCurHoverGenerator == i && mCurSelectedGenerator != i) {
-      g.setColour(tabColour.withAlpha(0.3f));
-      g.fillRoundedRectangle(tabRect, 10.0f);
+    if (mCurSelectedGenerator == i) {
+      g.setColour(tabColour);
+    } else {
+      // if hovering, let us know with color change
+      if (mCurHoverGenerator == i) {
+        // use grey as its neutral and works with all rainbow colors
+        g.setColour(juce::Colours::grey.withAlpha(0.6f));
+        g.fillRoundedRectangle(tabRect, 10.0f);
+      } else {
+        g.setColour(juce::Colours::darkgrey);  // non-filled
+      }
     }
-    g.setColour(tabColour);
     g.drawRoundedRectangle(tabRect, 10.0f, 2.0f);
 
     juce::Rectangle<int> textRect =
         juce::Rectangle<int>(mBtnsEnabled[i].getRight(), 0, tabRect.getRight() - mBtnsEnabled[i].getRight() - 6, TABS_HEIGHT);
+    // empathize the generator is solo
     if (mParamsNote.notes[mCurPitchClass]->soloIdx->get() == i) {
       g.setColour(juce::Colours::blue);
       g.fillRect(textRect.withSizeKeepingCentre(textRect.getWidth() / 2.0f, textRect.getHeight() / 2.0f));
     }
+    // need to invert the color uses to fill the tab
     g.setColour(juce::Colours::white);
     g.drawFittedText(juce::String("g") + juce::String(i + 1), textRect, juce::Justification::centred, 1);
     curStart += tabWidth;
   }
-
+  
   // Black out extended tabs with black rect
   g.setColour(juce::Colours::black);
   g.fillRect(2.0f, TABS_HEIGHT + 1.0f, (float)getWidth() - 4.0f, 30.0f);
@@ -397,9 +406,6 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   g.fillRect(filterEnvTitleRect);
   g.setColour(juce::Colours::black);
   g.drawText(juce::String(SECTION_FILTER_ENV_TITLE), filterEnvTitleRect, juce::Justification::centred);
-
-  g.setColour(fillCol);
-  g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.0f), 10.0f, 2.0f);
 }
 
 void GeneratorsBox::resized() {
@@ -614,7 +620,7 @@ void GeneratorsBox::changeGenerator(int newGenerator) {
 void GeneratorsBox::refreshState() {
   mPositionChanger.setSolo(mParamsNote.notes[mCurPitchClass]->soloIdx->get() == mCurSelectedGenerator);
 
-  juce::Colour newColour = juce::Colour(Utils::GENERATOR_COLOURS_HEX[mCurSelectedGenerator]);
+  juce::Colour newColour = Utils::getRainbow12Colour(mCurPitchClass);
   mPositionChanger.setColour(newColour);
   mEnvelopeGrain.setColour(newColour);
   mEnvelopeAmp.setColour(newColour);
@@ -622,14 +628,14 @@ void GeneratorsBox::refreshState() {
 
   for (int i = 0; i < mBtnsEnabled.size(); ++i) {
     juce::Colour tabColour = mParamsNote.notes[mCurPitchClass]->generators[i]->enable->get()
-                                 ? juce::Colour(Utils::GENERATOR_COLOURS_HEX[i])
+                                 ? ((i == mCurSelectedGenerator) ? newColour.brighter() : newColour.darker().darker())
                                  : juce::Colours::darkgrey;
+
     mBtnsEnabled[i].setColour(juce::ToggleButton::ColourIds::tickColourId, tabColour);
   }
 
   bool componentsLit = mParamsNote.notes[mCurPitchClass]->shouldPlayGenerator(mCurSelectedGenerator);
-  juce::Colour knobColour =
-      componentsLit ? juce::Colour(Utils::GENERATOR_COLOURS_HEX[mCurSelectedGenerator]) : juce::Colours::darkgrey;
+  juce::Colour knobColour = componentsLit ? newColour : juce::Colours::darkgrey;
   mSliderPitchAdjust.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
   mSliderPitchAdjust.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId,
                          componentsLit ? knobColour.brighter() : juce::Colours::darkgrey);

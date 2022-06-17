@@ -57,7 +57,7 @@ void NoteGrid::paint(juce::Graphics& g) {
       g.fillRect(square.withPosition(squarePos).reduced(2.0f));
 
       // Fill and label candidate if enabled, draw frame if not
-      g.setColour(juce::Colour(Utils::GENERATOR_COLOURS_HEX[j]));
+      g.setColour(Utils::getRainbow12Colour(i));
       if (mParamsNote.notes[i]->generators[j]->enable->get()) {
         g.fillRect(square.withPosition(squarePos).reduced(2.0f));
         g.setColour(juce::Colours::black);
