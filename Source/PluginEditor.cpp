@@ -521,5 +521,4 @@ void GRainbowAudioProcessorEditor::fastDebugMode() {
   DBG("Fast Debug Mode - Loading file " << FDB_LOAD_FILE);
   openNewFile(FDB_LOAD_FILE);
 #endif  // FDB_LOAD_FILE
-  openNewFile("/home/fricke/Downloads/billiePreset2.gbow");
 }
