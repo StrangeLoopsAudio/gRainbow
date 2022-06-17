@@ -43,8 +43,8 @@ void PointMarker::paint(juce::Graphics& g) {
 bool PointMarker::hitTest(int x, int y) { return mPath.contains(static_cast<float>(x), static_cast<float>(y)); }
 
 TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& paramUI)
-    : mThumbnailCache(THUMBNAIL_CACHE_SIZE),
-      mThumbnail(THUMBNAIL_CACHE_SIZE, formatManager, mThumbnailCache),
+    : mThumbnailCache(1),
+      mThumbnail(512, formatManager, mThumbnailCache),
       mParamUI(paramUI),
       mStartMarker(
           "S", juce::Colours::green, [this](PointMarker& m, const juce::MouseEvent& e) { this->MarkerMouseDragged(m, e); },
@@ -103,6 +103,14 @@ void TrimSelection::paint(juce::Graphics& g) {
                                              juce::Colours::darkgrey, channelBounds.getBottomLeft().toFloat(), false));
       mThumbnail.drawChannel(g, channelBounds, mVisibleRange.getStart(), mVisibleRange.getEnd(), i, 1.0f);
     }
+  }
+
+  // Darken areas outside of selectors
+  { 
+    g.setColour(juce::Colours::darkgrey.withAlpha(0.5f));
+    g.fillRect(mThumbnailRect.withWidth(timeToXPosition(mSelectedRange.getStart()) - mThumbnailRect.getX()));
+    int endX = timeToXPosition(mSelectedRange.getEnd());
+    g.fillRect(endX, mThumbnailRect.getY(), mThumbnailRect.getRight() - endX, mThumbnailRect.getHeight());
   }
 
   // Draw selectors
@@ -207,18 +215,26 @@ double TrimSelection::xPositionToTime(double xPosition) const {
 void TrimSelection::MarkerMouseDragged(PointMarker& marker, const juce::MouseEvent& e) {
   const double x = xPositionToTime(e.getEventRelativeTo(this).position.x);
   if (&marker == &mStartMarker) {
-    mSelectedRange.setStart(juce::jmax(x, mVisibleRange.getStart()));
-  } else {
-    mSelectedRange.setEnd(juce::jmin(x, mVisibleRange.getEnd()));
+    if (mSelectedRange.getEnd() - x >= MIN_SELECTION_SEC) {
+      mSelectedRange.setStart(juce::jmax(x, mVisibleRange.getStart()));
+    } else {
+      mSelectedRange.setStart(juce::jmax(mSelectedRange.getEnd() - MIN_SELECTION_SEC, mVisibleRange.getStart()));
+    }
+  } else if (&marker == &mEndMarker) {
+    if (x - mSelectedRange.getStart() >= MIN_SELECTION_SEC) {
+      mSelectedRange.setEnd(juce::jmin(x, mVisibleRange.getEnd()));
+    } else {
+      mSelectedRange.setEnd(juce::jmin(mSelectedRange.getStart() + MIN_SELECTION_SEC, mVisibleRange.getEnd()));
+    }
   }
   updatePointMarker();
 }
 
 void TrimSelection::MarkerMouseUp(PointMarker& marker, const juce::MouseEvent& e) {
   const double x = xPositionToTime(e.getEventRelativeTo(this).position.x);
-  if (&marker == &mStartMarker) {
+  if (&marker == &mStartMarker && mSelectedRange.getEnd() - x >= MIN_SELECTION_SEC) {
     mSelectedRange.setStart(juce::jmax(x, mVisibleRange.getStart()));
-  } else {
+  } else if (&marker == &mEndMarker && x - mSelectedRange.getStart() >= MIN_SELECTION_SEC) {
     mSelectedRange.setEnd(juce::jmin(x, mVisibleRange.getEnd()));
   }
   updatePointMarker();

@@ -95,8 +95,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   mTrimSelection.onCancel = [this]() {
     // if nothing was ever loaded, got back to the logo
-    mParamUI.centerComponent = (mParamUI.specComplete) ? ParamUI::CenterComponent::ARC_SPEC : ParamUI::CenterComponent::LOGO;
-    updateCenterComponent();
+    updateCenterComponent((mParamUI.specComplete) ? ParamUI::CenterComponent::ARC_SPEC : ParamUI::CenterComponent::LOGO);
   };
 
   mTrimSelection.onProcessSelection = [this](juce::Range<double> range, bool setSelection) {
@@ -149,7 +148,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   setSize(editorWidth, editorHeight);
 
   // Will update to be what it was when editor was last closed
-  updateCenterComponent();
+  updateCenterComponent(mParamUI.centerComponent);
 }
 
 GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
@@ -166,8 +165,9 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   setLookAndFeel(nullptr);
 }
 
-void GRainbowAudioProcessorEditor::updateCenterComponent() {
-  mLogo.setVisible(mParamUI.centerComponent == ParamUI::CenterComponent::LOGO);
+void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponent component) {
+  mParamUI.centerComponent = component;
+  mLogo.setVisible(component == ParamUI::CenterComponent::LOGO);
   mArcSpec.setVisible(mParamUI.centerComponent == ParamUI::CenterComponent::ARC_SPEC);
   mTrimSelection.setVisible(mParamUI.centerComponent == ParamUI::CenterComponent::TRIM_SELECTION);
 }
@@ -411,7 +411,7 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
 
   if (file.getFileExtension() == ".gbow") {
     processPreset(file);
-    mParamUI.centerComponent = ParamUI::CenterComponent::ARC_SPEC;
+    updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
   } else {
     mFormatReader = mFormatManager.createReaderFor(file);
     if (mFormatReader == nullptr) {
@@ -422,10 +422,9 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     // AudioThumbnail deletes it when calling setReader again
     mTrimSelection.parse(mFormatReader, file.hashCode64());
     // display screen to trim sample
-    mParamUI.centerComponent = ParamUI::CenterComponent::TRIM_SELECTION;
+    updateCenterComponent(ParamUI::CenterComponent::TRIM_SELECTION);
   }
 
-  updateCenterComponent();
 }
 
 void GRainbowAudioProcessorEditor::processPreset(juce::File file) {
@@ -499,8 +498,7 @@ void GRainbowAudioProcessorEditor::processNewSample(juce::Range<juce::int64> ran
     // Reset any UI elements that will need to wait until processing
     mArcSpec.reset();
     mBtnPreset.setEnabled(false);
-    mParamUI.centerComponent = ParamUI::CenterComponent::ARC_SPEC;
-    updateCenterComponent();
+    updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
   }
 
   mSynth.processFile(&fileAudioBuffer, sampleRate, false);

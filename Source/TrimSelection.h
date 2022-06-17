@@ -56,7 +56,8 @@ class TrimSelection : public juce::Component {
   std::function<void(juce::Range<double>, bool)> onProcessSelection = nullptr;
 
  private:
-  static constexpr auto THUMBNAIL_CACHE_SIZE = 4;
+  static constexpr int MIN_SELECTION_SEC = 5;
+
   juce::AudioThumbnailCache mThumbnailCache;
   juce::AudioThumbnail mThumbnail;
 

@@ -57,7 +57,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void fileDragExit(const juce::StringArray& files) override;
   void filesDropped(const juce::StringArray& files, int x, int y) override;
 
-  void updateCenterComponent();
   void timerCallback() override;
 
   void fastDebugMode();
@@ -116,6 +115,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void startRecording();
   void stopRecording();
   void savePreset();
+  void updateCenterComponent(ParamUI::CenterComponent component);
 
   SafePointer<juce::DialogWindow> mDialogWindow;
   void displayError(juce::String message);
