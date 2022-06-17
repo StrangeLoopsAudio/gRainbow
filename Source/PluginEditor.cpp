@@ -168,8 +168,8 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
 void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponent component) {
   mParamUI.centerComponent = component;
   mLogo.setVisible(component == ParamUI::CenterComponent::LOGO);
-  mArcSpec.setVisible(mParamUI.centerComponent == ParamUI::CenterComponent::ARC_SPEC);
-  mTrimSelection.setVisible(mParamUI.centerComponent == ParamUI::CenterComponent::TRIM_SELECTION);
+  mArcSpec.setVisible(component == ParamUI::CenterComponent::ARC_SPEC);
+  mTrimSelection.setVisible(component == ParamUI::CenterComponent::TRIM_SELECTION);
 }
 
 void GRainbowAudioProcessorEditor::timerCallback() {
