@@ -58,6 +58,7 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
   mBtnCancel.onClick = [this] { onCancel(); };
   addAndMakeVisible(mBtnCancel);
 
+  mBtnTestSelection.setEnabled(false); // TODO: enable once testing is possible
   mBtnTestSelection.setButtonText("Test Selection");
   mBtnTestSelection.setColour(juce::TextButton::buttonColourId, juce::Colours::blue);
   mBtnTestSelection.setColour(juce::TextButton::buttonOnColourId, juce::Colours::blue);
@@ -118,14 +119,16 @@ void TrimSelection::paint(juce::Graphics& g) {
     g.setColour(juce::Colours::white);
     g.setFont(14.0f);
     g.drawFittedText(mStartTimeString, mSelectorRect, juce::Justification::bottomLeft, 1);
+    g.drawFittedText(juce::String(mSelectedRange.getLength()) + " seconds", mSelectorRect, juce::Justification::centredBottom, 1);
     g.drawFittedText(mEndTimeString, mSelectorRect, juce::Justification::bottomRight, 1);
   }
 
   // Update text of test results
   {
-    g.setColour(juce::Colours::white);
-    g.setFont(14.0f);
-    g.drawFittedText("Test Selection to be implemented", mTestResultRect, juce::Justification::centred, 1);
+    // TODO: uncomment when test results are possible
+    //g.setColour(juce::Colours::white);
+    //g.setFont(14.0f);
+    //g.drawFittedText("Select portion of audio to use", mTestResultRect, juce::Justification::centred, 1);
   }
 }
 
