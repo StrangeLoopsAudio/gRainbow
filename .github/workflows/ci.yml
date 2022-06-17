@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - development
     tags:
       - v2.*
       - v1.*
