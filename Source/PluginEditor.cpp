@@ -31,6 +31,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mTrimSelection(mFormatManager, synth.getParamUI()),
       mFormatReader(nullptr) {
   setLookAndFeel(&mRainbowLookAndFeel);
+  mErrorMessage.clear();
 
   // Open file button
   juce::Image openFileNormal = juce::PNGImageFormat::loadFrom(BinaryData::openFileNormal_png, BinaryData::openFileNormal_pngSize);
@@ -421,9 +422,17 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     }
     // TODO - It is not obvious that this function will delete the AudioFormatReader for use when called multiple times because
     // AudioThumbnail deletes it when calling setReader again
-    mTrimSelection.parse(mFormatReader, file.hashCode64());
-    // display screen to trim sample
-    updateCenterComponent(ParamUI::CenterComponent::TRIM_SELECTION);
+    mTrimSelection.parse(mFormatReader, file.hashCode64(), mErrorMessage);
+    if (mErrorMessage.isEmpty()) {
+      // display screen to trim sample
+      updateCenterComponent(ParamUI::CenterComponent::TRIM_SELECTION);
+    } else {
+      delete (mFormatReader);
+      mFormatReader = nullptr;
+      displayError(mErrorMessage);
+      mErrorMessage.clear();
+      return;
+    }
   }
 
 }

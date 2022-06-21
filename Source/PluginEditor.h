@@ -119,6 +119,8 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   SafePointer<juce::DialogWindow> mDialogWindow;
   void displayError(juce::String message);
+  // used so other classes can report errors as this class needs to be the one to display it
+  juce::String mErrorMessage;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GRainbowAudioProcessorEditor)
 };
