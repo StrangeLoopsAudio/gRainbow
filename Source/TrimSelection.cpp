@@ -107,7 +107,7 @@ void TrimSelection::paint(juce::Graphics& g) {
   }
 
   // Darken areas outside of selectors
-  { 
+  {
     g.setColour(juce::Colours::darkgrey.withAlpha(0.5f));
     g.fillRect(mThumbnailRect.withWidth(timeToXPosition(mSelectedRange.getStart()) - mThumbnailRect.getX()));
     int endX = timeToXPosition(mSelectedRange.getEnd());
@@ -132,11 +132,20 @@ void TrimSelection::paint(juce::Graphics& g) {
   }
 }
 
-void TrimSelection::parse(juce::AudioFormatReader* formatReader, juce::int64 hash) {
+void TrimSelection::parse(juce::AudioFormatReader* formatReader, juce::int64 hash, juce::String& error) {
+  const double duration = static_cast<double>(formatReader->lengthInSamples) / formatReader->sampleRate;
+  if (static_cast<int>(duration) <= MIN_SELECTION_SEC) {
+    error =
+        juce::String::formatted("The audio file is %f seconds but must be greater than %d seconds", duration, MIN_SELECTION_SEC);
+    // If another valid file was opened, cancel as that selection will now fail as the formatReader is bad now
+    onCancel();
+    return;
+  }
+
   mThumbnail.setReader(formatReader, hash);
 
   mVisibleRange.setStart(0.0f);
-  mVisibleRange.setEnd(static_cast<double>(formatReader->lengthInSamples) / formatReader->sampleRate);
+  mVisibleRange.setEnd(duration);
   // start with everything selected
   mSelectedRange = mVisibleRange;
   updatePointMarker();
