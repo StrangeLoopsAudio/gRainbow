@@ -17,7 +17,7 @@
  */
 class EnvelopeGrain : public juce::Component {
  public:
-  EnvelopeGrain() {}
+  EnvelopeGrain();
   ~EnvelopeGrain() override {}
 
   void paint(juce::Graphics&) override;
@@ -36,6 +36,8 @@ class EnvelopeGrain : public juce::Component {
   static constexpr auto MAX_RATE_RATIO = 1.0f;
   static constexpr auto GAIN_HEIGHT = 0.8f;
 
+  juce::PathStrokeType mPathStroke;
+
   // Parameters
   float mShape = 0.5f;
   float mTilt = 0.5f;
@@ -44,6 +46,12 @@ class EnvelopeGrain : public juce::Component {
   bool mIsActive = false;
   bool mSync = false;
   juce::Colour mColour;
+
+  // UI values saved on resize
+  float mMinEnvWidth;
+  float mMaxEnvWidth;
+  float mEnvTop;
+  float mEnvBottom;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeGrain)
 };

@@ -48,12 +48,19 @@ class FilterControl : public juce::Component {
   Utils::FilterType mFilterType = Utils::FilterType::LOWPASS;
   static constexpr auto FILTER_TYPE_BUTTON_HEIGHT = 30;
   juce::Colour mColour;
-  juce::Rectangle<float> mLowPassRect;
-  juce::Rectangle<float> mHighPassRect;
-  juce::Rectangle<float> mBandPassRect;
   int mFilter = 0;
   Utils::FilterType mCurHoverFilterType = Utils::NO_FILTER;
   Utils::FilterType mCurSelectedFilterType = Utils::NO_FILTER;
+
+  // UI values saved on resize
+  juce::Rectangle<float> mLowPassRect;
+  juce::Rectangle<float> mLowPassTextRect;
+  juce::Rectangle<float> mHighPassRect;
+  juce::Rectangle<float> mHighPassTextRect;
+  juce::Rectangle<float> mBandPassRect;
+  juce::Rectangle<float> mBandPassTextRect;
+  int mBtnPadding;
+  int mBtnResPadding;  // with MAX_RES_HEIGHT
 
   static constexpr auto PADDING_SIZE = 5;
   static constexpr auto MAX_RES_HEIGHT = 20;

@@ -21,47 +21,33 @@ void PositionChanger::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);  // clear the background
   juce::Colour bgColour = mIsActive ? mColour : juce::Colours::darkgrey;
 
-  int arrowWidth = getWidth() * ARROW_PERC;
-  float soloHeight = getHeight() * SOLO_HEIGHT_PERC;
-  float selectorHeight = getHeight() - soloHeight;
   /* Draw left arrow */
-  juce::Path leftPath;
-  leftPath.addEllipse(1, 1, (arrowWidth * 2) - 1, selectorHeight - 2);
   if (mIsOverLeftArrow) {
     juce::Colour fillColour = mIsClickingArrow ? bgColour : bgColour.interpolatedWith(juce::Colours::black, 0.8);
     g.setColour(fillColour);
-    g.fillPath(leftPath);
+    g.fillPath(mLeftPath);
   }
   g.setColour(bgColour);
-  g.strokePath(leftPath, juce::PathStrokeType(2));
-  g.drawArrow(juce::Line<float>(arrowWidth - (arrowWidth * 0.1), selectorHeight / 2, (arrowWidth * 0.3), selectorHeight / 2), 2, 6,
-              6);
+  g.strokePath(mLeftPath, juce::PathStrokeType(2));
+  g.drawArrow(mLeftArrowLine, 2, 6, 6);
 
   /* Draw right arrow */
-  int rightStart = getWidth() * (ARROW_PERC + TITLE_PERC);
-  juce::Path rightPath;
-  rightPath.addEllipse(rightStart - arrowWidth, 1, (arrowWidth * 2) - 1, selectorHeight - 2);
   if (mIsOverRightArrow) {
     juce::Colour fillColour = mIsClickingArrow ? bgColour : bgColour.interpolatedWith(juce::Colours::black, 0.8);
     g.setColour(fillColour);
-    g.fillPath(rightPath);
+    g.fillPath(mRightPath);
   }
   g.setColour(bgColour);
-  g.strokePath(rightPath, juce::PathStrokeType(2));
-  g.drawArrow(
-      juce::Line<float>(rightStart + (arrowWidth * 0.1), selectorHeight / 2, getWidth() - (arrowWidth * 0.3), selectorHeight / 2),
-      2, 6, 6);
-
-  juce::Rectangle<int> titleRect =
-      getLocalBounds().withHeight(selectorHeight).withSizeKeepingCentre(getWidth() * TITLE_PERC, selectorHeight);
+  g.strokePath(mRightPath, juce::PathStrokeType(2));
+  g.drawArrow(mRightArrowLine, 2, 6, 6);
 
   /* Fill in title section to mask ellipses */
   g.setColour(juce::Colours::black);
-  g.fillRect(titleRect.reduced(2, 0));
+  g.fillRect(mTitleRect.reduced(2, 0));
 
   /* Draw top/bottom borders */
   g.setColour(bgColour);
-  g.drawRect(titleRect, 2);
+  g.drawRect(mTitleRect, 2);
 
   /* Draw position text */
   juce::String posString;
@@ -72,10 +58,9 @@ void PositionChanger::paint(juce::Graphics& g) {
     posString = "EMPTY";  // only can fit 5 letters in box, better then a blank boxs
   }
   g.setColour(bgColour);
-  g.drawText(posString, titleRect, juce::Justification::centred);
+  g.drawText(posString, mTitleRect, juce::Justification::centred);
 
   /* Solo button */
-  mSoloRect = titleRect.translated(0, selectorHeight).withHeight(soloHeight - 2).toFloat();
   if (mIsOverSolo || mIsSolo) {
     g.setColour(mIsSolo ? juce::Colours::blue : juce::Colours::blue.withAlpha(0.3f));
     g.fillRect(mSoloRect);
@@ -86,7 +71,24 @@ void PositionChanger::paint(juce::Graphics& g) {
   g.drawFittedText("solo", mSoloRect.reduced(4).toNearestInt(), juce::Justification::centred, 1);
 }
 
-void PositionChanger::resized() {}
+void PositionChanger::resized() {
+  const int arrowWidth = getWidth() * ARROW_PERC;
+  const float soloHeight = getHeight() * SOLO_HEIGHT_PERC;
+  const float selectorHeight = getHeight() - soloHeight;
+
+  mLeftPath.clear();
+  mLeftPath.addEllipse(1, 1, (arrowWidth * 2) - 1, selectorHeight - 2);
+  mLeftArrowLine = juce::Line<float>(arrowWidth - (arrowWidth * 0.1), selectorHeight / 2, (arrowWidth * 0.3), selectorHeight / 2);
+
+  const int rightStart = getWidth() * (ARROW_PERC + TITLE_PERC);
+  mRightPath.clear();
+  mRightPath.addEllipse(rightStart - arrowWidth, 1, (arrowWidth * 2) - 1, selectorHeight - 2);
+  mRightArrowLine =
+      juce::Line<float>(rightStart + (arrowWidth * 0.1), selectorHeight / 2, getWidth() - (arrowWidth * 0.3), selectorHeight / 2);
+
+  mTitleRect = getLocalBounds().withHeight(selectorHeight).withSizeKeepingCentre(getWidth() * TITLE_PERC, selectorHeight);
+  mSoloRect = mTitleRect.translated(0, selectorHeight).withHeight(soloHeight - 2).toFloat();
+}
 
 void PositionChanger::setActive(bool isActive) {
   mIsActive = isActive;

@@ -35,9 +35,8 @@ void PointMarker::paint(juce::Graphics& g) {
   g.setColour(mColour);
   g.fillPath(mPath);
 
-  auto height = 10;
   g.setColour(juce::Colours::white);
-  g.drawText(mName, getLocalBounds().removeFromBottom(height), juce::Justification::centred);
+  g.drawText(mName, getLocalBounds().removeFromBottom(HEIGHT), juce::Justification::centred);
 }
 
 bool PointMarker::hitTest(int x, int y) { return mPath.contains(static_cast<float>(x), static_cast<float>(y)); }
@@ -107,7 +106,7 @@ void TrimSelection::paint(juce::Graphics& g) {
   }
 
   // Darken areas outside of selectors
-  { 
+  {
     g.setColour(juce::Colours::darkgrey.withAlpha(0.5f));
     g.fillRect(mThumbnailRect.withWidth(timeToXPosition(mSelectedRange.getStart()) - mThumbnailRect.getX()));
     int endX = timeToXPosition(mSelectedRange.getEnd());

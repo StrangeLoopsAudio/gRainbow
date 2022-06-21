@@ -85,11 +85,6 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
                 juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
   }
 
-  juce::Point<float> centerPoint = juce::Point<float>(getWidth() / 2.0f, getHeight());
-  int startRadius = getHeight() / 4.0f;
-  int endRadius = getHeight();
-  int bowWidth = endRadius - startRadius;
-
   // Draw active grains
   if (PowerUserSettings::get().getAnimated()) {
     for (ArcGrain& grain : mArcGrains) {
@@ -102,8 +97,8 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
       xRatio += (candidate.duration / candidate.pbRate) * grainProg;
       float pitchClass = noteIdx - (std::log(candidate.pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
       float yRatio = (pitchClass + 0.25f + (grain.paramGenerator->pitchAdjust->get() * 6.0f)) / (float)Utils::PitchClass::COUNT;
-      int grainRad = startRadius + (yRatio * bowWidth);
-      juce::Point<float> grainPoint = centerPoint.getPointOnCircumference(
+      int grainRad = mStartRadius + (yRatio * mBowWidth);
+      juce::Point<float> grainPoint = mCenterPoint.getPointOnCircumference(
           grainRad, (1.5f * juce::MathConstants<float>::pi) + (xRatio * juce::MathConstants<float>::pi));
       float envIdx = juce::jmin(ParamGenerator::ENV_LUT_SIZE - 1.0f, grain.numFramesActive * grain.envIncSamples);
       float grainSize = grain.gain * grain.paramGenerator->grainEnvLUT[envIdx] * MAX_GRAIN_SIZE;
@@ -131,6 +126,11 @@ void ArcSpectrogram::resized() {
   auto r = getLocalBounds();
   // Spec type combobox
   mSpecType.setBounds(r.removeFromRight(SPEC_TYPE_WIDTH).removeFromTop(SPEC_TYPE_HEIGHT));
+
+  mCenterPoint = juce::Point<float>(getWidth() / 2.0f, getHeight());
+  mStartRadius = getHeight() / 4.0f;
+  mEndRadius = getHeight();
+  mBowWidth = mEndRadius - mStartRadius;
 }
 
 void ArcSpectrogram::run() {

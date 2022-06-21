@@ -53,6 +53,9 @@ class GlobalParamBox : public juce::Component {
   juce::Label mLabelSustain;
   juce::Label mLabelRelease;
   EnvelopeADSR mEnvelopeAmp;
+  // UI values saved on resize
+  juce::Rectangle<float> mTitleRect;
+  juce::Rectangle<float> mAmpEnvTitleRect;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GlobalParamBox)
 };

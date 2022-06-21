@@ -32,6 +32,15 @@ class NoteGrid : public juce::AnimatedAppComponent {
   static constexpr auto TITLE_HEIGHT = 20;
   static constexpr auto MAIN_TITLE = "note matrix";
 
+  // UI values saved on resize
+  juce::Rectangle<int> mGridRect;
+  float mSquareSize;
+  juce::Rectangle<int> mSquare;
+  juce::Rectangle<int> mColumn;
+  juce::Rectangle<int> mTitleRect;
+  juce::Rectangle<float> mTitleEdgeRect;
+  juce::Rectangle<int> mNoteNamesRect;
+
   ParamsNote &mParamsNote;
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoteGrid)
 };
