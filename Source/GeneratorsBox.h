@@ -63,6 +63,14 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   static constexpr auto SECTION_GRAIN_ENV_TITLE = "grain envelope";
   static constexpr auto SECTION_ADJUST_TITLE = "generator adjustments";
   static constexpr auto SECTION_FILTER_ENV_TITLE = "filter control";
+
+  // UI values saved on resize
+  juce::Rectangle<float> mBorderRect;
+  juce::Rectangle<int> mAdjustTitleRect;
+  juce::Rectangle<int> mAmpEnvTitleRect;
+  juce::Rectangle<int> mGrainEnvTitleRect;
+  juce::Rectangle<int> mFilterEnvTitleRect;
+
   // Parameters
   ParamsNote& mParamsNote;
   ParamUI& mParamUI;

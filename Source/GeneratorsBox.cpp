@@ -316,12 +316,12 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   bool borderLit = mParamsNote.notes[mCurPitchClass]->shouldPlayGenerator(mCurSelectedGenerator);
   juce::Colour fillCol = borderLit ? pitchColour : juce::Colours::darkgrey;
   g.setColour(fillCol);
-  g.drawRoundedRectangle(getLocalBounds().withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.0f), 10.0f, 2.0f);
+  g.drawRoundedRectangle(mBorderRect, 10.0f, 2.0f);
 
   // Black out extended lines for tabs
   g.setColour(juce::Colours::black);
   g.fillRect(0, 0, getWidth(), TABS_HEIGHT);
-  
+
   // Generator tabs
   float tabWidth = getWidth() / NUM_GENERATORS;
   float curStart = 1.0f;
@@ -355,7 +355,7 @@ void GeneratorsBox::paint(juce::Graphics& g) {
     g.drawFittedText(juce::String("g") + juce::String(i + 1), textRect, juce::Justification::centred, 1);
     curStart += tabWidth;
   }
-  
+
   // Black out extended tabs with black rect
   g.setColour(juce::Colours::black);
   g.fillRect(2.0f, TABS_HEIGHT + 1.0f, (float)getWidth() - 4.0f, 30.0f);
@@ -370,46 +370,34 @@ void GeneratorsBox::paint(juce::Graphics& g) {
   }
 
   // Adjustments section title
-  juce::Rectangle<int> adjustTitleRect =
-      juce::Rectangle<int>(0, mSliderPitchAdjust.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(), SECTION_TITLE_HEIGHT)
-          .reduced(PADDING_SIZE, PADDING_SIZE / 2);
   g.setColour(fillCol);
-  g.fillRect(adjustTitleRect);
+  g.fillRect(mAdjustTitleRect);
   g.setColour(juce::Colours::black);
-  g.drawText(juce::String(SECTION_ADJUST_TITLE), adjustTitleRect, juce::Justification::centred);
+  g.drawText(juce::String(SECTION_ADJUST_TITLE), mAdjustTitleRect, juce::Justification::centred);
 
   // Amp env section title
-  juce::Rectangle<int> ampEnvTitleRect =
-      juce::Rectangle<int>(0, mEnvelopeAmp.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(), SECTION_TITLE_HEIGHT)
-          .reduced(PADDING_SIZE, PADDING_SIZE / 2);
   g.setColour(fillCol);
-  g.fillRect(ampEnvTitleRect);
+  g.fillRect(mAmpEnvTitleRect);
   g.setColour(juce::Colours::black);
-  g.drawText(juce::String(SECTION_AMP_ENV_TITLE), ampEnvTitleRect, juce::Justification::centred);
+  g.drawText(juce::String(SECTION_AMP_ENV_TITLE), mAmpEnvTitleRect, juce::Justification::centred);
 
   // Grain env section title
-  juce::Rectangle<int> grainEnvTitleRect =
-      juce::Rectangle<int>(0, mEnvelopeGrain.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(),
-                           SECTION_TITLE_HEIGHT)
-          .reduced(PADDING_SIZE, PADDING_SIZE / 2);
   g.setColour(fillCol);
-  g.fillRect(grainEnvTitleRect);
+  g.fillRect(mGrainEnvTitleRect);
   g.setColour(juce::Colours::black);
-  g.drawText(juce::String(SECTION_GRAIN_ENV_TITLE), grainEnvTitleRect, juce::Justification::centred);
+  g.drawText(juce::String(SECTION_GRAIN_ENV_TITLE), mGrainEnvTitleRect, juce::Justification::centred);
 
   // Filter Control env section title
-  juce::Rectangle<int> filterEnvTitleRect =
-      juce::Rectangle<int>(0, mFilterControl.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(),
-                           SECTION_TITLE_HEIGHT)
-          .reduced(PADDING_SIZE, PADDING_SIZE / 2);
   g.setColour(fillCol);
-  g.fillRect(filterEnvTitleRect);
+  g.fillRect(mFilterEnvTitleRect);
   g.setColour(juce::Colours::black);
-  g.drawText(juce::String(SECTION_FILTER_ENV_TITLE), filterEnvTitleRect, juce::Justification::centred);
+  g.drawText(juce::String(SECTION_FILTER_ENV_TITLE), mFilterEnvTitleRect, juce::Justification::centred);
 }
 
 void GeneratorsBox::resized() {
   auto r = getLocalBounds();
+
+  mBorderRect = r.withHeight(getHeight() + 10).translated(0, -11).toFloat().reduced(1.0f);
 
   // Enable/disable buttons
   juce::Rectangle<int> btnRect = juce::Rectangle<int>(TOGGLE_SIZE, TOGGLE_SIZE);
@@ -440,6 +428,9 @@ void GeneratorsBox::resized() {
   mSliderPosAdjust.setBounds(posPanel.withSizeKeepingCentre(posPanel.getHeight() * 2, posPanel.getHeight()));
   mPositionChanger.setBounds(
       adjustmentsPanel.withSizeKeepingCentre(adjustmentsPanel.getWidth(), adjustmentsPanel.getHeight() / 2.0f));
+  mAdjustTitleRect = juce::Rectangle<int>(0, mSliderPitchAdjust.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(),
+                                          SECTION_TITLE_HEIGHT)
+                         .reduced(PADDING_SIZE, PADDING_SIZE / 2);
 
   r.removeFromTop(PADDING_SIZE);
 
@@ -451,6 +442,9 @@ void GeneratorsBox::resized() {
   mLabelGain.setBounds(gainPanel.removeFromBottom(LABEL_HEIGHT));
   mSliderGain.setBounds(gainPanel.withSizeKeepingCentre(gainPanel.getWidth(), gainPanel.getWidth() / 2.0f));
   mEnvelopeAmp.setBounds(ampEnvPanel.withTrimmedRight(PADDING_SIZE));
+  mAmpEnvTitleRect =
+      juce::Rectangle<int>(0, mEnvelopeAmp.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(), SECTION_TITLE_HEIGHT)
+          .reduced(PADDING_SIZE, PADDING_SIZE / 2);
   r.removeFromTop(PADDING_SIZE);
 
   // Amp env knobs
@@ -476,6 +470,9 @@ void GeneratorsBox::resized() {
   mBtnSync.changeWidthToFitText(LABEL_HEIGHT);
   mBtnSync.setCentrePosition(syncPanel.getCentre());
   mEnvelopeGrain.setBounds(grainPanel.withTrimmedRight(PADDING_SIZE));
+  mGrainEnvTitleRect = juce::Rectangle<int>(0, mEnvelopeGrain.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(),
+                                            SECTION_TITLE_HEIGHT)
+                           .reduced(PADDING_SIZE, PADDING_SIZE / 2);
   r.removeFromTop(PADDING_SIZE);
 
   // Grain env knobs
@@ -495,6 +492,9 @@ void GeneratorsBox::resized() {
   r.removeFromTop(SECTION_TITLE_HEIGHT);
 
   mFilterControl.setBounds(r.removeFromTop(FILTER_CONTROL_HEIGHT));
+  mFilterEnvTitleRect = juce::Rectangle<int>(0, mFilterControl.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(),
+                                             SECTION_TITLE_HEIGHT)
+                            .reduced(PADDING_SIZE, PADDING_SIZE / 2);
 
   r.removeFromTop(PADDING_SIZE);
 

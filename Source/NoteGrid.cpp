@@ -22,49 +22,40 @@ void NoteGrid::paint(juce::Graphics& g) {
 
   juce::Colour mainColour = juce::Colours::white;
 
-  // Note grid
-  juce::Rectangle<int> gridRect = getLocalBounds().reduced(PADDING_SIZE);
-  float squareSize = gridRect.getWidth() / static_cast<float>(Utils::PitchClass::COUNT);
-  juce::Rectangle<int> square = juce::Rectangle<int>(squareSize, squareSize);
-  juce::Rectangle<int> column = juce::Rectangle<int>(squareSize, squareSize * NUM_GENERATORS);
-
   // Main title
-  juce::Rectangle<int> titleRect = gridRect.removeFromTop(TITLE_HEIGHT);
   g.setColour(mainColour);
-  g.fillRoundedRectangle(titleRect.reduced(0, PADDING_SIZE / 2).toFloat(), 10.0f);
+  g.fillRoundedRectangle(mTitleEdgeRect, 10.0f);
   g.setColour(juce::Colours::black);
-  g.drawText(juce::String(MAIN_TITLE), titleRect, juce::Justification::centred);
-
-  juce::Rectangle<int> noteNamesRect = gridRect.removeFromTop(TITLE_HEIGHT);
+  g.drawText(juce::String(MAIN_TITLE), mTitleRect, juce::Justification::centred);
 
   for (int i = 0; i < Utils::PitchClass::COUNT; ++i) {
     // Note column
     juce::Colour noteColour = Utils::getRainbow12Colour(i);
     g.setColour(noteColour);
-    g.fillRect(column.withPosition(gridRect.getTopLeft() + juce::Point<int>(i * squareSize + 1, 1)).reduced(1.0f));
+    g.fillRect(mColumn.withPosition(mGridRect.getTopLeft() + juce::Point<int>(i * mSquareSize + 1, 1)).reduced(1.0f));
     // Note title
     g.drawRoundedRectangle(
-        column.withPosition(noteNamesRect.getTopLeft() + juce::Point<int>(i * squareSize + 1, 1)).toFloat().reduced(1.0f), 10.0f,
+        mColumn.withPosition(mNoteNamesRect.getTopLeft() + juce::Point<int>(i * mSquareSize + 1, 1)).toFloat().reduced(1.0f), 10.0f,
         1.0f);
     g.setColour(juce::Colours::white);
-    g.drawText(PITCH_CLASS_NAMES[i], noteNamesRect.getX() + i * squareSize, noteNamesRect.getY(), squareSize, squareSize,
+    g.drawText(PITCH_CLASS_NAMES[i], mNoteNamesRect.getX() + i * mSquareSize, mNoteNamesRect.getY(), mSquareSize, mSquareSize,
                juce::Justification::centred);
     for (int j = 0; j < NUM_GENERATORS; ++j) {
-      juce::Point<int> squarePos = gridRect.getTopLeft() + juce::Point<int>(i * squareSize + 1, j * squareSize + 1);
+      juce::Point<int> squarePos = mGridRect.getTopLeft() + juce::Point<int>(i * mSquareSize + 1, j * mSquareSize + 1);
 
       // Clear rect area first to eliminate note colour
       g.setColour(juce::Colours::black);
-      g.fillRect(square.withPosition(squarePos).reduced(2.0f));
+      g.fillRect(mSquare.withPosition(squarePos).reduced(2.0f));
 
       // Fill and label candidate if enabled, draw frame if not
       g.setColour(Utils::getRainbow12Colour(i));
       if (mParamsNote.notes[i]->generators[j]->enable->get()) {
-        g.fillRect(square.withPosition(squarePos).reduced(2.0f));
+        g.fillRect(mSquare.withPosition(squarePos).reduced(2.0f));
         g.setColour(juce::Colours::black);
-        g.drawText(juce::String(mParamsNote.notes[i]->generators[j]->candidate->get() + 1), square.withPosition(squarePos),
+        g.drawText(juce::String(mParamsNote.notes[i]->generators[j]->candidate->get() + 1), mSquare.withPosition(squarePos),
                    juce::Justification::centred);
       } else {
-        g.drawRect(square.withPosition(squarePos).reduced(1.0f), 2.0f);
+        g.drawRect(mSquare.withPosition(squarePos).reduced(1.0f), 2.0f);
       }
     }
   }
@@ -75,5 +66,11 @@ void NoteGrid::paint(juce::Graphics& g) {
 }
 
 void NoteGrid::resized() {
-
+  mGridRect = getLocalBounds().reduced(PADDING_SIZE);
+  mSquareSize = mGridRect.getWidth() / static_cast<float>(Utils::PitchClass::COUNT);
+  mSquare = juce::Rectangle<int>(mSquareSize, mSquareSize);
+  mColumn = juce::Rectangle<int>(mSquareSize, mSquareSize * NUM_GENERATORS);
+  mTitleRect = mGridRect.removeFromTop(TITLE_HEIGHT);
+  mTitleEdgeRect = mTitleRect.reduced(0, PADDING_SIZE / 2).toFloat();
+  mNoteNamesRect = mGridRect.removeFromTop(TITLE_HEIGHT);
 }

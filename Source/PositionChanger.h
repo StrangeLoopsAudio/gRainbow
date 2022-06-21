@@ -56,6 +56,13 @@ class PositionChanger : public juce::Component {
   bool mIsOverLeftArrow = false;
   bool mIsOverRightArrow = false;
   bool mIsOverSolo = false;
+
+  // UI values saved on resize
+  juce::Path mLeftPath;
+  juce::Path mRightPath;
+  juce::Line<float> mLeftArrowLine;
+  juce::Line<float> mRightArrowLine;
+  juce::Rectangle<int> mTitleRect;
   juce::Rectangle<float> mSoloRect;
 
   void updateMouseOver(const juce::MouseEvent& e, bool isDown);

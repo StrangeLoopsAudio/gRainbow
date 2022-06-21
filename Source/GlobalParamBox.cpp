@@ -128,23 +128,17 @@ void GlobalParamBox::paint(juce::Graphics& g) {
   juce::Colour mainColour = juce::Colours::white;
 
   // Global param title
-  juce::Rectangle<float> titleRect =
-      juce::Rectangle<float>(0.0f, 0.0f, getWidth(), MAIN_TITLE_HEIGHT).reduced(PADDING_SIZE, PADDING_SIZE);
   g.setColour(mainColour);
-  g.fillRoundedRectangle(titleRect, 10.0f);
+  g.fillRoundedRectangle(mTitleRect, 10.0f);
 
   g.setColour(juce::Colours::black);
-  g.drawText(juce::String(MAIN_TITLE), titleRect, juce::Justification::centred);
+  g.drawText(juce::String(MAIN_TITLE), mTitleRect, juce::Justification::centred);
 
   // Amp env section title
-  juce::Rectangle<float> ampEnvTitleRect =
-      juce::Rectangle<float>(0.0f, mEnvelopeAmp.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(),
-                             SECTION_TITLE_HEIGHT)
-          .reduced(PADDING_SIZE, PADDING_SIZE / 2.0f);
   g.setColour(mainColour);
-  g.fillRoundedRectangle(ampEnvTitleRect, 10.0f);
+  g.fillRoundedRectangle(mAmpEnvTitleRect, 10.0f);
   g.setColour(juce::Colours::black);
-  g.drawText(juce::String(SECTION_AMP_ENV_TITLE), ampEnvTitleRect, juce::Justification::centred);
+  g.drawText(juce::String(SECTION_AMP_ENV_TITLE), mAmpEnvTitleRect, juce::Justification::centred);
 
   // Outline rect
   g.setColour(mainColour);
@@ -161,6 +155,8 @@ void GlobalParamBox::resized() {
 
   r.removeFromTop(MAIN_TITLE_HEIGHT);
 
+  mTitleRect = juce::Rectangle<float>(0.0f, 0.0f, getWidth(), MAIN_TITLE_HEIGHT).reduced(PADDING_SIZE, PADDING_SIZE);
+
   // Amp envelope
   r.removeFromTop(SECTION_TITLE_HEIGHT);
   auto knobWidth = r.getWidth() / NUM_AMP_ENV_PARAMS;
@@ -170,6 +166,9 @@ void GlobalParamBox::resized() {
   mSliderGain->component.setBounds(gainPanel.withSizeKeepingCentre(gainPanel.getWidth(), gainPanel.getWidth() / 2.0f));
   mEnvelopeAmp.setBounds(ampEnvPanel.withTrimmedRight(PADDING_SIZE));
   r.removeFromTop(PADDING_SIZE);
+  mAmpEnvTitleRect = juce::Rectangle<float>(0.0f, mEnvelopeAmp.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(),
+                                            SECTION_TITLE_HEIGHT)
+                         .reduced(PADDING_SIZE, PADDING_SIZE / 2.0f);
 
   // Amp env knobs
   auto knobPanel = r.removeFromTop(knobWidth / 2);
