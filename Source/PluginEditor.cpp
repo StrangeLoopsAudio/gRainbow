@@ -28,7 +28,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mKeyboard(synth.getKeyboardState()),
       mProgressBar(synth.getLoadingProgress()),
       mParamUI(synth.getParamUI()),
-      mTrimSelection(mFormatManager, synth.getParamUI()),
+      mTrimSelection(mFormatManager, mSourcePlayer, synth.getParamUI()),
       mFormatReader(nullptr) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mErrorMessage.clear();
@@ -99,18 +99,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     updateCenterComponent((mParamUI.specComplete) ? ParamUI::CenterComponent::ARC_SPEC : ParamUI::CenterComponent::LOGO);
   };
 
-  mTrimSelection.onProcessSelection = [this](juce::Range<double> range, bool setSelection) {
-    const double sampleLength = static_cast<double>(mFormatReader->lengthInSamples);
-    const double secondLength = sampleLength / mFormatReader->sampleRate;
-    juce::int64 start = static_cast<juce::int64>(sampleLength * (range.getStart() / secondLength));
-    juce::int64 end = static_cast<juce::int64>(sampleLength * (range.getEnd() / secondLength));
-    // TODO - if small enough, it will get stuck trying to load
-    if (start == end) {
-      displayError("Attempted to select an empty range");
-    } else {
-      processNewSample(juce::Range<juce::int64>(start, end), setSelection);
-    }
-  };
+  mTrimSelection.onProcessSelection = [this](double sampleRate, bool setSelection) { processNewSample(sampleRate, setSelection); };
 
   // These share the same space, but only 1 is seen at a time
   addAndMakeVisible(mLogo);
@@ -123,6 +112,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
 
   mAudioDeviceManager.addAudioCallback(&mRecorder);
+  mAudioDeviceManager.addAudioCallback(&mSourcePlayer);
 
   mFormatManager.registerBasicFormats();
 
@@ -162,7 +152,9 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   auto recordFile = parentDir.getChildFile(FILE_RECORDING);
   recordFile.deleteFile();
+  mSourcePlayer.setSource(nullptr);
   mAudioDeviceManager.removeAudioCallback(&mRecorder);
+  mAudioDeviceManager.removeAudioCallback(&mSourcePlayer);
   setLookAndFeel(nullptr);
 }
 
@@ -497,24 +489,20 @@ void GRainbowAudioProcessorEditor::processPreset(juce::File file) {
   }
 }
 
-void GRainbowAudioProcessorEditor::processNewSample(juce::Range<juce::int64> range, bool setSelection) {
-  juce::AudioBuffer<float> fileAudioBuffer;
-  const int sampleLength = static_cast<int>(range.getLength());
-  fileAudioBuffer.setSize(mFormatReader->numChannels, sampleLength);
-  mFormatReader->read(&fileAudioBuffer, 0, sampleLength, range.getStart(), true, true);
-  const double sampleRate = mFormatReader->sampleRate;
+void GRainbowAudioProcessorEditor::processNewSample(double sampleRate, bool setSelection) {
+  juce::AudioBuffer<float>& audioBuffer = mTrimSelection.getAuidoBuffer();
 
   if (setSelection) {
     // Reset any UI elements that will need to wait until processing
     mArcSpec.reset();
     mBtnPreset.setEnabled(false);
     updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
-  }
 
-  mSynth.processFile(&fileAudioBuffer, sampleRate, false);
+    mSynth.processFile(&audioBuffer, sampleRate, false);
 
-  if (setSelection) {
     mArcSpec.loadBuffer(&mSynth.getFileBuffer());
+  } else {
+    // Just testing the audio to give the user information about the selection
   }
 }
 

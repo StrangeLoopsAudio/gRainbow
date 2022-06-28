@@ -41,10 +41,14 @@ void PointMarker::paint(juce::Graphics& g) {
 
 bool PointMarker::hitTest(int x, int y) { return mPath.contains(static_cast<float>(x), static_cast<float>(y)); }
 
-TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& paramUI)
+TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, juce::AudioSourcePlayer& sourcePlayer, ParamUI& paramUI)
     : mThumbnailCache(1),
       mThumbnail(512, formatManager, mThumbnailCache),
+      mThumbnailShadow([this](const juce::MouseEvent& e) { this->ThumbnailMouseDown(e); },
+                       [this](const juce::MouseEvent& e) { this->ThumbnailMouseDrag(e); },
+                       [this](const juce::MouseEvent& e) { this->ThumbnailMouseUp(e); }),
       mParamUI(paramUI),
+      mSourcePlayer(sourcePlayer),
       mStartMarker(
           "S", juce::Colours::green, [this](PointMarker& m, const juce::MouseEvent& e) { this->MarkerMouseDragged(m, e); },
           [this](PointMarker& m, const juce::MouseEvent& e) { this->MarkerMouseUp(m, e); }),
@@ -54,8 +58,25 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
   mBtnCancel.setButtonText("Cancel");
   mBtnCancel.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
   mBtnCancel.setColour(juce::TextButton::buttonOnColourId, juce::Colours::red);
-  mBtnCancel.onClick = [this] { onCancel(); };
+  mBtnCancel.onClick = [this] {
+    cleanup();
+    onCancel();
+  };
   addAndMakeVisible(mBtnCancel);
+
+  mBtnPlayback.setButtonText("Play/Stop");
+  mBtnPlayback.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+  mBtnPlayback.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
+  mBtnPlayback.onClick = [this] {
+    updateTrimBuffer();
+    if (mTransportSource.isPlaying()) {
+      mTransportSource.stop();
+    } else {
+      mTransportSource.setPosition(mSelectedRange.getStart());
+      mTransportSource.start();
+    }
+  };
+  addAndMakeVisible(mBtnPlayback);
 
   mBtnTestSelection.setEnabled(false); // TODO: enable once testing is possible
   mBtnTestSelection.setButtonText("Test Selection");
@@ -63,21 +84,30 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
   mBtnTestSelection.setColour(juce::TextButton::buttonOnColourId, juce::Colours::blue);
   mBtnTestSelection.onClick = [this] {
     // TOOD - Enable
-    // onProcessSelection(mSelectedRange, false);
+    // updateTrimBuffer();
+    // onProcessSelection(mSampleRate, false);
   };
   addAndMakeVisible(mBtnTestSelection);
 
   mBtnSetSelection.setButtonText("Set Selection");
   mBtnSetSelection.setColour(juce::TextButton::buttonColourId, juce::Colours::blue);
   mBtnSetSelection.setColour(juce::TextButton::buttonOnColourId, juce::Colours::blue);
-  mBtnSetSelection.onClick = [this] { onProcessSelection(mSelectedRange, true); };
+  mBtnSetSelection.onClick = [this] {
+    updateTrimBuffer();
+    onProcessSelection(mSampleRate, true);
+    cleanup();
+  };
   addAndMakeVisible(mBtnSetSelection);
 
   addAndMakeVisible(mStartMarker);
   addAndMakeVisible(mEndMarker);
+  addAndMakeVisible(mThumbnailShadow);
+
+  mPlaybackMarker.setFill(juce::Colours::white.withAlpha(0.9f));
+  addAndMakeVisible(mPlaybackMarker);
 }
 
-TrimSelection::~TrimSelection() {}
+TrimSelection::~TrimSelection() { cleanup(); }
 
 void TrimSelection::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
@@ -90,8 +120,9 @@ void TrimSelection::paint(juce::Graphics& g) {
   }
 
   // Draw thumbnail
+  const int thumbnailHeight = mThumbnailRect.getHeight();
   {
-    const int channelHeight = mThumbnailRect.getHeight() / numChannels;
+    const int channelHeight = thumbnailHeight / numChannels;
     // draw an outline around the thumbnail
     g.setColour(juce::Colours::grey);
     g.drawRect(mThumbnailRect, 1);
@@ -110,7 +141,7 @@ void TrimSelection::paint(juce::Graphics& g) {
     g.setColour(juce::Colours::darkgrey.withAlpha(0.5f));
     g.fillRect(mThumbnailRect.withWidth(timeToXPosition(mSelectedRange.getStart()) - mThumbnailRect.getX()));
     int endX = timeToXPosition(mSelectedRange.getEnd());
-    g.fillRect(endX, mThumbnailRect.getY(), mThumbnailRect.getRight() - endX, mThumbnailRect.getHeight());
+    g.fillRect(endX, mThumbnailRect.getY(), mThumbnailRect.getRight() - endX, thumbnailHeight);
   }
 
   // Draw selectors
@@ -120,6 +151,12 @@ void TrimSelection::paint(juce::Graphics& g) {
     g.drawFittedText(mStartTimeString, mSelectorRect, juce::Justification::bottomLeft, 1);
     g.drawFittedText(juce::String(mSelectedRange.getLength()) + " seconds", mSelectorRect, juce::Justification::centredBottom, 1);
     g.drawFittedText(mEndTimeString, mSelectorRect, juce::Justification::bottomRight, 1);
+  }
+
+  // Draw line showing where audio is playing from
+  {
+    const float xPosition = timeToXPosition(mTransportSource.getCurrentPosition());
+    mPlaybackMarker.setRectangle(juce::Rectangle<float>(xPosition, 0, 1.5f, thumbnailHeight));
   }
 
   // Update text of test results
@@ -132,6 +169,8 @@ void TrimSelection::paint(juce::Graphics& g) {
 }
 
 void TrimSelection::parse(juce::AudioFormatReader* formatReader, juce::int64 hash, juce::String& error) {
+  cleanup();
+
   const double duration = static_cast<double>(formatReader->lengthInSamples) / formatReader->sampleRate;
   if (static_cast<int>(duration) <= MIN_SELECTION_SEC) {
     error =
@@ -141,7 +180,22 @@ void TrimSelection::parse(juce::AudioFormatReader* formatReader, juce::int64 has
     return;
   }
 
+  // Will delete AudioFormatReader for us when it is done with it
   mThumbnail.setReader(formatReader, hash);
+
+  // update values here while have access to format reader
+  mSampleLength = static_cast<double>(formatReader->lengthInSamples);
+  mSampleRate = formatReader->sampleRate;
+
+  const int length = static_cast<int>(formatReader->lengthInSamples);
+  mFileAudioBuffer.setSize(formatReader->numChannels, length);
+  formatReader->read(&mFileAudioBuffer, 0, length, 0, true, true);
+
+  mPlaybackThread.startThread();
+  mPositionableAudioSource.reset(new juce::MemoryAudioSource(mFileAudioBuffer, false));
+  const int readAheadBufferSize = 1 << 16;  // 64kb should be enough to not lag when playing
+  mTransportSource.setSource(mPositionableAudioSource.get(), readAheadBufferSize, &mPlaybackThread, mSampleRate);
+  mSourcePlayer.setSource(&mTransportSource);
 
   mVisibleRange.setStart(0.0f);
   mVisibleRange.setEnd(duration);
@@ -163,11 +217,12 @@ void TrimSelection::resized() {
   mThumbnailRect = r.removeFromTop((2 * r.getHeight()) / 3);
   // extra 20 comes from 14 point font for text and some padding
   mSelectorRect = mThumbnailRect.removeFromBottom(PointMarker::height() + 20);
+  mThumbnailShadow.setBounds(mThumbnailRect);
 
   const int btnHeight = r.getHeight() * 0.3;
   const int btnHeightPadding = r.getHeight() * 0.1;
-  const int btnWidth = r.getWidth() * 0.25;
-  const int btnWidthPadding = r.getWidth() * (.25 / 4.0);
+  const int btnWidth = r.getWidth() * 0.2;
+  const int btnWidthPadding = r.getWidth() * (.2 / 5.0);
 
   juce::Rectangle<int> btnRect = r.removeFromTop(btnHeight);
   mTestResultRect = r;
@@ -175,6 +230,8 @@ void TrimSelection::resized() {
   btnRect.removeFromTop(btnHeightPadding);
   btnRect.removeFromLeft(btnWidthPadding);
   mBtnCancel.setBounds(btnRect.removeFromLeft(btnWidth));
+  btnRect.removeFromLeft(btnWidthPadding);
+  mBtnPlayback.setBounds(btnRect.removeFromLeft(btnWidth));
   btnRect.removeFromLeft(btnWidthPadding);
   mBtnTestSelection.setBounds(btnRect.removeFromLeft(btnWidth));
   btnRect.removeFromLeft(btnWidthPadding);
@@ -207,6 +264,29 @@ void TrimSelection::updatePointMarker() {
   mEndTimeString = juce::String::formatted("%02d:%02d", endMinute, endSecond);
 }
 
+// There is a single instance of TrimSelection so clean up between uses
+void TrimSelection::cleanup() {
+  mTransportSource.stop();
+  mTransportSource.setSource(nullptr);
+  // don't need the thread anymore, give a second to clean up
+  mPlaybackThread.stopThread(1000);
+  // release use of source player
+  mSourcePlayer.setSource(nullptr);
+}
+
+// Instead of constantly updating this, only update before it will be used
+void TrimSelection::updateTrimBuffer() {
+  const double secondLength = mSampleLength / mSampleRate;
+  int start = static_cast<int>(mSampleLength * (mSelectedRange.getStart() / secondLength));
+  int end = static_cast<int>(mSampleLength * (mSelectedRange.getEnd() / secondLength));
+  mSelectedSampleRange = juce::Range<int>(start, end);
+
+  mTrimAudioBuffer.setSize(mFileAudioBuffer.getNumChannels(), mSelectedSampleRange.getLength());
+  for (int i = 0; i < mFileAudioBuffer.getNumChannels(); i++) {
+    mTrimAudioBuffer.copyFrom(i, 0, mFileAudioBuffer, i, mSelectedSampleRange.getStart(), mSelectedSampleRange.getLength());
+  }
+}
+
 double TrimSelection::timeToXPosition(double time) const {
   const double start = time - mVisibleRange.getStart();
   const double width = mThumbnailRect.getWidth();
@@ -224,6 +304,9 @@ double TrimSelection::xPositionToTime(double xPosition) const {
 }
 
 void TrimSelection::MarkerMouseDragged(PointMarker& marker, const juce::MouseEvent& e) {
+  mTransportSource.stop();  // if the markers are moved at all need to stop playing
+  // TODO - will probably need to stop the 'Test Selection' also once implemented
+
   const double x = xPositionToTime(e.getEventRelativeTo(this).position.x);
   if (&marker == &mStartMarker) {
     if (mSelectedRange.getEnd() - x >= MIN_SELECTION_SEC) {
@@ -249,4 +332,22 @@ void TrimSelection::MarkerMouseUp(PointMarker& marker, const juce::MouseEvent& e
     mSelectedRange.setEnd(juce::jmin(x, mVisibleRange.getEnd()));
   }
   updatePointMarker();
+}
+
+void TrimSelection::ThumbnailMouseDown(const juce::MouseEvent& e) {
+  mTransportSource.stop();
+  ThumbnailMouseDrag(e);
+}
+
+void TrimSelection::ThumbnailMouseDrag(const juce::MouseEvent& e) {
+  double x = xPositionToTime(e.getEventRelativeTo(this).position.x);
+  // prevent from selecting out of the thumbnail
+  x = juce::jmax(x, mVisibleRange.getStart());
+  x = juce::jmin(x, mVisibleRange.getEnd());
+  mTransportSource.setPosition(x);
+}
+
+void TrimSelection::ThumbnailMouseUp(const juce::MouseEvent& e) {
+  // Will start playback when clicked
+  mTransportSource.start();
 }

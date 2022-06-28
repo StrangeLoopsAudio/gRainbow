@@ -77,6 +77,8 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   // DSP Modules
   GranularSynth& mSynth;
   AudioRecorder mRecorder;
+  // Used if need to stream audio
+  juce::AudioSourcePlayer mSourcePlayer;
 
   // UI Components
   juce::ImageButton mBtnOpenFile;
@@ -111,7 +113,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void openNewFile(const char* path = nullptr);
   void processFile(juce::File file);
   void processPreset(juce::File file);
-  void processNewSample(juce::Range<juce::int64> range, bool setSelection);
+  void processNewSample(double sampleRate, bool setSelection);
   void startRecording();
   void stopRecording();
   void savePreset();
