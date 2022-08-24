@@ -331,13 +331,18 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           if (paramGenerator->grainSync->get()) {
             float div = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX *
                                           paramGenerator->grainDuration->convertTo0to1(paramGenerator->grainDuration->get())));
-            float bpm = DEFAULT_BPM;
+            double bpm = DEFAULT_BPM;
             int beatsPerBar = 4;
-            if (auto* playhead = getPlayHead()) {
-              juce::AudioPlayHead::CurrentPositionInfo info;
-              playhead->getCurrentPosition(info);
-              bpm = info.bpm;
-              beatsPerBar = info.timeSigNumerator;
+            if (juce::AudioPlayHead* playhead = getPlayHead()) {
+              juce::Optional<juce::AudioPlayHead::PositionInfo> info = playhead->getPosition();
+              juce::Optional<double> newBpm = info->getBpm();
+              if (newBpm) {
+                bpm = *newBpm;
+              }
+              juce::Optional<juce::AudioPlayHead::TimeSignature> newTimeSignature = info->getTimeSignature();
+              if (newTimeSignature) {
+                beatsPerBar = (*newTimeSignature).numerator;
+              }
             }
             // Find synced duration using bpm
             durSec = (1.0f / bpm) * 60.0f * (beatsPerBar / div);
