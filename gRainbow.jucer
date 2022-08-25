@@ -3,7 +3,7 @@
 <JUCERPROJECT id="eC9OsA" name="gRainbow" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
               pluginCharacteristicsValue="pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn"
-              companyName="strangeloops">
+              companyName="strangeloops" defines="HAVE_WINSOCK2_H" headerPath="C:\Users\brady\Documents\GitHub\libmapper\include&#10;C:\Users\brady\Documents\GitHub\libmapper\build\liblo\liblo-master&#10;C:\Users\brady\Documents\GitHub\libmapper\build\liblo\liblo-master\cmake\build&#10;C:\Users\brady\Documents\GitHub\libmapper\build\zlib\msvc2017_64\include">
   <MAINGROUP id="SNaS8k" name="gRainbow">
     <GROUP id="{595D4325-C686-1839-D048-A225A7FE150A}" name="Source">
       <GROUP id="{5E1AB70E-1865-A28B-6DCD-3168747A76FD}" name="Components">
@@ -76,6 +76,8 @@
               file="Source/Resources/presetNormal.png"/>
         <FILE id="gvJiVv" name="presetOver.png" compile="0" resource="1" file="Source/Resources/presetOver.png"/>
       </GROUP>
+      <FILE id="QJZYD1" name="GranularMapperDevice.h" compile="0" resource="0"
+            file="Source/GranularMapperDevice.h"/>
       <FILE id="KSuUMg" name="Parameters.cpp" compile="1" resource="0" file="Source/Parameters.cpp"/>
       <FILE id="XcFpdr" name="Parameters.h" compile="0" resource="0" file="Source/Parameters.h"/>
       <FILE id="duDEsZ" name="PluginEditor.cpp" compile="1" resource="0"
@@ -112,7 +114,8 @@
         <MODULEPATH id="juce_dsp" path="../../../../../JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
-    <VS2022 targetFolder="Builds/VisualStudio2022" extraCompilerFlags="/bigobj">
+    <VS2022 targetFolder="Builds/VisualStudio2022" extraCompilerFlags="/bigobj"
+            externalLibraries="C:\Users\brady\Documents\GitHub\libmapper\build\zlib\msvc2017_64\lib\zlib\zlib.lib&#10;C:\Users\brady\Documents\GitHub\libmapper\build\liblo\liblo-master\cmake\build\Debug\liblo.lib&#10;C:\Users\brady\Documents\GitHub\libmapper\build\Debug\libmapper.lib">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
         <CONFIGURATION isDebug="0" name="Release" defines="JUCE_MODAL_LOOPS_PERMITTED=1"/>
