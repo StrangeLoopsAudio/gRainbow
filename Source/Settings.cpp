@@ -30,6 +30,15 @@ SettingsComponent::SettingsComponent() {
   mBtnResetParameters.setColour(juce::TextButton::buttonOnColourId, juce::Colours::red);
   mBtnResetParameters.onClick = [this] { PowerUserSettings::get().resetParameters(); };
   addAndMakeVisible(mBtnResetParameters);
+
+  mBtnResourceUsage.setButtonText("Resource Usage");
+  mBtnResourceUsage.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
+  mBtnResourceUsage.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
+  mBtnResourceUsage.setToggleState(PowerUserSettings::get().getResourceUsage(), juce::NotificationType::dontSendNotification);
+  mBtnResourceUsage.setClickingTogglesState(true);
+  mBtnResourceUsage.setToggleState(false, juce::NotificationType::dontSendNotification);
+  mBtnResourceUsage.onClick = [this] { PowerUserSettings::get().setResourceUsage(mBtnResourceUsage.getToggleState()); };
+  addAndMakeVisible(mBtnResourceUsage);
 }
 
 SettingsComponent::~SettingsComponent() {}
@@ -46,4 +55,5 @@ void SettingsComponent::resized() {
   const int buttonWidth = 100;
   mBtnAnimation.setBounds(r.removeFromTop(buttonHeight).withWidth(buttonWidth));
   mBtnResetParameters.setBounds(r.removeFromTop(buttonHeight).withWidth(buttonWidth));
+  mBtnResourceUsage.setBounds(r.removeFromTop(buttonHeight).withWidth(buttonWidth));
 }

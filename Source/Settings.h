@@ -27,6 +27,9 @@ class PowerUserSettings {
   void setAnimated(bool value) { mIsAnimated = value; }
   bool getAnimated() { return mIsAnimated; }
 
+  void setResourceUsage(bool value) { mIsResourceUsage = value; }
+  bool getResourceUsage() { return mIsResourceUsage; }
+
   void resetParameters();
 
   // Creates a singleton
@@ -39,6 +42,7 @@ class PowerUserSettings {
 
  private:
   bool mIsAnimated;
+  bool mIsResourceUsage;
 
   GranularSynth* mSynth;
 };
@@ -61,4 +65,5 @@ private:
   const int mDivideLineSize = 5;
   juce::TextButton mBtnAnimation;
   juce::TextButton mBtnResetParameters;
+  juce::TextButton mBtnResourceUsage;
 };

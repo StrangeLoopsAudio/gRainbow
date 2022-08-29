@@ -90,6 +90,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::Rectangle<float> mNoteDisplayRect;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;
+  juce::Label mResourceUsage;
 
   // main center UI component
   GRainbowLogo mLogo;

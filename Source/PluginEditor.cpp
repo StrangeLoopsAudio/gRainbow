@@ -10,6 +10,15 @@
 
 #include "Preset.h"
 
+// Used for getting memory usage
+#ifdef __linux__
+#include <sys/sysinfo.h>
+#include <unistd.h>
+#endif
+#ifdef _WINDOWS
+#include <windows.h>
+#endif
+
 GRainbowLogo::GRainbowLogo() { mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize); }
 
 void GRainbowLogo::paint(juce::Graphics& g) {
@@ -76,15 +85,11 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   }
   addAndMakeVisible(mLabelFileName);
 
-  // Generators box
   mGeneratorsBox.onPositionChanged = [this](int gen, bool isRight) { mSynth.incrementPosition(gen, isRight); };
   addAndMakeVisible(mGeneratorsBox);
-
-  // Global parameter box
   addAndMakeVisible(mGlobalParamBox);
-
-  // Note grid
   addAndMakeVisible(mNoteGrid);
+  addAndMakeVisible(mResourceUsage);
 
   // Arc spectrogram
   mArcSpec.onImagesComplete = [this]() {
@@ -202,6 +207,35 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   mKeyboard.setMidiNotes(midiNotes);
   mArcSpec.setMidiNotes(midiNotes);
   mGeneratorsBox.setMidiNotes(midiNotes);
+
+  if (PowerUserSettings::get().getResourceUsage()) {
+    const double cpu = mAudioDeviceManager.getCpuUsage() * 100;
+    size_t virtual_memory = 0;
+    size_t resident_memory = 0;
+#if defined(__linux__)
+    FILE* file = fopen("/proc/self/statm", "r");
+    if (file) {
+      unsigned long VmSize = 0;
+      unsigned long VmRSS = 0;
+      fscanf(file, "%lu %lu", &VmSize, &VmRSS);
+      fclose(file);
+      virtual_memory = static_cast<size_t>(VmSize) * getpagesize();
+      resident_memory = static_cast<size_t>(VmRSS) * getpagesize();
+    }
+#elif defined(_WINDOWS)
+    // According to MSDN
+    PROCESS_MEMORY_COUNTERS counters;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters))) {
+      virtual_memory = counters.PagefileUsage;
+      resident_memory = counters.WorkingSetSize;
+    }
+#endif
+
+    mResourceUsage.setText(juce::String(cpu, 1) + "% CPU | Virtual " + juce::String(virtual_memory >> 20) + " MB" + " | Resident " +
+                               juce::String(resident_memory >> 20) + " MB",
+                           juce::dontSendNotification);
+  }
+
   repaint();
 }
 
@@ -291,7 +325,9 @@ void GRainbowAudioProcessorEditor::resized() {
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
   mGlobalParamBox.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2));
-  mNoteGrid.setBounds(rightPanel);
+  const int resourceUsageHight = 15;
+  mNoteGrid.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() - resourceUsageHight));
+  mResourceUsage.setBounds(rightPanel);
 
   // Open and record buttons
   auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT + BTN_PADDING);
