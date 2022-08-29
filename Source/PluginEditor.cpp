@@ -356,13 +356,20 @@ void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files, 
    location
 */
 void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
+  if (mIsFileChooserUsed) {
+    return;
+  }
   if (path == nullptr) {
+    mIsFileChooserUsed = true;
     juce::FileChooser chooser("Select a file to granulize...", juce::File::getCurrentWorkingDirectory(), "*.wav;*.mp3;*.gbow",
                               true);
 
     if (chooser.browseForFileToOpen()) {
+      mIsFileChooserUsed = false;
       auto file = chooser.getResult();
       processFile(file);
+    } else {
+      mIsFileChooserUsed = false;
     }
   } else {
     auto file = juce::File(juce::String(path));
@@ -519,14 +526,19 @@ void GRainbowAudioProcessorEditor::processNewSample(juce::Range<juce::int64> ran
 }
 
 void GRainbowAudioProcessorEditor::savePreset() {
+  if (mIsFileChooserUsed) {
+    return;
+  }
   Preset::Header header;
   header.magic = Preset::MAGIC;
   header.versionMajor = Preset::VERSION_MAJOR;
   header.versionMinor = Preset::VERSION_MINOR;
 
+  mIsFileChooserUsed = true;
   juce::FileChooser chooser("Save gRainbow presets to a file", juce::File::getCurrentWorkingDirectory(), "*.gbow", true);
 
   if (chooser.browseForFileToSave(true)) {
+    mIsFileChooserUsed = false;
     juce::File file = chooser.getResult().withFileExtension("gbow");
     file.deleteFile();  // clear file if replacing
     juce::FileOutputStream outputStream(file);
@@ -582,6 +594,8 @@ void GRainbowAudioProcessorEditor::savePreset() {
       displayError(juce::String::formatted("Unable to open %s to write", file.getFullPathName().toRawUTF8()));
       return;
     }
+  } else {
+    mIsFileChooserUsed = false;
   }
 }
 

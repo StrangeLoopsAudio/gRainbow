@@ -104,6 +104,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
   bool mIsFileHovering = false;
+  bool mIsFileChooserUsed = false;
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
   juce::AudioFormatReader* mFormatReader;
