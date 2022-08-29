@@ -490,7 +490,7 @@ void GRainbowAudioProcessorEditor::processPreset(juce::File file) {
 }
 
 void GRainbowAudioProcessorEditor::processNewSample(double sampleRate, bool setSelection) {
-  juce::AudioBuffer<float>& audioBuffer = mTrimSelection.getAuidoBuffer();
+  juce::AudioBuffer<float>& audioBuffer = mTrimSelection.getAudioBuffer();
 
   if (setSelection) {
     // Reset any UI elements that will need to wait until processing
