@@ -23,12 +23,12 @@ PitchDetector::PitchDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch d
 
 PitchDetector::~PitchDetector() { stopThread(4000); }
 
-void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate) {
+void PitchDetector::processAudioBuffer(juce::AudioBuffer<float>* audioBuffer, double sampleRate) {
   cancelProcessing();
   updateProgress(0.01);
-  mFileBuffer = fileBuffer;
+  mInputBuffer = audioBuffer;
   mSampleRate = sampleRate;
-  mFft.processBuffer(fileBuffer);
+  mFft.processAudioBuffer(audioBuffer);
 }
 
 void PitchDetector::cancelProcessing() {
@@ -37,7 +37,7 @@ void PitchDetector::cancelProcessing() {
 }
 
 void PitchDetector::run() {
-  if (mFileBuffer == nullptr) return;
+  if (mInputBuffer == nullptr) return;
   if (!computeHPCP()) return;
   if (onHarmonicProfileReady != nullptr) onHarmonicProfileReady(mHPCP);
   if (!segmentPitches()) return;

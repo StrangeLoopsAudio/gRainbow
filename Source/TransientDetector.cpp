@@ -23,13 +23,13 @@ TransientDetector::TransientDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread(
 
 TransientDetector::~TransientDetector() { stopThread(2000); }
 
-void TransientDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer) {
-  mFft.processBuffer(fileBuffer);
-  mFileBuffer = fileBuffer;
+void TransientDetector::processAudioBuffer(juce::AudioBuffer<float>* audioBuffer) {
+  mFft.processAudioBuffer(audioBuffer);
+  mInputBuffer = audioBuffer;
 }
 
 void TransientDetector::run() {
-  if (mFileBuffer == nullptr) return;
+  if (mInputBuffer == nullptr) return;
   retrieveTransients();
   if (onTransientsUpdated != nullptr && !threadShouldExit()) {
     onTransientsUpdated(mTransients);

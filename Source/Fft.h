@@ -26,7 +26,7 @@ class Fft : public juce::Thread {
 
   void run() override;
 
-  void processBuffer(juce::AudioBuffer<float>* fileBuffer);
+  void processAudioBuffer(juce::AudioBuffer<float>* audioBuffer);
   std::vector<std::vector<float>>& getSpectrum() { return mFftData; }
 
   std::function<void(std::vector<std::vector<float>>& spectrum)> onProcessingComplete = nullptr;
@@ -39,7 +39,7 @@ class Fft : public juce::Thread {
   juce::dsp::WindowingFunction<float> mWindowEnvelope;
 
   // pointer to buffer to read from
-  juce::AudioBuffer<float>* mFileBuffer = nullptr;
+  juce::AudioBuffer<float>* mInputBuffer = nullptr;
 
   // processed data
   std::vector<float> mFftFrame;

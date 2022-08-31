@@ -13,21 +13,21 @@
 // Once a buffer is loaded, will run to produce mFftData and then will async
 // notify when done
 void Fft::run() {
-  if (mFileBuffer == nullptr) return;
+  if (mInputBuffer == nullptr) return;
   // Runs with first channel
-  const float* pBuffer = mFileBuffer->getReadPointer(0);
+  const float* pBuffer = mInputBuffer->getReadPointer(0);
   mFftFrame.clear();
   mFftFrame.resize(mWindowSize * 2, 0.0f);
   int curSample = 0;
-  bool hasData = mFileBuffer->getNumSamples() > mFftFrame.size();
+  bool hasData = mInputBuffer->getNumSamples() > mFftFrame.size();
   float curMax = std::numeric_limits<float>::min();
   mFftData.clear();
 
   while (hasData && !threadShouldExit()) {
     const float* startSample = &pBuffer[curSample];
     int numSamples = mFftFrame.size();
-    if (curSample + mFftFrame.size() > mFileBuffer->getNumSamples()) {
-      numSamples = (mFileBuffer->getNumSamples() - curSample);
+    if (curSample + mFftFrame.size() > mInputBuffer->getNumSamples()) {
+      numSamples = (mInputBuffer->getNumSamples() - curSample);
     }
     mFftFrame.clear();
     mFftFrame.resize(mWindowSize * 2, 0.0f);
@@ -48,7 +48,7 @@ void Fft::run() {
     }
 
     curSample += mHopSize;
-    if (curSample > mFileBuffer->getNumSamples()) hasData = false;
+    if (curSample > mInputBuffer->getNumSamples()) hasData = false;
   }
 
   if (onProcessingComplete != nullptr) {
@@ -56,8 +56,8 @@ void Fft::run() {
   }
 }
 
-void Fft::processBuffer(juce::AudioBuffer<float>* fileBuffer) {
+void Fft::processAudioBuffer(juce::AudioBuffer<float>* audioBuffer) {
   stopThread(4000);
-  mFileBuffer = fileBuffer;
+  mInputBuffer = audioBuffer;
   startThread();
 }

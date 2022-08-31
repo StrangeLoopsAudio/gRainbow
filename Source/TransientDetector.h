@@ -31,7 +31,7 @@ class TransientDetector : juce::Thread {
 
   std::function<void(std::vector<Transient>&)> onTransientsUpdated = nullptr;
 
-  void processBuffer(juce::AudioBuffer<float>* fileBuffer);
+  void processAudioBuffer(juce::AudioBuffer<float>* audioBuffer);
 
   void run() override;
 
@@ -43,7 +43,7 @@ class TransientDetector : juce::Thread {
   static constexpr auto PARAM_ATTACK_LOCK = 10;
 
   Fft mFft;
-  juce::AudioBuffer<float>* mFileBuffer = nullptr;
+  juce::AudioBuffer<float>* mInputBuffer = nullptr;
   std::array<float, PARAM_SPREAD> mEnergyBuffer;  // Spectral energy rolling buffer
   std::vector<Transient> mTransients;
   int mAttackFrames = PARAM_ATTACK_LOCK;

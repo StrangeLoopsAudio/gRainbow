@@ -36,7 +36,6 @@ class PitchDetector : juce::Thread {
  public:
   static constexpr auto MIN_MIDINOTE = 43;
   static constexpr auto MAX_MIDINOTE = 91;
-   
 
   PitchDetector();
   ~PitchDetector();
@@ -50,14 +49,14 @@ class PitchDetector : juce::Thread {
     Pitch(Utils::PitchClass pitchClass, float posRatio, float duration, float gain)
         : pitchClass(pitchClass), posRatio(posRatio), duration(duration), gain(gain) {}
   } Pitch;
-  
+
   typedef juce::HashMap<Utils::PitchClass, std::vector<Pitch>> PitchMap;
 
   std::function<void(std::vector<std::vector<float>>& hpcp)> onHarmonicProfileReady = nullptr;
   std::function<void(PitchMap& pitchMap, std::vector<std::vector<float>>& pitchSpec)> onPitchesReady = nullptr;
   std::function<void(double progress)> onProgressUpdated = nullptr;
 
-  void processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate);
+  void processAudioBuffer(juce::AudioBuffer<float>* audioBuffer, double sampleRate);
   void cancelProcessing();
 
   void run() override;
@@ -112,7 +111,7 @@ class PitchDetector : juce::Thread {
     HarmonicWeight(int semitone, float harmonicStrength) : semitone(semitone), gain(harmonicStrength) {}
   } HarmonicWeight;
 
-  juce::AudioBuffer<float>* mFileBuffer = nullptr;
+  juce::AudioBuffer<float>* mInputBuffer = nullptr;
   Fft mFft;
   double mSampleRate;
   // HPCP fields

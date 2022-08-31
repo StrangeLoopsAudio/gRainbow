@@ -38,7 +38,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void reset();
   bool shouldLoadImage(ParamUI::SpecType type) { return !mIsProcessing && !mImagesComplete[type]; }
   void loadBuffer(Utils::SpecBuffer *buffer, ParamUI::SpecType type);
-  void loadBuffer(juce::AudioBuffer<float> *fileBuffer); // Raw audio samples from file
+  void loadBuffer(juce::AudioBuffer<float> *audioBuffer);  // Raw audio samples from file
   void loadPreset();
   void setMidiNotes(const juce::Array<Utils::MidiNote> &midiNotes);
   void setSpecType(ParamUI::SpecType type) { mSpecType.setSelectedItemIndex(type, juce::dontSendNotification); }

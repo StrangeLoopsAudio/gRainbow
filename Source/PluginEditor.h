@@ -113,7 +113,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void openNewFile(const char* path = nullptr);
   void processFile(juce::File file);
   void processPreset(juce::File file);
-  void processNewSample(juce::Range<juce::int64> range, bool setSelection);
   void startRecording();
   void stopRecording();
   void savePreset();

@@ -114,7 +114,14 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     if (start == end) {
       displayError("Attempted to select an empty range");
     } else {
-      processNewSample(juce::Range<juce::int64>(start, end), setSelection);
+      mSynth.processInput(juce::Range<juce::int64>(start, end), setSelection, false);
+      if (setSelection) {
+        // Reset any UI elements that will need to wait until processing
+        mArcSpec.reset();
+        mBtnPreset.setEnabled(false);
+        updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
+        mArcSpec.loadBuffer(&mSynth.getAudioBuffer());
+      }
     }
   };
 
@@ -465,6 +472,13 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
       displayError("Unable to read the file.");
       return;
     }
+
+    juce::AudioBuffer<float> fileAudioBuffer;
+    const int length = static_cast<int>(mFormatReader->lengthInSamples);
+    fileAudioBuffer.setSize(mFormatReader->numChannels, length);
+    mFormatReader->read(&fileAudioBuffer, 0, length, 0, true, true);
+    mSynth.setInputBuffer(&fileAudioBuffer, mFormatReader->sampleRate);
+
     // TODO - It is not obvious that this function will delete the AudioFormatReader for use when called multiple times because
     // AudioThumbnail deletes it when calling setReader again
     mTrimSelection.parse(mFormatReader, file.hashCode64(), mErrorMessage);
@@ -534,32 +548,12 @@ void GRainbowAudioProcessorEditor::processPreset(juce::File file) {
 
     mBtnPreset.setEnabled(true);
     mArcSpec.loadPreset();
-    mSynth.processFile(&fileAudioBuffer, sampleRate, true);
-    mArcSpec.loadBuffer(&mSynth.getFileBuffer());
+    mSynth.setInputBuffer(&fileAudioBuffer, sampleRate);
+    mSynth.processInput(juce::Range<juce::int64>(), false, true);
+    mArcSpec.loadBuffer(&mSynth.getAudioBuffer());
   } else {
     displayError(juce::String::formatted("The file failed to open because %s", input.getStatus().getErrorMessage().toRawUTF8()));
     return;
-  }
-}
-
-void GRainbowAudioProcessorEditor::processNewSample(juce::Range<juce::int64> range, bool setSelection) {
-  juce::AudioBuffer<float> fileAudioBuffer;
-  const int sampleLength = static_cast<int>(range.getLength());
-  fileAudioBuffer.setSize(mFormatReader->numChannels, sampleLength);
-  mFormatReader->read(&fileAudioBuffer, 0, sampleLength, range.getStart(), true, true);
-  const double sampleRate = mFormatReader->sampleRate;
-
-  if (setSelection) {
-    // Reset any UI elements that will need to wait until processing
-    mArcSpec.reset();
-    mBtnPreset.setEnabled(false);
-    updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
-  }
-
-  mSynth.processFile(&fileAudioBuffer, sampleRate, false);
-
-  if (setSelection) {
-    mArcSpec.loadBuffer(&mSynth.getFileBuffer());
   }
 }
 

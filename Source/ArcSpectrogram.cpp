@@ -144,9 +144,9 @@ void ArcSpectrogram::run() {
 
   // Audio waveform (1D) is handled a bit differently than its 2D spectrograms
   if (mProcessType == ParamUI::SpecType::WAVEFORM) {
-    juce::AudioBuffer<float>* fileBuffer = (juce::AudioBuffer<float>*)mBuffers[mProcessType];
-    const float* bufferSamples = fileBuffer->getReadPointer(0);
-    float maxMagnitude = fileBuffer->getMagnitude(0, fileBuffer->getNumSamples());
+    juce::AudioBuffer<float>* audioBuffer = (juce::AudioBuffer<float>*)mBuffers[mProcessType];
+    const float* bufferSamples = audioBuffer->getReadPointer(0);
+    float maxMagnitude = audioBuffer->getMagnitude(0, audioBuffer->getNumSamples());
 
     // Draw NUM_COLS worth of audio samples
     juce::Point<float> prevPoint = startPoint.getPointOnCircumference(startRadius + bowWidth / 2.0f, startRadius + bowWidth / 2.0f,
@@ -154,7 +154,7 @@ void ArcSpectrogram::run() {
     juce::Colour prevColour = juce::Colours::black;
     for (auto i = 0; i < NUM_COLS; ++i) {
       if (threadShouldExit()) return;
-      int sampleIdx = ((float)i / NUM_COLS) * fileBuffer->getNumSamples();
+      int sampleIdx = ((float)i / NUM_COLS) * audioBuffer->getNumSamples();
       float sampleRadius = juce::jmap(bufferSamples[sampleIdx], -maxMagnitude, maxMagnitude, (float)startRadius, (float)endRadius);
 
       // Choose rainbow color depending on radius
@@ -264,13 +264,13 @@ void ArcSpectrogram::loadBuffer(Utils::SpecBuffer* buffer, ParamUI::SpecType typ
   }
 }
 
-void ArcSpectrogram::loadBuffer(juce::AudioBuffer<float>* fileBuffer) {
-  if (fileBuffer == nullptr) return;
+void ArcSpectrogram::loadBuffer(juce::AudioBuffer<float>* audioBuffer) {
+  if (audioBuffer == nullptr) return;
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   if (mImagesComplete[ParamUI::SpecType::WAVEFORM]) return;
 
   mProcessType = ParamUI::SpecType::WAVEFORM;
-  mBuffers[mProcessType] = fileBuffer;
+  mBuffers[mProcessType] = audioBuffer;
 
   // make visible when loading the buffer if it isn't already
   mSpecType.setVisible(true);
