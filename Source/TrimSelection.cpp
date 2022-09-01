@@ -67,9 +67,9 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
   mBtnPlayback.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
   mBtnPlayback.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
   mBtnPlayback.onClick = [this] {
-    mParamUI.trimSelectionPlaybackOn = !mParamUI.trimSelectionPlaybackOn;
-    if (mParamUI.trimSelectionPlaybackOn) {
-      mParamUI.trimSelectionPlaybackPosition = mSelectedRange.getStart();
+    mParamUI.trimPlaybackOn = !mParamUI.trimPlaybackOn;
+    if (mParamUI.trimPlaybackOn) {
+      mParamUI.trimPlaybackSample = timeToSample(mSelectedRange.getStart());
     }
   };
   addAndMakeVisible(mBtnPlayback);
@@ -126,7 +126,7 @@ void TrimSelection::paint(juce::Graphics& g) {
 
       g.setGradientFill(juce::ColourGradient(juce::Colours::lightblue, channelBounds.getTopLeft().toFloat(),
                                              juce::Colours::darkgrey, channelBounds.getBottomLeft().toFloat(), false));
-      mThumbnail.drawChannel(g, channelBounds, mVisibleRange.getStart(), mVisibleRange.getEnd(), i, 1.0f);
+      mThumbnail.drawChannel(g, channelBounds, 0.0f, mVisibleRange.getEnd(), i, 1.0f);
     }
   }
 
@@ -150,7 +150,7 @@ void TrimSelection::paint(juce::Graphics& g) {
 
   // Draw line showing where audio is playing from
   {
-    const float xPosition = timeToXPosition(mParamUI.trimSelectionPlaybackPosition);
+    const float xPosition = sampleToXPosition(mParamUI.trimPlaybackSample);
     mPlaybackMarker.setRectangle(juce::Rectangle<float>(xPosition, 0, 1.5f, thumbnailHeight));
   }
 
@@ -175,7 +175,7 @@ void TrimSelection::parse(juce::AudioFormatReader* formatReader, juce::int64 has
 
   mThumbnail.setReader(formatReader, hash);
 
-  mVisibleRange.setStart(0.0f);
+  mVisibleRange.setStart(0.0);  // never is not zero
   mVisibleRange.setEnd(duration);
   // start with everything selected
   mSelectedRange = mVisibleRange;
@@ -243,10 +243,10 @@ void TrimSelection::updatePointMarker() {
 }
 
 // There is a single instance of TrimSelection so clean up between uses
-void TrimSelection::cleanup() { mParamUI.trimSelectionPlaybackOn = false; }
+void TrimSelection::cleanup() { mParamUI.trimPlaybackOn = false; }
 
 double TrimSelection::timeToXPosition(double time) const {
-  const double start = time - mVisibleRange.getStart();
+  const double start = time;
   const double width = mThumbnailRect.getWidth();
   const double length = mVisibleRange.getLength();
   const double offset = mThumbnailRect.getX();
@@ -257,17 +257,31 @@ double TrimSelection::xPositionToTime(double xPosition) const {
   // xPosition is overall component, need to adjust to thumbnail bounds
   const double x = (xPosition - mThumbnailRect.getX()) * mVisibleRange.getLength();
   const double width = mThumbnailRect.getWidth();
-  const double start = mVisibleRange.getStart();
-  return (x / width) + start;
+  return (x / width);
+}
+
+double TrimSelection::sampleToXPosition(int sample) const {
+  const double start = static_cast<double>(sample);
+  const double length = static_cast<double>(mParamUI.trimPlaybackMaxSample);
+  const double width = mThumbnailRect.getWidth();
+  const double offset = mThumbnailRect.getX();
+  return ((start * width) / length) + offset;
+}
+
+int TrimSelection::timeToSample(double time) const {
+  const double start = time;
+  const double width = static_cast<double>(mParamUI.trimPlaybackMaxSample);
+  const double length = mVisibleRange.getLength();
+  return static_cast<int>((start * width) / length);
 }
 
 void TrimSelection::MarkerMouseDragged(PointMarker& marker, const juce::MouseEvent& e) {
   const double x = xPositionToTime(e.getEventRelativeTo(this).position.x);
   if (&marker == &mStartMarker) {
     if (mSelectedRange.getEnd() - x >= MIN_SELECTION_SEC) {
-      mSelectedRange.setStart(juce::jmax(x, mVisibleRange.getStart()));
+      mSelectedRange.setStart(juce::jmax(x, 0.0));
     } else {
-      mSelectedRange.setStart(juce::jmax(mSelectedRange.getEnd() - MIN_SELECTION_SEC, mVisibleRange.getStart()));
+      mSelectedRange.setStart(juce::jmax(mSelectedRange.getEnd() - MIN_SELECTION_SEC, 0.0));
     }
   } else if (&marker == &mEndMarker) {
     if (x - mSelectedRange.getStart() >= MIN_SELECTION_SEC) {
@@ -282,7 +296,7 @@ void TrimSelection::MarkerMouseDragged(PointMarker& marker, const juce::MouseEve
 void TrimSelection::MarkerMouseUp(PointMarker& marker, const juce::MouseEvent& e) {
   const double x = xPositionToTime(e.getEventRelativeTo(this).position.x);
   if (&marker == &mStartMarker && mSelectedRange.getEnd() - x >= MIN_SELECTION_SEC) {
-    mSelectedRange.setStart(juce::jmax(x, mVisibleRange.getStart()));
+    mSelectedRange.setStart(juce::jmax(x, 0.0));
   } else if (&marker == &mEndMarker && x - mSelectedRange.getStart() >= MIN_SELECTION_SEC) {
     mSelectedRange.setEnd(juce::jmin(x, mVisibleRange.getEnd()));
   }
@@ -290,16 +304,17 @@ void TrimSelection::MarkerMouseUp(PointMarker& marker, const juce::MouseEvent& e
 }
 
 void TrimSelection::ThumbnailMouseDown(const juce::MouseEvent& e) {
-  mParamUI.trimSelectionPlaybackOn = false;
+  mParamUI.trimPlaybackOn = false;
   ThumbnailMouseDrag(e);  // same logic to select position
 }
 
 void TrimSelection::ThumbnailMouseDrag(const juce::MouseEvent& e) {
-  double x = xPositionToTime(e.getEventRelativeTo(this).position.x);
+  double time = xPositionToTime(e.getEventRelativeTo(this).position.x);
+  int sample = timeToSample(time);
   // prevent from selecting out of the thumbnail
-  x = juce::jmax(x, mVisibleRange.getStart());
-  x = juce::jmin(x, mVisibleRange.getEnd());
-  mParamUI.trimSelectionPlaybackPosition = x;
+  sample = juce::jmax(sample, 0);
+  sample = juce::jmin(sample, mParamUI.trimPlaybackMaxSample);
+  mParamUI.trimPlaybackSample = sample;
 }
 
-void TrimSelection::ThumbnailMouseUp(const juce::MouseEvent& e) { mParamUI.trimSelectionPlaybackOn = true; }
+void TrimSelection::ThumbnailMouseUp(const juce::MouseEvent& e) { mParamUI.trimPlaybackOn = true; }

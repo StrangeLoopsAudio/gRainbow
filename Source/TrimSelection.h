@@ -109,6 +109,8 @@ class TrimSelection : public juce::Component {
   void updatePointMarker();
   double timeToXPosition(double time) const;
   double xPositionToTime(double xPosition) const;
+  double sampleToXPosition(int sample) const;
+  int timeToSample(double time) const;
 
   void MarkerMouseDragged(PointMarker& marker, const juce::MouseEvent& e);
   void MarkerMouseUp(PointMarker& marker, const juce::MouseEvent& e);

@@ -360,6 +360,7 @@ struct ParamUI {
   CenterComponent centerComponent = CenterComponent::LOGO;
 
   // trim selection status to pass information to the synth so it can pipe the audio out the main output
-  bool trimSelectionPlaybackOn = false;
-  double trimSelectionPlaybackPosition;
+  bool trimPlaybackOn = false;
+  int trimPlaybackSample;  // sampling buffer index position
+  int trimPlaybackMaxSample;
 };

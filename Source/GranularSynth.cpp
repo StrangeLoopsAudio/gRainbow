@@ -139,8 +139,9 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   juce::ScopedNoDenormals noDenormals;
   auto totalNumInputChannels = getTotalNumInputChannels();
   auto totalNumOutputChannels = getTotalNumOutputChannels();
+  const int bufferNumSample = buffer.getNumSamples();
 
-  mKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
+  mKeyboardState.processNextMidiBuffer(midiMessages, 0, bufferNumSample, true);
 
   // In case we have more outputs than inputs, this code clears any output
   // channels that didn't contain input data, (because these aren't
@@ -149,12 +150,25 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   // when they first compile a plugin, but obviously you don't need to keep
   // this code if your algorithm always overwrites all the output channels.
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
-    buffer.clear(i, 0, buffer.getNumSamples());
+    buffer.clear(i, 0, bufferNumSample);
+  }
+
+  if (mParamUI.trimPlaybackOn) {
+    int numSample = bufferNumSample;
+    if (mParamUI.trimPlaybackSample + bufferNumSample >= mParamUI.trimPlaybackMaxSample) {
+      mParamUI.trimPlaybackOn = false;
+      numSample = mParamUI.trimPlaybackMaxSample - mParamUI.trimPlaybackSample;
+    }
+
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+      buffer.copyFrom(ch, 0, mInputBuffer, ch, mParamUI.trimPlaybackSample, numSample);
+    }
+    mParamUI.trimPlaybackSample += numSample;
   }
 
   // Add contributions from each note
   auto bufferChannels = buffer.getArrayOfWritePointers();
-  for (int i = 0; i < buffer.getNumSamples(); ++i) {
+  for (int i = 0; i < bufferNumSample; ++i) {
     for (GrainNote& gNote : mActiveNotes) {
       float noteGain =
           gNote.ampEnv.getAmplitude(mTotalSamps, mParamGlobal.attack->get() * mSampleRate, mParamGlobal.decay->get() * mSampleRate,
@@ -192,10 +206,10 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
   // Clip buffers to valid range
   for (int i = 0; i < buffer.getNumChannels(); i++) {
-    juce::FloatVectorOperations::clip(buffer.getWritePointer(i), buffer.getReadPointer(i), -1.0f, 1.0f, buffer.getNumSamples());
+    juce::FloatVectorOperations::clip(buffer.getWritePointer(i), buffer.getReadPointer(i), -1.0f, 1.0f, bufferNumSample);
   }
 
-  handleGrainAddRemove(buffer.getNumSamples());
+  handleGrainAddRemove(bufferNumSample);
 
   // Reset timestamps if no grains active to keep numbers low
   if (mActiveNotes.isEmpty()) {
@@ -203,7 +217,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   } else {
     // Normalize the block before sending onward
     // if grains is empty, don't want to divide by zero
-    /*for (int i = 0; i < buffer.getNumSamples(); ++i) {
+    /*for (int i = 0; i < bufferNumSample; ++i) {
       for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
          float* channelBlock = buffer.getWritePointer(ch);
          channelBlock[i] /= mGrains.size();
@@ -414,6 +428,7 @@ void GranularSynth::setInputBuffer(juce::AudioBuffer<float>* audioBuffer, double
   const double ratioToOutput = mSampleRate / sampleRate;  // output / input
   // The output buffer needs to be size that matches the new sample rate
   const int resampleSize = static_cast<int>(static_cast<double>(audioBuffer->getNumSamples()) * ratioToOutput);
+  mParamUI.trimPlaybackMaxSample = resampleSize;
   mInputBuffer.setSize(audioBuffer->getNumChannels(), resampleSize);
 
   const float** inputs = audioBuffer->getArrayOfReadPointers();
