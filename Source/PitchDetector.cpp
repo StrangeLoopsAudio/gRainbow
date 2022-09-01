@@ -15,7 +15,7 @@
 
 PitchDetector::PitchDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch detector thread") {
   initHarmonicWeights();
-  mFft.onProcessingComplete = [this](std::vector<std::vector<float>>& spectrum) {
+  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
     stopThread(4000);
     startThread();
   };
@@ -74,7 +74,7 @@ void PitchDetector::getSegmentedPitchBuffer() {
 bool PitchDetector::computeHPCP() {
   mHPCP.clear();
 
-  std::vector<std::vector<float>>& spec = mFft.getSpectrum();
+  Utils::SpecBuffer& spec = mFft.getSpectrum();
   for (int frame = 0; frame < spec.size(); ++frame) {
     if (threadShouldExit()) return false;
     updateProgress(0.1 + 0.9 * ((float)frame / spec.size()));
@@ -239,7 +239,7 @@ Utils::PitchClass PitchDetector::getPitchClass(float binNum) {
 
 PitchDetector::Peak PitchDetector::interpolatePeak(int frame, int bin) {
   // Use quadratic interpolation to find peak freq and amplitude
-  std::vector<std::vector<float>>& spec = mFft.getSpectrum();
+  Utils::SpecBuffer& spec = mFft.getSpectrum();
   if (bin == 0 || bin == spec[frame].size() - 1) {
     return Peak((bin * mSampleRate) / FFT_SIZE, spec[frame][bin]);
   }

@@ -40,7 +40,7 @@ GranularSynth::GranularSynth()
     mProcessedSpecs[ParamUI::SpecType::HPCP] = &hpcpBuffer;
   };
 
-  mPitchDetector.onPitchesReady = [this](PitchDetector::PitchMap& pitchMap, std::vector<std::vector<float>>& pitchSpec) {
+  mPitchDetector.onPitchesReady = [this](PitchDetector::PitchMap& pitchMap, Utils::SpecBuffer& pitchSpec) {
     mProcessedSpecs[ParamUI::SpecType::DETECTED] = &pitchSpec;
     createCandidates(pitchMap);
   };

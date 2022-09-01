@@ -13,6 +13,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Utils.h"
 
 class Fft : public juce::Thread {
  public:
@@ -27,9 +28,9 @@ class Fft : public juce::Thread {
   void run() override;
 
   void processAudioBuffer(juce::AudioBuffer<float>* audioBuffer);
-  std::vector<std::vector<float>>& getSpectrum() { return mFftData; }
+  Utils::SpecBuffer& getSpectrum() { return mFftData; }
 
-  std::function<void(std::vector<std::vector<float>>& spectrum)> onProcessingComplete = nullptr;
+  std::function<void(Utils::SpecBuffer& spectrum)> onProcessingComplete = nullptr;
 
  private:
   // values passed in at creation time
@@ -43,5 +44,5 @@ class Fft : public juce::Thread {
 
   // processed data
   std::vector<float> mFftFrame;
-  std::vector<std::vector<float>> mFftData;  // FFT data normalized from 0.0-1.0
+  Utils::SpecBuffer mFftData;  // FFT data normalized from 0.0-1.0
 };

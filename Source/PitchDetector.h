@@ -52,8 +52,8 @@ class PitchDetector : juce::Thread {
 
   typedef juce::HashMap<Utils::PitchClass, std::vector<Pitch>> PitchMap;
 
-  std::function<void(std::vector<std::vector<float>>& hpcp)> onHarmonicProfileReady = nullptr;
-  std::function<void(PitchMap& pitchMap, std::vector<std::vector<float>>& pitchSpec)> onPitchesReady = nullptr;
+  std::function<void(Utils::SpecBuffer& hpcp)> onHarmonicProfileReady = nullptr;
+  std::function<void(PitchMap& pitchMap, Utils::SpecBuffer& pitchSpec)> onPitchesReady = nullptr;
   std::function<void(double progress)> onProgressUpdated = nullptr;
 
   void processAudioBuffer(juce::AudioBuffer<float>* audioBuffer, double sampleRate);
@@ -116,10 +116,10 @@ class PitchDetector : juce::Thread {
   double mSampleRate;
   // HPCP fields
   std::vector<HarmonicWeight> mHarmonicWeights;
-  std::vector<std::vector<float>> mHPCP;  // harmonic pitch class profile
+  Utils::SpecBuffer mHPCP;  // harmonic pitch class profile
 
   // Pitch segments in buffer form
-  std::vector<std::vector<float>> mSegmentedPitches;
+  Utils::SpecBuffer mSegmentedPitches;
   std::array<PitchSegment, NUM_ACTIVE_SEGMENTS> mSegments;
 
   // Hashmap of detected pitches

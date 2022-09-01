@@ -15,7 +15,7 @@
 #include <limits.h>
 
 TransientDetector::TransientDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("transient thread") {
-  mFft.onProcessingComplete = [this](std::vector<std::vector<float>>& spectrum) {
+  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
     stopThread(4000);
     startThread();
   };
@@ -38,7 +38,7 @@ void TransientDetector::run() {
 
 void TransientDetector::retrieveTransients() {
   // Perform transient detection on each frame
-  std::vector<std::vector<float>>& spec = mFft.getSpectrum();
+  Utils::SpecBuffer& spec = mFft.getSpectrum();
   mTransients.clear();
   mEnergyBuffer.fill(0.0f);
   for (int frame = 0; frame < spec.size(); ++frame) {
