@@ -40,6 +40,26 @@ class PointMarker : public juce::Component {
 };
 
 /**
+ * @brief juce::AudioThumbnail are not juce::Component and this class is just to put a mouse listener ontop of the AudioThumbnail
+ */
+class AudioThumbnailShadow : public juce::Component {
+ public:
+  using MouseCallback = std::function<void(const juce::MouseEvent&)>;
+  AudioThumbnailShadow(MouseCallback onMouseDown, MouseCallback onMouseDrag, MouseCallback onMouseUp)
+      : mOnMouseDown(std::move(onMouseDown)), mOnMouseDrag(std::move(onMouseDrag)), mOnMouseUp(std::move(onMouseUp)){};
+  void paint(juce::Graphics& g) override{};
+  void resized() override{};
+
+ private:
+  void mouseDown(const juce::MouseEvent& e) override { mOnMouseDown(e); }
+  void mouseDrag(const juce::MouseEvent& e) override { mOnMouseDrag(e); }
+  void mouseUp(const juce::MouseEvent& e) override { mOnMouseUp(e); }
+  MouseCallback mOnMouseDown;
+  MouseCallback mOnMouseDrag;
+  MouseCallback mOnMouseUp;
+};
+
+/**
  * @brief Lets the user trim the sample when loading it
  */
 class TrimSelection : public juce::Component {
@@ -60,6 +80,7 @@ class TrimSelection : public juce::Component {
 
   juce::AudioThumbnailCache mThumbnailCache;
   juce::AudioThumbnail mThumbnail;
+  AudioThumbnailShadow mThumbnailShadow;
 
   ParamUI& mParamUI;
 
@@ -68,6 +89,7 @@ class TrimSelection : public juce::Component {
   juce::Range<double> mSelectedRange;
 
   juce::TextButton mBtnCancel;
+  juce::TextButton mBtnPlayback;
   juce::TextButton mBtnTestSelection;
   juce::TextButton mBtnSetSelection;
 
@@ -75,11 +97,14 @@ class TrimSelection : public juce::Component {
   PointMarker mEndMarker;
   juce::String mStartTimeString;
   juce::String mEndTimeString;
+  juce::DrawableRectangle mPlaybackMarker;
 
   // Resized bound values
   juce::Rectangle<int> mThumbnailRect;
   juce::Rectangle<int> mSelectorRect;
   juce::Rectangle<int> mTestResultRect;
+
+  void cleanup();
 
   void updatePointMarker();
   double timeToXPosition(double time) const;
@@ -87,4 +112,7 @@ class TrimSelection : public juce::Component {
 
   void MarkerMouseDragged(PointMarker& marker, const juce::MouseEvent& e);
   void MarkerMouseUp(PointMarker& marker, const juce::MouseEvent& e);
+  void ThumbnailMouseDown(const juce::MouseEvent& e);
+  void ThumbnailMouseDrag(const juce::MouseEvent& e);
+  void ThumbnailMouseUp(const juce::MouseEvent& e);
 };

@@ -44,6 +44,9 @@ bool PointMarker::hitTest(int x, int y) { return mPath.contains(static_cast<floa
 TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& paramUI)
     : mThumbnailCache(1),
       mThumbnail(512, formatManager, mThumbnailCache),
+      mThumbnailShadow([this](const juce::MouseEvent& e) { this->ThumbnailMouseDown(e); },
+                       [this](const juce::MouseEvent& e) { this->ThumbnailMouseDrag(e); },
+                       [this](const juce::MouseEvent& e) { this->ThumbnailMouseUp(e); }),
       mParamUI(paramUI),
       mStartMarker(
           "S", juce::Colours::green, [this](PointMarker& m, const juce::MouseEvent& e) { this->MarkerMouseDragged(m, e); },
@@ -54,8 +57,22 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
   mBtnCancel.setButtonText("Cancel");
   mBtnCancel.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
   mBtnCancel.setColour(juce::TextButton::buttonOnColourId, juce::Colours::red);
-  mBtnCancel.onClick = [this] { onCancel(); };
+  mBtnCancel.onClick = [this] {
+    onCancel();
+    cleanup();
+  };
   addAndMakeVisible(mBtnCancel);
+
+  mBtnPlayback.setButtonText("Play/Stop");
+  mBtnPlayback.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
+  mBtnPlayback.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
+  mBtnPlayback.onClick = [this] {
+    mParamUI.trimSelectionPlaybackOn = !mParamUI.trimSelectionPlaybackOn;
+    if (mParamUI.trimSelectionPlaybackOn) {
+      mParamUI.trimSelectionPlaybackPosition = mSelectedRange.getStart();
+    }
+  };
+  addAndMakeVisible(mBtnPlayback);
 
   mBtnTestSelection.setEnabled(false); // TODO: enable once testing is possible
   mBtnTestSelection.setButtonText("Test Selection");
@@ -70,14 +87,21 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
   mBtnSetSelection.setButtonText("Set Selection");
   mBtnSetSelection.setColour(juce::TextButton::buttonColourId, juce::Colours::blue);
   mBtnSetSelection.setColour(juce::TextButton::buttonOnColourId, juce::Colours::blue);
-  mBtnSetSelection.onClick = [this] { onProcessSelection(mSelectedRange, true); };
+  mBtnSetSelection.onClick = [this] {
+    onProcessSelection(mSelectedRange, true);
+    cleanup();
+  };
   addAndMakeVisible(mBtnSetSelection);
 
   addAndMakeVisible(mStartMarker);
   addAndMakeVisible(mEndMarker);
+  addAndMakeVisible(mThumbnailShadow);
+
+  mPlaybackMarker.setFill(juce::Colours::white.withAlpha(0.9f));
+  addAndMakeVisible(mPlaybackMarker);
 }
 
-TrimSelection::~TrimSelection() {}
+TrimSelection::~TrimSelection() { cleanup(); }
 
 void TrimSelection::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);
@@ -90,8 +114,9 @@ void TrimSelection::paint(juce::Graphics& g) {
   }
 
   // Draw thumbnail
+  const int thumbnailHeight = mThumbnailRect.getHeight();
   {
-    const int channelHeight = mThumbnailRect.getHeight() / numChannels;
+    const int channelHeight = thumbnailHeight / numChannels;
     // draw an outline around the thumbnail
     g.setColour(juce::Colours::grey);
     g.drawRect(mThumbnailRect, 1);
@@ -110,7 +135,7 @@ void TrimSelection::paint(juce::Graphics& g) {
     g.setColour(juce::Colours::darkgrey.withAlpha(0.5f));
     g.fillRect(mThumbnailRect.withWidth(timeToXPosition(mSelectedRange.getStart()) - mThumbnailRect.getX()));
     int endX = timeToXPosition(mSelectedRange.getEnd());
-    g.fillRect(endX, mThumbnailRect.getY(), mThumbnailRect.getRight() - endX, mThumbnailRect.getHeight());
+    g.fillRect(endX, mThumbnailRect.getY(), mThumbnailRect.getRight() - endX, thumbnailHeight);
   }
 
   // Draw selectors
@@ -118,8 +143,15 @@ void TrimSelection::paint(juce::Graphics& g) {
     g.setColour(juce::Colours::white);
     g.setFont(14.0f);
     g.drawFittedText(mStartTimeString, mSelectorRect, juce::Justification::bottomLeft, 1);
-    g.drawFittedText(juce::String(mSelectedRange.getLength()) + " seconds", mSelectorRect, juce::Justification::centredBottom, 1);
+    g.drawFittedText(juce::String(mSelectedRange.getLength(), 1) + " seconds", mSelectorRect, juce::Justification::centredBottom,
+                     1);
     g.drawFittedText(mEndTimeString, mSelectorRect, juce::Justification::bottomRight, 1);
+  }
+
+  // Draw line showing where audio is playing from
+  {
+    const float xPosition = timeToXPosition(mParamUI.trimSelectionPlaybackPosition);
+    mPlaybackMarker.setRectangle(juce::Rectangle<float>(xPosition, 0, 1.5f, thumbnailHeight));
   }
 
   // Update text of test results
@@ -135,7 +167,7 @@ void TrimSelection::parse(juce::AudioFormatReader* formatReader, juce::int64 has
   const double duration = static_cast<double>(formatReader->lengthInSamples) / formatReader->sampleRate;
   if (static_cast<int>(duration) <= MIN_SELECTION_SEC) {
     error =
-        juce::String::formatted("The audio file is %f seconds but must be greater than %d seconds", duration, MIN_SELECTION_SEC);
+        juce::String::formatted("The audio file is  %.1f seconds but must be greater than %d seconds", duration, MIN_SELECTION_SEC);
     // If another valid file was opened, cancel as that selection will now fail as the formatReader is bad now
     onCancel();
     return;
@@ -163,11 +195,12 @@ void TrimSelection::resized() {
   mThumbnailRect = r.removeFromTop((2 * r.getHeight()) / 3);
   // extra 20 comes from 14 point font for text and some padding
   mSelectorRect = mThumbnailRect.removeFromBottom(PointMarker::height() + 20);
+  mThumbnailShadow.setBounds(mThumbnailRect);
 
   const int btnHeight = r.getHeight() * 0.3;
   const int btnHeightPadding = r.getHeight() * 0.1;
-  const int btnWidth = r.getWidth() * 0.25;
-  const int btnWidthPadding = r.getWidth() * (.25 / 4.0);
+  const int btnWidth = r.getWidth() * 0.2;
+  const int btnWidthPadding = r.getWidth() * (.2 / 5.0);
 
   juce::Rectangle<int> btnRect = r.removeFromTop(btnHeight);
   mTestResultRect = r;
@@ -175,6 +208,8 @@ void TrimSelection::resized() {
   btnRect.removeFromTop(btnHeightPadding);
   btnRect.removeFromLeft(btnWidthPadding);
   mBtnCancel.setBounds(btnRect.removeFromLeft(btnWidth));
+  btnRect.removeFromLeft(btnWidthPadding);
+  mBtnPlayback.setBounds(btnRect.removeFromLeft(btnWidth));
   btnRect.removeFromLeft(btnWidthPadding);
   mBtnTestSelection.setBounds(btnRect.removeFromLeft(btnWidth));
   btnRect.removeFromLeft(btnWidthPadding);
@@ -206,6 +241,9 @@ void TrimSelection::updatePointMarker() {
   mStartTimeString = juce::String::formatted("%02d:%02d", startMinute, startSecond);
   mEndTimeString = juce::String::formatted("%02d:%02d", endMinute, endSecond);
 }
+
+// There is a single instance of TrimSelection so clean up between uses
+void TrimSelection::cleanup() { mParamUI.trimSelectionPlaybackOn = false; }
 
 double TrimSelection::timeToXPosition(double time) const {
   const double start = time - mVisibleRange.getStart();
@@ -250,3 +288,18 @@ void TrimSelection::MarkerMouseUp(PointMarker& marker, const juce::MouseEvent& e
   }
   updatePointMarker();
 }
+
+void TrimSelection::ThumbnailMouseDown(const juce::MouseEvent& e) {
+  mParamUI.trimSelectionPlaybackOn = false;
+  ThumbnailMouseDrag(e);  // same logic to select position
+}
+
+void TrimSelection::ThumbnailMouseDrag(const juce::MouseEvent& e) {
+  double x = xPositionToTime(e.getEventRelativeTo(this).position.x);
+  // prevent from selecting out of the thumbnail
+  x = juce::jmax(x, mVisibleRange.getStart());
+  x = juce::jmin(x, mVisibleRange.getEnd());
+  mParamUI.trimSelectionPlaybackPosition = x;
+}
+
+void TrimSelection::ThumbnailMouseUp(const juce::MouseEvent& e) { mParamUI.trimSelectionPlaybackOn = true; }
