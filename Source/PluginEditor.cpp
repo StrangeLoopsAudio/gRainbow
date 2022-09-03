@@ -606,11 +606,11 @@ void GRainbowAudioProcessorEditor::savePreset() {
       header.specImageHpcpSize = hpcpStaging.getDataSize();
 
       juce::MemoryOutputStream detectedStaging;
-      header.specImageDetectedSize = detectedStaging.getDataSize();
       if (!mParamUI.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED)) {
         displayError("Unable to write Detected image out the file");
         return;
       }
+      header.specImageDetectedSize = detectedStaging.getDataSize();
 
       // XML structure of preset contains all audio related information
       // These include not just AudioParams but also other params not exposes to
