@@ -73,7 +73,7 @@ class TrimSelection : public juce::Component {
   void parse(juce::AudioFormatReader* formatReader, juce::int64 hash, juce::String& error);
 
   std::function<void(void)> onCancel = nullptr;
-  std::function<void(juce::Range<double>, bool)> onProcessSelection = nullptr;
+  std::function<void(juce::Range<double>)> onProcessSelection = nullptr;
 
  private:
   static constexpr int MIN_SELECTION_SEC = 5;
@@ -90,7 +90,6 @@ class TrimSelection : public juce::Component {
 
   juce::TextButton mBtnCancel;
   juce::TextButton mBtnPlayback;
-  juce::TextButton mBtnTestSelection;
   juce::TextButton mBtnSetSelection;
 
   PointMarker mStartMarker;

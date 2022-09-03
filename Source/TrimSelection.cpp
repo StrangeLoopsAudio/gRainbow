@@ -74,21 +74,11 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
   };
   addAndMakeVisible(mBtnPlayback);
 
-  mBtnTestSelection.setEnabled(false); // TODO: enable once testing is possible
-  mBtnTestSelection.setButtonText("Test Selection");
-  mBtnTestSelection.setColour(juce::TextButton::buttonColourId, juce::Colours::blue);
-  mBtnTestSelection.setColour(juce::TextButton::buttonOnColourId, juce::Colours::blue);
-  mBtnTestSelection.onClick = [this] {
-    // TOOD - Enable
-    // onProcessSelection(mSelectedRange, false);
-  };
-  addAndMakeVisible(mBtnTestSelection);
-
   mBtnSetSelection.setButtonText("Set Selection");
   mBtnSetSelection.setColour(juce::TextButton::buttonColourId, juce::Colours::blue);
   mBtnSetSelection.setColour(juce::TextButton::buttonOnColourId, juce::Colours::blue);
   mBtnSetSelection.onClick = [this] {
-    onProcessSelection(mSelectedRange, true);
+    onProcessSelection(mSelectedRange);
     cleanup();
   };
   addAndMakeVisible(mBtnSetSelection);
@@ -153,14 +143,6 @@ void TrimSelection::paint(juce::Graphics& g) {
     const float xPosition = sampleToXPosition(mParamUI.trimPlaybackSample);
     mPlaybackMarker.setRectangle(juce::Rectangle<float>(xPosition, 0, 1.5f, thumbnailHeight));
   }
-
-  // Update text of test results
-  {
-    // TODO: uncomment when test results are possible
-    //g.setColour(juce::Colours::white);
-    //g.setFont(14.0f);
-    //g.drawFittedText("Select portion of audio to use", mTestResultRect, juce::Justification::centred, 1);
-  }
 }
 
 void TrimSelection::parse(juce::AudioFormatReader* formatReader, juce::int64 hash, juce::String& error) {
@@ -199,8 +181,8 @@ void TrimSelection::resized() {
 
   const int btnHeight = r.getHeight() * 0.3;
   const int btnHeightPadding = r.getHeight() * 0.1;
-  const int btnWidth = r.getWidth() * 0.2;
-  const int btnWidthPadding = r.getWidth() * (.2 / 5.0);
+  const int btnWidth = r.getWidth() * 0.25;
+  const int btnWidthPadding = r.getWidth() * (.25 / 4.0);
 
   juce::Rectangle<int> btnRect = r.removeFromTop(btnHeight);
   mTestResultRect = r;
@@ -210,8 +192,6 @@ void TrimSelection::resized() {
   mBtnCancel.setBounds(btnRect.removeFromLeft(btnWidth));
   btnRect.removeFromLeft(btnWidthPadding);
   mBtnPlayback.setBounds(btnRect.removeFromLeft(btnWidth));
-  btnRect.removeFromLeft(btnWidthPadding);
-  mBtnTestSelection.setBounds(btnRect.removeFromLeft(btnWidth));
   btnRect.removeFromLeft(btnWidthPadding);
   btnRect.removeFromRight(btnWidthPadding);
   mBtnSetSelection.setBounds(btnRect.removeFromLeft(btnWidth));

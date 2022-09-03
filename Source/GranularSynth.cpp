@@ -441,12 +441,11 @@ void GranularSynth::setInputBuffer(juce::AudioBuffer<float>* audioBuffer, double
   }
 }
 
-void GranularSynth::processInput(juce::Range<juce::int64> range, bool setSelection, bool preset) {
+void GranularSynth::processInput(juce::Range<juce::int64> range, bool preset) {
   // Cancel processing if in progress
   mFft.stopThread(4000);
   mPitchDetector.cancelProcessing();
 
-  (void)setSelection;  // TODO - Have path to set synth main audio buffer
   // If a range to trim is provided then
   if (range.isEmpty()) {
     mAudioBuffer.setSize(mInputBuffer.getNumChannels(), mInputBuffer.getNumSamples());

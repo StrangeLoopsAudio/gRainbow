@@ -105,7 +105,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     updateCenterComponent((mParamUI.specComplete) ? ParamUI::CenterComponent::ARC_SPEC : ParamUI::CenterComponent::LOGO);
   };
 
-  mTrimSelection.onProcessSelection = [this](juce::Range<double> range, bool setSelection) {
+  mTrimSelection.onProcessSelection = [this](juce::Range<double> range) {
     const double sampleLength = static_cast<double>(mFormatReader->lengthInSamples);
     const double secondLength = sampleLength / mFormatReader->sampleRate;
     juce::int64 start = static_cast<juce::int64>(sampleLength * (range.getStart() / secondLength));
@@ -114,14 +114,12 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     if (start == end) {
       displayError("Attempted to select an empty range");
     } else {
-      mSynth.processInput(juce::Range<juce::int64>(start, end), setSelection, false);
-      if (setSelection) {
-        // Reset any UI elements that will need to wait until processing
-        mArcSpec.reset();
-        mBtnPreset.setEnabled(false);
-        updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
-        mArcSpec.loadBuffer(&mSynth.getAudioBuffer());
-      }
+      mSynth.processInput(juce::Range<juce::int64>(start, end), false);
+      // Reset any UI elements that will need to wait until processing
+      mArcSpec.reset();
+      mBtnPreset.setEnabled(false);
+      updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
+      mArcSpec.loadBuffer(&mSynth.getAudioBuffer());
     }
   };
 
@@ -549,7 +547,7 @@ void GRainbowAudioProcessorEditor::processPreset(juce::File file) {
     mBtnPreset.setEnabled(true);
     mArcSpec.loadPreset();
     mSynth.setInputBuffer(&fileAudioBuffer, sampleRate);
-    mSynth.processInput(juce::Range<juce::int64>(), false, true);
+    mSynth.processInput(juce::Range<juce::int64>(), true);
     mArcSpec.loadBuffer(&mSynth.getAudioBuffer());
   } else {
     displayError(juce::String::formatted("The file failed to open because %s", input.getStatus().getErrorMessage().toRawUTF8()));

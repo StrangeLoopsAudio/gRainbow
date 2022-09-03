@@ -77,7 +77,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   juce::MidiKeyboardState& getKeyboardState() { return mKeyboardState; }
 
   void setInputBuffer(juce::AudioBuffer<float>* audioBuffer, double sampleRate);
-  void processInput(juce::Range<juce::int64> range, bool setSelection, bool preset);
+  void processInput(juce::Range<juce::int64> range, bool preset);
   std::vector<Utils::SpecBuffer*> getProcessedSpecs() {
     return std::vector<Utils::SpecBuffer*>(mProcessedSpecs.begin(), mProcessedSpecs.end());
   }
