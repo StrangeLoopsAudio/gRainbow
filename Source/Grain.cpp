@@ -10,7 +10,7 @@
 
 #include "Grain.h"
 
-float Grain::process(juce::AudioBuffer<float>& audioBuffer, juce::AudioBuffer<float>& blockBuffer, float gain, int time) {
+float Grain::process(const juce::AudioBuffer<float>& audioBuffer, float gain, int time) {
   float timePerc = (time - trigTs) / (float)duration;
   float totalGain = gain * getAmplitude(timePerc);
   const float** fileBuf = audioBuffer.getArrayOfReadPointers();
@@ -20,7 +20,6 @@ float Grain::process(juce::AudioBuffer<float>& audioBuffer, juce::AudioBuffer<fl
   int highSample = std::ceil(juce::jmax(0.0f, timePerc * unStretchedDuration));
   float rem = (timePerc * unStretchedDuration) - lowSample;
 
-  jassert(blockBuffer.getNumChannels() > 0);
   float sample = juce::jmap(rem, fileBuf[0][(startPos + lowSample) % audioBuffer.getNumSamples()],
                             fileBuf[0][(startPos + highSample) % audioBuffer.getNumSamples()]);
   sample *= totalGain;

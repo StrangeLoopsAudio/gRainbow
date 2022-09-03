@@ -183,7 +183,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
                               mTotalSamps, paramGenerator->attack->get() * mSampleRate, paramGenerator->decay->get() * mSampleRate,
                               paramGenerator->sustain->get(), paramGenerator->release->get() * mSampleRate) *
                           paramGenerator->gain->get();
-          genSample += grain.process(mAudioBuffer, buffer, noteGain * genGain * mParamGlobal.gain->get(), mTotalSamps);
+          genSample += grain.process(mAudioBuffer, noteGain * genGain * mParamGlobal.gain->get(), mTotalSamps);
         }
 
         // Process filter and optionally use for output
@@ -466,8 +466,8 @@ void GranularSynth::processInput(juce::Range<juce::int64> range, bool setSelecti
     resetParameters();
     mLoadingProgress = 0.0;
     mProcessedSpecs.fill(nullptr);
-    mFft.processAudioBuffer(&mAudioBuffer);
-    mPitchDetector.processAudioBuffer(&mAudioBuffer, mSampleRate);
+    mFft.process(&mAudioBuffer);
+    mPitchDetector.process(&mAudioBuffer, mSampleRate);
   } else {
     mLoadingProgress = 1.0;
   }

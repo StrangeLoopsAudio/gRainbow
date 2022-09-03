@@ -17,18 +17,13 @@
 
 class Fft : public juce::Thread {
  public:
-  Fft(int windowSize, int hopSize)
-      : mWindowSize(windowSize),
-        mHopSize(hopSize),
-        mForwardFFT(std::log2(windowSize)),
-        mWindowEnvelope(windowSize, juce::dsp::WindowingFunction<float>::WindowingMethod::blackmanHarris),
-        juce::Thread("fft thread") {}
-  ~Fft() {}
+  Fft(int windowSize, int hopSize);
+  ~Fft();
 
   void run() override;
 
-  void processAudioBuffer(juce::AudioBuffer<float>* audioBuffer);
-  Utils::SpecBuffer& getSpectrum() { return mFftData; }
+  void process(const juce::AudioBuffer<float>* audioBuffer);
+  const Utils::SpecBuffer& getSpectrum() { return mFftData; }
 
   std::function<void(Utils::SpecBuffer& spectrum)> onProcessingComplete = nullptr;
 
@@ -40,7 +35,7 @@ class Fft : public juce::Thread {
   juce::dsp::WindowingFunction<float> mWindowEnvelope;
 
   // pointer to buffer to read from
-  juce::AudioBuffer<float>* mInputBuffer = nullptr;
+  const juce::AudioBuffer<float>* mInputBuffer = nullptr;
 
   // processed data
   std::vector<float> mFftFrame;

@@ -56,7 +56,7 @@ class PitchDetector : juce::Thread {
   std::function<void(PitchMap& pitchMap, Utils::SpecBuffer& pitchSpec)> onPitchesReady = nullptr;
   std::function<void(double progress)> onProgressUpdated = nullptr;
 
-  void processAudioBuffer(juce::AudioBuffer<float>* audioBuffer, double sampleRate);
+  void process(const juce::AudioBuffer<float>* audioBuffer, double sampleRate);
   void cancelProcessing();
 
   void run() override;
@@ -111,7 +111,6 @@ class PitchDetector : juce::Thread {
     HarmonicWeight(int semitone, float harmonicStrength) : semitone(semitone), gain(harmonicStrength) {}
   } HarmonicWeight;
 
-  juce::AudioBuffer<float>* mInputBuffer = nullptr;
   Fft mFft;
   double mSampleRate;
   // HPCP fields
@@ -135,7 +134,7 @@ class PitchDetector : juce::Thread {
   Peak interpolatePeak(int frame, int bin);
   void interpolatePeak(const float leftVal, const float middleVal, const float rightVal, int currentBin, float& resultVal,
                        float& resultBin) const;
-  std::vector<Peak> getPeaks(int numPeaks, std::vector<float>& frame);
-  std::vector<Peak> getWhitenedPeaks(int numPeaks, std::vector<float>& frame);
+  std::vector<Peak> getPeaks(int numPeaks, const std::vector<float>& frame);
+  std::vector<Peak> getWhitenedPeaks(int numPeaks, const std::vector<float>& frame);
   void initHarmonicWeights();
 };

@@ -23,13 +23,9 @@ TransientDetector::TransientDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread(
 
 TransientDetector::~TransientDetector() { stopThread(2000); }
 
-void TransientDetector::processAudioBuffer(juce::AudioBuffer<float>* audioBuffer) {
-  mFft.processAudioBuffer(audioBuffer);
-  mInputBuffer = audioBuffer;
-}
+void TransientDetector::process(const juce::AudioBuffer<float>* audioBuffer) { mFft.process(audioBuffer); }
 
 void TransientDetector::run() {
-  if (mInputBuffer == nullptr) return;
   retrieveTransients();
   if (onTransientsUpdated != nullptr && !threadShouldExit()) {
     onTransientsUpdated(mTransients);
@@ -38,7 +34,7 @@ void TransientDetector::run() {
 
 void TransientDetector::retrieveTransients() {
   // Perform transient detection on each frame
-  Utils::SpecBuffer& spec = mFft.getSpectrum();
+  const Utils::SpecBuffer& spec = mFft.getSpectrum();
   mTransients.clear();
   mEnergyBuffer.fill(0.0f);
   for (int frame = 0; frame < spec.size(); ++frame) {

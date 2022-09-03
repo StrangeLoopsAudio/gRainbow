@@ -10,6 +10,15 @@
 
 #include "Fft.h"
 
+Fft::Fft(int windowSize, int hopSize)
+    : mWindowSize(windowSize),
+      mHopSize(hopSize),
+      mForwardFFT(std::log2(windowSize)),
+      mWindowEnvelope(windowSize, juce::dsp::WindowingFunction<float>::WindowingMethod::blackmanHarris),
+      juce::Thread("fft thread") {}
+
+Fft::~Fft() {}
+
 // Once a buffer is loaded, will run to produce mFftData and then will async
 // notify when done
 void Fft::run() {
@@ -56,7 +65,7 @@ void Fft::run() {
   }
 }
 
-void Fft::processAudioBuffer(juce::AudioBuffer<float>* audioBuffer) {
+void Fft::process(const juce::AudioBuffer<float>* audioBuffer) {
   stopThread(4000);
   mInputBuffer = audioBuffer;
   startThread();
