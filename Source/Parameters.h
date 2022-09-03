@@ -314,7 +314,8 @@ struct ParamUI {
   // will only set xml-able items (floats/int/strings)
   void setXml(juce::XmlElement* xml) {
     if (xml != nullptr) {
-      fileName = xml->getStringAttribute("fileName");
+      loadedFileName = xml->getStringAttribute("fileName");
+      fileName = loadedFileName;
       generatorTab = xml->getIntAttribute("generatorTab");
       pitchClass = xml->getIntAttribute("pitchClass");
       specType = xml->getIntAttribute("specType");
@@ -324,7 +325,7 @@ struct ParamUI {
   // Build the XML representation to save in plugin state.
   juce::XmlElement* getXml() {
     juce::XmlElement* xml = new juce::XmlElement("ParamUI");
-    xml->setAttribute("fileName", fileName);
+    xml->setAttribute("fileName", loadedFileName);
     xml->setAttribute("generatorTab", generatorTab);
     xml->setAttribute("pitchClass", pitchClass);
     xml->setAttribute("specType", specType);
@@ -343,7 +344,8 @@ struct ParamUI {
 
   enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, WAVEFORM, COUNT };
 
-  juce::String fileName = "";
+  juce::String fileName = "";        // currently being viewed
+  juce::String loadedFileName = "";  // name of what was loaded last
   int generatorTab = 0;
   // default when new instance is loaded
   int pitchClass = Utils::PitchClass::C;

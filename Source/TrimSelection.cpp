@@ -146,6 +146,7 @@ void TrimSelection::paint(juce::Graphics& g) {
 }
 
 void TrimSelection::parse(juce::AudioFormatReader* formatReader, juce::int64 hash, juce::String& error) {
+  cleanup();  // in case while trim selecting, user selects a new file
   const double duration = static_cast<double>(formatReader->lengthInSamples) / formatReader->sampleRate;
   if (static_cast<int>(duration) <= MIN_SELECTION_SEC) {
     error =

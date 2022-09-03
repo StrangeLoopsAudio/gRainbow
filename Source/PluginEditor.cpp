@@ -103,6 +103,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mTrimSelection.onCancel = [this]() {
     // if nothing was ever loaded, got back to the logo
     updateCenterComponent((mParamUI.specComplete) ? ParamUI::CenterComponent::ARC_SPEC : ParamUI::CenterComponent::LOGO);
+    mParamUI.fileName = mParamUI.loadedFileName;
+    mLabelFileName.setText(mParamUI.fileName, juce::dontSendNotification);
   };
 
   mTrimSelection.onProcessSelection = [this](juce::Range<double> range) {
@@ -120,6 +122,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mBtnPreset.setEnabled(false);
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
       mArcSpec.loadBuffer(&mSynth.getAudioBuffer());
+      mParamUI.loadedFileName = mParamUI.fileName;
     }
   };
 
@@ -267,7 +270,7 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   @brief Draw note display (the small section between the keyboard and arc spectrogram)
 */
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
-  if (!PowerUserSettings::get().getAnimated()) {
+  if (!PowerUserSettings::get().getAnimated() || mParamUI.centerComponent != ParamUI::CenterComponent::ARC_SPEC) {
     return;
   }
 
@@ -457,14 +460,15 @@ void GRainbowAudioProcessorEditor::stopRecording() {
 }
 
 void GRainbowAudioProcessorEditor::processFile(juce::File file) {
-  // Show users which file is being loaded/processed
-  mParamUI.fileName = file.getFileName();
-  mLabelFileName.setText(mParamUI.fileName, juce::dontSendNotification);
 
   if (file.getFileExtension() == ".gbow") {
     processPreset(file);
     updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
   } else {
+    // Show users which file is being loaded/processed
+    mParamUI.fileName = file.getFileName();
+    mLabelFileName.setText(mParamUI.fileName, juce::dontSendNotification);
+
     mFormatReader = mFormatManager.createReaderFor(file);
     if (mFormatReader == nullptr) {
       displayError("Unable to read the file.");
@@ -549,6 +553,7 @@ void GRainbowAudioProcessorEditor::processPreset(juce::File file) {
     mSynth.setInputBuffer(&fileAudioBuffer, sampleRate);
     mSynth.processInput(juce::Range<juce::int64>(), true);
     mArcSpec.loadBuffer(&mSynth.getAudioBuffer());
+    mLabelFileName.setText(mParamUI.fileName, juce::dontSendNotification);
   } else {
     displayError(juce::String::formatted("The file failed to open because %s", input.getStatus().getErrorMessage().toRawUTF8()));
     return;
