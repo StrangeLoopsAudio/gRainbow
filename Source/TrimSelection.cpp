@@ -65,7 +65,8 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
 
   mBtnPlayback.setButtonText("Play/Stop");
   mBtnPlayback.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
-  mBtnPlayback.setColour(juce::TextButton::buttonOnColourId, juce::Colours::green);
+  mBtnPlayback.setColour(juce::TextButton::buttonOnColourId, juce::Colours::red);
+  mBtnPlayback.setClickingTogglesState(true);
   mBtnPlayback.onClick = [this] {
     mParamUI.trimPlaybackOn = !mParamUI.trimPlaybackOn;
     if (mParamUI.trimPlaybackOn) {
@@ -298,4 +299,7 @@ void TrimSelection::ThumbnailMouseDrag(const juce::MouseEvent& e) {
   mParamUI.trimPlaybackSample = sample;
 }
 
-void TrimSelection::ThumbnailMouseUp(const juce::MouseEvent& e) { mParamUI.trimPlaybackOn = true; }
+void TrimSelection::ThumbnailMouseUp(const juce::MouseEvent& e) {
+  mParamUI.trimPlaybackOn = true;
+  mBtnPlayback.setToggleState(true, juce::dontSendNotification);
+}
