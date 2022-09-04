@@ -160,8 +160,11 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
       numSample = mParamUI.trimPlaybackMaxSample - mParamUI.trimPlaybackSample;
     }
 
+    // if output buffer is stereo and the input in mono, duplicate into both channels
+    // if output buffer is mono and the input in stereo, just play one channel for simplicity
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
-      buffer.copyFrom(ch, 0, mInputBuffer, ch, mParamUI.trimPlaybackSample, numSample);
+      const int inputChannel = juce::jmin(ch, mInputBuffer.getNumChannels() - 1);
+      buffer.copyFrom(ch, 0, mInputBuffer, inputChannel, mParamUI.trimPlaybackSample, numSample);
     }
     mParamUI.trimPlaybackSample += numSample;
   }
