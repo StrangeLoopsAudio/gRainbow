@@ -90,12 +90,17 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     for (ArcGrain& grain : mArcGrains) {
       const int noteIdx = grain.paramGenerator->noteIdx;
       const int genIdx = grain.paramGenerator->genIdx;
-      const ParamCandidate& candidate = *(mParamsNote.notes[noteIdx]->getCandidate(genIdx));
+      const ParamCandidate* candidate = mParamsNote.notes[noteIdx]->getCandidate(genIdx);
+      // candidates are updated when a new sampler is created, there is a chance we are still playing the old sample in which case
+      // just end drawing
+      if (candidate == nullptr) {
+        return;
+      }
 
-      float xRatio = candidate.posRatio + (candidate.duration * grain.paramGenerator->positionAdjust->get());
+      float xRatio = candidate->posRatio + (candidate->duration * grain.paramGenerator->positionAdjust->get());
       float grainProg = (grain.numFramesActive * grain.envIncSamples) / ParamGenerator::ENV_LUT_SIZE;
-      xRatio += (candidate.duration / candidate.pbRate) * grainProg;
-      float pitchClass = noteIdx - (std::log(candidate.pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
+      xRatio += (candidate->duration / candidate->pbRate) * grainProg;
+      float pitchClass = noteIdx - (std::log(candidate->pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
       float yRatio = (pitchClass + 0.25f + (grain.paramGenerator->pitchAdjust->get() * 6.0f)) / (float)Utils::PitchClass::COUNT;
       int grainRad = mStartRadius + (yRatio * mBowWidth);
       juce::Point<float> grainPoint = mCenterPoint.getPointOnCircumference(
@@ -238,6 +243,8 @@ void ArcSpectrogram::reset() {
     mImagesComplete[(ParamUI::SpecType)i] = false;
   }
   mParamUI.specComplete = false;
+  // might be lingering grains
+  mArcGrains.clear();
 }
 
 void ArcSpectrogram::loadBuffer(Utils::SpecBuffer* buffer, ParamUI::SpecType type) {
