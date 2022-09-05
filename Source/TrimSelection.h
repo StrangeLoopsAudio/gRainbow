@@ -70,7 +70,7 @@ class TrimSelection : public juce::Component {
   void paint(juce::Graphics& g) override;
   void resized() override;
 
-  void parse(juce::AudioFormatReader* formatReader, juce::int64 hash, juce::String& error);
+  void parse(const juce::AudioBuffer<float>& audioBuffer, double sampleRate, juce::String& error);
 
   std::function<void(void)> onCancel = nullptr;
   std::function<void(juce::Range<double>)> onProcessSelection = nullptr;

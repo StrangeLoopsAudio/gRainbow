@@ -38,8 +38,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mKeyboard(synth.getKeyboardState()),
       mProgressBar(synth.getLoadingProgress()),
       mParamUI(synth.getParamUI()),
-      mTrimSelection(mFormatManager, synth.getParamUI()),
-      mFormatReader(nullptr) {
+      mTrimSelection(mFormatManager, synth.getParamUI()) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mErrorMessage.clear();
 
@@ -108,8 +107,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   };
 
   mTrimSelection.onProcessSelection = [this](juce::Range<double> range) {
-    const double sampleLength = static_cast<double>(mFormatReader->lengthInSamples);
-    const double secondLength = sampleLength / mFormatReader->sampleRate;
+    const double sampleLength = static_cast<double>(mSynth.getInputBuffer().getNumSamples());
+    const double secondLength = sampleLength / mSynth.getSampleRate();
     juce::int64 start = static_cast<juce::int64>(sampleLength * (range.getStart() / secondLength));
     juce::int64 end = static_cast<juce::int64>(sampleLength * (range.getEnd() / secondLength));
     // TODO - if small enough, it will get stuck trying to load
@@ -469,27 +468,25 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     mParamUI.fileName = file.getFileName();
     mLabelFileName.setText(mParamUI.fileName, juce::dontSendNotification);
 
-    mFormatReader = mFormatManager.createReaderFor(file);
-    if (mFormatReader == nullptr) {
+    juce::AudioFormatReader* formatReader = mFormatManager.createReaderFor(file);
+    if (formatReader == nullptr) {
       displayError("Unable to read the file.");
       return;
     }
 
     juce::AudioBuffer<float> fileAudioBuffer;
-    const int length = static_cast<int>(mFormatReader->lengthInSamples);
-    fileAudioBuffer.setSize(mFormatReader->numChannels, length);
-    mFormatReader->read(&fileAudioBuffer, 0, length, 0, true, true);
-    mSynth.setInputBuffer(&fileAudioBuffer, mFormatReader->sampleRate);
+    const int length = static_cast<int>(formatReader->lengthInSamples);
+    fileAudioBuffer.setSize(formatReader->numChannels, length);
+    formatReader->read(&fileAudioBuffer, 0, length, 0, true, true);
+    mSynth.setInputBuffer(&fileAudioBuffer, formatReader->sampleRate);
+    // should not need the file anymore as we want to work with the resampled input buffer across the rest of the plugin
+    delete (formatReader);
 
-    // TODO - It is not obvious that this function will delete the AudioFormatReader for use when called multiple times because
-    // AudioThumbnail deletes it when calling setReader again
-    mTrimSelection.parse(mFormatReader, file.hashCode64(), mErrorMessage);
+    mTrimSelection.parse(mSynth.getInputBuffer(), mSynth.getSampleRate(), mErrorMessage);
     if (mErrorMessage.isEmpty()) {
       // display screen to trim sample
       updateCenterComponent(ParamUI::CenterComponent::TRIM_SELECTION);
     } else {
-      delete (mFormatReader);
-      mFormatReader = nullptr;
       displayError(mErrorMessage);
       mErrorMessage.clear();
       return;

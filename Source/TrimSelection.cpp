@@ -42,7 +42,7 @@ void PointMarker::paint(juce::Graphics& g) {
 bool PointMarker::hitTest(int x, int y) { return mPath.contains(static_cast<float>(x), static_cast<float>(y)); }
 
 TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& paramUI)
-    : mThumbnailCache(1),
+    : mThumbnailCache(1), // need a cache if not used, this is smallest possible
       mThumbnail(512, formatManager, mThumbnailCache),
       mThumbnailShadow([this](const juce::MouseEvent& e) { this->ThumbnailMouseDown(e); },
                        [this](const juce::MouseEvent& e) { this->ThumbnailMouseDrag(e); },
@@ -146,9 +146,9 @@ void TrimSelection::paint(juce::Graphics& g) {
   }
 }
 
-void TrimSelection::parse(juce::AudioFormatReader* formatReader, juce::int64 hash, juce::String& error) {
+void TrimSelection::parse(const juce::AudioBuffer<float>& audioBuffer, double sampleRate, juce::String& error) {
   cleanup();  // in case while trim selecting, user selects a new file
-  const double duration = static_cast<double>(formatReader->lengthInSamples) / formatReader->sampleRate;
+  const double duration = static_cast<double>(audioBuffer.getNumSamples()) / sampleRate;
   if (static_cast<int>(duration) <= MIN_SELECTION_SEC) {
     error =
         juce::String::formatted("The audio file is  %.1f seconds but must be greater than %d seconds", duration, MIN_SELECTION_SEC);
@@ -157,7 +157,14 @@ void TrimSelection::parse(juce::AudioFormatReader* formatReader, juce::int64 has
     return;
   }
 
-  mThumbnail.setReader(formatReader, hash);
+  // It is slightly faster to use the setReader() with the AudioFormatReader for the thumbnail and make use of
+  // juce::AudioThumbnailCache, but the main reasons to add the thumbnail block manually are
+  // 1. The file might be at a different sampleRate than the audio buffer which can seem like it doesn't match the playback
+  // 2. It is possible to update the thumbnail if the audio buffer is modified
+  // 3. It is not obvious that setReader() will delete the AudioFormatReader when called a second time
+  mThumbnail.clear();
+  mThumbnail.reset(audioBuffer.getNumChannels(), sampleRate, audioBuffer.getNumSamples());
+  mThumbnail.addBlock(0, audioBuffer, 0, audioBuffer.getNumSamples());
 
   mVisibleRange.setStart(0.0);  // never is not zero
   mVisibleRange.setEnd(duration);

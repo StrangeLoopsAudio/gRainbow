@@ -108,7 +108,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   bool mIsFileChooserUsed = false;
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
-  juce::AudioFormatReader* mFormatReader;
 
   void openNewFile(const char* path = nullptr);
   void processFile(juce::File file);
