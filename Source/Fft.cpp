@@ -10,9 +10,12 @@
 
 #include "Fft.h"
 
-Fft::Fft(int windowSize, int hopSize)
+Fft::Fft(int windowSize, int hopSize, double startProgress, double endProgress)
     : mWindowSize(windowSize),
       mHopSize(hopSize),
+      mStartProgress(startProgress),
+      mEndProgress(endProgress),
+      mDiffProgress(mEndProgress - mStartProgress),
       mForwardFFT(std::log2(windowSize)),
       mWindowEnvelope(windowSize, juce::dsp::WindowingFunction<float>::WindowingMethod::blackmanHarris),
       juce::Thread("fft thread") {}
@@ -24,19 +27,21 @@ Fft::~Fft() {}
 void Fft::run() {
   if (mInputBuffer == nullptr) return;
   // Runs with first channel
+  const int numInputSamples = mInputBuffer->getNumSamples();
   const float* pBuffer = mInputBuffer->getReadPointer(0);
   mFftFrame.clear();
   mFftFrame.resize(mWindowSize * 2, 0.0f);
   int curSample = 0;
-  bool hasData = mInputBuffer->getNumSamples() > mFftFrame.size();
+  bool hasData = numInputSamples > mFftFrame.size();
   float curMax = std::numeric_limits<float>::min();
   mFftData.clear();
 
   while (hasData && !threadShouldExit()) {
+    updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(curSample) / static_cast<double>(numInputSamples))));
     const float* startSample = &pBuffer[curSample];
     int numSamples = mFftFrame.size();
-    if (curSample + mFftFrame.size() > mInputBuffer->getNumSamples()) {
-      numSamples = (mInputBuffer->getNumSamples() - curSample);
+    if (curSample + mFftFrame.size() > numInputSamples) {
+      numSamples = (numInputSamples - curSample);
     }
     mFftFrame.clear();
     mFftFrame.resize(mWindowSize * 2, 0.0f);
@@ -52,16 +57,24 @@ void Fft::run() {
     if (frameMax > curMax) curMax = frameMax;
     mFftData.push_back(newFrame);
     // Normalize fft values according to max frame value
-    for (int i = 0; i < mFftData.back().size(); ++i) {
+    for (size_t i = 0; i < mFftData.back().size(); ++i) {
       mFftData.back()[i] /= curMax;
     }
 
     curSample += mHopSize;
-    if (curSample > mInputBuffer->getNumSamples()) hasData = false;
+    if (curSample > numInputSamples) {
+      hasData = false;
+    }
   }
 
   if (onProcessingComplete != nullptr) {
     onProcessingComplete(mFftData);
+  }
+}
+
+void Fft::updateProgress(double progress) {
+  if (onProgressUpdated != nullptr) {
+    onProgressUpdated(progress);
   }
 }
 

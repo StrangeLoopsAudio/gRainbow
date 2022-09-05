@@ -13,20 +13,26 @@
 #include "PitchDetector.h"
 #include <limits.h>
 
-PitchDetector::PitchDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch detector thread") {
+PitchDetector::PitchDetector(double startProgress, double endProgress)
+    : mStartProgress(endProgress / 2.0),
+      mEndProgress(endProgress),
+      mDiffProgress(mEndProgress - mStartProgress),
+      mFft(FFT_SIZE, HOP_SIZE, startProgress, endProgress / 2.0),
+      juce::Thread("pitch detector thread") {
   initHarmonicWeights();
   mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
     // Runs FFT twice but using custom size suited for the PitchDetector
     stopThread(4000);
     startThread();
   };
+  mFft.onProgressUpdated = [this](float progress) { updateProgress(progress); };
 }
 
 PitchDetector::~PitchDetector() { stopThread(4000); }
 
 void PitchDetector::process(const juce::AudioBuffer<float>* audioBuffer, double sampleRate) {
   cancelProcessing();
-  updateProgress(0.01);
+  updateProgress(mStartProgress);
   mSampleRate = sampleRate;
   mFft.process(audioBuffer);
 }
@@ -41,7 +47,7 @@ void PitchDetector::run() {
   if (onHarmonicProfileReady != nullptr) onHarmonicProfileReady(mHPCP);
   if (!segmentPitches()) return;
   getSegmentedPitchBuffer();
-  updateProgress(1.0);
+  updateProgress(mEndProgress);
   if (onPitchesReady != nullptr) onPitchesReady(mPitchMap, mSegmentedPitches);
 }
 
@@ -74,9 +80,9 @@ bool PitchDetector::computeHPCP() {
   mHPCP.clear();
 
   const Utils::SpecBuffer& spec = mFft.getSpectrum();
-  for (int frame = 0; frame < spec.size(); ++frame) {
+  for (size_t frame = 0; frame < spec.size(); ++frame) {
     if (threadShouldExit()) return false;
-    updateProgress(0.1 + 0.9 * ((float)frame / spec.size()));
+    updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(frame) / static_cast<double>(spec.size()))));
     mHPCP.push_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
 
     const std::vector<float>& specFrame = spec[frame];

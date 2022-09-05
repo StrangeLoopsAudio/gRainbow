@@ -20,7 +20,7 @@
 
 class TransientDetector : juce::Thread {
  public:
-  TransientDetector();
+  TransientDetector(double startProgress, double endProgress);
   ~TransientDetector();
 
   typedef struct Transient {
@@ -30,6 +30,7 @@ class TransientDetector : juce::Thread {
   } Transient;
 
   std::function<void(std::vector<Transient>&)> onTransientsUpdated = nullptr;
+  std::function<void(double progress)> onProgressUpdated = nullptr;
 
   void process(const juce::AudioBuffer<float>* audioBuffer);
 
@@ -41,6 +42,12 @@ class TransientDetector : juce::Thread {
   static constexpr auto PARAM_THRESHOLD = 2.5f;
   static constexpr auto PARAM_SPREAD = 3;
   static constexpr auto PARAM_ATTACK_LOCK = 10;
+
+  // Used to show far along the run thread is
+  void updateProgress(double progress);
+  double mStartProgress;
+  double mEndProgress;
+  double mDiffProgress;
 
   Fft mFft;
   std::array<float, PARAM_SPREAD> mEnergyBuffer;  // Spectral energy rolling buffer

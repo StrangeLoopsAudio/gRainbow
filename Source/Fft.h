@@ -17,7 +17,7 @@
 
 class Fft : public juce::Thread {
  public:
-  Fft(int windowSize, int hopSize);
+  Fft(int windowSize, int hopSize, double startProgress, double endProgress);
   ~Fft();
 
   void run() override;
@@ -26,6 +26,7 @@ class Fft : public juce::Thread {
   const Utils::SpecBuffer& getSpectrum() { return mFftData; }
 
   std::function<void(Utils::SpecBuffer& spectrum)> onProcessingComplete = nullptr;
+  std::function<void(double progress)> onProgressUpdated = nullptr;
 
  private:
   // values passed in at creation time
@@ -36,6 +37,12 @@ class Fft : public juce::Thread {
 
   // pointer to buffer to read from
   const juce::AudioBuffer<float>* mInputBuffer = nullptr;
+
+  // Used to show far along the run thread is
+  void updateProgress(double progress);
+  double mStartProgress;
+  double mEndProgress;
+  double mDiffProgress;
 
   // processed data
   std::vector<float> mFftFrame;

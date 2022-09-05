@@ -124,8 +124,8 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   } GrainNote;
 
   // DSP-preprocessing
-  PitchDetector mPitchDetector;
   Fft mFft;
+  PitchDetector mPitchDetector;
 
   // Bookkeeping
   juce::AudioBuffer<float> mInputBuffer;  // incoming buffer from file or other source

@@ -37,7 +37,7 @@ class PitchDetector : juce::Thread {
   static constexpr auto MIN_MIDINOTE = 43;
   static constexpr auto MAX_MIDINOTE = 91;
 
-  PitchDetector();
+  PitchDetector(double startProgress, double endProgress);
   ~PitchDetector();
 
   typedef struct Pitch {
@@ -89,6 +89,12 @@ class PitchDetector : juce::Thread {
   static constexpr auto MIN_NOTE_TIME_MS = 125;
   static constexpr auto LOOKAHEAD_TIME_MS = 25;
 
+  // Used to show far along the run thread is
+  void updateProgress(double progress);
+  double mStartProgress;
+  double mEndProgress;
+  double mDiffProgress;
+
   typedef struct PitchSegment {
     float binNum;      // Bin number in HPCP
     int startFrame;    // Start frame of segment
@@ -124,7 +130,6 @@ class PitchDetector : juce::Thread {
   // Hashmap of detected pitches
   PitchMap mPitchMap;
 
-  void updateProgress(double progress);
   bool computeHPCP();
   bool segmentPitches();
   void getSegmentedPitchBuffer();

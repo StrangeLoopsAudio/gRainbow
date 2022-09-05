@@ -25,7 +25,9 @@ GranularSynth::GranularSynth()
                          )
 #endif
       ,
-      mFft(FFT_SIZE, HOP_SIZE) {
+      // only care about tracking the processing of the DSP, not the spectrogram
+      mFft(FFT_SIZE, HOP_SIZE, 0, 0),
+      mPitchDetector(0.01, 1.0) {
   mParamsNote.addParams(*this);
   mParamGlobal.addParams(*this);
 
