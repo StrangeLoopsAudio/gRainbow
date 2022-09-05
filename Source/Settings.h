@@ -19,13 +19,16 @@
 */
 class PowerUserSettings {
  public:
-  PowerUserSettings() : mIsAnimated(true), mSynth(nullptr){};
+  PowerUserSettings() : mIsAnimated(true), mIsResourceUsage(true), mSynth(nullptr){};
   ~PowerUserSettings(){};
 
   void setSynth(GranularSynth* synth) { mSynth = synth; }
 
   void setAnimated(bool value) { mIsAnimated = value; }
   bool getAnimated() { return mIsAnimated; }
+
+  void setResourceUsage(bool value) { mIsResourceUsage = value; }
+  bool getResourceUsage() { return mIsResourceUsage; }
 
   void resetParameters();
 
@@ -39,6 +42,7 @@ class PowerUserSettings {
 
  private:
   bool mIsAnimated;
+  bool mIsResourceUsage;
 
   GranularSynth* mSynth;
 };
@@ -61,4 +65,5 @@ private:
   const int mDivideLineSize = 5;
   juce::TextButton mBtnAnimation;
   juce::TextButton mBtnResetParameters;
+  juce::TextButton mBtnResourceUsage;
 };
