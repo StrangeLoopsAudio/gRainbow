@@ -19,7 +19,7 @@
 */
 class PowerUserSettings {
  public:
-  PowerUserSettings() : mIsAnimated(true), mSynth(nullptr){};
+  PowerUserSettings() : mIsAnimated(true), mIsResourceUsage(true), mSynth(nullptr){};
   ~PowerUserSettings(){};
 
   void setSynth(GranularSynth* synth) { mSynth = synth; }

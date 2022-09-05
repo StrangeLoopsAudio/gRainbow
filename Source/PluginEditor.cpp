@@ -17,6 +17,7 @@
 #endif
 #ifdef _WINDOWS
 #include <windows.h>
+#include <Psapi.h>
 #endif
 
 GRainbowLogo::GRainbowLogo() { mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize); }
@@ -209,7 +210,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   mGeneratorsBox.setMidiNotes(midiNotes);
 
   if (PowerUserSettings::get().getResourceUsage()) {
-    const double cpu = mAudioDeviceManager.getCpuUsage() * 100;
+    const double cpuPerc = mAudioDeviceManager.getCpuUsage() * 100;
     size_t virtual_memory = 0;
     size_t resident_memory = 0;
 #if defined(__linux__)
@@ -231,7 +232,8 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     }
 #endif
 
-    mResourceUsage.setText(juce::String(cpu, 1) + "% CPU | Virtual " + juce::String(virtual_memory >> 20) + " MB" + " | Resident " +
+    mResourceUsage.setText(juce::String(cpuPerc, 1) + "% CPU | Virtual " + juce::String(virtual_memory >> 20) + " MB" +
+                               " | Resident " +
                                juce::String(resident_memory >> 20) + " MB",
                            juce::dontSendNotification);
   }
