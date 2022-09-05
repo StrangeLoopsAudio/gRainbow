@@ -60,6 +60,8 @@ class PitchDetector : juce::Thread {
   void cancelProcessing();
 
   void run() override;
+  // Clear any data not used after lifetime of run()
+  void clear();
 
  private:
   // FFT

@@ -97,7 +97,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
  private:
   // DSP constants
   static constexpr auto FFT_SIZE = 4096;
-  static constexpr auto HOP_SIZE = 2048;  // Larger because don't need high resolution for spectrogram
+  static constexpr auto HOP_SIZE = 4096;  // Larger because don't need high resolution for spectrogram
   static constexpr double DEFAULT_BPM = 120.0f;
   // Param bounds
   static constexpr auto MIN_RATE_RATIO = .25f;

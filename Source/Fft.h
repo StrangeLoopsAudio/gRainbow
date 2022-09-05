@@ -21,6 +21,8 @@ class Fft : public juce::Thread {
   ~Fft();
 
   void run() override;
+  // Clear any data not used after lifetime of run()
+  void clear(bool clearData);
 
   void process(const juce::AudioBuffer<float>* audioBuffer);
   const Utils::SpecBuffer& getSpectrum() { return mFftData; }

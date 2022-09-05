@@ -26,15 +26,14 @@ Fft::~Fft() {}
 // notify when done
 void Fft::run() {
   if (mInputBuffer == nullptr) return;
+  clear(true);
   // Runs with first channel
   const int numInputSamples = mInputBuffer->getNumSamples();
   const float* pBuffer = mInputBuffer->getReadPointer(0);
-  mFftFrame.clear();
   mFftFrame.resize(mWindowSize * 2, 0.0f);
   int curSample = 0;
   bool hasData = numInputSamples > mFftFrame.size();
   float curMax = std::numeric_limits<float>::min();
-  mFftData.clear();
 
   while (hasData && !threadShouldExit()) {
     updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(curSample) / static_cast<double>(numInputSamples))));
@@ -69,6 +68,15 @@ void Fft::run() {
 
   if (onProcessingComplete != nullptr) {
     onProcessingComplete(mFftData);
+  }
+}
+
+void Fft::clear(bool clearData) {
+  mFftFrame.clear();
+  if (clearData) {
+    // The FFT can take up a lot of memory, need to not just clear, but have STD deallocate it
+    mFftData.clear();
+    mFftData.shrink_to_fit();
   }
 }
 

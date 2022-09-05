@@ -51,6 +51,11 @@ void PitchDetector::run() {
   if (onPitchesReady != nullptr) onPitchesReady(mPitchMap, mSegmentedPitches);
 }
 
+void PitchDetector::clear() {
+  mFft.clear(true);
+  mPitchMap.clear();
+}
+
 void PitchDetector::updateProgress(double progress) {
   if (onProgressUpdated != nullptr) {
     onProgressUpdated(progress);

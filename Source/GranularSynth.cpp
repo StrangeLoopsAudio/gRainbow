@@ -36,7 +36,10 @@ GranularSynth::GranularSynth()
 
   mKeyboardState.addListener(this);
 
-  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) { mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = &spectrum; };
+  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
+    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = &spectrum;
+    mFft.clear(false);
+  };
 
   mPitchDetector.onHarmonicProfileReady = [this](Utils::SpecBuffer& hpcpBuffer) {
     mProcessedSpecs[ParamUI::SpecType::HPCP] = &hpcpBuffer;
@@ -45,6 +48,7 @@ GranularSynth::GranularSynth()
   mPitchDetector.onPitchesReady = [this](PitchDetector::PitchMap& pitchMap, Utils::SpecBuffer& pitchSpec) {
     mProcessedSpecs[ParamUI::SpecType::DETECTED] = &pitchSpec;
     createCandidates(pitchMap);
+    mPitchDetector.clear();
   };
 
   mPitchDetector.onProgressUpdated = [this](float progress) { mLoadingProgress = progress; };
@@ -463,6 +467,11 @@ void GranularSynth::processInput(juce::Range<juce::int64> range, bool preset) {
       mAudioBuffer.copyFrom(c, 0, mInputBuffer, c, range.getStart(), sampleLength);
     }
   }
+  // set input buffer to 1 to reduce memory pressure, should not be needed anymore
+  // clear() keeps memory around
+  // TODO - Find a way to trim the mInputBuffer without having to make another copy. Or find a way so only 1 of these needs to live
+  // on the heap and the other can be remove after used on the stack
+  mInputBuffer.setSize(1, 1);
 
   // preset don't need to generate things again
   if (!preset) {
