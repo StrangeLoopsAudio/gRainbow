@@ -178,7 +178,6 @@ void TrimSelection::resized() {
   // - Thumbnail
   // - Selector
   // - buttons
-  // - test result text
 
   juce::Rectangle<int> r = getLocalBounds();
   // just enough padding to not be on the side borders
@@ -188,13 +187,10 @@ void TrimSelection::resized() {
   mSelectorRect = mThumbnailRect.removeFromBottom(PointMarker::height() + 20);
   mThumbnailShadow.setBounds(mThumbnailRect);
 
-  const int btnHeight = r.getHeight() * 0.3;
   const int btnHeightPadding = r.getHeight() * 0.1;
   const int btnWidth = r.getWidth() * 0.25;
   const int btnWidthPadding = r.getWidth() * (.25 / 4.0);
-
-  juce::Rectangle<int> btnRect = r.removeFromTop(btnHeight);
-  mTestResultRect = r;
+  juce::Rectangle<int> btnRect = r;
 
   btnRect.removeFromTop(btnHeightPadding);
   btnRect.removeFromLeft(btnWidthPadding);

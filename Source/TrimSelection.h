@@ -101,7 +101,6 @@ class TrimSelection : public juce::Component {
   // Resized bound values
   juce::Rectangle<int> mThumbnailRect;
   juce::Rectangle<int> mSelectorRect;
-  juce::Rectangle<int> mTestResultRect;
 
   void cleanup();
 
