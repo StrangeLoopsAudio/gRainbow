@@ -478,6 +478,21 @@ void GRainbowAudioProcessorEditor::processFile(juce::File file) {
     const int length = static_cast<int>(formatReader->lengthInSamples);
     fileAudioBuffer.setSize(formatReader->numChannels, length);
     formatReader->read(&fileAudioBuffer, 0, length, 0, true, true);
+
+    // .mp3 files, unlike .wav files, can contain PCM values greater than abs(1.0) (aka, clipping) which will produce aweful
+    // sounding grains, so normalize the gain of any mp3 file clipping before using anywhere
+    if (file.getFileExtension() == ".mp3") {
+      float absMax = 0.0f;
+      for (int i = 0; i < fileAudioBuffer.getNumChannels(); i++) {
+        juce::Range<float> range =
+            juce::FloatVectorOperations::findMinAndMax(fileAudioBuffer.getReadPointer(i), fileAudioBuffer.getNumSamples());
+        absMax = juce::jmax(absMax, std::abs(range.getStart()), std::abs(range.getEnd()));
+      }
+      if (absMax > 1.0) {
+        fileAudioBuffer.applyGain(1.0f / absMax);
+      }
+    }
+
     mSynth.setInputBuffer(&fileAudioBuffer, formatReader->sampleRate);
     // should not need the file anymore as we want to work with the resampled input buffer across the rest of the plugin
     delete (formatReader);
