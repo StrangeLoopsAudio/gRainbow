@@ -120,7 +120,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mArcSpec.reset();
       mBtnPreset.setEnabled(false);
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
-      mArcSpec.loadBuffer(&mSynth.getAudioBuffer());
+      mArcSpec.loadWaveformBuffer(&mSynth.getAudioBuffer());
       mParamUI.loadedFileName = mParamUI.fileName;
     }
   };
@@ -201,7 +201,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     std::vector<Utils::SpecBuffer*> specs = mSynth.getProcessedSpecs();
     for (int i = 0; i < specs.size(); ++i) {
       if (specs[i] != nullptr && mArcSpec.shouldLoadImage((ParamUI::SpecType)i))
-        mArcSpec.loadBuffer(specs[i], (ParamUI::SpecType)i);
+        mArcSpec.loadSpecBuffer(specs[i], (ParamUI::SpecType)i);
     }
   }
 
@@ -564,7 +564,7 @@ void GRainbowAudioProcessorEditor::processPreset(juce::File file) {
     mArcSpec.loadPreset();
     mSynth.setInputBuffer(&fileAudioBuffer, sampleRate);
     mSynth.processInput(juce::Range<juce::int64>(), true);
-    mArcSpec.loadBuffer(&mSynth.getAudioBuffer());
+    mArcSpec.loadWaveformBuffer(&mSynth.getAudioBuffer());
     mLabelFileName.setText(mParamUI.fileName, juce::dontSendNotification);
   } else {
     displayError(juce::String::formatted("The file failed to open because %s", input.getStatus().getErrorMessage().toRawUTF8()));

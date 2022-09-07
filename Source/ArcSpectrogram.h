@@ -37,8 +37,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
 
   void reset();
   bool shouldLoadImage(ParamUI::SpecType type) { return !mIsProcessing && !mImagesComplete[type]; }
-  void loadBuffer(Utils::SpecBuffer *buffer, ParamUI::SpecType type);
-  void loadBuffer(juce::AudioBuffer<float> *audioBuffer);  // Raw audio samples from file
+  void loadSpecBuffer(Utils::SpecBuffer *buffer, ParamUI::SpecType type);
+  void loadWaveformBuffer(juce::AudioBuffer<float> *audioBuffer);  // Raw audio samples from file
   void loadPreset();
   void setMidiNotes(const juce::Array<Utils::MidiNote> &midiNotes);
   void setSpecType(ParamUI::SpecType type) { mSpecType.setSelectedItemIndex(type, juce::dontSendNotification); }
@@ -86,7 +86,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   // Bookkeeping
   std::bitset<Utils::PitchClass::COUNT> mActivePitchClass;
   juce::Array<ArcGrain> mArcGrains;
-  ParamUI::SpecType mProcessType;
   bool mIsProcessing = false;
   bool mImagesComplete[ParamUI::SpecType::COUNT];
 

@@ -310,6 +310,7 @@ struct ParamGlobal {
 struct ParamUI {
   ParamUI() = default;
 
+  enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, WAVEFORM, COUNT };
   // Get it from the plugin state
   // will only set xml-able items (floats/int/strings)
   void setXml(juce::XmlElement* xml) {
@@ -318,7 +319,7 @@ struct ParamUI {
       fileName = loadedFileName;
       generatorTab = xml->getIntAttribute("generatorTab");
       pitchClass = xml->getIntAttribute("pitchClass");
-      specType = xml->getIntAttribute("specType");
+      specType = (SpecType)xml->getIntAttribute("specType");
     }
   }
 
@@ -328,7 +329,7 @@ struct ParamUI {
     xml->setAttribute("fileName", loadedFileName);
     xml->setAttribute("generatorTab", generatorTab);
     xml->setAttribute("pitchClass", pitchClass);
-    xml->setAttribute("specType", specType);
+    xml->setAttribute("specType", static_cast<int>(specType));
     return xml;
   }
 
@@ -342,8 +343,6 @@ struct ParamUI {
     return pngWriter.writeImageToStream(specImages[index], outputStream);
   }
 
-  enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, WAVEFORM, COUNT };
-
   juce::String fileName = "";        // currently being viewed
   juce::String loadedFileName = "";  // name of what was loaded last
   int generatorTab = 0;
@@ -351,7 +350,7 @@ struct ParamUI {
   int pitchClass = Utils::PitchClass::C;
 
   // ArcSpectrogram related items
-  int specType = 0;
+  SpecType specType = ParamUI::SpecType::INVALID;
   std::array<juce::Image, SpecType::COUNT> specImages;
   // Where ArcSpectrogram can let others know when it is "complete"
   // Makes no scenes to save to preset file
