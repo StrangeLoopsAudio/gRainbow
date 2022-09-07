@@ -178,7 +178,11 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   // Add contributions from each note
   auto bufferChannels = buffer.getArrayOfWritePointers();
   for (int i = 0; i < bufferNumSample; ++i) {
-    for (GrainNote& gNote : mActiveNotes) {
+    // Don't use a for(auto x : mActiveNotes) loop here as mActiveNotes can be added outside this function. If it is partially added
+    // it might to use it and the undefined data will cause a crash eventually
+    const int activeNoteSize = mActiveNotes.size();
+    for (int noteIndex = 0; noteIndex < activeNoteSize; noteIndex++) {
+      GrainNote& gNote = mActiveNotes.getReference(noteIndex);
       float noteGain =
           gNote.ampEnv.getAmplitude(mTotalSamps, mParamGlobal.attack->get() * mSampleRate, mParamGlobal.decay->get() * mSampleRate,
                                     mParamGlobal.sustain->get(), mParamGlobal.release->get() * mSampleRate) *
