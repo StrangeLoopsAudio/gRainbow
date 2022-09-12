@@ -459,6 +459,10 @@ void GranularSynth::processInput(juce::Range<juce::int64> range, bool preset) {
   mFft.stopThread(4000);
   mPitchDetector.cancelProcessing();
 
+  // TODO - we clear mInputBuffer here, but processBlock still in theory might need it one last time. Find a proper system for
+  // knowing when the buffer is not needed (Or find a way to have a single buffer as stated in the TODO where it is cleared)
+  mParamUI.trimPlaybackOn = false;
+
   // If a range to trim is provided then
   if (range.isEmpty()) {
     mAudioBuffer.setSize(mInputBuffer.getNumChannels(), mInputBuffer.getNumSamples());
