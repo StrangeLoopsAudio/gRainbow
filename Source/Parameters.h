@@ -129,7 +129,7 @@ struct ParamCandidate {
 };
 
 struct ParamGenerator : juce::AudioProcessorParameter::Listener {
-  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {
+  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx), selected(false) {
     filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
     filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
   }
@@ -196,6 +196,8 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* filterResonance = nullptr;
   juce::AudioParameterFloat* filterCutoff = nullptr;
   juce::AudioParameterChoice* filterType = nullptr;
+
+  bool selected;
 
   // LUT of the grain envelope
   static constexpr auto ENV_LUT_SIZE = 128;
