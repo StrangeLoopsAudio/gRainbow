@@ -9,8 +9,7 @@
 */
 
 #include "EnvelopeGrain.h"
-#include "Parameters.h"
-#include <JuceHeader.h>
+#include "../Parameters.h"
 
 EnvelopeGrain::EnvelopeGrain()
     : mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {}

@@ -10,8 +10,6 @@
 
 #include "EnvelopeADSR.h"
 
-#include <JuceHeader.h>
-
 //==============================================================================
 EnvelopeADSR::EnvelopeADSR() {
   // In your constructor, you should add any child components, and

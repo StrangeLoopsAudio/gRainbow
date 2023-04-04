@@ -9,8 +9,8 @@
 */
 
 #pragma once
-#include <JuceHeader.h>
-#include "Utils.h"
+#include <juce_audio_basics/juce_audio_basics.h>
+#include "../Utils.h"
 
 class Grain {
  public:

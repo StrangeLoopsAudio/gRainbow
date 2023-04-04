@@ -8,6 +8,8 @@
   ==============================================================================
 */
 
+#include <juce_audio_formats/juce_audio_formats.h>
+
 #include "AudioRecorder.h"
 
 void AudioRecorder::startRecording(const juce::File& file) {
@@ -61,8 +63,9 @@ void AudioRecorder::audioDeviceAboutToStart(juce::AudioIODevice* device) { mSamp
 
 void AudioRecorder::audioDeviceStopped() { mSampleRate = 0; }
 
-void AudioRecorder::audioDeviceIOCallback(const float** inputChannelData, int numInputChannels, float** outputChannelData,
-                                          int numOutputChannels, int numSamples) {
+void AudioRecorder::audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels,
+                                          float* const* outputChannelData, int numOutputChannels, int numSamples,
+                                          const juce::AudioIODeviceCallbackContext& context) {
   const juce::ScopedLock sl(mWriterLock);
 
   if (mActiveWriter.load() != nullptr) {

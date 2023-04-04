@@ -10,12 +10,13 @@
 
 #pragma once
 
-#include <JuceHeader.h>
-#include "GranularSynth.h"
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_audio_processors/juce_audio_processors.h>
+#include "../DSP/GranularSynth.h"
+#include "../Utils.h"
 #include "EnvelopeGrain.h"
 #include "EnvelopeADSR.h"
 #include "PositionChanger.h"
-#include "Utils.h"
 #include "FilterControl.h"
 
 //==============================================================================

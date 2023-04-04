@@ -13,7 +13,7 @@
 float Grain::process(const juce::AudioBuffer<float>& audioBuffer, float gain, int time) {
   float timePerc = (time - trigTs) / (float)duration;
   float totalGain = gain * getAmplitude(timePerc);
-  const float** fileBuf = audioBuffer.getArrayOfReadPointers();
+  const float* const* fileBuf = audioBuffer.getArrayOfReadPointers();
 
   float unStretchedDuration = duration * pbRate;
   int lowSample = std::floor(juce::jmax(0.0f, timePerc * unStretchedDuration));

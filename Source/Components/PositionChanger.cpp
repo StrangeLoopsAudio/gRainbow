@@ -9,8 +9,6 @@
 */
 
 #include "PositionChanger.h"
-#include "GranularSynth.h"
-#include <JuceHeader.h>
 
 //==============================================================================
 PositionChanger::PositionChanger() {}

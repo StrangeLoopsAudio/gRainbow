@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include <JuceHeader.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 
-#include "GranularSynth.h"
+#include "../DSP/GranularSynth.h"
 
 /**
     This class holds the state of the settings that are known globally at all times

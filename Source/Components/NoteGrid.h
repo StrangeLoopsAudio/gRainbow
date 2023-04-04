@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <JuceHeader.h>
-#include "Parameters.h"
+#include <juce_gui_extra/juce_gui_extra.h>
+#include "../Parameters.h"
 
 //==============================================================================
 /*

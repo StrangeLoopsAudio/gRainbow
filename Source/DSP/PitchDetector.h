@@ -27,10 +27,10 @@
 
 #pragma once
 
-#include <JuceHeader.h>
+#include <juce_core/juce_core.h>
 
 #include "Fft.h"
-#include "Utils.h"
+#include "../Utils.h"
 
 class PitchDetector : juce::Thread {
  public:

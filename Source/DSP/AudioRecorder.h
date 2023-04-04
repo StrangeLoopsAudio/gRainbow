@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "JuceHeader.h"
+#include "juce_audio_devices/juce_audio_devices.h"
 
 //==============================================================================
 /** A simple class that acts as an AudioIODeviceCallback and writes the
@@ -36,8 +36,9 @@ class AudioRecorder : public juce::AudioIODeviceCallback {
 
   void audioDeviceStopped() override;
 
-  void audioDeviceIOCallback(const float** inputChannelData, int numInputChannels, float** outputChannelData, int numOutputChannels,
-                             int numSamples) override;
+  void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const* outputChannelData,
+                                        int numOutputChannels, int numSamples,
+                                        const juce::AudioIODeviceCallbackContext& context) override;
 
  private:
   juce::TimeSliceThread mBackgroundThread{"Audio Recorder Thread"};          // the thread that will write our audio data to

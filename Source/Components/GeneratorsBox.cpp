@@ -9,7 +9,6 @@
 */
 
 #include "GeneratorsBox.h"
-#include "Utils.h"
 
 //==============================================================================
 GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)

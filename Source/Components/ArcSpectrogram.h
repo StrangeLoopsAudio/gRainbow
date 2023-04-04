@@ -14,14 +14,14 @@
 
 #pragma once
 
-#include <JuceHeader.h>
+#include <juce_gui_extra/juce_gui_extra.h>
 
 #include <random>
 #include <bitset>
 
-#include "Fft.h"
-#include "Parameters.h"
-#include "Utils.h"
+#include "../DSP/Fft.h"
+#include "../Parameters.h"
+#include "../Utils.h"
 
 //==============================================================================
 /*

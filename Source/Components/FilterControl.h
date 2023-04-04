@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include <JuceHeader.h>
-#include "Utils.h"
-#include "Parameters.h"
+#include <juce_gui_basics/juce_gui_basics.h>
+#include "../Utils.h"
+#include "../Parameters.h"
 
 //==============================================================================
 /*

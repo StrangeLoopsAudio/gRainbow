@@ -8,9 +8,8 @@
   ==============================================================================
 */
 
-#include <JuceHeader.h>
 #include "NoteGrid.h"
-#include "Utils.h"
+#include "../Utils.h"
 
 //==============================================================================
 NoteGrid::NoteGrid(ParamsNote& paramsNote) : mParamsNote(paramsNote) {}

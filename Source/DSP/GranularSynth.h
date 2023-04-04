@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include <JuceHeader.h>
+#include <juce_audio_basics/juce_audio_basics.h>
 
 #include "Grain.h"
-#include "Parameters.h"
 #include "PitchDetector.h"
-#include "Utils.h"
+#include "../Parameters.h"
+#include "../Utils.h"
 #include <bitset>
 
 class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::Listener {

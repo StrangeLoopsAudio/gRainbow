@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <JuceHeader.h>
-#include "Utils.h"
+#include <juce_core/juce_core.h>
+#include <juce_dsp/juce_dsp.h>
 
 #include "Utils.h"
 

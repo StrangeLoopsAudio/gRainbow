@@ -8,10 +8,12 @@
   ==============================================================================
 */
 
+#include <juce_core/juce_core.h>
+
 #include "GranularSynth.h"
 
-#include "PluginEditor.h"
-#include "Settings.h"
+#include "../PluginEditor.h"
+#include "../Components/Settings.h"
 
 GranularSynth::GranularSynth()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -444,8 +446,8 @@ void GranularSynth::setInputBuffer(juce::AudioBuffer<float>* audioBuffer, double
   mParamUI.trimPlaybackMaxSample = resampleSize;
   mInputBuffer.setSize(audioBuffer->getNumChannels(), resampleSize);
 
-  const float** inputs = audioBuffer->getArrayOfReadPointers();
-  float** outputs = mInputBuffer.getArrayOfWritePointers();
+  const float* const* inputs = audioBuffer->getArrayOfReadPointers();
+  float* const* outputs = mInputBuffer.getArrayOfWritePointers();
 
   std::unique_ptr<juce::LagrangeInterpolator> resampler = std::make_unique<juce::LagrangeInterpolator>();
   for (int c = 0; c < mInputBuffer.getNumChannels(); c++) {
