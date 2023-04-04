@@ -7,8 +7,8 @@
 */
 
 #include "PluginEditor.h"
-
 #include "Preset.h"
+#include "BinaryData.h"
 
 // Used for getting memory usage
 #ifdef __linux__
@@ -394,21 +394,17 @@ void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files, 
    location
 */
 void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
-  if (mIsFileChooserUsed) {
-    return;
-  }
   if (path == nullptr) {
-    mIsFileChooserUsed = true;
-    juce::FileChooser chooser("Select a file to granulize...", juce::File::getCurrentWorkingDirectory(), "*.wav;*.mp3;*.gbow",
-                              true);
+    mFileChooser = std::make_unique<juce::FileChooser>("Select a file to granulize...", juce::File::getCurrentWorkingDirectory(),
+                                                       "*.wav;*.mp3;*.gbow", true);
 
-    if (chooser.browseForFileToOpen()) {
-      mIsFileChooserUsed = false;
-      auto file = chooser.getResult();
+    int openFlags =
+        juce::FileBrowserComponent::FileChooserFlags::openMode;
+
+  mFileChooser->launchAsync(openFlags, [this](const juce::FileChooser& fc) {
+      auto file = fc.getResult();
       processFile(file);
-    } else {
-      mIsFileChooserUsed = false;
-    }
+    });
   } else {
     auto file = juce::File(juce::String(path));
     processFile(file);
@@ -564,24 +560,24 @@ void GRainbowAudioProcessorEditor::processNewSample(juce::Range<juce::int64> ran
 }
 
 void GRainbowAudioProcessorEditor::savePreset() {
-  if (mIsFileChooserUsed) {
-    return;
-  }
-  Preset::Header header;
-  header.magic = Preset::MAGIC;
-  header.versionMajor = Preset::VERSION_MAJOR;
-  header.versionMinor = Preset::VERSION_MINOR;
+  
 
-  mIsFileChooserUsed = true;
-  juce::FileChooser chooser("Save gRainbow presets to a file", juce::File::getCurrentWorkingDirectory(), "*.gbow", true);
+  mFileChooser = std::make_unique<juce::FileChooser>("Save gRainbow presets to a file", juce::File::getCurrentWorkingDirectory(),
+                                                     "*.gbow", true);
 
-  if (chooser.browseForFileToSave(true)) {
-    mIsFileChooserUsed = false;
-    juce::File file = chooser.getResult().withFileExtension("gbow");
+  int saveFlags =
+      juce::FileBrowserComponent::FileChooserFlags::saveMode | juce::FileBrowserComponent::FileChooserFlags::warnAboutOverwriting;
+
+  mFileChooser->launchAsync(saveFlags, [this](const juce::FileChooser& fc) {
+    juce::File file = fc.getResult().withFileExtension("gbow");
     file.deleteFile();  // clear file if replacing
     juce::FileOutputStream outputStream(file);
 
     if (file.hasWriteAccess() && outputStream.openedOk()) {
+      Preset::Header header;
+      header.magic = Preset::MAGIC;
+      header.versionMajor = Preset::VERSION_MAJOR;
+      header.versionMinor = Preset::VERSION_MINOR;
       // Audio buffer data is grabbed from current synth
       const juce::AudioBuffer<float>& audioBuffer = mSynth.getAudioBuffer();
       header.audioBufferSamplerRate = mSynth.getSampleRate();
@@ -632,9 +628,7 @@ void GRainbowAudioProcessorEditor::savePreset() {
       displayError(juce::String::formatted("Unable to open %s to write", file.getFullPathName().toRawUTF8()));
       return;
     }
-  } else {
-    mIsFileChooserUsed = false;
-  }
+  });
 }
 
 void GRainbowAudioProcessorEditor::displayError(juce::String message) {
