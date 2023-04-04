@@ -8,20 +8,25 @@
 
 #pragma once
 
-#include <JuceHeader.h>
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_audio_devices/juce_audio_devices.h>
+#include <juce_audio_formats/juce_audio_formats.h>
 
-#include "ArcSpectrogram.h"
-#include "AudioRecorder.h"
-#include "Fft.h"
-#include "GeneratorsBox.h"
-#include "GlobalParamBox.h"
-#include "NoteGrid.h"
-#include "RainbowKeyboard.h"
+#include "Components/ArcSpectrogram.h"
+#include "Components/GeneratorsBox.h"
+#include "Components/GlobalParamBox.h"
+#include "Components/NoteGrid.h"
+#include "Components/RainbowKeyboard.h"
+#include "Components/TrimSelection.h"
+#include "Components/Settings.h"
+#include "DSP/AudioRecorder.h"
+#include "DSP/Fft.h"
+#include "DSP/TransientDetector.h"
+#include "DSP/GranularSynth.h"
 #include "RainbowLookAndFeel.h"
-#include "TransientDetector.h"
-#include "TrimSelection.h"
 #include "Utils.h"
-#include "Settings.h"
+
 
 /**
  * @brief Used on startup to fill unused area with the logo
@@ -105,7 +110,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::File mRecordedFile;
   juce::AudioDeviceManager mAudioDeviceManager;
   bool mIsFileHovering = false;
-  bool mIsFileChooserUsed = false;
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::AudioFormatManager mFormatManager;
   juce::AudioFormatReader* mFormatReader;
@@ -120,6 +124,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   void updateCenterComponent(ParamUI::CenterComponent component);
 
   SafePointer<juce::DialogWindow> mDialogWindow;
+  std::unique_ptr<juce::FileChooser> mFileChooser;
   void displayError(juce::String message);
   // used so other classes can report errors as this class needs to be the one to display it
   juce::String mErrorMessage;
