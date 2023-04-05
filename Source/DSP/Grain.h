@@ -19,7 +19,7 @@ class Grain {
       : mEnv(env), duration(duration), pbRate(pbRate), startPos(startPos), trigTs(trigTs), gain(gain) {}
   ~Grain() {}
 
-  float process(juce::AudioBuffer<float>& fileBuffer, juce::AudioBuffer<float>& blockBuffer, float gain, int time);
+  float process(const juce::AudioBuffer<float>& audioBuffer, float gain, int time);
 
   float getAmplitude(float timePerc);
 

@@ -13,22 +13,28 @@
 #include "PitchDetector.h"
 #include <limits.h>
 
-PitchDetector::PitchDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("pitch detector thread") {
+PitchDetector::PitchDetector(double startProgress, double endProgress)
+    : mStartProgress(endProgress / 2.0),
+      mEndProgress(endProgress),
+      mDiffProgress(mEndProgress - mStartProgress),
+      mFft(FFT_SIZE, HOP_SIZE, startProgress, endProgress / 2.0),
+      juce::Thread("pitch detector thread") {
   initHarmonicWeights();
-  mFft.onProcessingComplete = [this](std::vector<std::vector<float>>& spectrum) {
+  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
+    // Runs FFT twice but using custom size suited for the PitchDetector
     stopThread(4000);
     startThread();
   };
+  mFft.onProgressUpdated = [this](float progress) { updateProgress(progress); };
 }
 
 PitchDetector::~PitchDetector() { stopThread(4000); }
 
-void PitchDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate) {
+void PitchDetector::process(const juce::AudioBuffer<float>* audioBuffer, double sampleRate) {
   cancelProcessing();
-  updateProgress(0.01);
-  mFileBuffer = fileBuffer;
+  updateProgress(mStartProgress);
   mSampleRate = sampleRate;
-  mFft.processBuffer(fileBuffer);
+  mFft.process(audioBuffer);
 }
 
 void PitchDetector::cancelProcessing() {
@@ -37,13 +43,17 @@ void PitchDetector::cancelProcessing() {
 }
 
 void PitchDetector::run() {
-  if (mFileBuffer == nullptr) return;
   if (!computeHPCP()) return;
   if (onHarmonicProfileReady != nullptr) onHarmonicProfileReady(mHPCP);
   if (!segmentPitches()) return;
   getSegmentedPitchBuffer();
-  updateProgress(1.0);
+  updateProgress(mEndProgress);
   if (onPitchesReady != nullptr) onPitchesReady(mPitchMap, mSegmentedPitches);
+}
+
+void PitchDetector::clear() {
+  mFft.clear(true);
+  mPitchMap.clear();
 }
 
 void PitchDetector::updateProgress(double progress) {
@@ -74,13 +84,13 @@ void PitchDetector::getSegmentedPitchBuffer() {
 bool PitchDetector::computeHPCP() {
   mHPCP.clear();
 
-  std::vector<std::vector<float>>& spec = mFft.getSpectrum();
-  for (int frame = 0; frame < spec.size(); ++frame) {
+  const Utils::SpecBuffer& spec = mFft.getSpectrum();
+  for (size_t frame = 0; frame < spec.size(); ++frame) {
     if (threadShouldExit()) return false;
-    updateProgress(0.1 + 0.9 * ((float)frame / spec.size()));
+    updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(frame) / static_cast<double>(spec.size()))));
     mHPCP.push_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
 
-    std::vector<float>& specFrame = mFft.getSpectrum()[frame];
+    const std::vector<float>& specFrame = spec[frame];
 
     // Find local peaks to compute HPCP with
     std::vector<PitchDetector::Peak> peaks = getPeaks(MAX_SPEC_PEAKS, specFrame);
@@ -239,7 +249,7 @@ Utils::PitchClass PitchDetector::getPitchClass(float binNum) {
 
 PitchDetector::Peak PitchDetector::interpolatePeak(int frame, int bin) {
   // Use quadratic interpolation to find peak freq and amplitude
-  std::vector<std::vector<float>>& spec = mFft.getSpectrum();
+  const Utils::SpecBuffer& spec = mFft.getSpectrum();
   if (bin == 0 || bin == spec[frame].size() - 1) {
     return Peak((bin * mSampleRate) / FFT_SIZE, spec[frame][bin]);
   }
@@ -289,7 +299,7 @@ void PitchDetector::initHarmonicWeights() {
   }
 }
 
-std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int numPeaks, std::vector<float>& frame) {
+std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int numPeaks, const std::vector<float>& frame) {
   int size = frame.size();
   const float scale = 1.0 / (float)(size - 1);
 
@@ -369,7 +379,7 @@ std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int numPeaks, std::vect
   return std::vector<Peak>(peaks.begin(), peaks.begin() + nWantedPeaks);
 }
 
-std::vector<PitchDetector::Peak> PitchDetector::getWhitenedPeaks(int numPeaks, std::vector<float>& frame) {
+std::vector<PitchDetector::Peak> PitchDetector::getWhitenedPeaks(int numPeaks, const std::vector<float>& frame) {
   std::vector<Peak> peaks = getWhitenedPeaks(numPeaks, frame);
   const int nPeaks = peaks.size();
 

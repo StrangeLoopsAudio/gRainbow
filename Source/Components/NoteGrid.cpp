@@ -12,9 +12,16 @@
 #include "../Utils.h"
 
 //==============================================================================
-NoteGrid::NoteGrid(ParamsNote& paramsNote) : mParamsNote(paramsNote) { setFramesPerSecond(REFRESH_RATE_FPS); }
+NoteGrid::NoteGrid(ParamsNote& paramsNote) : mParamsNote(paramsNote) {}
 
 NoteGrid::~NoteGrid() {}
+
+juce::Rectangle<int> NoteGrid::getNoteSquare(int pitch, int generator) {
+  jassert(pitch < Utils::PitchClass::COUNT);
+  jassert(generator < NUM_GENERATORS);
+  juce::Point<int> squarePos = mGridRect.getTopLeft() + juce::Point<int>(pitch * mSquareSize + 1, generator * mSquareSize + 1);
+  return mSquare.withPosition(squarePos);
+}
 
 void NoteGrid::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::black);  // clear the background
@@ -40,21 +47,24 @@ void NoteGrid::paint(juce::Graphics& g) {
     g.drawText(PITCH_CLASS_NAMES[i], mNoteNamesRect.getX() + i * mSquareSize, mNoteNamesRect.getY(), mSquareSize, mSquareSize,
                juce::Justification::centred);
     for (int j = 0; j < NUM_GENERATORS; ++j) {
-      juce::Point<int> squarePos = mGridRect.getTopLeft() + juce::Point<int>(i * mSquareSize + 1, j * mSquareSize + 1);
+      juce::Rectangle<int> squareRect = getNoteSquare(i, j);
 
-      // Clear rect area first to eliminate note colour
-      g.setColour(juce::Colours::black);
-      g.fillRect(mSquare.withPosition(squarePos).reduced(2.0f));
+      // draw frame
+      g.setColour(noteColour);
+      g.drawRect(squareRect.reduced(1.0f), 2.0f);
 
-      // Fill and label candidate if enabled, draw frame if not
-      g.setColour(Utils::getRainbow12Colour(i));
+      const bool selected = mParamsNote.notes[i]->generators[j]->selected;
       if (mParamsNote.notes[i]->generators[j]->enable->get()) {
-        g.fillRect(mSquare.withPosition(squarePos).reduced(2.0f));
+        // Fill and label candidate if enabled
+        g.setColour(selected ? juce::Colours::white : noteColour);
+        g.fillRect(squareRect.reduced(2.0f));
         g.setColour(juce::Colours::black);
-        g.drawText(juce::String(mParamsNote.notes[i]->generators[j]->candidate->get() + 1), mSquare.withPosition(squarePos),
+        g.drawText(juce::String(mParamsNote.notes[i]->generators[j]->candidate->get() + 1), squareRect,
                    juce::Justification::centred);
       } else {
-        g.drawRect(mSquare.withPosition(squarePos).reduced(1.0f), 2.0f);
+        // Clear rect area only if not enabled
+        g.setColour(selected ? juce::Colours::white : juce::Colours::black);
+        g.fillRect(squareRect.reduced(2.0f));
       }
     }
   }
@@ -72,4 +82,19 @@ void NoteGrid::resized() {
   mTitleRect = mGridRect.removeFromTop(TITLE_HEIGHT);
   mTitleEdgeRect = mTitleRect.reduced(0, PADDING_SIZE / 2).toFloat();
   mNoteNamesRect = mGridRect.removeFromTop(TITLE_HEIGHT);
+
+  juce::Rectangle<int> topLeftNote = getNoteSquare(0, 0);
+  juce::Rectangle<int> bottomRightNote = getNoteSquare(Utils::PitchClass::COUNT - 1, NUM_GENERATORS - 1);
+  mSelectableNoteRects = juce::Rectangle<int>(topLeftNote.getTopLeft(), bottomRightNote.getBottomRight());
+  mSelectableFactorX = mSelectableNoteRects.getWidth() / Utils::PitchClass::COUNT;
+  mSelectableFactorY = mSelectableNoteRects.getHeight() / NUM_GENERATORS;
+}
+
+void NoteGrid::mouseDown(const juce::MouseEvent& event) {
+  if (mSelectableNoteRects.contains(event.getMouseDownPosition())) {
+    int pitchClass = (event.getMouseDownX() - mSelectableNoteRects.getX()) / mSelectableFactorX;
+    int generator = (event.getMouseDownY() - mSelectableNoteRects.getY()) / mSelectableFactorY;
+    mParamsNote.notes[pitchClass]->generators[generator]->selected =
+        !mParamsNote.notes[pitchClass]->generators[generator]->selected;
+  }
 }

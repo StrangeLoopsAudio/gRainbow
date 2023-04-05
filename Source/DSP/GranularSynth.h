@@ -73,14 +73,15 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   void setPresetParamsXml(const void* data, int sizeInBytes);
 
   double getSampleRate() { return mSampleRate; }
-  const juce::AudioBuffer<float>& getAudioBuffer() { return mFileBuffer; }
+  juce::AudioBuffer<float>& getAudioBuffer() { return mAudioBuffer; }
   juce::MidiKeyboardState& getKeyboardState() { return mKeyboardState; }
 
-  void processFile(juce::AudioBuffer<float>* audioBuffer, double sampleRate, bool preset);
+  void setInputBuffer(juce::AudioBuffer<float>* audioBuffer, double sampleRate);
+  const juce::AudioBuffer<float>& getInputBuffer() { return mInputBuffer; }
+  void processInput(juce::Range<juce::int64> range, bool preset);
   std::vector<Utils::SpecBuffer*> getProcessedSpecs() {
     return std::vector<Utils::SpecBuffer*>(mProcessedSpecs.begin(), mProcessedSpecs.end());
   }
-  juce::AudioBuffer<float>& getFileBuffer() { return mFileBuffer; }
 
   ParamsNote& getParamsNote() { return mParamsNote; }
   ParamGlobal& getParamGlobal() { return mParamGlobal; }
@@ -96,7 +97,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
  private:
   // DSP constants
   static constexpr auto FFT_SIZE = 4096;
-  static constexpr auto HOP_SIZE = 2048;
+  static constexpr auto HOP_SIZE = 4096;  // Larger because don't need high resolution for spectrogram
   static constexpr double DEFAULT_BPM = 120.0f;
   // Param bounds
   static constexpr auto MIN_RATE_RATIO = .25f;
@@ -123,11 +124,12 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   } GrainNote;
 
   // DSP-preprocessing
-  PitchDetector mPitchDetector;
   Fft mFft;
+  PitchDetector mPitchDetector;
 
   // Bookkeeping
-  juce::AudioBuffer<float> mFileBuffer;
+  juce::AudioBuffer<float> mInputBuffer;  // incoming buffer from file or other source
+  juce::AudioBuffer<float> mAudioBuffer;  // final buffer used for actual synth
   std::array<Utils::SpecBuffer*, ParamUI::SpecType::COUNT> mProcessedSpecs;
   double mSampleRate;
   juce::MidiKeyboardState mKeyboardState;

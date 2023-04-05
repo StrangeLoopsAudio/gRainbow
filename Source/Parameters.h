@@ -129,7 +129,7 @@ struct ParamCandidate {
 };
 
 struct ParamGenerator : juce::AudioProcessorParameter::Listener {
-  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {
+  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx), selected(false) {
     filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
     filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
   }
@@ -196,6 +196,8 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* filterResonance = nullptr;
   juce::AudioParameterFloat* filterCutoff = nullptr;
   juce::AudioParameterChoice* filterType = nullptr;
+
+  bool selected;
 
   // LUT of the grain envelope
   static constexpr auto ENV_LUT_SIZE = 128;
@@ -310,24 +312,26 @@ struct ParamGlobal {
 struct ParamUI {
   ParamUI() = default;
 
+  enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, WAVEFORM, COUNT };
   // Get it from the plugin state
   // will only set xml-able items (floats/int/strings)
   void setXml(juce::XmlElement* xml) {
     if (xml != nullptr) {
-      fileName = xml->getStringAttribute("fileName");
+      loadedFileName = xml->getStringAttribute("fileName");
+      fileName = loadedFileName;
       generatorTab = xml->getIntAttribute("generatorTab");
       pitchClass = xml->getIntAttribute("pitchClass");
-      specType = xml->getIntAttribute("specType");
+      specType = (SpecType)xml->getIntAttribute("specType");
     }
   }
 
   // Build the XML representation to save in plugin state.
   juce::XmlElement* getXml() {
     juce::XmlElement* xml = new juce::XmlElement("ParamUI");
-    xml->setAttribute("fileName", fileName);
+    xml->setAttribute("fileName", loadedFileName);
     xml->setAttribute("generatorTab", generatorTab);
     xml->setAttribute("pitchClass", pitchClass);
-    xml->setAttribute("specType", specType);
+    xml->setAttribute("specType", static_cast<int>(specType));
     return xml;
   }
 
@@ -341,15 +345,14 @@ struct ParamUI {
     return pngWriter.writeImageToStream(specImages[index], outputStream);
   }
 
-  enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, WAVEFORM, COUNT };
-
-  juce::String fileName = "";
+  juce::String fileName = "";        // currently being viewed
+  juce::String loadedFileName = "";  // name of what was loaded last
   int generatorTab = 0;
   // default when new instance is loaded
   int pitchClass = Utils::PitchClass::C;
 
   // ArcSpectrogram related items
-  int specType = 0;
+  SpecType specType = ParamUI::SpecType::INVALID;
   std::array<juce::Image, SpecType::COUNT> specImages;
   // Where ArcSpectrogram can let others know when it is "complete"
   // Makes no scenes to save to preset file
@@ -358,4 +361,9 @@ struct ParamUI {
   // Tracks what component is being displayed
   enum class CenterComponent { LOGO, ARC_SPEC, TRIM_SELECTION };
   CenterComponent centerComponent = CenterComponent::LOGO;
+
+  // trim selection status to pass information to the synth so it can pipe the audio out the main output
+  bool trimPlaybackOn = false;
+  int trimPlaybackSample;  // sampling buffer index position
+  int trimPlaybackMaxSample;
 };

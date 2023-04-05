@@ -36,9 +36,8 @@ class PitchDetector : juce::Thread {
  public:
   static constexpr auto MIN_MIDINOTE = 43;
   static constexpr auto MAX_MIDINOTE = 91;
-   
 
-  PitchDetector();
+  PitchDetector(double startProgress, double endProgress);
   ~PitchDetector();
 
   typedef struct Pitch {
@@ -50,17 +49,19 @@ class PitchDetector : juce::Thread {
     Pitch(Utils::PitchClass pitchClass, float posRatio, float duration, float gain)
         : pitchClass(pitchClass), posRatio(posRatio), duration(duration), gain(gain) {}
   } Pitch;
-  
+
   typedef juce::HashMap<Utils::PitchClass, std::vector<Pitch>> PitchMap;
 
-  std::function<void(std::vector<std::vector<float>>& hpcp)> onHarmonicProfileReady = nullptr;
-  std::function<void(PitchMap& pitchMap, std::vector<std::vector<float>>& pitchSpec)> onPitchesReady = nullptr;
+  std::function<void(Utils::SpecBuffer& hpcp)> onHarmonicProfileReady = nullptr;
+  std::function<void(PitchMap& pitchMap, Utils::SpecBuffer& pitchSpec)> onPitchesReady = nullptr;
   std::function<void(double progress)> onProgressUpdated = nullptr;
 
-  void processBuffer(juce::AudioBuffer<float>* fileBuffer, double sampleRate);
+  void process(const juce::AudioBuffer<float>* audioBuffer, double sampleRate);
   void cancelProcessing();
 
   void run() override;
+  // Clear any data not used after lifetime of run()
+  void clear();
 
  private:
   // FFT
@@ -90,6 +91,12 @@ class PitchDetector : juce::Thread {
   static constexpr auto MIN_NOTE_TIME_MS = 125;
   static constexpr auto LOOKAHEAD_TIME_MS = 25;
 
+  // Used to show far along the run thread is
+  void updateProgress(double progress);
+  double mStartProgress;
+  double mEndProgress;
+  double mDiffProgress;
+
   typedef struct PitchSegment {
     float binNum;      // Bin number in HPCP
     int startFrame;    // Start frame of segment
@@ -112,21 +119,19 @@ class PitchDetector : juce::Thread {
     HarmonicWeight(int semitone, float harmonicStrength) : semitone(semitone), gain(harmonicStrength) {}
   } HarmonicWeight;
 
-  juce::AudioBuffer<float>* mFileBuffer = nullptr;
   Fft mFft;
   double mSampleRate;
   // HPCP fields
   std::vector<HarmonicWeight> mHarmonicWeights;
-  std::vector<std::vector<float>> mHPCP;  // harmonic pitch class profile
+  Utils::SpecBuffer mHPCP;  // harmonic pitch class profile
 
   // Pitch segments in buffer form
-  std::vector<std::vector<float>> mSegmentedPitches;
+  Utils::SpecBuffer mSegmentedPitches;
   std::array<PitchSegment, NUM_ACTIVE_SEGMENTS> mSegments;
 
   // Hashmap of detected pitches
   PitchMap mPitchMap;
 
-  void updateProgress(double progress);
   bool computeHPCP();
   bool segmentPitches();
   void getSegmentedPitchBuffer();
@@ -136,7 +141,7 @@ class PitchDetector : juce::Thread {
   Peak interpolatePeak(int frame, int bin);
   void interpolatePeak(const float leftVal, const float middleVal, const float rightVal, int currentBin, float& resultVal,
                        float& resultBin) const;
-  std::vector<Peak> getPeaks(int numPeaks, std::vector<float>& frame);
-  std::vector<Peak> getWhitenedPeaks(int numPeaks, std::vector<float>& frame);
+  std::vector<Peak> getPeaks(int numPeaks, const std::vector<float>& frame);
+  std::vector<Peak> getWhitenedPeaks(int numPeaks, const std::vector<float>& frame);
   void initHarmonicWeights();
 };

@@ -15,23 +15,22 @@
 #include <juce_core/juce_core.h>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_dsp/juce_dsp.h>
+#include "../Utils.h"
 
 class Fft : public juce::Thread {
  public:
-  Fft(int windowSize, int hopSize)
-      : mWindowSize(windowSize),
-        mHopSize(hopSize),
-        mForwardFFT(std::log2(windowSize)),
-        mWindowEnvelope(windowSize, juce::dsp::WindowingFunction<float>::WindowingMethod::blackmanHarris),
-        juce::Thread("fft thread") {}
-  ~Fft() {}
+  Fft(int windowSize, int hopSize, double startProgress, double endProgress);
+  ~Fft();
 
   void run() override;
+  // Clear any data not used after lifetime of run()
+  void clear(bool clearData);
 
-  void processBuffer(juce::AudioBuffer<float>* fileBuffer);
-  std::vector<std::vector<float>>& getSpectrum() { return mFftData; }
+  void process(const juce::AudioBuffer<float>* audioBuffer);
+  const Utils::SpecBuffer& getSpectrum() { return mFftData; }
 
-  std::function<void(std::vector<std::vector<float>>& spectrum)> onProcessingComplete = nullptr;
+  std::function<void(Utils::SpecBuffer& spectrum)> onProcessingComplete = nullptr;
+  std::function<void(double progress)> onProgressUpdated = nullptr;
 
  private:
   // values passed in at creation time
@@ -41,9 +40,15 @@ class Fft : public juce::Thread {
   juce::dsp::WindowingFunction<float> mWindowEnvelope;
 
   // pointer to buffer to read from
-  juce::AudioBuffer<float>* mFileBuffer = nullptr;
+  const juce::AudioBuffer<float>* mInputBuffer = nullptr;
+
+  // Used to show far along the run thread is
+  void updateProgress(double progress);
+  double mStartProgress;
+  double mEndProgress;
+  double mDiffProgress;
 
   // processed data
   std::vector<float> mFftFrame;
-  std::vector<std::vector<float>> mFftData;  // FFT data normalized from 0.0-1.0
+  Utils::SpecBuffer mFftData;  // FFT data normalized from 0.0-1.0
 };

@@ -14,8 +14,13 @@
 
 #include <limits.h>
 
-TransientDetector::TransientDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread("transient thread") {
-  mFft.onProcessingComplete = [this](std::vector<std::vector<float>>& spectrum) {
+TransientDetector::TransientDetector(double startProgress, double endProgress)
+    : mStartProgress(startProgress / 2.0),
+      mEndProgress(endProgress),
+      mDiffProgress(mEndProgress - mStartProgress),
+      mFft(FFT_SIZE, HOP_SIZE, startProgress, endProgress / 2.0),
+      juce::Thread("transient thread") {
+  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
     stopThread(4000);
     startThread();
   };
@@ -23,26 +28,29 @@ TransientDetector::TransientDetector() : mFft(FFT_SIZE, HOP_SIZE), juce::Thread(
 
 TransientDetector::~TransientDetector() { stopThread(2000); }
 
-void TransientDetector::processBuffer(juce::AudioBuffer<float>* fileBuffer) {
-  mFft.processBuffer(fileBuffer);
-  mFileBuffer = fileBuffer;
-}
+void TransientDetector::process(const juce::AudioBuffer<float>* audioBuffer) { mFft.process(audioBuffer); }
 
 void TransientDetector::run() {
-  if (mFileBuffer == nullptr) return;
   retrieveTransients();
   if (onTransientsUpdated != nullptr && !threadShouldExit()) {
     onTransientsUpdated(mTransients);
   }
 }
 
+void TransientDetector::updateProgress(double progress) {
+  if (onProgressUpdated != nullptr) {
+    onProgressUpdated(progress);
+  }
+}
+
 void TransientDetector::retrieveTransients() {
   // Perform transient detection on each frame
-  std::vector<std::vector<float>>& spec = mFft.getSpectrum();
+  const Utils::SpecBuffer& spec = mFft.getSpectrum();
   mTransients.clear();
   mEnergyBuffer.fill(0.0f);
-  for (int frame = 0; frame < spec.size(); ++frame) {
+  for (size_t frame = 0; frame < spec.size(); ++frame) {
     if (threadShouldExit()) return;
+    updateProgress(mStartProgress + (mDiffProgress * static_cast<double>(frame / spec.size())));
     // Shift energy frames
     for (int i = PARAM_SPREAD - 1; i >= 0; --i) {
       if (i == 0)

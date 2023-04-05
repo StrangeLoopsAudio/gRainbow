@@ -27,7 +27,9 @@ GranularSynth::GranularSynth()
                          )
 #endif
       ,
-      mFft(FFT_SIZE, HOP_SIZE) {
+      // only care about tracking the processing of the DSP, not the spectrogram
+      mFft(FFT_SIZE, HOP_SIZE, 0, 0),
+      mPitchDetector(0.01, 1.0) {
   mParamsNote.addParams(*this);
   mParamGlobal.addParams(*this);
 
@@ -36,15 +38,19 @@ GranularSynth::GranularSynth()
 
   mKeyboardState.addListener(this);
 
-  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) { mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = &spectrum; };
+  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
+    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = &spectrum;
+    mFft.clear(false);
+  };
 
   mPitchDetector.onHarmonicProfileReady = [this](Utils::SpecBuffer& hpcpBuffer) {
     mProcessedSpecs[ParamUI::SpecType::HPCP] = &hpcpBuffer;
   };
 
-  mPitchDetector.onPitchesReady = [this](PitchDetector::PitchMap& pitchMap, std::vector<std::vector<float>>& pitchSpec) {
+  mPitchDetector.onPitchesReady = [this](PitchDetector::PitchMap& pitchMap, Utils::SpecBuffer& pitchSpec) {
     mProcessedSpecs[ParamUI::SpecType::DETECTED] = &pitchSpec;
     createCandidates(pitchMap);
+    mPitchDetector.clear();
   };
 
   mPitchDetector.onProgressUpdated = [this](float progress) { mLoadingProgress = progress; };
@@ -141,8 +147,9 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   juce::ScopedNoDenormals noDenormals;
   auto totalNumInputChannels = getTotalNumInputChannels();
   auto totalNumOutputChannels = getTotalNumOutputChannels();
+  const int bufferNumSample = buffer.getNumSamples();
 
-  mKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
+  mKeyboardState.processNextMidiBuffer(midiMessages, 0, bufferNumSample, true);
 
   // In case we have more outputs than inputs, this code clears any output
   // channels that didn't contain input data, (because these aren't
@@ -151,13 +158,33 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   // when they first compile a plugin, but obviously you don't need to keep
   // this code if your algorithm always overwrites all the output channels.
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
-    buffer.clear(i, 0, buffer.getNumSamples());
+    buffer.clear(i, 0, bufferNumSample);
+  }
+
+  if (mParamUI.trimPlaybackOn) {
+    int numSample = bufferNumSample;
+    if (mParamUI.trimPlaybackSample + bufferNumSample >= mParamUI.trimPlaybackMaxSample) {
+      mParamUI.trimPlaybackOn = false;
+      numSample = mParamUI.trimPlaybackMaxSample - mParamUI.trimPlaybackSample;
+    }
+
+    // if output buffer is stereo and the input in mono, duplicate into both channels
+    // if output buffer is mono and the input in stereo, just play one channel for simplicity
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+      const int inputChannel = juce::jmin(ch, mInputBuffer.getNumChannels() - 1);
+      buffer.copyFrom(ch, 0, mInputBuffer, inputChannel, mParamUI.trimPlaybackSample, numSample);
+    }
+    mParamUI.trimPlaybackSample += numSample;
   }
 
   // Add contributions from each note
   auto bufferChannels = buffer.getArrayOfWritePointers();
-  for (int i = 0; i < buffer.getNumSamples(); ++i) {
-    for (GrainNote& gNote : mActiveNotes) {
+  for (int i = 0; i < bufferNumSample; ++i) {
+    // Don't use a for(auto x : mActiveNotes) loop here as mActiveNotes can be added outside this function. If it is partially added
+    // it might to use it and the undefined data will cause a crash eventually
+    const int activeNoteSize = mActiveNotes.size();
+    for (int noteIndex = 0; noteIndex < activeNoteSize; noteIndex++) {
+      GrainNote& gNote = mActiveNotes.getReference(noteIndex);
       float noteGain =
           gNote.ampEnv.getAmplitude(mTotalSamps, mParamGlobal.attack->get() * mSampleRate, mParamGlobal.decay->get() * mSampleRate,
                                     mParamGlobal.sustain->get(), mParamGlobal.release->get() * mSampleRate) *
@@ -171,7 +198,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
                               mTotalSamps, paramGenerator->attack->get() * mSampleRate, paramGenerator->decay->get() * mSampleRate,
                               paramGenerator->sustain->get(), paramGenerator->release->get() * mSampleRate) *
                           paramGenerator->gain->get();
-          genSample += grain.process(mFileBuffer, buffer, noteGain * genGain * mParamGlobal.gain->get(), mTotalSamps);
+          genSample += grain.process(mAudioBuffer, noteGain * genGain * mParamGlobal.gain->get(), mTotalSamps);
         }
 
         // Process filter and optionally use for output
@@ -194,10 +221,10 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
   // Clip buffers to valid range
   for (int i = 0; i < buffer.getNumChannels(); i++) {
-    juce::FloatVectorOperations::clip(buffer.getWritePointer(i), buffer.getReadPointer(i), -1.0f, 1.0f, buffer.getNumSamples());
+    juce::FloatVectorOperations::clip(buffer.getWritePointer(i), buffer.getReadPointer(i), -1.0f, 1.0f, bufferNumSample);
   }
 
-  handleGrainAddRemove(buffer.getNumSamples());
+  handleGrainAddRemove(bufferNumSample);
 
   // Reset timestamps if no grains active to keep numbers low
   if (mActiveNotes.isEmpty()) {
@@ -205,7 +232,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   } else {
     // Normalize the block before sending onward
     // if grains is empty, don't want to divide by zero
-    /*for (int i = 0; i < buffer.getNumSamples(); ++i) {
+    /*for (int i = 0; i < bufferNumSample; ++i) {
       for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
          float* channelBlock = buffer.getWritePointer(ch);
          channelBlock[i] /= mGrains.size();
@@ -362,7 +389,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
                 mSampleRate;
             if (random.nextFloat() > 0.5f) posSprayOffset = -posSprayOffset;
             float posOffset = paramGenerator->positionAdjust->get() * durSamples + posSprayOffset;
-            float posSamples = paramCandidate->posRatio * mFileBuffer.getNumSamples() + posOffset;
+            float posSamples = paramCandidate->posRatio * mAudioBuffer.getNumSamples() + posOffset;
 
             /* Pitch calculation */
             float pitchSprayOffset = juce::jmap(random.nextFloat(), 0.0f, paramGenerator->pitchSpray->get());
@@ -409,27 +436,52 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
   mActiveNotes.removeIf([this](GrainNote& gNote) { return (gNote.ampEnv.noteOnTs < 0 && gNote.ampEnv.noteOffTs < 0); });
 }
 
-void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer, double sampleRate, bool preset) {
-  // Cancel processing if in progress
-  mFft.stopThread(4000);
-  mPitchDetector.cancelProcessing();
-
+void GranularSynth::setInputBuffer(juce::AudioBuffer<float>* audioBuffer, double sampleRate) {
   // resamples the buffer from the file sampler rate to the the proper sampler
   // rate set from the DAW in prepareToPlay.
   const double ratioToInput = sampleRate / mSampleRate;   // input / output
   const double ratioToOutput = mSampleRate / sampleRate;  // output / input
   // The output buffer needs to be size that matches the new sample rate
   const int resampleSize = static_cast<int>(static_cast<double>(audioBuffer->getNumSamples()) * ratioToOutput);
-  mFileBuffer.setSize(audioBuffer->getNumChannels(), resampleSize);
+  mParamUI.trimPlaybackMaxSample = resampleSize;
+  mInputBuffer.setSize(audioBuffer->getNumChannels(), resampleSize);
 
   const float* const* inputs = audioBuffer->getArrayOfReadPointers();
-  float* const* outputs = mFileBuffer.getArrayOfWritePointers();
+  float* const* outputs = mInputBuffer.getArrayOfWritePointers();
 
   std::unique_ptr<juce::LagrangeInterpolator> resampler = std::make_unique<juce::LagrangeInterpolator>();
-  for (int c = 0; c < mFileBuffer.getNumChannels(); c++) {
+  for (int c = 0; c < mInputBuffer.getNumChannels(); c++) {
     resampler->reset();
-    resampler->process(ratioToInput, inputs[c], outputs[c], mFileBuffer.getNumSamples());
+    resampler->process(ratioToInput, inputs[c], outputs[c], mInputBuffer.getNumSamples());
   }
+}
+
+void GranularSynth::processInput(juce::Range<juce::int64> range, bool preset) {
+  // Cancel processing if in progress
+  mFft.stopThread(4000);
+  mPitchDetector.cancelProcessing();
+
+  // TODO - we clear mInputBuffer here, but processBlock still in theory might need it one last time. Find a proper system for
+  // knowing when the buffer is not needed (Or find a way to have a single buffer as stated in the TODO where it is cleared)
+  mParamUI.trimPlaybackOn = false;
+
+  // If a range to trim is provided then
+  if (range.isEmpty()) {
+    mAudioBuffer.setSize(mInputBuffer.getNumChannels(), mInputBuffer.getNumSamples());
+    mAudioBuffer = mInputBuffer;
+  } else {
+    juce::AudioBuffer<float> fileAudioBuffer;
+    const int sampleLength = static_cast<int>(range.getLength());
+    mAudioBuffer.setSize(mInputBuffer.getNumChannels(), sampleLength);
+    for (int c = 0; c < mInputBuffer.getNumChannels(); c++) {
+      mAudioBuffer.copyFrom(c, 0, mInputBuffer, c, range.getStart(), sampleLength);
+    }
+  }
+  // set input buffer to 1 to reduce memory pressure, should not be needed anymore
+  // clear() keeps memory around
+  // TODO - Find a way to trim the mInputBuffer without having to make another copy. Or find a way so only 1 of these needs to live
+  // on the heap and the other can be remove after used on the stack
+  mInputBuffer.setSize(1, 1);
 
   // preset don't need to generate things again
   if (!preset) {
@@ -437,8 +489,8 @@ void GranularSynth::processFile(juce::AudioBuffer<float>* audioBuffer, double sa
     resetParameters();
     mLoadingProgress = 0.0;
     mProcessedSpecs.fill(nullptr);
-    mFft.processBuffer(&mFileBuffer);
-    mPitchDetector.processBuffer(&mFileBuffer, mSampleRate);
+    mFft.process(&mAudioBuffer);
+    mPitchDetector.process(&mAudioBuffer, mSampleRate);
   } else {
     mLoadingProgress = 1.0;
   }
