@@ -43,8 +43,13 @@ class RainbowKeyboard : public juce::Component {
   float getPitchXRatio(Utils::PitchClass pitchClass);
 
  private:
-  static constexpr float BLACK_NOTE_SIZE_RATIO = 0.7f;
   static constexpr int MIDI_CHANNEL = 1;
+  static constexpr float NOTE_BODY_PADDING = 0.01f;
+  static constexpr float NOTE_BODY_HEIGHT = 0.5f;
+  static constexpr float GEN_NODE_HEIGHT = 0.08f;
+  static constexpr float NOTE_BODY_SATURATION = 0.4f;
+  static constexpr float NOTE_LABEL_SIZE = 20;
+
   juce::Random mRandom;
 
   juce::MidiKeyboardState& mState;
@@ -65,16 +70,6 @@ class RainbowKeyboard : public juce::Component {
   void fillNoteRectangleMap();
 
   void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);
-
-  // if a key is black or white is only a keyboard UI issue
-  Utils::PitchClass WHITE_KEYS_PITCH_CLASS[7] = {Utils::PitchClass::C, Utils::PitchClass::D, Utils::PitchClass::E,
-                                                 Utils::PitchClass::F, Utils::PitchClass::G, Utils::PitchClass::A,
-                                                 Utils::PitchClass::B};
-
-  Utils::PitchClass BLACK_KEYS_PITCH_CLASS[5] = {Utils::PitchClass::Cs, Utils::PitchClass::Ds, Utils::PitchClass::Fs,
-                                                 Utils::PitchClass::Gs, Utils::PitchClass::As};
-
-  static inline bool isBlackKey(Utils::PitchClass pitchClass) { return ((1 << (pitchClass)) & 0x054a) != 0; }
 
   // LUT for animation values to save from recomputing each frame
   static constexpr int ANIMATION_BLOCK_DIVISOR = 12;

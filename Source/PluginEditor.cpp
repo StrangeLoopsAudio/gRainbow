@@ -32,7 +32,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
       mGlobalParamBox(mSynth.getParamGlobal()),
-      mNoteGrid(mSynth.getParamsNote()),
       mGeneratorsBox(mSynth.getParamsNote(), synth.getParamUI()),
       mArcSpec(synth.getParamsNote(), synth.getParamUI()),
       mKeyboard(synth.getKeyboardState()),
@@ -88,7 +87,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mGeneratorsBox.onPositionChanged = [this](int gen, bool isRight) { mSynth.incrementPosition(gen, isRight); };
   addAndMakeVisible(mGeneratorsBox);
   addAndMakeVisible(mGlobalParamBox);
-  addAndMakeVisible(mNoteGrid);
   addAndMakeVisible(mResourceUsage);
 
   // Arc spectrogram
@@ -328,14 +326,19 @@ void GRainbowAudioProcessorEditor::resized() {
   mSettings.setBounds(r.removeFromBottom(mSettings.getHeight()));
 #endif
 
+  // Rainbow keyboard
+  juce::Rectangle<int> keyboardRect = r.removeFromBottom(r.getHeight() * KEYBOARD_HEIGHT);
+  mKeyboard.setBounds(keyboardRect);
+  mNoteDisplayRect = r.removeFromBottom(NOTE_DISPLAY_HEIGHT).toFloat();
+
   // Generators box
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
   mGeneratorsBox.setBounds(leftPanel);
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
-  mGlobalParamBox.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2));
   const int resourceUsageHight = 15;
-  mNoteGrid.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() - resourceUsageHight));
+  mGlobalParamBox.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() - resourceUsageHight));
+  
   mResourceUsage.setBounds(rightPanel);
 
   // Open and record buttons
@@ -362,13 +365,6 @@ void GRainbowAudioProcessorEditor::resized() {
   mLogo.setBounds(centerRect);
   mTrimSelection.setBounds(centerRect);
   mProgressBar.setBounds(centerRect.withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
-
-  // Space for note display
-  mNoteDisplayRect = r.removeFromTop(NOTE_DISPLAY_HEIGHT).toFloat();
-
-  // Keyboard
-  juce::Rectangle<int> keyboardRect = r.removeFromTop(r.getHeight() - NOTE_DISPLAY_HEIGHT).reduced(NOTE_DISPLAY_HEIGHT, 0.0f);
-  mKeyboard.setBounds(keyboardRect);
 }
 
 bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files) {

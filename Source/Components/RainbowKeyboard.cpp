@@ -24,26 +24,16 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
 
   // Draw each white key, but rainbowy, then black key, but rainbowy, so the
   // black keys rect are fully on top of white key rect visually
-  for (Utils::PitchClass pitchClass : WHITE_KEYS_PITCH_CLASS) {
-    drawKey(g, pitchClass);
+  for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
+    drawKey(g, key);
   }
-  for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
-    drawKey(g, pitchClass);
-  }
+
+  g.setColour(juce::Colours::white);
+  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), 10.0f, 2.0f);
 }
 
 float RainbowKeyboard::getPitchXRatio(Utils::PitchClass pitchClass) {
-  float noteMiddle = mNoteRectangleMap[pitchClass].getCentreX() / static_cast<float>(getWidth());
-  bool needsLeftShift = ((1 << (pitchClass)) & 0x021) != 0;
-  bool needsRightShift = ((1 << (pitchClass)) & 0x810) != 0;
-  float shiftAmount = (1.0f / 7.0f) * (BLACK_NOTE_SIZE_RATIO / 4.0f);
-  if (needsLeftShift) {
-    return noteMiddle - shiftAmount;
-  } else if (needsRightShift) {
-    return noteMiddle + shiftAmount;
-  } else {
-    return noteMiddle;
-  }
+  return mNoteRectangleMap[pitchClass].getCentreX() / static_cast<float>(getWidth());
 }
 
 void RainbowKeyboard::fillNoteRectangleMap() {
@@ -51,36 +41,25 @@ void RainbowKeyboard::fillNoteRectangleMap() {
   const float componentWidth = static_cast<float>(getWidth());
   const float componentHeight = static_cast<float>(getHeight());
 
-  const float keyWidth = componentWidth / 7.0f;
-  const float blackKeyOffset = BLACK_NOTE_SIZE_RATIO * keyWidth / 2.0f;
+  juce::Rectangle<float> r = getLocalBounds().toFloat();
+  
+  const float padding = NOTE_BODY_PADDING * componentWidth;
 
-  const float notePos[Utils::PitchClass::COUNT] = {0.0f * keyWidth,
-                                                   1.0f * keyWidth - blackKeyOffset,
-                                                   1.0f * keyWidth,
-                                                   2.0f * keyWidth - blackKeyOffset,
-                                                   2.0f * keyWidth,
-                                                   3.0f * keyWidth,
-                                                   4.0f * keyWidth - blackKeyOffset,
-                                                   4.0f * keyWidth,
-                                                   5.0f * keyWidth - blackKeyOffset,
-                                                   5.0f * keyWidth,
-                                                   6.0f * keyWidth - blackKeyOffset,
-                                                   6.0f * keyWidth};
+  r = r.withSizeKeepingCentre(getWidth() - padding * 2, getHeight() - padding * 2);
 
-  const float blackNoteWidth = BLACK_NOTE_SIZE_RATIO * keyWidth;
-  const float whiteNoteWidth = keyWidth;
-  const float blackNoteHeight = componentHeight / 2.0f;
-  const float whiteNoteHeight = componentHeight;
+  // key width = leftover width after padding / num pitch classes * component width
+  const float keyWidth = (r.getWidth() - (padding * (Utils::PitchClass::COUNT - 1))) / Utils::PitchClass::COUNT;
+  const float keyHeight = componentHeight * NOTE_BODY_HEIGHT;
 
   for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
-    const bool blackKey = isBlackKey(key);
-    mNoteRectangleMap[key].setBounds(notePos[key], 0, (blackKey) ? blackNoteWidth : whiteNoteWidth,
-                                     (blackKey) ? blackNoteHeight : whiteNoteHeight);
+    //float keyCenterY = 
+    mNoteRectangleMap[key] = r.removeFromLeft(keyWidth).removeFromBottom(keyHeight);
+    r.removeFromLeft(padding);
   }
 }
 
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
-  juce::Colour keyColor = Utils::getRainbow12Colour(pitchClass);
+  juce::Colour keyColor = Utils::getRainbow12Colour(pitchClass).withSaturation(NOTE_BODY_SATURATION);
   const float velocity = mNoteVelocity[pitchClass];
   const bool isDown = (velocity > 0.0f);
 
@@ -98,9 +77,9 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   g.setFillType(juce::ColourGradient(color1, juce::Point<float>(0.0f, 0.0f), color2, juce::Point<float>(0, getHeight()), false));
 
   juce::Rectangle<float> area = mNoteRectangleMap[pitchClass];
-  g.fillRect(area);
-  g.setColour(juce::Colours::black);
-  g.drawRect(area, isBlackKey(pitchClass) ? 2 : 1);
+  g.fillRoundedRectangle(area, 10.0f);
+  g.setColour(keyColor.withSaturation(1.0f));
+  g.drawRoundedRectangle(area, 10.0f, 1.0f);
 
   // display animation to show the velocity level of the note
   if (isDown && PowerUserSettings::get().getAnimated()) {
@@ -117,6 +96,15 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
       g.drawRect(block);
     }
   }
+
+  // Pitch class label
+  juce::Rectangle<float> labelRect = area.withTrimmedTop(5).withTrimmedLeft(5).withSize(NOTE_LABEL_SIZE, NOTE_LABEL_SIZE);
+  g.setColour(keyColor.withSaturation(0.7f));
+  g.fillRoundedRectangle(labelRect, 5.0f);
+  g.setColour(keyColor.withSaturation(1.0f));
+  g.drawRoundedRectangle(labelRect, 5.0f, 1.0f);
+  g.setColour(juce::Colours::black);
+  g.drawFittedText(Utils::PITCH_CLASS_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred, 1);
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
@@ -206,20 +194,12 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
   // Since the Juce canvas is all in float, keep in float to prevent strange
   // int-vs-float rounding errors selecting the wrong key
   const float componentHeight = static_cast<float>(getHeight());
-  const float blackNoteLength = componentHeight / 2.0f;
 
-  // can skip quick checking black notes from y position
-  if (pos.getY() < blackNoteLength) {
-    for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
-      if (mNoteRectangleMap[pitchClass].contains(pos)) {
-        return Utils::MidiNote(pitchClass, juce::jmax(0.0f, 1.0f - (pos.y / blackNoteLength)));
-      }
-    }
-  }
-
-  for (Utils::PitchClass pitchClass : WHITE_KEYS_PITCH_CLASS) {
+  for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
     if (mNoteRectangleMap[pitchClass].contains(pos)) {
-      return Utils::MidiNote(pitchClass, juce::jmax(0.0f, 1.0f - (pos.y / componentHeight)));
+      // TODO: recheck velocity calc for new key design
+      float velocity = juce::jmax(0.0f, 1.0f - ((pos.y - mNoteRectangleMap[pitchClass].getY()) / mNoteRectangleMap[pitchClass].getHeight()));
+      return Utils::MidiNote(pitchClass, velocity);
     }
   }
 

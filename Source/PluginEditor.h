@@ -16,7 +16,6 @@
 #include "Components/ArcSpectrogram.h"
 #include "Components/GeneratorsBox.h"
 #include "Components/GlobalParamBox.h"
-#include "Components/NoteGrid.h"
 #include "Components/RainbowKeyboard.h"
 #include "Components/TrimSelection.h"
 #include "Components/Settings.h"
@@ -68,15 +67,16 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
 
  private:
   // UI Layout
-  static constexpr auto BTN_PANEL_HEIGHT = 50;
-  static constexpr auto BTN_PADDING = 5;
-  static constexpr auto OPEN_FILE_WIDTH = 80;
-  static constexpr auto PANEL_WIDTH = 300;
-  static constexpr auto KNOB_HEIGHT = 50;
-  static constexpr auto TABS_HEIGHT = 30;
-  static constexpr auto PROGRESS_SIZE = 80;
-  static constexpr auto NOTE_BULB_SIZE = 10;
-  static constexpr auto NOTE_DISPLAY_HEIGHT = 20;
+  static constexpr int BTN_PANEL_HEIGHT = 50;
+  static constexpr int BTN_PADDING = 5;
+  static constexpr int OPEN_FILE_WIDTH = 80;
+  static constexpr int PANEL_WIDTH = 300;
+  static constexpr int KNOB_HEIGHT = 50;
+  static constexpr int TABS_HEIGHT = 30;
+  static constexpr int PROGRESS_SIZE = 80;
+  static constexpr int NOTE_BULB_SIZE = 10;
+  static constexpr int NOTE_DISPLAY_HEIGHT = 20;
+  static constexpr float KEYBOARD_HEIGHT = 0.2f;
   static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
 
   // DSP Modules
@@ -90,7 +90,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::Label mLabelFileName;
   RainbowKeyboard mKeyboard;
   GlobalParamBox mGlobalParamBox;
-  NoteGrid mNoteGrid;
   GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;

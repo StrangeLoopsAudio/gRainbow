@@ -177,7 +177,7 @@ void FilterControl::paint(juce::Graphics& g) {
 
   g.setColour(envColour);
   g.drawRect(juce::Rectangle<float>(0, FILTER_TYPE_BUTTON_HEIGHT + PADDING_SIZE, getWidth(),
-                                    getHeight() - FILTER_TYPE_BUTTON_HEIGHT - PADDING_SIZE),
+                                    juce::jmax(0, getHeight() - FILTER_TYPE_BUTTON_HEIGHT - PADDING_SIZE)),
              2.0f);
 }
 
