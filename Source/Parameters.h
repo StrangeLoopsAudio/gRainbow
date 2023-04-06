@@ -37,13 +37,16 @@ static juce::String genSustain{"_sustain_gen_"};
 static juce::String genRelease{"_release_gen_"};
 static juce::String genFilterCutoff{"_filt_cutoff_gen_"};
 static juce::String genFilterResonance{"_filt_resonance_gen_"};
-static juce::String genFilterType{"_filter_type_gen_"};
+static juce::String genFilterType{"_filt_type_gen_"};
 // Global params
 static juce::String globalGain{"global_gain"};
 static juce::String globalAttack{"global_attack"};
 static juce::String globalDecay{"global_decay"};
 static juce::String globalSustain{"global_sustain"};
 static juce::String globalRelease{"global_release"};
+static juce::String globalFilterCutoff{"global_filt_cutoff"};
+static juce::String globalFilterResonance{"global_filt_resonance"};
+static juce::String globalFilterType{"global_filt_type"};
 }  // namespace ParamIDs
 
 namespace ParamRanges {
@@ -289,8 +292,42 @@ struct ParamsNote {
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamsNote)
 };
 
-struct ParamGlobal {
-  ParamGlobal() {}
+struct ParamGlobal : juce::AudioProcessorParameter::Listener {
+  ParamGlobal() {
+    filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
+    filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+  }
+  ~ParamGlobal() {
+    filterType->removeListener(this);
+    filterCutoff->removeListener(this);
+    filterResonance->removeListener(this);
+  }
+
+  void parameterValueChanged(int paramIdx, float newValue) override {
+    if (paramIdx == filterType->getParameterIndex()) {
+      switch (filterType->getIndex()) {
+        case Utils::FilterType::LOWPASS: {
+          filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
+          break;
+        }
+        case Utils::FilterType::HIGHPASS: {
+          filter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
+          break;
+        }
+        case Utils::FilterType::BANDPASS: {
+          filter.setType(juce::dsp::StateVariableTPTFilterType::bandpass);
+          break;
+        }
+        default:
+          break;
+      }
+    } else if (paramIdx == filterCutoff->getParameterIndex()) {
+      filter.setCutoffFrequency(filterCutoff->get());
+    } else if (paramIdx == filterResonance->getParameterIndex()) {
+      filter.setResonance(filterResonance->get());
+    }
+  };
+  void parameterGestureChanged(int, bool) override {}
 
   void addParams(juce::AudioProcessor& p);
   void resetParams();
@@ -300,6 +337,13 @@ struct ParamGlobal {
   juce::AudioParameterFloat* decay = nullptr;
   juce::AudioParameterFloat* sustain = nullptr;
   juce::AudioParameterFloat* release = nullptr;
+  juce::AudioParameterFloat* filterCutoff = nullptr;
+  juce::AudioParameterFloat* filterResonance = nullptr;
+  juce::AudioParameterChoice* filterType = nullptr;
+
+    // State variable filter for generator
+  double sampleRate = 48000;
+  juce::dsp::StateVariableTPTFilter<float> filter;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
 };

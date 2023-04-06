@@ -22,6 +22,14 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                    juce::NormalisableRange<float>(0.0f, 1.0f), ParamDefaults::SUSTAIN_DEFAULT));
   p.addParameter(release = new juce::AudioParameterFloat(ParamIDs::globalRelease, "Master Release", ParamRanges::RELEASE,
                                                          ParamDefaults::RELEASE_DEFAULT_SEC));
+  p.addParameter(filterCutoff = new juce::AudioParameterFloat(ParamIDs::globalFilterCutoff, "Master Filter Cutoff",
+                                                              ParamRanges::CUTOFF, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
+  filterCutoff->addListener(this);
+  p.addParameter(filterResonance = new juce::AudioParameterFloat(ParamIDs::globalFilterResonance, "Master Filter Cutoff",
+                                                                 ParamRanges::RESONANCE, ParamDefaults::FILTER_RESONANCE_DEFAULT));
+  filterResonance->addListener(this);
+  p.addParameter(filterType = new juce::AudioParameterChoice(ParamIDs::globalFilterType, "Master Filter Type", FILTER_TYPE_NAMES, 0));
+  filterType->addListener(this);
 }
 
 void ParamGlobal::resetParams() {
@@ -30,6 +38,9 @@ void ParamGlobal::resetParams() {
   ParamHelper::setParam(decay, ParamDefaults::DECAY_DEFAULT_SEC);
   ParamHelper::setParam(sustain, ParamDefaults::SUSTAIN_DEFAULT);
   ParamHelper::setParam(release, ParamDefaults::RELEASE_DEFAULT_SEC);
+  ParamHelper::setParam(filterCutoff, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+  ParamHelper::setParam(filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
+  ParamHelper::setParam(filterType, 0);
 }
 
 void ParamGenerator::addParams(juce::AudioProcessor& p) {

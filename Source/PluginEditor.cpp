@@ -6,6 +6,8 @@
   ==============================================================================
 */
 
+#define GRAINBOW_PRODUCTION 1
+
 #include "PluginEditor.h"
 #include "Preset.h"
 #include "BinaryData.h"

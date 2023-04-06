@@ -118,6 +118,74 @@ GlobalParamBox::GlobalParamBox(ParamGlobal& paramGlobal) : mParamGlobal(paramGlo
   mLabelRelease.setText("Release", juce::dontSendNotification);
   mLabelRelease.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRelease);
+
+  /* Filter Cutoff */
+  mSliderCutoff = std::make_unique<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
+      *mParamGlobal.filterCutoff, *this, [mainColour, rotaryParams](juce::Slider& slider) {
+        slider.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, mainColour);
+        slider.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mainColour);
+        slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+        slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+        slider.setRotaryParameters(rotaryParams);
+        slider.setNumDecimalPlacesToDisplay(2);
+        slider.setRange(0.0, 1.0, 0.01);
+      });
+  mSliderCutoff->component.setTextValueSuffix("Hz");
+  mSliderCutoff->component.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderCutoff->component.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderCutoff->component.setRotaryParameters(rotaryParams);
+  mSliderCutoff->component.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, .01f);
+  mSliderCutoff->component.onValueChange = [this] { 
+    mFilterControl.setCutoff(ParamRanges::CUTOFF.convertTo0to1(mParamGlobal.filterCutoff->get()));
+  };
+
+  mLabelCutoff.setText("Cutoff", juce::dontSendNotification);
+  mLabelCutoff.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelCutoff);
+
+  /* Filter Resonance */
+  mSliderResonance = std::make_unique<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment> >(
+      *mParamGlobal.filterResonance, *this, [mainColour, rotaryParams](juce::Slider& slider) {
+        slider.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, mainColour);
+        slider.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mainColour);
+        slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+        slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+        slider.setRotaryParameters(rotaryParams);
+        slider.setNumDecimalPlacesToDisplay(2);
+        slider.setRange(0.0, 1.0, 0.01);
+      });
+  mSliderResonance->component.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+  mSliderResonance->component.setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  mSliderResonance->component.setRotaryParameters(rotaryParams);
+  mSliderResonance->component.setRange(0.0, 1.0, 0.01);
+  mSliderResonance->component.onValueChange = [this] {
+    mFilterControl.setResonance(mParamGlobal.filterResonance->get());
+  };
+
+  mLabelResonance.setText("Resonance", juce::dontSendNotification);
+  mLabelResonance.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelResonance);
+
+  /* Filter type */
+  mFilterControl.setColour(mainColour);
+  mFilterControl.onFilterTypeChange = [this](Utils::FilterType filterType) {
+    ParamHelper::setParam(mParamGlobal.filterType, filterType);
+    switch (filterType) {
+      case (Utils::FilterType::LOWPASS):
+        ParamHelper::setParam(mParamGlobal.filterCutoff, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+        break;
+      case (Utils::FilterType::HIGHPASS):
+        ParamHelper::setParam(mParamGlobal.filterCutoff, ParamDefaults::FILTER_HP_CUTOFF_DEFAULT_HZ);
+        break;
+      case (Utils::FilterType::BANDPASS):
+        ParamHelper::setParam(mParamGlobal.filterCutoff, ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
+        break;
+    }
+    ParamHelper::setParam(mParamGlobal.filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
+  };
+  //TODO: listen for filter type change and:
+  // mFilterControl.setFilterType(gen.filterType->getIndex());
+  addAndMakeVisible(mFilterControl);
 }
 
 GlobalParamBox::~GlobalParamBox() {}
@@ -139,6 +207,12 @@ void GlobalParamBox::paint(juce::Graphics& g) {
   g.fillRoundedRectangle(mAmpEnvTitleRect, 10.0f);
   g.setColour(juce::Colours::black);
   g.drawText(juce::String(SECTION_AMP_ENV_TITLE), mAmpEnvTitleRect, juce::Justification::centred);
+
+  // Filter Control env section title
+  g.setColour(mainColour);
+  g.fillRect(mFilterEnvTitleRect);
+  g.setColour(juce::Colours::black);
+  g.drawText(juce::String(SECTION_FILTER_ENV_TITLE), mFilterEnvTitleRect, juce::Justification::centred);
 
   // Outline rect
   g.setColour(mainColour);
@@ -182,4 +256,26 @@ void GlobalParamBox::resized() {
   mLabelDecay.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelSustain.setBounds(labelPanel.removeFromLeft(knobWidth));
   mLabelRelease.setBounds(labelPanel.removeFromLeft(knobWidth));
+
+  // Filter Control
+  r.removeFromTop(SECTION_TITLE_HEIGHT);
+
+  mFilterControl.setBounds(r.removeFromTop(ENVELOPE_HEIGHT));
+  mFilterEnvTitleRect = juce::Rectangle<int>(0, mFilterControl.getY() - SECTION_TITLE_HEIGHT - (PADDING_SIZE / 2.0f), getWidth(),
+                                             SECTION_TITLE_HEIGHT)
+                            .reduced(PADDING_SIZE, PADDING_SIZE / 2);
+
+  r.removeFromTop(PADDING_SIZE);
+
+  // Filter env knobs
+  knobWidth = r.getWidth() / 3;
+  knobPanel = r.removeFromTop(PADDING_SIZE + knobWidth / 2);
+  auto cutoffPanel = knobPanel.removeFromLeft(knobPanel.getWidth() / 2);
+  mSliderCutoff->component.setBounds(cutoffPanel.removeFromRight(knobWidth));
+  mSliderResonance->component.setBounds(knobPanel.removeFromLeft(knobWidth));
+
+  labelPanel = r.removeFromTop(LABEL_HEIGHT);
+  cutoffPanel = labelPanel.removeFromLeft(labelPanel.getWidth() / 2);
+  mLabelCutoff.setBounds(cutoffPanel.removeFromRight(knobWidth));
+  mLabelResonance.setBounds(labelPanel.removeFromLeft(knobWidth));
 }

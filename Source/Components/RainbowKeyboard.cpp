@@ -10,6 +10,7 @@
 
 #include "RainbowKeyboard.h"
 #include "Settings.h"
+#include "../Parameters.h"
 
 //==============================================================================
 RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state) : mState(state) {
@@ -104,7 +105,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   g.setColour(keyColor.withSaturation(1.0f));
   g.drawRoundedRectangle(labelRect, 5.0f, 1.0f);
   g.setColour(juce::Colours::black);
-  g.drawFittedText(Utils::PITCH_CLASS_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred, 1);
+  g.drawFittedText(PITCH_CLASS_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred, 1);
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }

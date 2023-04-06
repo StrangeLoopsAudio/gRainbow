@@ -13,6 +13,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "EnvelopeADSR.h"
+#include "FilterControl.h"
 #include "../DSP/GranularSynth.h"
 
 //==============================================================================
@@ -36,6 +37,7 @@ class GlobalParamBox : public juce::Component {
   static constexpr auto ENVELOPE_HEIGHT = 60;
   static constexpr auto MAIN_TITLE = "global parameters";
   static constexpr auto SECTION_AMP_ENV_TITLE = "amplitude envelope";
+  static constexpr auto SECTION_FILTER_ENV_TITLE = "filter control";
 
   // Parameters
   ParamGlobal& mParamGlobal;
@@ -46,6 +48,12 @@ class GlobalParamBox : public juce::Component {
   std::unique_ptr<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>> mSliderDecay;
   std::unique_ptr<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>> mSliderSustain;
   std::unique_ptr<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>> mSliderRelease;
+  std::unique_ptr<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>> mSliderCutoff;
+  std::unique_ptr<Utils::AttachedComponent<juce::Slider, juce::SliderParameterAttachment>> mSliderResonance;
+  // -- Filter Control
+  juce::Label mLabelCutoff;
+  juce::Label mLabelResonance;
+  FilterControl mFilterControl;
   // -- ADSR Env
   juce::Label mLabelGain;
   juce::Label mLabelAttack;
@@ -56,6 +64,7 @@ class GlobalParamBox : public juce::Component {
   // UI values saved on resize
   juce::Rectangle<float> mTitleRect;
   juce::Rectangle<float> mAmpEnvTitleRect;
+  juce::Rectangle<int> mFilterEnvTitleRect;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GlobalParamBox)
 };

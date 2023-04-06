@@ -30,8 +30,6 @@ enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
 
 // All util logic around the notes/pitchClasses
 enum PitchClass { NONE = -1, C = 0, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, COUNT };
-static constexpr std::array<const char*, PitchClass::COUNT> PITCH_CLASS_NAMES{"C",  "C#", "D",  "D#", "E",  "F",
-                                                                      "F#", "G",  "G#", "A",  "A#", "B"};
 static inline PitchClass getPitchClass(int midiNoteNumber) { return (PitchClass)(midiNoteNumber % PitchClass::COUNT); }
 // A "Note" is a wrapper to hold all the information about notes from a MidiMessage we care about sharing around classes
 struct MidiNote {

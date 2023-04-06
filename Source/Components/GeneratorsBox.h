@@ -17,7 +17,6 @@
 #include "EnvelopeGrain.h"
 #include "EnvelopeADSR.h"
 #include "PositionChanger.h"
-#include "FilterControl.h"
 
 //==============================================================================
 /*
@@ -63,14 +62,12 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   static constexpr auto SECTION_AMP_ENV_TITLE = "amplitude envelope";
   static constexpr auto SECTION_GRAIN_ENV_TITLE = "grain envelope";
   static constexpr auto SECTION_ADJUST_TITLE = "generator adjustments";
-  static constexpr auto SECTION_FILTER_ENV_TITLE = "filter control";
 
   // UI values saved on resize
   juce::Rectangle<float> mBorderRect;
   juce::Rectangle<int> mAdjustTitleRect;
   juce::Rectangle<int> mAmpEnvTitleRect;
   juce::Rectangle<int> mGrainEnvTitleRect;
-  juce::Rectangle<int> mFilterEnvTitleRect;
 
   // Parameters
   ParamsNote& mParamsNote;
@@ -140,12 +137,6 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   EnvelopeADSR mEnvelopeAmp;
   juce::Slider mSliderGain;
   juce::Label mLabelGain;
-  /* -- Filter Control*/
-  FilterControl mFilterControl;
-  juce::Slider mSliderCutoff;
-  juce::Label mLabelCutoff;
-  juce::Slider mSliderResonance;
-  juce::Label mLabelResonance;
 
   void changeGenerator(int newGenerator);
   void refreshState();
