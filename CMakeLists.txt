@@ -80,8 +80,6 @@ set(SourceFiles
     Source/Components/NoteGrid.cpp
     Source/Components/FilterControl.h
     Source/Components/FilterControl.cpp
-    Source/Components/GeneratorsBox.h
-    Source/Components/GeneratorsBox.cpp
     Source/DSP/AudioRecorder.h
     Source/DSP/AudioRecorder.cpp
     Source/DSP/TransientDetector.h

@@ -14,7 +14,6 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <chrono>
 
-
 namespace Utils {
 typedef std::vector<std::vector<float>> SpecBuffer;
 

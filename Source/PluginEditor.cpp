@@ -33,10 +33,10 @@ void GRainbowLogo::paint(juce::Graphics& g) {
 GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
-      mGeneratorsBox(mSynth.getParamsNote(), synth.getParamUI()),
       mArcSpec(synth.getParamsNote(), synth.getParamUI()),
       mKeyboard(synth.getKeyboardState()),
       mEnvAdsr(synth.getParams()),
+      mEnvGrain(synth.getParams()),
       mFilterControl(synth.getParams()),
       mProgressBar(synth.getLoadingProgress()),
       mParamUI(synth.getParamUI()),
@@ -87,8 +87,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   }
   addAndMakeVisible(mLabelFileName);
 
-  mGeneratorsBox.onPositionChanged = [this](int gen, bool isRight) { mSynth.incrementPosition(gen, isRight); };
-  addAndMakeVisible(mGeneratorsBox);
   addAndMakeVisible(mResourceUsage);
 
   // Arc spectrogram
@@ -133,6 +131,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   addAndMakeVisible(mKeyboard);
   addAndMakeVisible(mEnvAdsr);
+  addAndMakeVisible(mEnvGrain);
   addAndMakeVisible(mFilterControl);
 
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
@@ -217,7 +216,6 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   const Utils::PitchClass pitchClass = midiNotes.getLast().pitch;
   mKeyboard.setMidiNotes(midiNotes);
   mArcSpec.setMidiNotes(midiNotes);
-  mGeneratorsBox.setMidiNotes(midiNotes);
 
   if (PowerUserSettings::get().getResourceUsage()) {
     const double cpuPerc = mAudioDeviceManager.getCpuUsage() * 100;
@@ -286,7 +284,9 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
       juce::Colour pitchColour = Utils::getRainbow12Colour(mSynth.getLastPitchClass());
       for (int i = 0; i < candidates.size(); ++i) {
         if (candidates[i] == nullptr) continue;
-        g.setColour((i == mGeneratorsBox.getSelectedGenerator()) ? pitchColour.brighter() : pitchColour.darker().darker());
+        // TODO: fix this coloring below
+        g.setColour(pitchColour);
+        //g.setColour((i == mGeneratorsBox.getSelectedGenerator()) ? pitchColour.brighter() : pitchColour.darker().darker());
         auto middlePos = candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
         float angleRad = (juce::MathConstants<float>::pi * middlePos) - (juce::MathConstants<float>::pi / 2.0f);
         juce::Point<float> startPoint = juce::Point<float>(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
@@ -336,9 +336,9 @@ void GRainbowAudioProcessorEditor::resized() {
   mKeyboard.setBounds(keyboardRect);
   mNoteDisplayRect = r.removeFromBottom(NOTE_DISPLAY_HEIGHT).toFloat();
 
-  // Generators box
+  // Left and right panels
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
-  mGeneratorsBox.setBounds(leftPanel);
+  mEnvGrain.setBounds(leftPanel.removeFromTop(leftPanel.getHeight() / 2.0f));
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
   mResourceUsage.setBounds(rightPanel.removeFromBottom(12));

@@ -53,7 +53,7 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
       return;
     }
     ParamGenerator* gen = mParamsNote.notes[pitchClass]->generators[genIdx].get();
-    float envIncSamples = ParamGenerator::ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
+    float envIncSamples = ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
     mArcGrains.add(ArcGrain(gen, envGain, envIncSamples, pitchClass));
   };
 
@@ -95,14 +95,14 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
       }
 
       float xRatio = candidate->posRatio + (candidate->duration * grain.paramGenerator->positionAdjust->get());
-      float grainProg = (grain.numFramesActive * grain.envIncSamples) / ParamGenerator::ENV_LUT_SIZE;
+      float grainProg = (grain.numFramesActive * grain.envIncSamples) / ENV_LUT_SIZE;
       xRatio += (candidate->duration / candidate->pbRate) * grainProg;
       float pitchClass = noteIdx - (std::log(candidate->pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
       float yRatio = (pitchClass + 0.25f + (grain.paramGenerator->pitchAdjust->get() * 6.0f)) / (float)Utils::PitchClass::COUNT;
       int grainRad = mStartRadius + (yRatio * mBowWidth);
       juce::Point<float> grainPoint = mCenterPoint.getPointOnCircumference(
           grainRad, (1.5f * juce::MathConstants<float>::pi) + (xRatio * juce::MathConstants<float>::pi));
-      float envIdx = juce::jmin(ParamGenerator::ENV_LUT_SIZE - 1.0f, grain.numFramesActive * grain.envIncSamples);
+      float envIdx = juce::jmin(ENV_LUT_SIZE - 1.0f, grain.numFramesActive * grain.envIncSamples);
       float grainSize = grain.gain * grain.paramGenerator->grainEnvLUT[envIdx] * MAX_GRAIN_SIZE;
 
       juce::Rectangle<float> grainRect = juce::Rectangle<float>(grainSize, grainSize).withCentre(grainPoint);
@@ -121,7 +121,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
   // Remove arc grains that are completed
   mArcGrains.removeIf(
-      [this](ArcGrain& grain) { return (grain.numFramesActive * grain.envIncSamples) > ParamGenerator::ENV_LUT_SIZE; });
+      [this](ArcGrain& grain) { return (grain.numFramesActive * grain.envIncSamples) > ENV_LUT_SIZE; });
 }
 
 void ArcSpectrogram::resized() {

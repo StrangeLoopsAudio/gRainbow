@@ -47,6 +47,11 @@ static juce::String globalRelease{"global_release"};
 static juce::String globalFilterCutoff{"global_filt_cutoff"};
 static juce::String globalFilterResonance{"global_filt_resonance"};
 static juce::String globalFilterType{"global_filt_type"};
+static juce::String globalGrainShape{"global_grain_shape_gen_"};
+static juce::String globalGrainTilt{"global_grain_tilt_gen"};
+static juce::String globalGrainRate{"global_grain_rate_gen"};
+static juce::String globalGrainDuration{"global_grain_duration_gen"};
+static juce::String globalGrainSync{"global_grain_sync_gen"};
 }  // namespace ParamIDs
 
 namespace ParamRanges {
@@ -102,6 +107,32 @@ static constexpr auto MAX_CANDIDATES = 6;
 static constexpr auto NUM_GENERATORS = 4;
 static constexpr auto SOLO_NONE = -1;
 static constexpr auto NUM_FILTER_TYPES = 3;
+static constexpr auto ENV_LUT_SIZE = 128;  // grain env lookup table size
+
+static inline void updateGrainEnvelopeLUT(std::vector<float>& lut, float shape, float tilt) {
+  lut.clear();
+  /* LUT divided into 3 parts
+
+               1.0
+              -----
+     rampUp  /     \  rampDown
+            /       \
+  */
+  float scaledShape = (shape * ENV_LUT_SIZE) / 2.0f;
+  float scaledTilt = tilt * ENV_LUT_SIZE;
+  int rampUpEndSample = juce::jmax(0.0f, scaledTilt - scaledShape);
+  int rampDownStartSample = juce::jmin((float)ENV_LUT_SIZE, scaledTilt + scaledShape);
+  for (int i = 0; i < ENV_LUT_SIZE; i++) {
+    if (i < rampUpEndSample) {
+      lut.push_back((float)i / rampUpEndSample);
+    } else if (i > rampDownStartSample) {
+      lut.push_back(1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample));
+    } else {
+      lut.push_back(1.0f);
+    }
+  }
+  juce::FloatVectorOperations::clip(lut.data(), lut.data(), 0.0f, 1.0f, lut.size());
+}
 
 struct ParamCandidate {
   float posRatio;
@@ -146,7 +177,7 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
 
   void parameterValueChanged(int paramIdx, float newValue) override {
     if (paramIdx == grainShape->getParameterIndex() || paramIdx == grainTilt->getParameterIndex()) {
-      updateGrainEnvelopeLUT();
+      updateGrainEnvelopeLUT(grainEnvLUT, grainShape->get(), grainTilt->get());
     } else if (paramIdx == filterType->getParameterIndex()) {
       switch (filterType->getIndex()) {
         case Utils::FilterType::LOWPASS: {
@@ -175,7 +206,6 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   void addParams(juce::AudioProcessor& p);
   void addListener(juce::AudioProcessorParameter::Listener* listener);
   void removeListener(juce::AudioProcessorParameter::Listener* listener);
-  void updateGrainEnvelopeLUT();
 
   int noteIdx;
   int genIdx;
@@ -203,7 +233,6 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   bool selected;
 
   // LUT of the grain envelope
-  static constexpr auto ENV_LUT_SIZE = 128;
   std::vector<float> grainEnvLUT;
 
   // State variable filter for generator
@@ -301,10 +330,17 @@ struct ParamGlobal : juce::AudioProcessorParameter::Listener {
     filterType->removeListener(this);
     filterCutoff->removeListener(this);
     filterResonance->removeListener(this);
+    grainShape->removeListener(this);
+    grainTilt->removeListener(this);
+    filterType->removeListener(this);
+    filterCutoff->removeListener(this);
+    filterResonance->removeListener(this);
   }
 
   void parameterValueChanged(int paramIdx, float newValue) override {
-    if (paramIdx == filterType->getParameterIndex()) {
+    if (paramIdx == grainShape->getParameterIndex() || paramIdx == grainTilt->getParameterIndex()) {
+      updateGrainEnvelopeLUT(grainEnvLUT, grainShape->get(), grainTilt->get());
+    } else if (paramIdx == filterType->getParameterIndex()) {
       switch (filterType->getIndex()) {
         case Utils::FilterType::LOWPASS: {
           filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
@@ -343,10 +379,17 @@ struct ParamGlobal : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* filterCutoff = nullptr;
   juce::AudioParameterFloat* filterResonance = nullptr;
   juce::AudioParameterChoice* filterType = nullptr;
+  juce::AudioParameterFloat* grainShape = nullptr;
+  juce::AudioParameterFloat* grainTilt = nullptr;
+  juce::AudioParameterFloat* grainRate = nullptr;
+  juce::AudioParameterFloat* grainDuration = nullptr;
+  juce::AudioParameterBool* grainSync = nullptr;
 
-    // State variable filter for generator
+  // State variable filter for generator
   double sampleRate = 48000;
   juce::dsp::StateVariableTPTFilter<float> filter;
+  // LUT of the grain envelope
+  std::vector<float> grainEnvLUT;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
 };

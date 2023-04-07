@@ -9,7 +9,7 @@
 */
 
 #include "FilterControl.h"
-#include "../Parameters.h"
+#include "../Utils.h"
 
 //==============================================================================
 FilterControl::FilterControl(Parameters& parameters): mParameters(parameters) {
@@ -67,24 +67,24 @@ void FilterControl::timerCallback() {
 }
 
 void FilterControl::paint(juce::Graphics& g) {
-  juce::Colour envColour = juce::Colours::white;
+  juce::Colour colour = juce::Colours::white;
   g.setFont(14.0f);
 
   // Filter section title
-  g.setColour(envColour);
+  g.setColour(colour);
   g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
   g.setColour(juce::Colours::black);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
   // draw filter type rectangles
-  g.setColour(envColour);
+  g.setColour(colour);
   g.drawRoundedRectangle(mLowPassRect, Utils::ROUNDED_AMOUNT, 2.0f);
   g.drawRoundedRectangle(mHighPassRect, Utils::ROUNDED_AMOUNT, 2.0f);
   g.drawRoundedRectangle(mBandPassRect, Utils::ROUNDED_AMOUNT, 2.0f);
 
   // Select current filter type
   switch (mCurHoverFilterType) {
-    g.setColour(envColour.withAlpha(0.3f));
+    g.setColour(colour.withAlpha(0.3f));
     case (Utils::FilterType::LOWPASS):
       g.fillRoundedRectangle(mLowPassRect, Utils::ROUNDED_AMOUNT);
       break;
@@ -144,7 +144,7 @@ void FilterControl::paint(juce::Graphics& g) {
   }
 
   // Set gradient
-  g.setFillType(juce::ColourGradient(envColour, mVizRect.getTopLeft(), envColour.withAlpha(0.4f), mVizRect.getBottomLeft(), false));
+  g.setFillType(juce::ColourGradient(colour, mVizRect.getTopLeft(), colour.withAlpha(0.4f), mVizRect.getBottomLeft(), false));
   mFilterPath.startNewSubPath(startPt);
   mFilterPath.lineTo(midPt1);
   mFilterPath.lineTo(midPt2);
@@ -156,17 +156,17 @@ void FilterControl::paint(juce::Graphics& g) {
 
   // Draw highlight over path
   float highlightWidth = 3.0f;
-  g.setColour(envColour);
+  g.setColour(colour);
   g.drawLine(juce::Line<float>(startPt, midPt1), highlightWidth);
   g.drawLine(juce::Line<float>(midPt1, midPt2), highlightWidth);
   g.drawLine(juce::Line<float>(midPt2, midPt3), highlightWidth);
   g.drawLine(juce::Line<float>(midPt3, midPt4), highlightWidth);
   g.drawLine(juce::Line<float>(midPt4, endPt), highlightWidth);
 
-  g.setColour(envColour);
+  g.setColour(colour);
   g.drawRect(mVizRect, 2.0f);
 
-  g.setColour(envColour);
+  g.setColour(colour);
   g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 
@@ -174,6 +174,7 @@ void FilterControl::resized() {
   juce::Rectangle<float> r = getLocalBounds().toFloat();
   // Remove padding
   r = r.reduced(Utils::PADDING * 2, Utils::PADDING * 2).withCentre(getLocalBounds().toFloat().getCentre());
+
   // Make title rect
   mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT);
 
@@ -185,15 +186,17 @@ void FilterControl::resized() {
   mHighPassRect = buttonPanel.removeFromLeft(buttonPanel.getWidth() / 3);
   mBandPassRect = buttonPanel;
 
+  r.removeFromTop(Utils::PADDING);
+
   // Place labels
   juce::Rectangle<int> labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT).toNearestInt();
-  int labelWidth = labelPanel.getWidth() / 4;
+  int labelWidth = labelPanel.getWidth() / 2;
   mLabelCutoff.setBounds(labelPanel.removeFromLeft(labelWidth));
   mLabelResonance.setBounds(labelPanel.removeFromLeft(labelWidth));
 
   // Place sliders
   juce::Rectangle<int> knobPanel = r.removeFromBottom(Utils::KNOB_HEIGHT).toNearestInt();
-  int knobWidth = knobPanel.getWidth() / 4;
+  int knobWidth = knobPanel.getWidth() / 2;
   mSliderCutoff.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderResonance.setBounds(knobPanel.removeFromLeft(knobWidth));
 

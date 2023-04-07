@@ -14,9 +14,9 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 
 #include "Components/ArcSpectrogram.h"
-#include "Components/GeneratorsBox.h"
 #include "Components/RainbowKeyboard.h"
 #include "Components/EnvelopeADSR.h"
+#include "Components/EnvelopeGrain.h"
 #include "Components/FilterControl.h"
 #include "Components/TrimSelection.h"
 #include "Components/Settings.h"
@@ -91,8 +91,8 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::Label mLabelFileName;
   RainbowKeyboard mKeyboard;
   EnvelopeADSR mEnvAdsr;
+  EnvelopeGrain mEnvGrain;
   FilterControl mFilterControl;
-  GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;

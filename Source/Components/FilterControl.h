@@ -11,7 +11,6 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "../Utils.h"
 #include "../Parameters.h"
 
 //==============================================================================
@@ -47,7 +46,6 @@ class FilterControl : public juce::Component, juce::AudioProcessorParameter::Lis
   // Bookkeeping
   Parameters& mParameters;
   std::atomic<bool> mParamHasChanged;
-  float mResonance = ParamDefaults::FILTER_RESONANCE_DEFAULT;
   Utils::FilterType mCurHoverFilterType = Utils::FilterType::NO_FILTER;
 
   // UI values saved on resize
