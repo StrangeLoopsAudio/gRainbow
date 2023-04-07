@@ -33,11 +33,11 @@ void GRainbowLogo::paint(juce::Graphics& g) {
 GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
-      mGlobalParamBox(mSynth.getParamGlobal()),
       mGeneratorsBox(mSynth.getParamsNote(), synth.getParamUI()),
       mArcSpec(synth.getParamsNote(), synth.getParamUI()),
       mKeyboard(synth.getKeyboardState()),
       mEnvAdsr(synth.getParams()),
+      mFilterControl(synth.getParams()),
       mProgressBar(synth.getLoadingProgress()),
       mParamUI(synth.getParamUI()),
       mTrimSelection(mFormatManager, synth.getParamUI()) {
@@ -89,7 +89,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   mGeneratorsBox.onPositionChanged = [this](int gen, bool isRight) { mSynth.incrementPosition(gen, isRight); };
   addAndMakeVisible(mGeneratorsBox);
-  addAndMakeVisible(mGlobalParamBox);
   addAndMakeVisible(mResourceUsage);
 
   // Arc spectrogram
@@ -134,6 +133,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   addAndMakeVisible(mKeyboard);
   addAndMakeVisible(mEnvAdsr);
+  addAndMakeVisible(mFilterControl);
 
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
 
@@ -343,9 +343,7 @@ void GRainbowAudioProcessorEditor::resized() {
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
   mResourceUsage.setBounds(rightPanel.removeFromBottom(12));
   mEnvAdsr.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2.0f));
-  mGlobalParamBox.setBounds(rightPanel);
-  
-  
+  mFilterControl.setBounds(rightPanel);  
 
   // Open and record buttons
   auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT + BTN_PADDING);

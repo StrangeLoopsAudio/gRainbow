@@ -82,8 +82,6 @@ set(SourceFiles
     Source/Components/FilterControl.cpp
     Source/Components/GeneratorsBox.h
     Source/Components/GeneratorsBox.cpp
-    Source/Components/GlobalParamBox.h
-    Source/Components/GlobalParamBox.cpp
     Source/DSP/AudioRecorder.h
     Source/DSP/AudioRecorder.cpp
     Source/DSP/TransientDetector.h

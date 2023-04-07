@@ -28,13 +28,11 @@ class GlobalParamBox : public juce::Component {
 
  private:
   // UI Layout
-  static constexpr int NUM_AMP_ENV_PARAMS = 4;
   static constexpr float PADDING_SIZE = 0.01f;
   static constexpr float SECTION_TITLE_HEIGHT = 0.1f;
   static constexpr float KNOB_HEIGHT = 0.3f;
   static constexpr float LABEL_HEIGHT = 0.1f;
   static constexpr auto MAIN_TITLE = "global parameters";
-  static constexpr const char* SECTION_FILTER_ENV_TITLE = "filter control";
 
   // Parameters
   ParamGlobal& mParamGlobal;

@@ -116,7 +116,7 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
 
   // Amp env section title
   g.setColour(envColour);
-  g.fillRoundedRectangle(mTitleRect, 10.0f);
+  g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
   g.setColour(juce::Colours::black);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
@@ -145,22 +145,17 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   g.fillPath(adsrPath);
 
   // Draw highlight lines on top of each segment
-  // TODO: simplify brighter().brighter() code
   float highlightWidth = 3.0f;
-  g.setColour(envColour.brighter(0.2f));
+  g.setColour(envColour);
   g.drawLine(juce::Line<float>(startPt, attackPt), highlightWidth);
-  g.setColour(envColour.brighter(0.4f));
   g.drawLine(juce::Line<float>(attackPt, decayPt), highlightWidth);
-  g.setColour(envColour.brighter(0.6f));
   g.drawLine(juce::Line<float>(decayPt, sustainPt), highlightWidth);
-  g.setColour(envColour.brighter(0.8f));
   g.drawLine(juce::Line<float>(sustainPt.translated(0, -1), endPt), highlightWidth);
 
-  g.setColour(envColour);
   g.drawRect(mVizRect, 2.0f);
 
   g.setColour(envColour);
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), 10.0f, 2.0f);
+  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 
 void EnvelopeADSR::resized() {
