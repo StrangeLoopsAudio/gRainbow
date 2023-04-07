@@ -18,6 +18,12 @@
 namespace Utils {
 typedef std::vector<std::vector<float>> SpecBuffer;
 
+// UI spacing
+static int PADDING = 6;
+static int TITLE_HEIGHT = 20;
+static int LABEL_HEIGHT = 20;
+static int KNOB_HEIGHT = 40;
+
 // american gold, light silver, metallic bronze, rich purple
 static constexpr juce::int64 GENERATOR_COLOURS_HEX[4] = {0xFFD6AF36, 0xFFD7D7D7, 0xFFA77044, 0xFFA34827};
 

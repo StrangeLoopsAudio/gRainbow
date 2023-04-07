@@ -11,35 +11,46 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_audio_processors/juce_audio_processors.h>
+#include "../Parameters.h"
 
 //==============================================================================
 /*
  */
-class EnvelopeADSR : public juce::Component {
+class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
-  EnvelopeADSR();
-  ~EnvelopeADSR() override;
+  EnvelopeADSR(Parameters& parameters);
+  ~EnvelopeADSR();
 
   void paint(juce::Graphics&) override;
   void resized() override;
 
-  void setActive(bool isActive);
-  void setAttack(float attack);
-  void setDecay(float decay);
-  void setSustain(float sustain);
-  void setRelease(float release);
-  void setGain(float gain);
-  void setColour(juce::Colour colour);
+  void selectPitchClass(Utils::PitchClass pitchClass);
+
+  void parameterValueChanged(int idx, float value) override;
+  void parameterGestureChanged(int, bool) override {}
+
+    void timerCallback() override;
 
  private:
-  // Parameters
-  float mAttack = 0.2f;
-  float mDecay = 0.2f;
-  float mSustain = 0.8f;
-  float mRelease = 0.5f;
-  float mGain = 0.8f;
-  bool mIsActive = false;
-  juce::Colour mColour;
+  static constexpr const char* SECTION_TITLE = "amplitude envelope";
+
+  // Components
+  juce::Slider mSliderAttack;
+  juce::Slider mSliderDecay;
+  juce::Slider mSliderSustain;
+  juce::Slider mSliderRelease;
+  juce::Label mLabelAttack;
+  juce::Label mLabelDecay;
+  juce::Label mLabelSustain;
+  juce::Label mLabelRelease;
+
+  // Bookkeeping
+  Parameters& mParameters;
+  std::atomic<bool> mParamHasChanged;
+  Utils::PitchClass mSelPitchClass = Utils::PitchClass::NONE;
+  juce::Rectangle<float> mTitleRect;
+  juce::Rectangle<float> mVizRect;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeADSR)
 };

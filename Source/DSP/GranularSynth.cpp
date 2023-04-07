@@ -30,8 +30,8 @@ GranularSynth::GranularSynth()
       // only care about tracking the processing of the DSP, not the spectrogram
       mFft(FFT_SIZE, HOP_SIZE, 0, 0),
       mPitchDetector(0.01, 1.0) {
-  mParamsNote.addParams(*this);
-  mParamGlobal.addParams(*this);
+  mParameters.note.addParams(*this);
+  mParameters.global.addParams(*this);
 
   mTotalSamps = 0;
   mProcessedSpecs.fill(nullptr);
@@ -108,7 +108,7 @@ void GranularSynth::changeProgramName(int index, const juce::String& newName) {}
 //==============================================================================
 void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
   mSampleRate = sampleRate;
-  for (auto&& note : mParamsNote.notes) {
+  for (auto&& note : mParameters.note.notes) {
     for (auto&& gen : note->generators) {
       gen->filter.prepare({sampleRate, (juce::uint32)samplesPerBlock, 1});
       gen->sampleRate = sampleRate;
@@ -161,20 +161,20 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     buffer.clear(i, 0, bufferNumSample);
   }
 
-  if (mParamUI.trimPlaybackOn) {
+  if (mParameters.ui.trimPlaybackOn) {
     int numSample = bufferNumSample;
-    if (mParamUI.trimPlaybackSample + bufferNumSample >= mParamUI.trimPlaybackMaxSample) {
-      mParamUI.trimPlaybackOn = false;
-      numSample = mParamUI.trimPlaybackMaxSample - mParamUI.trimPlaybackSample;
+    if (mParameters.ui.trimPlaybackSample + bufferNumSample >= mParameters.ui.trimPlaybackMaxSample) {
+      mParameters.ui.trimPlaybackOn = false;
+      numSample = mParameters.ui.trimPlaybackMaxSample - mParameters.ui.trimPlaybackSample;
     }
 
     // if output buffer is stereo and the input in mono, duplicate into both channels
     // if output buffer is mono and the input in stereo, just play one channel for simplicity
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
       const int inputChannel = juce::jmin(ch, mInputBuffer.getNumChannels() - 1);
-      buffer.copyFrom(ch, 0, mInputBuffer, inputChannel, mParamUI.trimPlaybackSample, numSample);
+      buffer.copyFrom(ch, 0, mInputBuffer, inputChannel, mParameters.ui.trimPlaybackSample, numSample);
     }
-    mParamUI.trimPlaybackSample += numSample;
+    mParameters.ui.trimPlaybackSample += numSample;
   }
 
   // Add contributions from each note
@@ -186,19 +186,19 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     for (int noteIndex = 0; noteIndex < activeNoteSize; noteIndex++) {
       GrainNote& gNote = mActiveNotes.getReference(noteIndex);
       float noteGain =
-          gNote.ampEnv.getAmplitude(mTotalSamps, mParamGlobal.attack->get() * mSampleRate, mParamGlobal.decay->get() * mSampleRate,
-                                    mParamGlobal.sustain->get(), mParamGlobal.release->get() * mSampleRate) *
+          gNote.ampEnv.getAmplitude(mTotalSamps, mParameters.global.attack->get() * mSampleRate, mParameters.global.decay->get() * mSampleRate,
+                                    mParameters.global.sustain->get(), mParameters.global.release->get() * mSampleRate) *
           gNote.velocity;
       // Add contributions from the grains in this generator
       float genSample = 0.0f;
       for (int genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
-        ParamGenerator* paramGenerator = mParamsNote.notes[gNote.pitchClass]->generators[genIdx].get();
+        ParamGenerator* paramGenerator = mParameters.note.notes[gNote.pitchClass]->generators[genIdx].get();
         for (Grain& grain : gNote.genGrains[genIdx]) {
           float genGain = gNote.genAmpEnvs[genIdx].getAmplitude(
                               mTotalSamps, paramGenerator->attack->get() * mSampleRate, paramGenerator->decay->get() * mSampleRate,
                               paramGenerator->sustain->get(), paramGenerator->release->get() * mSampleRate) *
                           paramGenerator->gain->get();
-          genSample += grain.process(mAudioBuffer, noteGain * genGain * mParamGlobal.gain->get(), mTotalSamps);
+          genSample += grain.process(mAudioBuffer, noteGain * genGain * mParameters.global.gain->get(), mTotalSamps);
         }
 
         // Process filter and optionally use for output
@@ -265,7 +265,7 @@ void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
   }
 
   xml.addChildElement(params);
-  xml.addChildElement(mParamUI.getXml());
+  xml.addChildElement(mParameters.ui.getXml());
 
   copyXmlToBinary(xml, destData);
 }
@@ -283,7 +283,7 @@ void GranularSynth::setStateInformation(const void* data, int sizeInBytes) {
 
     params = xml->getChildByName("ParamUI");
     if (params != nullptr) {
-      mParamUI.setXml(params);
+      mParameters.ui.setXml(params);
     }
   }
 }
@@ -299,8 +299,8 @@ void GranularSynth::getPresetParamsXml(juce::MemoryBlock& destData) {
     audioParams->setAttribute(ParamHelper::getParamID(param), param->getValue());
   }
   xml.addChildElement(audioParams);
-  xml.addChildElement(mParamsNote.getXml());
-  xml.addChildElement(mParamUI.getXml());
+  xml.addChildElement(mParameters.note.getXml());
+  xml.addChildElement(mParameters.ui.getXml());
 
   copyXmlToBinary(xml, destData);
 }
@@ -318,12 +318,12 @@ void GranularSynth::setPresetParamsXml(const void* data, int sizeInBytes) {
 
     params = xml->getChildByName("NotesParams");
     if (params != nullptr) {
-      mParamsNote.setXml(params);
+      mParameters.note.setXml(params);
     }
 
     params = xml->getChildByName("ParamUI");
     if (params != nullptr) {
-      mParamUI.setXml(params);
+      mParameters.ui.setXml(params);
     }
   }
 }
@@ -354,8 +354,8 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
     for (GrainNote& gNote : mActiveNotes) {
       for (int i = 0; i < gNote.grainTriggers.size(); ++i) {
         if (gNote.grainTriggers[i] <= 0) {
-          ParamGenerator* paramGenerator = mParamsNote.notes[gNote.pitchClass]->generators[i].get();
-          ParamCandidate* paramCandidate = mParamsNote.notes[gNote.pitchClass]->getCandidate(i);
+          ParamGenerator* paramGenerator = mParameters.note.notes[gNote.pitchClass]->generators[i].get();
+          ParamCandidate* paramCandidate = mParameters.note.notes[gNote.pitchClass]->getCandidate(i);
           float durSec;
           if (paramGenerator->grainSync->get()) {
             float div = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX *
@@ -379,7 +379,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             durSec = paramGenerator->grainDuration->get();
           }
           // Skip adding new grain if not enabled or full of grains
-          if (paramCandidate != nullptr && mParamsNote.notes[gNote.pitchClass]->shouldPlayGenerator(i) &&
+          if (paramCandidate != nullptr && mParameters.note.notes[gNote.pitchClass]->shouldPlayGenerator(i) &&
               gNote.genGrains.size() < MAX_GRAINS) {
             float durSamples = mSampleRate * durSec * (1.0f / paramCandidate->pbRate);
             /* Position calculation */
@@ -404,8 +404,8 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
 
             /* Trigger grain in arcspec */
             float totalGain = paramGenerator->gain->get() * gNote.ampEnv.amplitude * gNote.genAmpEnvs[i].amplitude *
-                              gNote.velocity * mParamGlobal.gain->get();
-            mParamsNote.grainCreated(gNote.pitchClass, i, durSec / pbRate, totalGain);
+                              gNote.velocity * mParameters.global.gain->get();
+            mParameters.note.grainCreated(gNote.pitchClass, i, durSec / pbRate, totalGain);
           }
           // Reset trigger ts
           if (paramGenerator->grainSync->get()) {
@@ -443,7 +443,7 @@ void GranularSynth::setInputBuffer(juce::AudioBuffer<float>* audioBuffer, double
   const double ratioToOutput = mSampleRate / sampleRate;  // output / input
   // The output buffer needs to be size that matches the new sample rate
   const int resampleSize = static_cast<int>(static_cast<double>(audioBuffer->getNumSamples()) * ratioToOutput);
-  mParamUI.trimPlaybackMaxSample = resampleSize;
+  mParameters.ui.trimPlaybackMaxSample = resampleSize;
   mInputBuffer.setSize(audioBuffer->getNumChannels(), resampleSize);
 
   const float* const* inputs = audioBuffer->getArrayOfReadPointers();
@@ -463,7 +463,7 @@ void GranularSynth::processInput(juce::Range<juce::int64> range, bool preset) {
 
   // TODO - we clear mInputBuffer here, but processBlock still in theory might need it one last time. Find a proper system for
   // knowing when the buffer is not needed (Or find a way to have a single buffer as stated in the TODO where it is cleared)
-  mParamUI.trimPlaybackOn = false;
+  mParameters.ui.trimPlaybackOn = false;
 
   // If a range to trim is provided then
   if (range.isEmpty()) {
@@ -497,20 +497,20 @@ void GranularSynth::processInput(juce::Range<juce::int64> range, bool preset) {
 }
 
 int GranularSynth::incrementPosition(int genIdx, bool lookRight) {
-  int numCandidates = mParamsNote.notes[mLastPitchClass]->candidates.size();
-  int pos = mParamsNote.notes[mLastPitchClass]->generators[genIdx]->candidate->get();
+  int numCandidates = mParameters.note.notes[mLastPitchClass]->candidates.size();
+  int pos = mParameters.note.notes[mLastPitchClass]->generators[genIdx]->candidate->get();
   if (numCandidates == 0) return pos;
   int newPos = lookRight ? pos + 1 : pos - 1;
   newPos = (newPos + numCandidates) % numCandidates;
-  ParamHelper::setParam(mParamsNote.notes[mLastPitchClass]->generators[genIdx]->candidate, newPos);
+  ParamHelper::setParam(mParameters.note.notes[mLastPitchClass]->generators[genIdx]->candidate, newPos);
   return newPos;
 }
 
 std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
   std::vector<ParamCandidate*> candidates;
   for (int i = 0; i < NUM_GENERATORS; ++i) {
-    if (mParamsNote.notes[mLastPitchClass]->shouldPlayGenerator(i)) {
-      candidates.push_back(mParamsNote.notes[mLastPitchClass]->getCandidate(i));
+    if (mParameters.note.notes[mLastPitchClass]->shouldPlayGenerator(i)) {
+      candidates.push_back(mParameters.note.notes[mLastPitchClass]->getCandidate(i));
     } else {
       candidates.push_back(nullptr);
     }
@@ -547,13 +547,13 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState* state, int midiChanne
 }
 
 void GranularSynth::resetParameters(bool fullClear) {
-  mParamsNote.resetParams(fullClear);
-  mParamGlobal.resetParams();
+  mParameters.note.resetParams(fullClear);
+  mParameters.global.resetParams();
 }
 
 void GranularSynth::createCandidates(juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>& detectedPitches) {
   // Add candidates for each pitch class
-  for (auto&& note : mParamsNote.notes) {
+  for (auto&& note : mParameters.note.notes) {
     // Look for detected pitches with correct pitch and good gain
     bool foundAll = false;
     int numFound = 0;

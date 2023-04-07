@@ -125,18 +125,6 @@ class GeneratorsBox : public juce::Component, juce::AudioProcessorParameter::Lis
   juce::Label mLabelDuration;
   juce::TextButton mBtnSync;
   EnvelopeGrain mEnvelopeGrain;
-  // -- ADSR Env
-  juce::Slider mSliderAttack;
-  juce::Label mLabelAttack;
-  juce::Slider mSliderDecay;
-  juce::Label mLabelDecay;
-  juce::Slider mSliderSustain;
-  juce::Label mLabelSustain;
-  juce::Slider mSliderRelease;
-  juce::Label mLabelRelease;
-  EnvelopeADSR mEnvelopeAmp;
-  juce::Slider mSliderGain;
-  juce::Label mLabelGain;
 
   void changeGenerator(int newGenerator);
   void refreshState();

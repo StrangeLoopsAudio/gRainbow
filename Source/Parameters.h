@@ -329,6 +329,9 @@ struct ParamGlobal : juce::AudioProcessorParameter::Listener {
   };
   void parameterGestureChanged(int, bool) override {}
 
+  void addListener(juce::AudioProcessorParameter::Listener* listener);
+  void removeListener(juce::AudioProcessorParameter::Listener* listener);
+
   void addParams(juce::AudioProcessor& p);
   void resetParams();
 
@@ -410,4 +413,10 @@ struct ParamUI {
   bool trimPlaybackOn = false;
   int trimPlaybackSample;  // sampling buffer index position
   int trimPlaybackMaxSample;
+};
+
+struct Parameters {
+  ParamUI ui;
+  ParamGlobal global;
+  ParamsNote note;
 };

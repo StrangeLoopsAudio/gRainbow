@@ -17,6 +17,7 @@
 #include "Components/GeneratorsBox.h"
 #include "Components/GlobalParamBox.h"
 #include "Components/RainbowKeyboard.h"
+#include "Components/EnvelopeADSR.h"
 #include "Components/TrimSelection.h"
 #include "Components/Settings.h"
 #include "DSP/AudioRecorder.h"
@@ -89,6 +90,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::ImageButton mBtnPreset;
   juce::Label mLabelFileName;
   RainbowKeyboard mKeyboard;
+  EnvelopeADSR mEnvAdsr;
   GlobalParamBox mGlobalParamBox;
   GeneratorsBox mGeneratorsBox;
   juce::Rectangle<float> mNoteDisplayRect;

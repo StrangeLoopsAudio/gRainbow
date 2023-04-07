@@ -43,6 +43,28 @@ void ParamGlobal::resetParams() {
   ParamHelper::setParam(filterType, 0);
 }
 
+void ParamGlobal::addListener(juce::AudioProcessorParameter::Listener* listener) { 
+  gain->addListener(listener);
+  attack->addListener(listener);
+  decay->addListener(listener);
+  sustain->addListener(listener);
+  release->addListener(listener);
+  filterCutoff->addListener(listener);
+  filterResonance->addListener(listener);
+  filterType->addListener(listener);
+}
+
+void ParamGlobal::removeListener(juce::AudioProcessorParameter::Listener* listener) {
+  gain->removeListener(listener);
+  attack->removeListener(listener);
+  decay->removeListener(listener);
+  sustain->removeListener(listener);
+  release->removeListener(listener);
+  filterCutoff->removeListener(listener);
+  filterResonance->removeListener(listener);
+  filterType->removeListener(listener);
+}
+
 void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String enableId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genEnable + juce::String(genIdx);
   p.addParameter(enable = new juce::AudioParameterBool(enableId, enableId, genIdx == 0));

@@ -37,6 +37,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mGeneratorsBox(mSynth.getParamsNote(), synth.getParamUI()),
       mArcSpec(synth.getParamsNote(), synth.getParamUI()),
       mKeyboard(synth.getKeyboardState()),
+      mEnvAdsr(synth.getParams()),
       mProgressBar(synth.getLoadingProgress()),
       mParamUI(synth.getParamUI()),
       mTrimSelection(mFormatManager, synth.getParamUI()) {
@@ -132,6 +133,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addChildComponent(mTrimSelection);
 
   addAndMakeVisible(mKeyboard);
+  addAndMakeVisible(mEnvAdsr);
 
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
 
@@ -212,6 +214,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
   // Each component has has a different use for the midi notes, so just give them the notes and have them do what logic they want
   // with it
+  const Utils::PitchClass pitchClass = midiNotes.getLast().pitch;
   mKeyboard.setMidiNotes(midiNotes);
   mArcSpec.setMidiNotes(midiNotes);
   mGeneratorsBox.setMidiNotes(midiNotes);
@@ -338,10 +341,11 @@ void GRainbowAudioProcessorEditor::resized() {
   mGeneratorsBox.setBounds(leftPanel);
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
-  const int resourceUsageHight = 15;
-  mGlobalParamBox.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() - resourceUsageHight));
+  mResourceUsage.setBounds(rightPanel.removeFromBottom(12));
+  mEnvAdsr.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2.0f));
+  mGlobalParamBox.setBounds(rightPanel);
   
-  mResourceUsage.setBounds(rightPanel);
+  
 
   // Open and record buttons
   auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT + BTN_PADDING);
