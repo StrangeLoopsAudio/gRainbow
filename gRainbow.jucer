@@ -7,60 +7,60 @@
   <MAINGROUP id="SNaS8k" name="gRainbow">
     <GROUP id="{595D4325-C686-1839-D048-A225A7FE150A}" name="Source">
       <GROUP id="{5E1AB70E-1865-A28B-6DCD-3168747A76FD}" name="Components">
-        <FILE id="VnD1Mj" name="TrimSelection.cpp" compile="1" resource="0"
-              file="Source/TrimSelection.cpp"/>
-        <FILE id="MTDckU" name="TrimSelection.h" compile="0" resource="0" file="Source/TrimSelection.h"/>
-        <FILE id="wfqhFs" name="Settings.cpp" compile="1" resource="0" file="Source/Settings.cpp"/>
-        <FILE id="nrOvLX" name="Settings.h" compile="0" resource="0" file="Source/Settings.h"/>
-        <FILE id="GqrDVH" name="NoteGrid.cpp" compile="1" resource="0" file="Source/NoteGrid.cpp"/>
-        <FILE id="gsT0kQ" name="NoteGrid.h" compile="0" resource="0" file="Source/NoteGrid.h"/>
-        <FILE id="BHxSYv" name="FilterControl.cpp" compile="1" resource="0"
-              file="Source/FilterControl.cpp"/>
-        <FILE id="woW8y5" name="FilterControl.h" compile="0" resource="0" file="Source/FilterControl.h"/>
-        <FILE id="KGvt5z" name="GlobalParamBox.cpp" compile="1" resource="0"
-              file="Source/GlobalParamBox.cpp"/>
-        <FILE id="B9m0eJ" name="GlobalParamBox.h" compile="0" resource="0"
-              file="Source/GlobalParamBox.h"/>
-        <FILE id="h9GepA" name="GeneratorsBox.cpp" compile="1" resource="0"
-              file="Source/GeneratorsBox.cpp"/>
-        <FILE id="rzErFn" name="GeneratorsBox.h" compile="0" resource="0" file="Source/GeneratorsBox.h"/>
-        <FILE id="EcGiwq" name="PositionChanger.cpp" compile="1" resource="0"
-              file="Source/PositionChanger.cpp"/>
-        <FILE id="HWBliz" name="PositionChanger.h" compile="0" resource="0"
-              file="Source/PositionChanger.h"/>
-        <FILE id="z3F1iQ" name="RainbowKeyboard.cpp" compile="1" resource="0"
-              file="Source/RainbowKeyboard.cpp"/>
-        <FILE id="h6qcMW" name="RainbowKeyboard.h" compile="0" resource="0"
-              file="Source/RainbowKeyboard.h"/>
-        <FILE id="U3RA3l" name="ArcSpectrogram.cpp" compile="1" resource="0"
-              file="Source/ArcSpectrogram.cpp"/>
-        <FILE id="FxXYcK" name="ArcSpectrogram.h" compile="0" resource="0"
-              file="Source/ArcSpectrogram.h"/>
-        <FILE id="NyVZ3J" name="EnvelopeADSR.cpp" compile="1" resource="0"
-              file="Source/EnvelopeADSR.cpp"/>
-        <FILE id="X1IEXi" name="EnvelopeADSR.h" compile="0" resource="0" file="Source/EnvelopeADSR.h"/>
-        <FILE id="kkPTHZ" name="EnvelopeGrain.cpp" compile="1" resource="0"
-              file="Source/EnvelopeGrain.cpp"/>
-        <FILE id="dkXBmp" name="EnvelopeGrain.h" compile="0" resource="0" file="Source/EnvelopeGrain.h"/>
+        <FILE id="jS2n0M" name="TrimSelection.h" compile="0" resource="0" file="Source/Components/TrimSelection.h"/>
+        <FILE id="jeBT7l" name="TrimSelection.cpp" compile="1" resource="0"
+              file="Source/Components/TrimSelection.cpp"/>
+        <FILE id="pYbTkk" name="Settings.h" compile="0" resource="0" file="Source/Components/Settings.h"/>
+        <FILE id="AUPREc" name="Settings.cpp" compile="1" resource="0" file="Source/Components/Settings.cpp"/>
+        <FILE id="gNep8Y" name="RainbowKeyboard.h" compile="0" resource="0"
+              file="Source/Components/RainbowKeyboard.h"/>
+        <FILE id="cCnr9H" name="RainbowKeyboard.cpp" compile="1" resource="0"
+              file="Source/Components/RainbowKeyboard.cpp"/>
+        <FILE id="kwwces" name="PositionChanger.h" compile="0" resource="0"
+              file="Source/Components/PositionChanger.h"/>
+        <FILE id="Df5ayQ" name="PositionChanger.cpp" compile="1" resource="0"
+              file="Source/Components/PositionChanger.cpp"/>
+        <FILE id="kODuQr" name="NoteGrid.h" compile="0" resource="0" file="Source/Components/NoteGrid.h"/>
+        <FILE id="CE0dDZ" name="NoteGrid.cpp" compile="1" resource="0" file="Source/Components/NoteGrid.cpp"/>
+        <FILE id="XZUilA" name="GlobalParamBox.h" compile="0" resource="0"
+              file="Source/Components/GlobalParamBox.h"/>
+        <FILE id="DDxdPM" name="GlobalParamBox.cpp" compile="1" resource="0"
+              file="Source/Components/GlobalParamBox.cpp"/>
+        <FILE id="G5hNw4" name="GeneratorsBox.h" compile="0" resource="0" file="Source/Components/GeneratorsBox.h"/>
+        <FILE id="p8c6Fq" name="GeneratorsBox.cpp" compile="1" resource="0"
+              file="Source/Components/GeneratorsBox.cpp"/>
+        <FILE id="DbBk5n" name="FilterControl.h" compile="0" resource="0" file="Source/Components/FilterControl.h"/>
+        <FILE id="kIiEUF" name="FilterControl.cpp" compile="1" resource="0"
+              file="Source/Components/FilterControl.cpp"/>
+        <FILE id="vUk1Ha" name="EnvelopeGrain.h" compile="0" resource="0" file="Source/Components/EnvelopeGrain.h"/>
+        <FILE id="EvHGon" name="EnvelopeGrain.cpp" compile="1" resource="0"
+              file="Source/Components/EnvelopeGrain.cpp"/>
+        <FILE id="PMETjU" name="EnvelopeADSR.h" compile="0" resource="0" file="Source/Components/EnvelopeADSR.h"/>
+        <FILE id="mEldkq" name="EnvelopeADSR.cpp" compile="1" resource="0"
+              file="Source/Components/EnvelopeADSR.cpp"/>
+        <FILE id="KPLGQt" name="ArcSpectrogram.h" compile="0" resource="0"
+              file="Source/Components/ArcSpectrogram.h"/>
+        <FILE id="Dqq75f" name="ArcSpectrogram.cpp" compile="1" resource="0"
+              file="Source/Components/ArcSpectrogram.cpp"/>
       </GROUP>
       <GROUP id="{815336C9-3A77-691D-E8CC-E2B9A088B5B6}" name="DSP">
-        <FILE id="ni5qfe" name="AudioRecorder.cpp" compile="1" resource="0"
-              file="Source/AudioRecorder.cpp"/>
-        <FILE id="EnaaDK" name="AudioRecorder.h" compile="0" resource="0" file="Source/AudioRecorder.h"/>
-        <FILE id="iPQcXj" name="Fft.cpp" compile="1" resource="0" file="Source/Fft.cpp"/>
-        <FILE id="qkwj0M" name="Fft.h" compile="0" resource="0" file="Source/Fft.h"/>
-        <FILE id="S4XXw9" name="Grain.cpp" compile="1" resource="0" file="Source/Grain.cpp"/>
-        <FILE id="G0hDZN" name="Grain.h" compile="0" resource="0" file="Source/Grain.h"/>
-        <FILE id="yFDMhJ" name="GranularSynth.cpp" compile="1" resource="0"
-              file="Source/GranularSynth.cpp"/>
-        <FILE id="PKer4S" name="GranularSynth.h" compile="0" resource="0" file="Source/GranularSynth.h"/>
-        <FILE id="jJouL1" name="PitchDetector.cpp" compile="1" resource="0"
-              file="Source/PitchDetector.cpp"/>
-        <FILE id="wy5VgL" name="PitchDetector.h" compile="0" resource="0" file="Source/PitchDetector.h"/>
-        <FILE id="WRXak8" name="TransientDetector.cpp" compile="1" resource="0"
-              file="Source/TransientDetector.cpp"/>
-        <FILE id="k0y5GL" name="TransientDetector.h" compile="0" resource="0"
-              file="Source/TransientDetector.h"/>
+        <FILE id="O5zOLq" name="AudioRecorder.cpp" compile="1" resource="0"
+              file="Source/DSP/AudioRecorder.cpp"/>
+        <FILE id="Qep8OP" name="AudioRecorder.h" compile="0" resource="0" file="Source/DSP/AudioRecorder.h"/>
+        <FILE id="leHbO3" name="Fft.cpp" compile="1" resource="0" file="Source/DSP/Fft.cpp"/>
+        <FILE id="Eb5EdF" name="Fft.h" compile="0" resource="0" file="Source/DSP/Fft.h"/>
+        <FILE id="mtM48H" name="Grain.cpp" compile="1" resource="0" file="Source/DSP/Grain.cpp"/>
+        <FILE id="G5s8z0" name="Grain.h" compile="0" resource="0" file="Source/DSP/Grain.h"/>
+        <FILE id="X9XZtc" name="GranularSynth.cpp" compile="1" resource="0"
+              file="Source/DSP/GranularSynth.cpp"/>
+        <FILE id="Vv48Ea" name="GranularSynth.h" compile="0" resource="0" file="Source/DSP/GranularSynth.h"/>
+        <FILE id="NbIZOR" name="PitchDetector.cpp" compile="1" resource="0"
+              file="Source/DSP/PitchDetector.cpp"/>
+        <FILE id="e3MkAk" name="PitchDetector.h" compile="0" resource="0" file="Source/DSP/PitchDetector.h"/>
+        <FILE id="D9cYAP" name="TransientDetector.cpp" compile="1" resource="0"
+              file="Source/DSP/TransientDetector.cpp"/>
+        <FILE id="xCALt4" name="TransientDetector.h" compile="0" resource="0"
+              file="Source/DSP/TransientDetector.h"/>
       </GROUP>
       <GROUP id="{686FB61F-2127-074F-B6C7-E25843969006}" name="Resources">
         <FILE id="deOQaC" name="appicon.png" compile="0" resource="1" file="Source/Resources/appicon.png"/>
