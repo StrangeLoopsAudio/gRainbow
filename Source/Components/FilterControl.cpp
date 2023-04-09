@@ -53,6 +53,9 @@ void FilterControl::paint(juce::Graphics& g) {
       g.setColour(envColour.withAlpha(0.3f));
       g.fillRoundedRectangle(mBandPassRect, 10.0f);
       break;
+    case (Utils::FilterType::NO_FILTER):
+      jassertfalse;
+      break;
   }
 
   // Draw selected filter path
@@ -257,5 +260,8 @@ float FilterControl::filterTypeToCutoff(Utils::FilterType filterType) {
       return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::FILTER_HP_CUTOFF_DEFAULT_HZ);
     case (Utils::FilterType::BANDPASS):
       return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
+    case (Utils::FilterType::NO_FILTER):
+      jassertfalse;
+      return 0.0f;
   }
 }
