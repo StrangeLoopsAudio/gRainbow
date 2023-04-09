@@ -295,6 +295,9 @@ GeneratorsBox::GeneratorsBox(ParamsNote& paramsNote, ParamUI& paramUI)
       case (Utils::FilterType::BANDPASS):
         ParamHelper::setParam(getCurrentGenerator()->filterCutoff, ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
         break;
+      case (Utils::FilterType::NO_FILTER):
+        jassertfalse;
+        break;
     }
     ParamHelper::setParam(getCurrentGenerator()->filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
   };
