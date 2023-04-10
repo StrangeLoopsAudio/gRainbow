@@ -164,7 +164,7 @@ void FilterControl::paint(juce::Graphics& g) {
   g.drawLine(juce::Line<float>(midPt4, endPt), highlightWidth);
 
   g.setColour(colour);
-  g.drawRect(mVizRect, 2.0f);
+  g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f);
 
   g.setColour(colour);
   g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
@@ -182,8 +182,9 @@ void FilterControl::resized() {
   
   // Make button rects
   juce::Rectangle<float> buttonPanel = r.removeFromTop(FILTER_TYPE_BUTTON_HEIGHT); 
-  mLowPassRect = buttonPanel.removeFromLeft(buttonPanel.getWidth() / 3);
-  mHighPassRect = buttonPanel.removeFromLeft(buttonPanel.getWidth() / 3);
+  int buttonWidth = buttonPanel.getWidth() / 3;
+  mLowPassRect = buttonPanel.removeFromLeft(buttonWidth);
+  mHighPassRect = buttonPanel.removeFromLeft(buttonWidth);
   mBandPassRect = buttonPanel;
 
   r.removeFromTop(Utils::PADDING);
@@ -196,9 +197,12 @@ void FilterControl::resized() {
 
   // Place sliders
   juce::Rectangle<int> knobPanel = r.removeFromBottom(Utils::KNOB_HEIGHT).toNearestInt();
-  int knobWidth = knobPanel.getWidth() / 2;
-  mSliderCutoff.setBounds(knobPanel.removeFromLeft(knobWidth));
-  mSliderResonance.setBounds(knobPanel.removeFromLeft(knobWidth));
+  juce::Rectangle<int> knobRect = juce::Rectangle<int>(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT);
+  mSliderCutoff.setBounds(knobRect.withCentre(juce::Point<int>(knobPanel.getX() + knobPanel.getWidth() * 0.25f, knobPanel.getCentreY())));
+  mSliderResonance.setBounds(
+      knobRect.withCentre(juce::Point<int>(knobPanel.getX() + knobPanel.getWidth() * 0.75f, knobPanel.getCentreY())));
+
+  r.removeFromBottom(Utils::PADDING);
 
   mVizRect = r;
 }

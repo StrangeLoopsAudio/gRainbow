@@ -130,11 +130,11 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   g.setFillType(juce::ColourGradient(envColour, mVizRect.getTopLeft(), envColour.withAlpha(0.4f), mVizRect.getBottomLeft(), false));
 
   juce::Path adsrPath;
-  juce::Point<float> startPt = mVizRect.getBottomLeft().translated(1, -1);
-  juce::Point<float> attackPt = startPt.translated(attack * mVizRect.getWidth() * 0.375f, -mVizRect.getHeight() + 2);
-  juce::Point<float> decayPt = attackPt.translated(decay * mVizRect.getWidth() * 0.375f, (1.0f - sustain) * (mVizRect.getHeight() - 1));
-  juce::Point<float> sustainPt = mVizRect.getBottomLeft().translated(mVizRect.getWidth() * 0.75f, -sustain * (mVizRect.getHeight() - 1));
-  juce::Point<float> endPt = sustainPt.translated(release * mVizRect.getWidth() * 0.25f, 0.0f).withY(mVizRect.getBottom() - 1);
+  juce::Point<float> startPt = mVizRect.getBottomLeft();
+  juce::Point<float> attackPt = startPt.translated(attack * mVizRect.getWidth() * 0.375f, -mVizRect.getHeight());
+  juce::Point<float> decayPt = attackPt.translated(decay * mVizRect.getWidth() * 0.375f, (1.0f - sustain) * (mVizRect.getHeight()));
+  juce::Point<float> sustainPt = mVizRect.getBottomLeft().translated(mVizRect.getWidth() * 0.75f, -sustain * (mVizRect.getHeight()));
+  juce::Point<float> endPt = sustainPt.translated(release * mVizRect.getWidth() * 0.25f, 0.0f).withY(mVizRect.getBottom());
 
   adsrPath.startNewSubPath(startPt);
   adsrPath.lineTo(attackPt);
@@ -152,7 +152,7 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   g.drawLine(juce::Line<float>(decayPt, sustainPt), highlightWidth);
   g.drawLine(juce::Line<float>(sustainPt.translated(0, -1), endPt), highlightWidth);
 
-  g.drawRect(mVizRect, 2.0f);
+  g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f);
 
   g.setColour(envColour);
   g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
