@@ -17,7 +17,7 @@
 namespace Utils {
 typedef std::vector<std::vector<float>> SpecBuffer;
 
-// UI spacing
+// UI spacing and colours
 static int PADDING = 6;
 static int TITLE_HEIGHT = 20;
 static int LABEL_HEIGHT = 20;

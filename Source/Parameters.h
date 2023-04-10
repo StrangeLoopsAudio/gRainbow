@@ -468,7 +468,15 @@ struct ParamUI {
 };
 
 struct Parameters {
+  // The 3 types of parameter sets
   ParamUI ui;
   ParamGlobal global;
   ParamsNote note;
+
+  // Called when current selected note or generator changes
+  // Should be used only by PluginEditor and passed on to subcomponents
+  std::function<void()> onSelectedChange = nullptr;
+  // Keeps track of the current selected note or generator for parameter editing
+  Utils::PitchClass selectedNote = Utils::PitchClass::NONE;
+  int selectedGenerator = -1;
 };

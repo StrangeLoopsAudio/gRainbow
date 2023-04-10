@@ -46,7 +46,7 @@ class RainbowKeyboard : public juce::Component {
   static constexpr int MIDI_CHANNEL = 1;
   static constexpr float NOTE_BODY_HEIGHT = 0.5f;
   static constexpr float GEN_NODE_HEIGHT = 0.08f;
-  static constexpr float NOTE_BODY_SATURATION = 0.6f;
+  static constexpr float NOTE_BODY_SATURATION = 0.5f;
   static constexpr float NOTE_LABEL_SIZE = 22;
   static constexpr float ADD_GEN_SIZE = 18;
 
@@ -58,8 +58,8 @@ class RainbowKeyboard : public juce::Component {
   std::array<float, Utils::PitchClass::COUNT> mNoteVelocity;
 
   // These allow using the mouse to click a key
-  void updateMouseState(const juce::MouseEvent& e, bool isDown);
-  Utils::MidiNote xyMouseToNote(juce::Point<float> pos, bool isDown);
+  void updateMouseState(const juce::MouseEvent& e, bool isDown, bool isClick);
+  Utils::MidiNote xyMouseToNote(juce::Point<float> pos, bool isClick);
   // Note being currently hovered by the mouse
   Utils::MidiNote mHoverNote;
   // Generator being currently hovered by the mouse
