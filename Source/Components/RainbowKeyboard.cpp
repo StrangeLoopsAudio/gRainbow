@@ -10,7 +10,6 @@
 
 #include "RainbowKeyboard.h"
 #include "Settings.h"
-#include "../Parameters.h"
 
 //==============================================================================
 RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state) : mState(state) {
@@ -30,7 +29,7 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
   }
 
   g.setColour(Utils::GLOBAL_COLOUR);
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), 10.0f, 2.0f);
+  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 
 float RainbowKeyboard::getPitchXRatio(Utils::PitchClass pitchClass) {
@@ -76,9 +75,9 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   g.setFillType(juce::ColourGradient(color1, juce::Point<float>(0.0f, 0.0f), color2, juce::Point<float>(0, getHeight()), false));
 
   juce::Rectangle<float> area = mNoteRectangleMap[pitchClass];
-  g.fillRoundedRectangle(area, 10.0f);
+  g.fillRoundedRectangle(area, Utils::ROUNDED_AMOUNT);
   g.setColour(keyColor.withSaturation(1.0f));
-  g.drawRoundedRectangle(area, 10.0f, 1.0f);
+  g.drawRoundedRectangle(area, Utils::ROUNDED_AMOUNT, 2.0f);
 
   // display animation to show the velocity level of the note
   if (isDown && PowerUserSettings::get().getAnimated()) {
@@ -103,7 +102,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   g.setColour(keyColor.withSaturation(1.0f));
   g.drawRoundedRectangle(labelRect, 5.0f, 1.0f);
   g.setColour(juce::Colours::black);
-  g.drawFittedText(PITCH_CLASS_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred, 1);
+  g.drawFittedText(Utils::PITCH_CLASS_DISP_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred, 1);
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }

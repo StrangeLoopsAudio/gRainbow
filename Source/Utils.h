@@ -25,6 +25,9 @@ static int KNOB_HEIGHT = 40;
 static float ROUNDED_AMOUNT = 10.0f;
 static juce::Colour GLOBAL_COLOUR = juce::Colours::black;
 
+// Slightly different from Parameters::PITCH_CLASS_NAMES for displaying to user, (e.g, replaces Cs with C#)
+static juce::Array<juce::String> PITCH_CLASS_DISP_NAMES{"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+
 // american gold, light silver, metallic bronze, rich purple
 static constexpr juce::int64 GENERATOR_COLOURS_HEX[4] = {0xFFD6AF36, 0xFFD7D7D7, 0xFFA77044, 0xFFA34827};
 

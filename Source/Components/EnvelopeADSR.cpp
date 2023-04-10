@@ -27,11 +27,12 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end, 0.01);
   mSliderAttack.setTextValueSuffix("s");
   mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour.brighter());
+  mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   //mSliderAttack.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderAttack.getValue()); };
   addAndMakeVisible(mSliderAttack);
 
   mLabelAttack.setText("Attack", juce::dontSendNotification);
+  mLabelAttack.setColour(juce::Label::ColourIds::textColourId, knobColour);
   mLabelAttack.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelAttack);
 
@@ -43,11 +44,12 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
   mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
   mSliderDecay.setTextValueSuffix("s");
   mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour.brighter());
+  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   //mSliderDecay.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->decay, mSliderDecay.getValue()); };
   addAndMakeVisible(mSliderDecay);
 
   mLabelDecay.setText("Decay", juce::dontSendNotification);
+  mLabelDecay.setColour(juce::Label::ColourIds::textColourId, knobColour);
   mLabelDecay.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelDecay);
 
@@ -58,11 +60,12 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
   mSliderSustain.setNumDecimalPlacesToDisplay(2);
   mSliderSustain.setRange(0.0, 1.0, 0.01);
   mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour.brighter());
+  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   //mSliderSustain.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->sustain, mSliderSustain.getValue()); };
   addAndMakeVisible(mSliderSustain);
 
   mLabelSustain.setText("Sustain", juce::dontSendNotification);
+  mLabelSustain.setColour(juce::Label::ColourIds::textColourId, knobColour);
   mLabelSustain.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelSustain);
 
@@ -74,11 +77,12 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
   mSliderRelease.setTextValueSuffix("s");
   mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour.brighter());
+  mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
   //mSliderRelease.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->release, mSliderRelease.getValue()); };
   addAndMakeVisible(mSliderRelease);
 
   mLabelRelease.setText("Release", juce::dontSendNotification);
+  mLabelRelease.setColour(juce::Label::ColourIds::textColourId, knobColour);
   mLabelRelease.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRelease);
 

@@ -28,11 +28,12 @@ FilterControl::FilterControl(Parameters& parameters): mParameters(parameters) {
   mSliderCutoff.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, 0.01);
   mSliderCutoff.setTextValueSuffix("Hz");
   mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour.brighter());
+  mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
   // mSliderCutoff.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderCutoff.getValue()); };
   addAndMakeVisible(mSliderCutoff);
 
   mLabelCutoff.setText("Cutoff", juce::dontSendNotification);
+  mLabelCutoff.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelCutoff.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelCutoff);
 
@@ -43,11 +44,12 @@ FilterControl::FilterControl(Parameters& parameters): mParameters(parameters) {
   mSliderResonance.setNumDecimalPlacesToDisplay(2);
   mSliderResonance.setRange(ParamRanges::RESONANCE.start, ParamRanges::RESONANCE.end, 0.01);
   mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour.brighter());
+  mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
   // mSliderResonance.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderResonance.getValue()); };
   addAndMakeVisible(mSliderResonance);
 
   mLabelResonance.setText("Resonance", juce::dontSendNotification);
+  mLabelResonance.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelResonance.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelResonance);
 

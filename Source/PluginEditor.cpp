@@ -87,6 +87,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   }
   addAndMakeVisible(mLabelFileName);
 
+  mResourceUsage.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
   addAndMakeVisible(mResourceUsage);
 
   // Arc spectrogram

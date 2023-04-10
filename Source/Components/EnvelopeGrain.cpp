@@ -28,11 +28,12 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderShape.setNumDecimalPlacesToDisplay(2);
   mSliderShape.setRange(0, 1, 0.01);
   mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour.brighter());
+  mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
   // mSliderShape.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderShape.getValue()); };
   addAndMakeVisible(mSliderShape);
 
   mLabelShape.setText("Shape", juce::dontSendNotification);
+  mLabelShape.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelShape.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelShape);
 
@@ -43,11 +44,12 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderTilt.setNumDecimalPlacesToDisplay(2);
   mSliderTilt.setRange(0, 1, 0.01);
   mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour.brighter());
+  mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
   // mSliderTilt.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderTilt.getValue()); };
   addAndMakeVisible(mSliderTilt);
 
   mLabelTilt.setText("Tilt", juce::dontSendNotification);
+  mLabelTilt.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelTilt.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelTilt);
   
@@ -58,11 +60,12 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderRate.setNumDecimalPlacesToDisplay(2);
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour.brighter());
+  mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
   // mSliderRate.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderRate.getValue()); };
   addAndMakeVisible(mSliderRate);
 
   mLabelRate.setText("Rate", juce::dontSendNotification);
+  mLabelRate.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelRate.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRate);
 
@@ -74,11 +77,12 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start, ParamRanges::GRAIN_DURATION.end, 0.01);
   mSliderDuration.setTextValueSuffix("s");
   mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour.brighter());
+  mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
   // mSliderDuration.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderDuration.getValue()); };
   addAndMakeVisible(mSliderDuration);
 
   mLabelDuration.setText("Duration", juce::dontSendNotification);
+  mLabelDuration.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelDuration.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelDuration);
 
