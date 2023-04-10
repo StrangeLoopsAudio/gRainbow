@@ -45,6 +45,15 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                                ParamDefaults::GRAIN_DURATION_DEFAULT));
   p.addParameter(grainSync = new juce::AudioParameterBool(ParamIDs::globalGrainSync, "Master Grain Sync", false));
   updateGrainEnvelopeLUT(grainEnvLUT, grainShape->get(), grainTilt->get());
+
+  p.addParameter(pitchAdjust = new juce::AudioParameterFloat(ParamIDs::globalPitchAdjust, "Master Pitch Adjust",
+                                                             ParamRanges::PITCH_ADJUST, 0.0f));
+  p.addParameter(
+      pitchSpray = new juce::AudioParameterFloat(ParamIDs::globalPitchSpray, "Master Pitch Spray", ParamRanges::PITCH_SPRAY, 0.0f));
+  p.addParameter(positionAdjust = new juce::AudioParameterFloat(ParamIDs::globalPositionAdjust, "Master Position Adjust",
+                                                                ParamRanges::POSITION_ADJUST, 0.0f));
+  p.addParameter(positionSpray = new juce::AudioParameterFloat(ParamIDs::globalPositionSpray, "Master Position Spray",
+                                                               ParamRanges::POSITION_SPRAY, ParamDefaults::POSITION_SPRAY_DEFAULT));
 }
 
 void ParamGlobal::resetParams() {
@@ -56,6 +65,15 @@ void ParamGlobal::resetParams() {
   ParamHelper::setParam(filterCutoff, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
   ParamHelper::setParam(filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
   ParamHelper::setParam(filterType, 0);
+  ParamHelper::setParam(pitchAdjust, 0.0f);
+  ParamHelper::setParam(pitchSpray, 0.0f);
+  ParamHelper::setParam(positionAdjust, 0.0f);
+  ParamHelper::setParam(positionSpray, ParamDefaults::POSITION_SPRAY_DEFAULT);
+  ParamHelper::setParam(grainShape, 0.5f);
+  ParamHelper::setParam(grainTilt, 0.5f);
+  ParamHelper::setParam(grainRate, ParamDefaults::GRAIN_RATE_DEFAULT);
+  ParamHelper::setParam(grainDuration, ParamDefaults::GRAIN_DURATION_DEFAULT);
+  ParamHelper::setParam(grainSync, false);
 }
 
 void ParamGlobal::addListener(juce::AudioProcessorParameter::Listener* listener) { 
@@ -72,6 +90,10 @@ void ParamGlobal::addListener(juce::AudioProcessorParameter::Listener* listener)
   grainRate->addListener(listener);
   grainDuration->addListener(listener);
   grainSync->addListener(listener);
+  pitchAdjust->addListener(listener);
+  pitchSpray->addListener(listener);
+  positionAdjust->addListener(listener);
+  positionSpray->addListener(listener);
 }
 
 void ParamGlobal::removeListener(juce::AudioProcessorParameter::Listener* listener) {
@@ -83,11 +105,15 @@ void ParamGlobal::removeListener(juce::AudioProcessorParameter::Listener* listen
   filterCutoff->removeListener(listener);
   filterResonance->removeListener(listener);
   filterType->removeListener(listener);
-  grainShape->addListener(listener);
-  grainTilt->addListener(listener);
-  grainRate->addListener(listener);
-  grainDuration->addListener(listener);
-  grainSync->addListener(listener);
+  grainShape->removeListener(listener);
+  grainTilt->removeListener(listener);
+  grainRate->removeListener(listener);
+  grainDuration->removeListener(listener);
+  grainSync->removeListener(listener);
+  pitchAdjust->removeListener(listener);
+  pitchSpray->removeListener(listener);
+  positionAdjust->removeListener(listener);
+  positionSpray->removeListener(listener);
 }
 
 void ParamGenerator::addParams(juce::AudioProcessor& p) {

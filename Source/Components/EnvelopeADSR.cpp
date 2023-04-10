@@ -118,7 +118,7 @@ void EnvelopeADSR::selectPitchClass(Utils::PitchClass pitchClass) {
 void EnvelopeADSR::paint(juce::Graphics& g) {
   juce::Colour envColour = Utils::GLOBAL_COLOUR;
 
-  // Amp env section title
+  // Section title
   g.setColour(envColour);
   g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
   g.setColour(juce::Colours::white);

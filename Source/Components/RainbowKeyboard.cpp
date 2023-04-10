@@ -97,10 +97,10 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 
   // Pitch class label
   juce::Rectangle<float> labelRect = area.withTrimmedTop(5).withTrimmedLeft(5).withSize(NOTE_LABEL_SIZE, NOTE_LABEL_SIZE);
-  g.setColour(keyColor.withSaturation(0.7f));
+  g.setColour(keyColor.withSaturation(0.4f));
   g.fillRoundedRectangle(labelRect, 5.0f);
   g.setColour(keyColor.withSaturation(1.0f));
-  g.drawRoundedRectangle(labelRect, 5.0f, 1.0f);
+  g.drawRoundedRectangle(labelRect, 5.0f, 2.0f);
   g.setColour(juce::Colours::black);
   g.drawFittedText(Utils::PITCH_CLASS_DISP_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred, 1);
 }

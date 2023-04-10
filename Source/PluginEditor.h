@@ -17,6 +17,7 @@
 #include "Components/RainbowKeyboard.h"
 #include "Components/EnvelopeADSR.h"
 #include "Components/EnvelopeGrain.h"
+#include "Components/GrainControl.h"
 #include "Components/FilterControl.h"
 #include "Components/TrimSelection.h"
 #include "Components/Settings.h"
@@ -91,8 +92,9 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::Label mLabelFileName;
   RainbowKeyboard mKeyboard;
   EnvelopeADSR mEnvAdsr;
-  EnvelopeGrain mEnvGrain;
   FilterControl mFilterControl;
+  EnvelopeGrain mEnvGrain;
+  GrainControl mGrainControl;
   juce::Rectangle<float> mNoteDisplayRect;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;

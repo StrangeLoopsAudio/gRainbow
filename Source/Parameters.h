@@ -47,11 +47,15 @@ static juce::String globalRelease{"global_release"};
 static juce::String globalFilterCutoff{"global_filt_cutoff"};
 static juce::String globalFilterResonance{"global_filt_resonance"};
 static juce::String globalFilterType{"global_filt_type"};
-static juce::String globalGrainShape{"global_grain_shape_gen_"};
-static juce::String globalGrainTilt{"global_grain_tilt_gen"};
-static juce::String globalGrainRate{"global_grain_rate_gen"};
-static juce::String globalGrainDuration{"global_grain_duration_gen"};
-static juce::String globalGrainSync{"global_grain_sync_gen"};
+static juce::String globalGrainShape{"global_grain_shape"};
+static juce::String globalGrainTilt{"global_grain_tilt"};
+static juce::String globalGrainRate{"global_grain_rate"};
+static juce::String globalGrainDuration{"global_grain_duration"};
+static juce::String globalGrainSync{"global_grain_sync"};
+static juce::String globalPitchAdjust{"global_pitch_adjust"};
+static juce::String globalPitchSpray{"global_pitch_spray"};
+static juce::String globalPositionAdjust{"global_position_adjust"};
+static juce::String globalPositionSpray{"global_position_spray"};
 }  // namespace ParamIDs
 
 namespace ParamRanges {
@@ -384,6 +388,10 @@ struct ParamGlobal : juce::AudioProcessorParameter::Listener {
   juce::AudioParameterFloat* grainRate = nullptr;
   juce::AudioParameterFloat* grainDuration = nullptr;
   juce::AudioParameterBool* grainSync = nullptr;
+  juce::AudioParameterFloat* pitchAdjust = nullptr;
+  juce::AudioParameterFloat* pitchSpray = nullptr;
+  juce::AudioParameterFloat* positionAdjust = nullptr;
+  juce::AudioParameterFloat* positionSpray = nullptr;
 
   // State variable filter for generator
   double sampleRate = 48000;

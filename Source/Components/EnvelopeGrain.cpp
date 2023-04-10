@@ -111,7 +111,7 @@ void EnvelopeGrain::timerCallback() {
 void EnvelopeGrain::paint(juce::Graphics& g) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
 
-  // Filter section title
+  // Section title
   g.setColour(colour);
   g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
   g.setColour(juce::Colours::white);

@@ -37,6 +37,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mKeyboard(synth.getKeyboardState()),
       mEnvAdsr(synth.getParams()),
       mEnvGrain(synth.getParams()),
+      mGrainControl(synth.getParams()),
       mFilterControl(synth.getParams()),
       mProgressBar(synth.getLoadingProgress()),
       mParamUI(synth.getParamUI()),
@@ -134,6 +135,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mEnvAdsr);
   addAndMakeVisible(mEnvGrain);
   addAndMakeVisible(mFilterControl);
+  addAndMakeVisible(mGrainControl);
 
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
 
@@ -344,6 +346,7 @@ void GRainbowAudioProcessorEditor::resized() {
   // Left and right panels
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
   mEnvGrain.setBounds(leftPanel.removeFromTop(leftPanel.getHeight() / 2.0f));
+  mGrainControl.setBounds(leftPanel);
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
   mResourceUsage.setBounds(rightPanel.removeFromBottom(12));

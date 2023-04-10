@@ -72,7 +72,7 @@ void FilterControl::paint(juce::Graphics& g) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
   g.setFont(14.0f);
 
-  // Filter section title
+  // Section title
   g.setColour(colour);
   g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
   g.setColour(juce::Colours::white);
