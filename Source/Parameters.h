@@ -247,7 +247,7 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
 };
 
 struct ParamNote {
-  ParamNote(int noteIdx) : noteIdx(noteIdx) {
+  ParamNote(int noteIdx) : noteIdx(noteIdx), numActiveGens(1) {
     for (int i = 0; i < NUM_GENERATORS; ++i) {
       generators.emplace_back(new ParamGenerator(noteIdx, i));
     }
@@ -261,6 +261,7 @@ struct ParamNote {
   void setStartingCandidatePosition();
 
   int noteIdx;
+  int numActiveGens;
   std::vector<std::unique_ptr<ParamGenerator>> generators;
   std::vector<ParamCandidate> candidates;
   juce::AudioParameterInt* soloIdx = nullptr;

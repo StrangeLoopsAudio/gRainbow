@@ -12,7 +12,7 @@
 #include "Settings.h"
 
 //==============================================================================
-RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state) : mState(state) {
+RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state, Parameters& parameters) : mState(state), mParameters(parameters) {
   mNoteVelocity.fill(0.0f);
   mRandom.setSeed(juce::Time::currentTimeMillis());
 }
@@ -22,8 +22,7 @@ RainbowKeyboard::~RainbowKeyboard() {}
 void RainbowKeyboard::paint(juce::Graphics& g) {
   //g.fillAll(juce::Colours::transparentBlack);
 
-  // Draw each white key, but rainbowy, then black key, but rainbowy, so the
-  // black keys rect are fully on top of white key rect visually
+  // Draw each key and its active generators
   for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
     drawKey(g, key);
   }
@@ -33,12 +32,11 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
 }
 
 float RainbowKeyboard::getPitchXRatio(Utils::PitchClass pitchClass) {
-  return mNoteRectangleMap[pitchClass].getCentreX() / static_cast<float>(getWidth());
+  return mNoteRectMap[pitchClass].getCentreX() / static_cast<float>(getWidth());
 }
 
 void RainbowKeyboard::fillNoteRectangleMap() {
   // Keep everything in float to match Rectangle type
-  const float componentWidth = static_cast<float>(getWidth());
   const float componentHeight = static_cast<float>(getHeight());
 
   juce::Rectangle<float> r = getLocalBounds().toFloat();
@@ -48,35 +46,49 @@ void RainbowKeyboard::fillNoteRectangleMap() {
   // key width = leftover width after padding / num pitch classes * component width
   const float keyWidth = (r.getWidth() - (Utils::PADDING * (Utils::PitchClass::COUNT - 1))) / Utils::PitchClass::COUNT;
   const float keyHeight = componentHeight * NOTE_BODY_HEIGHT;
+  int genHeight = getHeight() * (1.0f - NOTE_BODY_HEIGHT) / 4;
 
   for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
-    //float keyCenterY = 
-    mNoteRectangleMap[key] = r.removeFromLeft(keyWidth).removeFromBottom(keyHeight);
+    juce::Rectangle<float> keyRect = r.removeFromLeft(keyWidth);
+    // Note body
+    mNoteRectMap[key] = keyRect.removeFromBottom(keyHeight);
+
+    // Generators on top of the note
+    for (int i = 0; i < Utils::NUM_GEN; ++i) {
+      mNoteGenRectMap[key][i] = keyRect.removeFromBottom(genHeight);
+    }
+
+    // Add generator button for each note
+    mNoteAddGenRectMap[key] = mNoteRectMap[key]
+                                  .withSizeKeepingCentre(ADD_GEN_SIZE, ADD_GEN_SIZE)
+                                  .withBottomY(mNoteRectMap[key].getY() - (genHeight * mParameters.note.notes[key]->numActiveGens) - Utils::PADDING);
+    
     r.removeFromLeft(Utils::PADDING);
   }
 }
 
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
-  juce::Colour keyColor = Utils::getRainbow12Colour(pitchClass).withSaturation(NOTE_BODY_SATURATION);
+  juce::Colour keyColour = Utils::getRainbow12Colour(pitchClass);
+  juce::Colour bodyColour = keyColour.withSaturation(NOTE_BODY_SATURATION);
   const float velocity = mNoteVelocity[pitchClass];
   const bool isDown = (velocity > 0.0f);
 
   // if down, extra dark
   // if no note is down, lightly darken if mouse is hovering it
   if (isDown) {
-    keyColor = keyColor.darker().darker();
+    bodyColour = bodyColour.darker().darker();
   } else if (pitchClass == mHoverNote.pitch) {
-    keyColor = keyColor.darker();
+    bodyColour = bodyColour.darker();
   }
 
-  g.setColour(keyColor);
-  juce::Colour color1 = (isDown) ? keyColor.brighter() : keyColor;
-  juce::Colour color2 = (isDown) ? keyColor : keyColor.brighter();
+  g.setColour(bodyColour);
+  juce::Colour color1 = (isDown) ? bodyColour.brighter() : bodyColour;
+  juce::Colour color2 = (isDown) ? bodyColour : bodyColour.brighter();
   g.setFillType(juce::ColourGradient(color1, juce::Point<float>(0.0f, 0.0f), color2, juce::Point<float>(0, getHeight()), false));
 
-  juce::Rectangle<float> area = mNoteRectangleMap[pitchClass];
+  juce::Rectangle<float> area = mNoteRectMap[pitchClass];
   g.fillRoundedRectangle(area, Utils::ROUNDED_AMOUNT);
-  g.setColour(keyColor.withSaturation(1.0f));
+  g.setColour(bodyColour.withSaturation(1.0f));
   g.drawRoundedRectangle(area, Utils::ROUNDED_AMOUNT, 2.0f);
 
   // display animation to show the velocity level of the note
@@ -97,12 +109,39 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 
   // Pitch class label
   juce::Rectangle<float> labelRect = area.withTrimmedTop(5).withTrimmedLeft(5).withSize(NOTE_LABEL_SIZE, NOTE_LABEL_SIZE);
-  g.setColour(keyColor.withSaturation(0.4f));
+  g.setColour(bodyColour.withSaturation(0.4f));
   g.fillRoundedRectangle(labelRect, 5.0f);
-  g.setColour(keyColor.withSaturation(1.0f));
+  g.setColour(bodyColour.withSaturation(1.0f));
   g.drawRoundedRectangle(labelRect, 5.0f, 2.0f);
   g.setColour(juce::Colours::black);
-  g.drawFittedText(Utils::PITCH_CLASS_DISP_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred, 1);
+  g.drawFittedText(Utils::PITCH_CLASS_DISP_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred,
+                   1);
+
+  // Draw the active generators on top of each key
+  int genHeight = getHeight() * (1.0f - NOTE_BODY_HEIGHT) / 4;
+  int numGens = mParameters.note.notes[pitchClass]->numActiveGens;
+  juce::Rectangle<int> genRect = juce::Rectangle<int>(area.getWidth(), genHeight);
+  for (int i = 0; i < numGens; ++i) {
+    juce::Colour genColour = (mHoverGenRect == mNoteGenRectMap[pitchClass][i]) ? keyColour.withSaturation(NOTE_BODY_SATURATION).darker()
+                                 : keyColour.withSaturation(NOTE_BODY_SATURATION);
+    g.setColour(genColour);
+    g.fillRoundedRectangle(mNoteGenRectMap[pitchClass][i], Utils::ROUNDED_AMOUNT);
+    g.setColour(keyColour.withSaturation(1.0f));
+    g.drawRoundedRectangle(mNoteGenRectMap[pitchClass][i], Utils::ROUNDED_AMOUNT, 2.0f);
+  }
+
+  // Draw the add generator button if more can still be added
+  if (numGens < Utils::NUM_GEN) {
+    juce::Colour addColour = (mHoverGenRect == mNoteAddGenRectMap[pitchClass]) ? keyColour.withSaturation(0.4f).darker()
+                                                                               : keyColour.withSaturation(0.4f);
+    g.setColour(addColour);
+    g.fillRoundedRectangle(mNoteAddGenRectMap[pitchClass], 5.0f);
+    g.setColour(keyColour.withSaturation(1.0f));
+    g.drawRoundedRectangle(mNoteAddGenRectMap[pitchClass], 5.0f, 2.0f);
+    g.setColour(juce::Colours::black);
+    g.drawText("+", mNoteAddGenRectMap[pitchClass], juce::Justification::centred);
+  }
+
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
@@ -114,7 +153,7 @@ void RainbowKeyboard::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes
 
     // if note is pressed, update animation LUT
     if (midiNote.velocity > 0.0f) {
-      juce::Rectangle<float> area = mNoteRectangleMap[midiNote.pitch];
+      juce::Rectangle<float> area = mNoteRectMap[midiNote.pitch];
       AnimationLUT& lut = mAnimationLUT[midiNote.pitch];
       lut.noteWidthSplit = area.getWidth() / static_cast<float>(ANIMATION_BLOCK_DIVISOR);
       lut.inverseVelocityLine = (area.getHeight() * midiNote.velocity);
@@ -155,7 +194,8 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
 */
 void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown) {
   const juce::Point<float> pos = e.getEventRelativeTo(this).position;
-  mHoverNote = xyMouseToNote(pos);
+  mHoverGenRect = juce::Rectangle<float>();
+  mHoverNote = xyMouseToNote(pos, isDown);
 
   // Will be invalid if mouse is dragged outside of keyboard
   bool isValidNote = mHoverNote.pitch != Utils::PitchClass::NONE;
@@ -187,18 +227,35 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown) {
   repaint();
 }
 
-Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
+Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isDown) {
   if (!reallyContains(pos.toInt(), false)) return Utils::MidiNote();
-  // Since the Juce canvas is all in float, keep in float to prevent strange
-  // int-vs-float rounding errors selecting the wrong key
-  const float componentHeight = static_cast<float>(getHeight());
 
   for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
-    if (mNoteRectangleMap[pitchClass].contains(pos)) {
-      // TODO: recheck velocity calc for new key design
-      float velocity = juce::jmax(0.0f, 1.0f - ((pos.y - mNoteRectangleMap[pitchClass].getY()) / mNoteRectangleMap[pitchClass].getHeight()));
-      return Utils::MidiNote(pitchClass, velocity);
+    // First check general note area
+    if (mNoteRectMap[pitchClass].contains(pos.withY(mNoteRectMap[pitchClass].getCentreY()))) {
+      // Now check note body and generators
+      if (mNoteRectMap[pitchClass].contains(pos)) {
+        // TODO: recheck velocity calc for new key design
+        float velocity =
+            juce::jmax(0.0f, 1.0f - ((pos.y - mNoteRectMap[pitchClass].getY()) / mNoteRectMap[pitchClass].getHeight()));
+        return Utils::MidiNote(pitchClass, velocity);
+      } else {
+        // Check generators and add gen button for hover
+        // TODO: switch selected gen/handle add gen click
+        int numGens = mParameters.note.notes[pitchClass]->numActiveGens;
+        for (int i = 0; i < numGens; ++i) {
+          if (mNoteGenRectMap[pitchClass][i].contains(pos)) {
+            mHoverGenRect = mNoteGenRectMap[pitchClass][i];
+            return Utils::MidiNote();
+          }
+        }
+        if (mNoteAddGenRectMap[pitchClass].contains(pos)) {
+          mHoverGenRect = mNoteAddGenRectMap[pitchClass];
+          return Utils::MidiNote();
+        }
+      }
     }
+    
   }
 
   // note not found

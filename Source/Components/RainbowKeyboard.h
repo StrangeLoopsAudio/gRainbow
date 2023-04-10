@@ -12,7 +12,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_basics/juce_audio_basics.h>
-
+#include "../Parameters.h"
 #include "../Utils.h"
 
 /**
@@ -23,7 +23,7 @@
 */
 class RainbowKeyboard : public juce::Component {
  public:
-  RainbowKeyboard(juce::MidiKeyboardState& state);
+  RainbowKeyboard(juce::MidiKeyboardState& state, Parameters& parameters);
   ~RainbowKeyboard() override;
 
   void paint(juce::Graphics&) override;
@@ -48,24 +48,29 @@ class RainbowKeyboard : public juce::Component {
   static constexpr float GEN_NODE_HEIGHT = 0.08f;
   static constexpr float NOTE_BODY_SATURATION = 0.6f;
   static constexpr float NOTE_LABEL_SIZE = 22;
+  static constexpr float ADD_GEN_SIZE = 18;
 
   juce::Random mRandom;
-
   juce::MidiKeyboardState& mState;
+  Parameters& mParameters;
 
   // holds the velocity of each pitch class, if zero, then note is not played
   std::array<float, Utils::PitchClass::COUNT> mNoteVelocity;
 
   // These allow using the mouse to click a key
   void updateMouseState(const juce::MouseEvent& e, bool isDown);
-  Utils::MidiNote xyMouseToNote(juce::Point<float> pos);
+  Utils::MidiNote xyMouseToNote(juce::Point<float> pos, bool isDown);
   // Note being currently hovered by the mouse
   Utils::MidiNote mHoverNote;
+  // Generator being currently hovered by the mouse
+  juce::Rectangle<float> mHoverGenRect;
   // Keeps track of the note being played because of the mouse injected input
   Utils::MidiNote mMouseNote;
 
   // Notes rectangle are recreated on resize and then just become a LUT
-  juce::Rectangle<float> mNoteRectangleMap[Utils::PitchClass::COUNT];
+  juce::Rectangle<float> mNoteRectMap[Utils::PitchClass::COUNT];
+  juce::Rectangle<float> mNoteAddGenRectMap[Utils::PitchClass::COUNT];
+  juce::Rectangle<float> mNoteGenRectMap[Utils::PitchClass::COUNT][Utils::NUM_GEN];
   void fillNoteRectangleMap();
 
   void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);
