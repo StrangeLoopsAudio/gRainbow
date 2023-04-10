@@ -16,8 +16,7 @@ PositionChanger::PositionChanger() {}
 PositionChanger::~PositionChanger() {}
 
 void PositionChanger::paint(juce::Graphics& g) {
-  g.fillAll(juce::Colours::black);  // clear the background
-  juce::Colour bgColour = mIsActive ? mColour : juce::Colours::darkgrey;
+  juce::Colour bgColour = mColour;
 
   /* Draw left arrow */
   if (mIsOverLeftArrow) {
@@ -40,7 +39,7 @@ void PositionChanger::paint(juce::Graphics& g) {
   g.drawArrow(mRightArrowLine, 2, 6, 6);
 
   /* Fill in title section to mask ellipses */
-  g.setColour(juce::Colours::black);
+  g.setColour(juce::Colours::transparentBlack);
   g.fillRect(mTitleRect.reduced(2, 0));
 
   /* Draw top/bottom borders */
@@ -74,23 +73,24 @@ void PositionChanger::resized() {
   const float soloHeight = getHeight() * SOLO_HEIGHT_PERC;
   const float selectorHeight = getHeight() - soloHeight;
 
+  juce::Rectangle<int> r = getLocalBounds();
+
+  mTitleRect = r.withHeight(selectorHeight).withSizeKeepingCentre(getWidth() * TITLE_PERC, selectorHeight);
+  mSoloRect = mTitleRect.translated(0, selectorHeight).withHeight(soloHeight - 2).toFloat();
+
   mLeftPath.clear();
-  mLeftPath.addEllipse(1, 1, (arrowWidth * 2) - 1, selectorHeight - 2);
+  mLeftPath.addCentredArc(mTitleRect.getX(), selectorHeight / 2, arrowWidth - 1, selectorHeight / 2 - 1, 0, juce::MathConstants<float>::pi,
+                          juce::MathConstants<float>::twoPi, true);
+  mLeftPath.closeSubPath();
   mLeftArrowLine = juce::Line<float>(arrowWidth - (arrowWidth * 0.1), selectorHeight / 2, (arrowWidth * 0.3), selectorHeight / 2);
 
   const int rightStart = getWidth() * (ARROW_PERC + TITLE_PERC);
   mRightPath.clear();
-  mRightPath.addEllipse(rightStart - arrowWidth, 1, (arrowWidth * 2) - 1, selectorHeight - 2);
+  mRightPath.addCentredArc(mTitleRect.getRight(), selectorHeight / 2, arrowWidth - 1, selectorHeight / 2 - 1, 0, 0,
+                           juce::MathConstants<float>::pi, true);
+  mRightPath.closeSubPath();
   mRightArrowLine =
       juce::Line<float>(rightStart + (arrowWidth * 0.1), selectorHeight / 2, getWidth() - (arrowWidth * 0.3), selectorHeight / 2);
-
-  mTitleRect = getLocalBounds().withHeight(selectorHeight).withSizeKeepingCentre(getWidth() * TITLE_PERC, selectorHeight);
-  mSoloRect = mTitleRect.translated(0, selectorHeight).withHeight(soloHeight - 2).toFloat();
-}
-
-void PositionChanger::setActive(bool isActive) {
-  mIsActive = isActive;
-  repaint();
 }
 
 void PositionChanger::setSolo(bool isSolo) {

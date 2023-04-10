@@ -25,6 +25,8 @@ GrainControl::GrainControl(Parameters& parameters) : mParameters(parameters) {
   mSliderPitchAdjust.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderPitchAdjust.setRotaryParameters(rotaryParams);
   mSliderPitchAdjust.setNumDecimalPlacesToDisplay(2);
+  mSliderPitchAdjust.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
+  mSliderPitchAdjust.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
   mSliderPitchAdjust.setRange(ParamRanges::PITCH_ADJUST.start, ParamRanges::PITCH_ADJUST.end, 0.01);
   //mSliderPitchAdjust.onValueChange = [this] {
   //  ParamHelper::setParam(getCurrentGenerator()->pitchAdjust, mSliderPitchAdjust.getValue());
@@ -40,6 +42,9 @@ GrainControl::GrainControl(Parameters& parameters) : mParameters(parameters) {
   mSliderPitchSpray.setTextValueSuffix("cents");
   mSliderPitchSpray.setSliderStyle(juce::Slider::SliderStyle::LinearBar);
   mSliderPitchSpray.setNumDecimalPlacesToDisplay(3);
+  mSliderPitchSpray.setColour(juce::Slider::ColourIds::textBoxOutlineColourId, colour);
+  mSliderPitchSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
+  mSliderPitchSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
   mSliderPitchSpray.setRange(ParamRanges::PITCH_SPRAY.start, ParamRanges::PITCH_SPRAY.end, 0.005);
   //mSliderPitchSpray.onValueChange = [this] {
   //  ParamHelper::setParam(getCurrentGenerator()->pitchSpray, mSliderPitchSpray.getValue());
@@ -56,6 +61,8 @@ GrainControl::GrainControl(Parameters& parameters) : mParameters(parameters) {
   mSliderPosAdjust.setSliderStyle(juce::Slider::SliderStyle::Rotary);
   mSliderPosAdjust.setRotaryParameters(rotaryParams);
   mSliderPosAdjust.setNumDecimalPlacesToDisplay(2);
+  mSliderPosAdjust.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
+  mSliderPosAdjust.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
   mSliderPosAdjust.setRange(ParamRanges::POSITION_ADJUST.start, ParamRanges::POSITION_ADJUST.end, 0.01);
   //mSliderPosAdjust.onValueChange = [this] {
   //  ParamHelper::setParam(getCurrentGenerator()->positionAdjust, mSliderPosAdjust.getValue());
@@ -71,6 +78,9 @@ GrainControl::GrainControl(Parameters& parameters) : mParameters(parameters) {
   mSliderPosSpray.setTextValueSuffix("s");
   mSliderPosSpray.setSliderStyle(juce::Slider::SliderStyle::LinearBar);
   mSliderPosSpray.setNumDecimalPlacesToDisplay(3);
+  mSliderPosSpray.setColour(juce::Slider::ColourIds::textBoxOutlineColourId, colour);
+  mSliderPosSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
+  mSliderPosSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
   mSliderPosSpray.setRange(ParamRanges::POSITION_SPRAY.start, ParamRanges::POSITION_SPRAY.end, 0.005);
   //mSliderPosSpray.onValueChange = [this] {
   //  ParamHelper::setParam(getCurrentGenerator()->positionSpray, mSliderPosSpray.getValue());
@@ -90,6 +100,7 @@ GrainControl::GrainControl(Parameters& parameters) : mParameters(parameters) {
   mPositionChanger.onSoloChanged = [this](bool isSolo) {
     ParamHelper::setParam(mParamsNote.notes[mCurPitchClass]->soloIdx, isSolo ? mCurSelectedGenerator : SOLO_NONE);
   };*/
+  mPositionChanger.setColour(colour);
   addAndMakeVisible(mPositionChanger);
 
   startTimer(500);
@@ -164,19 +175,22 @@ void GrainControl::paint(juce::Graphics& g) {
 }
 
 void GrainControl::resized() {
-  juce::Rectangle<float> r = getLocalBounds().toFloat();
+  juce::Rectangle<int> r = getLocalBounds();
   // Remove padding
-  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().toFloat().getCentre());
+  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(r.getCentre());
 
   // Make title rect
-  mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT);
+  mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT).toFloat();
 
   r.removeFromTop(Utils::PADDING);
 
   int panelWidth = r.getWidth() / 3;
+  int panelHeight = Utils::LABEL_HEIGHT * 3 + Utils::KNOB_HEIGHT;
+
+  juce::Rectangle<int> paramPanel = r.removeFromBottom(panelHeight);
 
   // Pitch components
-  juce::Rectangle<int> pitchPanel = r.removeFromLeft(panelWidth).toNearestInt();
+  juce::Rectangle<int> pitchPanel = paramPanel.removeFromLeft(panelWidth);
   mLabelPitchSpray.setBounds(pitchPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPitchSpray.setBounds(pitchPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mLabelPitchAdjust.setBounds(pitchPanel.removeFromBottom(Utils::LABEL_HEIGHT));
@@ -184,7 +198,7 @@ void GrainControl::resized() {
       pitchPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
 
   // Position components
-  juce::Rectangle<int> positionPanel = r.removeFromRight(panelWidth).toNearestInt();
+  juce::Rectangle<int> positionPanel = paramPanel.removeFromRight(panelWidth);
   mLabelPosSpray.setBounds(positionPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPosSpray.setBounds(positionPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mLabelPosAdjust.setBounds(positionPanel.removeFromBottom(Utils::LABEL_HEIGHT));
@@ -192,5 +206,7 @@ void GrainControl::resized() {
       positionPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
 
   // Candidate changer
-  mPositionChanger.setBounds(r.withHeight(r.getHeight() / 2).toNearestInt());
+  mPositionChanger.setBounds(paramPanel.withSizeKeepingCentre(paramPanel.getWidth(), paramPanel.getHeight() / 2));
+
+  // TODO: param viz rect
 }
