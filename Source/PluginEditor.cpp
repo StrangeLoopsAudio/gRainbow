@@ -25,7 +25,7 @@
 GRainbowLogo::GRainbowLogo() { mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize); }
 
 void GRainbowLogo::paint(juce::Graphics& g) {
-  g.fillAll(juce::Colours::black);
+  g.fillAll(juce::Colours::transparentBlack);
   g.drawImage(mLogoImage, getLocalBounds().toFloat(), juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
 }
 
@@ -251,7 +251,11 @@ void GRainbowAudioProcessorEditor::timerCallback() {
 
 //==============================================================================
 void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
-  g.fillAll(juce::Colours::black);
+  // Set gradient
+  juce::Colour colour = juce::Colours::lightgrey;
+  g.setFillType(juce::ColourGradient(colour, getLocalBounds().getTopLeft().toFloat(), colour.withAlpha(0.4f),
+                                     getLocalBounds().getBottomLeft().toFloat(), false));
+  g.fillRect(getLocalBounds());
 
   // Draw background for open file button
   g.setColour(juce::Colours::darkgrey);

@@ -15,7 +15,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
     : mParameters(parameters),
       mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
 
-  juce::Colour colour = juce::Colours::white;
+  juce::Colour colour = Utils::GLOBAL_COLOUR;
   // Knob params
   auto rotaryParams = juce::Slider::RotaryParameters();
   rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
@@ -105,12 +105,12 @@ void EnvelopeGrain::timerCallback() {
 }
 
 void EnvelopeGrain::paint(juce::Graphics& g) {
-  juce::Colour colour = juce::Colours::white;
+  juce::Colour colour = Utils::GLOBAL_COLOUR;
 
   // Filter section title
   g.setColour(colour);
   g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
-  g.setColour(juce::Colours::black);
+  g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
   float envWidth;
@@ -166,7 +166,7 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
 void EnvelopeGrain::resized() {
   juce::Rectangle<float> r = getLocalBounds().toFloat();
   // Remove padding
-  r = r.reduced(Utils::PADDING * 2, Utils::PADDING * 2).withCentre(getLocalBounds().toFloat().getCentre());
+  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().toFloat().getCentre());
 
   // Make title rect
   mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT);

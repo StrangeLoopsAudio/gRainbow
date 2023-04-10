@@ -44,7 +44,6 @@ class RainbowKeyboard : public juce::Component {
 
  private:
   static constexpr int MIDI_CHANNEL = 1;
-  static constexpr float NOTE_BODY_PADDING = 0.01f;
   static constexpr float NOTE_BODY_HEIGHT = 0.5f;
   static constexpr float GEN_NODE_HEIGHT = 0.08f;
   static constexpr float NOTE_BODY_SATURATION = 0.4f;

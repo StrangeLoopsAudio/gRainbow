@@ -13,7 +13,7 @@
 
 //==============================================================================
 EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
-  juce::Colour knobColour = juce::Colours::white;
+  juce::Colour knobColour = Utils::GLOBAL_COLOUR;
   // Knob params
   auto rotaryParams = juce::Slider::RotaryParameters();
   rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
@@ -112,12 +112,12 @@ void EnvelopeADSR::selectPitchClass(Utils::PitchClass pitchClass) {
 }
 
 void EnvelopeADSR::paint(juce::Graphics& g) {
-  juce::Colour envColour = juce::Colours::white;
+  juce::Colour envColour = Utils::GLOBAL_COLOUR;
 
   // Amp env section title
   g.setColour(envColour);
   g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
-  g.setColour(juce::Colours::black);
+  g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
   // TODO: include other non-global values as well
@@ -161,7 +161,7 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
 void EnvelopeADSR::resized() {
   juce::Rectangle<int> r = getLocalBounds();
   // Remove padding
-  r = r.reduced(Utils::PADDING * 2, Utils::PADDING * 2).withCentre(getLocalBounds().getCentre());
+  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().getCentre());
   // Make title rect
   mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT).toFloat();
 

@@ -14,7 +14,7 @@
 //==============================================================================
 FilterControl::FilterControl(Parameters& parameters): mParameters(parameters) {
 
-  juce::Colour colour = juce::Colours::white;
+  juce::Colour colour = Utils::GLOBAL_COLOUR;
   // Knob params
   auto rotaryParams = juce::Slider::RotaryParameters();
   rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
@@ -67,13 +67,13 @@ void FilterControl::timerCallback() {
 }
 
 void FilterControl::paint(juce::Graphics& g) {
-  juce::Colour colour = juce::Colours::white;
+  juce::Colour colour = Utils::GLOBAL_COLOUR;
   g.setFont(14.0f);
 
   // Filter section title
   g.setColour(colour);
   g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
-  g.setColour(juce::Colours::black);
+  g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
   // draw filter type rectangles
@@ -97,7 +97,7 @@ void FilterControl::paint(juce::Graphics& g) {
   }
 
   // Label filter types
-  g.setColour(juce::Colours::white);
+  g.setColour(Utils::GLOBAL_COLOUR);
   g.drawText(FILTER_TYPE_NAMES[1], mLowPassRect, juce::Justification::centred);
   g.drawText(FILTER_TYPE_NAMES[2], mHighPassRect, juce::Justification::centred);
   g.drawText(FILTER_TYPE_NAMES[3], mBandPassRect, juce::Justification::centred);
@@ -173,7 +173,7 @@ void FilterControl::paint(juce::Graphics& g) {
 void FilterControl::resized() {
   juce::Rectangle<float> r = getLocalBounds().toFloat();
   // Remove padding
-  r = r.reduced(Utils::PADDING * 2, Utils::PADDING * 2).withCentre(getLocalBounds().toFloat().getCentre());
+  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().toFloat().getCentre());
 
   // Make title rect
   mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT);

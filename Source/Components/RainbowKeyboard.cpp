@@ -21,7 +21,7 @@ RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state) : mState(state)
 RainbowKeyboard::~RainbowKeyboard() {}
 
 void RainbowKeyboard::paint(juce::Graphics& g) {
-  g.fillAll(juce::Colours::black);
+  //g.fillAll(juce::Colours::transparentBlack);
 
   // Draw each white key, but rainbowy, then black key, but rainbowy, so the
   // black keys rect are fully on top of white key rect visually
@@ -29,7 +29,7 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
     drawKey(g, key);
   }
 
-  g.setColour(juce::Colours::white);
+  g.setColour(Utils::GLOBAL_COLOUR);
   g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), 10.0f, 2.0f);
 }
 
@@ -44,18 +44,16 @@ void RainbowKeyboard::fillNoteRectangleMap() {
 
   juce::Rectangle<float> r = getLocalBounds().toFloat();
   
-  const float padding = NOTE_BODY_PADDING * componentWidth;
-
-  r = r.withSizeKeepingCentre(getWidth() - padding * 2, getHeight() - padding * 2);
+  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().toFloat().getCentre());
 
   // key width = leftover width after padding / num pitch classes * component width
-  const float keyWidth = (r.getWidth() - (padding * (Utils::PitchClass::COUNT - 1))) / Utils::PitchClass::COUNT;
+  const float keyWidth = (r.getWidth() - (Utils::PADDING * (Utils::PitchClass::COUNT - 1))) / Utils::PitchClass::COUNT;
   const float keyHeight = componentHeight * NOTE_BODY_HEIGHT;
 
   for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
     //float keyCenterY = 
     mNoteRectangleMap[key] = r.removeFromLeft(keyWidth).removeFromBottom(keyHeight);
-    r.removeFromLeft(padding);
+    r.removeFromLeft(Utils::PADDING);
   }
 }
 

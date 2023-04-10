@@ -86,7 +86,7 @@ static float FILTER_BP_CUTOFF_DEFAULT_HZ = 1200.0f;
 static juce::String FILTER_TYPE_DEFAULT = "none";
 }  // namespace ParamDefaults
 
-static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
+static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "lowpass", "highpass", "bandpass"};
 
 struct ParamHelper {
