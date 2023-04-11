@@ -29,6 +29,8 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
 
   void timerCallback() override;
 
+  void updateSelectedParams();
+
  private:
   static constexpr const char* SECTION_TITLE = "grain envelope";
   static constexpr float MIN_RATE_RATIO = .25f;

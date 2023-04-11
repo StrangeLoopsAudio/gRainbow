@@ -107,7 +107,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::ProgressBar mProgressBar;
 
   // Synth owns, but need to grab params on reloading of plugin
-  ParamUI& mParamUI;
+  Parameters& mParameters;
 
   // Bookkeeping
   juce::File mRecordedFile;

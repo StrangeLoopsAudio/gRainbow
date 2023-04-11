@@ -68,6 +68,9 @@ void FilterControl::timerCallback() {
   }
 }
 
+void FilterControl::updateSelectedParams() { repaint(); }
+
+
 void FilterControl::paint(juce::Graphics& g) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
   g.setFont(14.0f);

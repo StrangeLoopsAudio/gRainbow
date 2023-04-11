@@ -76,8 +76,6 @@ set(SourceFiles
     Source/Components/RainbowKeyboard.cpp
     Source/Components/PositionChanger.h
     Source/Components/PositionChanger.cpp
-    Source/Components/NoteGrid.h
-    Source/Components/NoteGrid.cpp
     Source/Components/FilterControl.h
     Source/Components/FilterControl.cpp
     Source/Components/GrainControl.h

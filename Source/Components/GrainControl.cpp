@@ -116,6 +116,8 @@ void GrainControl::timerCallback() {
   }
 }
 
+void GrainControl::updateSelectedParams() { repaint(); }
+
 void GrainControl::paint(juce::Graphics& g) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
 

@@ -18,19 +18,27 @@
 namespace ParamIDs {
 // Note params
 static juce::String genSolo{"_solo_gen"};
+static juce::String noteGain{"_note_gain"};
+static juce::String noteAttack{"_note_attack"};
+static juce::String noteDecay{"_note_decay"};
+static juce::String noteSustain{"_note_sustain"};
+static juce::String noteRelease{"_note_release"};
+static juce::String noteFilterCutoff{"_note_filt_cutoff"};
+static juce::String noteFilterResonance{"_note_filt_resonance"};
+static juce::String noteFilterType{"_note_filt_type"};
+static juce::String noteGrainShape{"_note_grain_shape"};
+static juce::String noteGrainTilt{"_note_grain_tilt"};
+static juce::String noteGrainRate{"_note_grain_rate"};
+static juce::String noteGrainDuration{"_note_grain_duration"};
+static juce::String noteGrainSync{"_note_grain_sync"};
+static juce::String notePitchAdjust{"_note_pitch_adjust"};
+static juce::String notePitchSpray{"_note_pitch_spray"};
+static juce::String notePositionAdjust{"_note_position_adjust"};
+static juce::String notePositionSpray{"_note_position_spray"};
 // Generator params
 static juce::String genEnable{"_enable_gen_"};
-static juce::String genGain{"_gain_gen_"};
 static juce::String genCandidate{"_candidate_gen_"};
-static juce::String genPitchAdjust{"_pitch_adjust_gen_"};
-static juce::String genPitchSpray{"_pitch_spray_gen_"};
-static juce::String genPositionAdjust{"_position_adjust_gen_"};
-static juce::String genPositionSpray{"_position_spray_gen_"};
-static juce::String genGrainShape{"_grain_shape_gen_"};
-static juce::String genGrainTilt{"_grain_tilt_gen_"};
-static juce::String genGrainRate{"_grain_rate_gen_"};
-static juce::String genGrainDuration{"_grain_duration_gen_"};
-static juce::String genGrainSync{"_grain_sync_gen_"};
+static juce::String genGain{"_gain_gen_"};
 static juce::String genAttack{"_attack_gen_"};
 static juce::String genDecay{"_decay_gen_"};
 static juce::String genSustain{"_sustain_gen_"};
@@ -38,6 +46,15 @@ static juce::String genRelease{"_release_gen_"};
 static juce::String genFilterCutoff{"_filt_cutoff_gen_"};
 static juce::String genFilterResonance{"_filt_resonance_gen_"};
 static juce::String genFilterType{"_filt_type_gen_"};
+static juce::String genGrainShape{"_grain_shape_gen_"};
+static juce::String genGrainTilt{"_grain_tilt_gen_"};
+static juce::String genGrainRate{"_grain_rate_gen_"};
+static juce::String genGrainDuration{"_grain_duration_gen_"};
+static juce::String genGrainSync{"_grain_sync_gen_"};
+static juce::String genPitchAdjust{"_pitch_adjust_gen_"};
+static juce::String genPitchSpray{"_pitch_spray_gen_"};
+static juce::String genPositionAdjust{"_position_adjust_gen_"};
+static juce::String genPositionSpray{"_position_spray_gen_"};
 // Global params
 static juce::String globalGain{"global_gain"};
 static juce::String globalAttack{"global_attack"};
@@ -76,6 +93,7 @@ static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 namespace ParamDefaults {
 static float POSITION_SPRAY_DEFAULT = 0.01f;
 static float GRAIN_SHAPE_DEFAULT = 0.75f;
+static float GRAIN_TILT_DEFAULT = 0.5f;
 static float GRAIN_RATE_DEFAULT = 0.33f;
 static float GRAIN_DURATION_DEFAULT = 0.2f;
 static float GAIN_DEFAULT = 0.8f;
@@ -113,70 +131,79 @@ static constexpr auto SOLO_NONE = -1;
 static constexpr auto NUM_FILTER_TYPES = 3;
 static constexpr auto ENV_LUT_SIZE = 128;  // grain env lookup table size
 
-static inline void updateGrainEnvelopeLUT(std::vector<float>& lut, float shape, float tilt) {
-  lut.clear();
-  /* LUT divided into 3 parts
-
-               1.0
-              -----
-     rampUp  /     \  rampDown
-            /       \
-  */
-  float scaledShape = (shape * ENV_LUT_SIZE) / 2.0f;
-  float scaledTilt = tilt * ENV_LUT_SIZE;
-  int rampUpEndSample = juce::jmax(0.0f, scaledTilt - scaledShape);
-  int rampDownStartSample = juce::jmin((float)ENV_LUT_SIZE, scaledTilt + scaledShape);
-  for (int i = 0; i < ENV_LUT_SIZE; i++) {
-    if (i < rampUpEndSample) {
-      lut.push_back((float)i / rampUpEndSample);
-    } else if (i > rampDownStartSample) {
-      lut.push_back(1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample));
-    } else {
-      lut.push_back(1.0f);
-    }
-  }
-  juce::FloatVectorOperations::clip(lut.data(), lut.data(), 0.0f, 1.0f, lut.size());
-}
-
-struct ParamCandidate {
-  float posRatio;
-  float pbRate;
-  float duration;
-  float salience;
-
-  ParamCandidate(float posRatio, float pbRate, float duration, float salience)
-      : posRatio(posRatio), pbRate(pbRate), duration(duration), salience(salience) {}
-
-  // setXml equivalent since we always need a valid candidate param  value
-  ParamCandidate(juce::XmlElement* xml) {
-    jassert(xml->hasTagName("ParamCandidate"));
-    posRatio = xml->getDoubleAttribute("posRatio");
-    pbRate = xml->getDoubleAttribute("pbRate");
-    duration = xml->getDoubleAttribute("duration");
-    salience = xml->getDoubleAttribute("salience");
-  }
-
-  juce::XmlElement* getXml() {
-    juce::XmlElement* xml = new juce::XmlElement("ParamCandidate");
-    xml->setAttribute("posRatio", posRatio);
-    xml->setAttribute("pbRate", pbRate);
-    xml->setAttribute("duration", duration);
-    xml->setAttribute("salience", salience);
-    return xml;
-  }
-};
-
-struct ParamGenerator : juce::AudioProcessorParameter::Listener {
-  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx), selected(false) {
+// Common parameters types used by each generator, note and globally
+class ParamCommon: public juce::AudioProcessorParameter::Listener {
+ public:
+  ParamCommon() {
     filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
     filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+    updateGrainEnvelopeLUT(grainEnvLUT, ParamDefaults::GRAIN_SHAPE_DEFAULT, ParamDefaults::GRAIN_TILT_DEFAULT);
   }
-  ~ParamGenerator() {
+  ~ParamCommon() {
     grainShape->removeListener(this);
     grainTilt->removeListener(this);
     filterType->removeListener(this);
     filterCutoff->removeListener(this);
     filterResonance->removeListener(this);
+  }
+
+  void addListener(juce::AudioProcessorParameter::Listener* listener) {
+    gain->addListener(listener);
+    attack->addListener(listener);
+    decay->addListener(listener);
+    sustain->addListener(listener);
+    release->addListener(listener);
+    filterCutoff->addListener(listener);
+    filterResonance->addListener(listener);
+    filterType->addListener(listener);
+    grainShape->addListener(listener);
+    grainTilt->addListener(listener);
+    grainRate->addListener(listener);
+    grainDuration->addListener(listener);
+    grainSync->addListener(listener);
+    pitchAdjust->addListener(listener);
+    pitchSpray->addListener(listener);
+    positionAdjust->addListener(listener);
+    positionSpray->addListener(listener);
+  }
+  void removeListener(juce::AudioProcessorParameter::Listener* listener) {
+    gain->removeListener(listener);
+    attack->removeListener(listener);
+    decay->removeListener(listener);
+    sustain->removeListener(listener);
+    release->removeListener(listener);
+    filterCutoff->removeListener(listener);
+    filterResonance->removeListener(listener);
+    filterType->removeListener(listener);
+    grainShape->removeListener(listener);
+    grainTilt->removeListener(listener);
+    grainRate->removeListener(listener);
+    grainDuration->removeListener(listener);
+    grainSync->removeListener(listener);
+    pitchAdjust->removeListener(listener);
+    pitchSpray->removeListener(listener);
+    positionAdjust->removeListener(listener);
+    positionSpray->removeListener(listener);
+  }
+
+  void resetParams(bool fullClear = true) {
+    ParamHelper::setParam(gain, ParamDefaults::GAIN_DEFAULT);
+    ParamHelper::setParam(attack, ParamDefaults::ATTACK_DEFAULT_SEC);
+    ParamHelper::setParam(decay, ParamDefaults::DECAY_DEFAULT_SEC);
+    ParamHelper::setParam(sustain, ParamDefaults::SUSTAIN_DEFAULT);
+    ParamHelper::setParam(release, ParamDefaults::RELEASE_DEFAULT_SEC);
+    ParamHelper::setParam(filterCutoff, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+    ParamHelper::setParam(filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
+    ParamHelper::setParam(filterType, 0);
+    ParamHelper::setParam(pitchAdjust, 0.0f);
+    ParamHelper::setParam(pitchSpray, 0.0f);
+    ParamHelper::setParam(positionAdjust, 0.0f);
+    ParamHelper::setParam(positionSpray, ParamDefaults::POSITION_SPRAY_DEFAULT);
+    ParamHelper::setParam(grainShape, 0.5f);
+    ParamHelper::setParam(grainTilt, 0.5f);
+    ParamHelper::setParam(grainRate, ParamDefaults::GRAIN_RATE_DEFAULT);
+    ParamHelper::setParam(grainDuration, ParamDefaults::GRAIN_DURATION_DEFAULT);
+    ParamHelper::setParam(grainSync, false);
   }
 
   void parameterValueChanged(int paramIdx, float newValue) override {
@@ -207,46 +234,112 @@ struct ParamGenerator : juce::AudioProcessorParameter::Listener {
   };
   void parameterGestureChanged(int, bool) override {}
 
-  void addParams(juce::AudioProcessor& p);
-  void addListener(juce::AudioProcessorParameter::Listener* listener);
-  void removeListener(juce::AudioProcessorParameter::Listener* listener);
-
-  int noteIdx;
-  int genIdx;
-
-  juce::AudioParameterBool* enable = nullptr;
   juce::AudioParameterFloat* gain = nullptr;
-  juce::AudioParameterInt* candidate = nullptr;
-  juce::AudioParameterFloat* pitchAdjust = nullptr;
-  juce::AudioParameterFloat* pitchSpray = nullptr;
-  juce::AudioParameterFloat* positionAdjust = nullptr;
-  juce::AudioParameterFloat* positionSpray = nullptr;
+  juce::AudioParameterFloat* attack = nullptr;
+  juce::AudioParameterFloat* decay = nullptr;
+  juce::AudioParameterFloat* sustain = nullptr;
+  juce::AudioParameterFloat* release = nullptr;
+  juce::AudioParameterFloat* filterCutoff = nullptr;
+  juce::AudioParameterFloat* filterResonance = nullptr;
+  juce::AudioParameterChoice* filterType = nullptr;
   juce::AudioParameterFloat* grainShape = nullptr;
   juce::AudioParameterFloat* grainTilt = nullptr;
   juce::AudioParameterFloat* grainRate = nullptr;
   juce::AudioParameterFloat* grainDuration = nullptr;
   juce::AudioParameterBool* grainSync = nullptr;
-  juce::AudioParameterFloat* attack = nullptr;
-  juce::AudioParameterFloat* decay = nullptr;
-  juce::AudioParameterFloat* sustain = nullptr;
-  juce::AudioParameterFloat* release = nullptr;
-  juce::AudioParameterFloat* filterResonance = nullptr;
-  juce::AudioParameterFloat* filterCutoff = nullptr;
-  juce::AudioParameterChoice* filterType = nullptr;
-
-  bool selected;
-
+  juce::AudioParameterFloat* pitchAdjust = nullptr;
+  juce::AudioParameterFloat* pitchSpray = nullptr;
+  juce::AudioParameterFloat* positionAdjust = nullptr;
+  juce::AudioParameterFloat* positionSpray = nullptr;
+  
   // LUT of the grain envelope
   std::vector<float> grainEnvLUT;
-
   // State variable filter for generator
-  double sampleRate = 48000;
   juce::dsp::StateVariableTPTFilter<float> filter;
+  double sampleRate = 48000;
+
+ private:
+  void updateGrainEnvelopeLUT(std::vector<float>& lut, float shape, float tilt) {
+    lut.clear();
+    /* LUT divided into 3 parts
+
+                 1.0
+                -----
+       rampUp  /     \  rampDown
+              /       \
+    */
+    float scaledShape = (shape * ENV_LUT_SIZE) / 2.0f;
+    float scaledTilt = tilt * ENV_LUT_SIZE;
+    int rampUpEndSample = juce::jmax(0.0f, scaledTilt - scaledShape);
+    int rampDownStartSample = juce::jmin((float)ENV_LUT_SIZE, scaledTilt + scaledShape);
+    for (int i = 0; i < ENV_LUT_SIZE; i++) {
+      if (i < rampUpEndSample) {
+        lut.push_back((float)i / rampUpEndSample);
+      } else if (i > rampDownStartSample) {
+        lut.push_back(1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample));
+      } else {
+        lut.push_back(1.0f);
+      }
+    }
+    juce::FloatVectorOperations::clip(lut.data(), lut.data(), 0.0f, 1.0f, lut.size());
+  }
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamCommon)
+};
+
+struct ParamCandidate {
+  float posRatio;
+  float pbRate;
+  float duration;
+  float salience;
+
+  ParamCandidate(float posRatio, float pbRate, float duration, float salience)
+      : posRatio(posRatio), pbRate(pbRate), duration(duration), salience(salience) {}
+
+  // setXml equivalent since we always need a valid candidate param  value
+  ParamCandidate(juce::XmlElement* xml) {
+    jassert(xml->hasTagName("ParamCandidate"));
+    posRatio = xml->getDoubleAttribute("posRatio");
+    pbRate = xml->getDoubleAttribute("pbRate");
+    duration = xml->getDoubleAttribute("duration");
+    salience = xml->getDoubleAttribute("salience");
+  }
+
+  juce::XmlElement* getXml() {
+    juce::XmlElement* xml = new juce::XmlElement("ParamCandidate");
+    xml->setAttribute("posRatio", posRatio);
+    xml->setAttribute("pbRate", pbRate);
+    xml->setAttribute("duration", duration);
+    xml->setAttribute("salience", salience);
+    return xml;
+  }
+};
+
+struct ParamGenerator : ParamCommon {
+  ParamGenerator(int noteIdx, int genIdx) : noteIdx(noteIdx), genIdx(genIdx) {}
+  ~ParamGenerator() {}
+
+  void addParams(juce::AudioProcessor& p);
+
+  void addListener(juce::AudioProcessorParameter::Listener* listener) { 
+    ParamCommon::addListener(listener);
+    candidate->addListener(listener);
+  }
+  void removeListener(juce::AudioProcessorParameter::Listener* listener) {
+    ParamCommon::removeListener(listener);
+    candidate->removeListener(listener);
+  }
+
+  int noteIdx;
+  int genIdx;
+
+  juce::AudioParameterBool* enable = nullptr;
+  juce::AudioParameterInt* candidate = nullptr;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGenerator)
 };
 
-struct ParamNote {
+struct ParamNote : ParamCommon {
   ParamNote(int noteIdx) : noteIdx(noteIdx), numActiveGens(1) {
     for (int i = 0; i < NUM_GENERATORS; ++i) {
       generators.emplace_back(new ParamGenerator(noteIdx, i));
@@ -254,16 +347,37 @@ struct ParamNote {
   }
 
   void addParams(juce::AudioProcessor& p);
-  void addListener(int genIdx, juce::AudioProcessorParameter::Listener* listener);
-  void removeListener(int genIdx, juce::AudioProcessorParameter::Listener* listener);
+
+  void addListener(juce::AudioProcessorParameter::Listener* listener) {
+    ParamCommon::addListener(listener);
+    soloIdx->addListener(listener);
+  }
+  void removeListener(juce::AudioProcessorParameter::Listener* listener) {
+    ParamCommon::removeListener(listener);
+    soloIdx->removeListener(listener);
+  }
+
+  void resetParams(bool fullClear) {
+    ParamCommon::resetParams(fullClear);
+    for (auto& generator : generators) {
+      generator->resetParams();
+    }
+    if (fullClear) {
+      candidates.clear();
+    }
+    ParamHelper::setParam(soloIdx, SOLO_NONE);
+  }
+
   bool shouldPlayGenerator(int genIdx);
   ParamCandidate* getCandidate(int genIdx);
   void setStartingCandidatePosition();
 
   int noteIdx;
   int numActiveGens;
+
   std::vector<std::unique_ptr<ParamGenerator>> generators;
   std::vector<ParamCandidate> candidates;
+
   juce::AudioParameterInt* soloIdx = nullptr;
 
   juce::XmlElement* getXml() {
@@ -295,7 +409,12 @@ struct ParamsNote {
   }
 
   void addParams(juce::AudioProcessor& p);
-  void resetParams(bool fullClear = true);
+
+  void resetParams(bool fullClear = true) {
+    for (auto& note : notes) {
+      note->resetParams(fullClear);
+    }
+  }
 
   // always send creation and have callback scope decide if valid or not
   void grainCreated(Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain) {
@@ -326,79 +445,11 @@ struct ParamsNote {
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamsNote)
 };
 
-struct ParamGlobal : juce::AudioProcessorParameter::Listener {
-  ParamGlobal() {
-    filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-    filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
-  }
-  ~ParamGlobal() {
-    filterType->removeListener(this);
-    filterCutoff->removeListener(this);
-    filterResonance->removeListener(this);
-    grainShape->removeListener(this);
-    grainTilt->removeListener(this);
-    filterType->removeListener(this);
-    filterCutoff->removeListener(this);
-    filterResonance->removeListener(this);
-  }
-
-  void parameterValueChanged(int paramIdx, float newValue) override {
-    if (paramIdx == grainShape->getParameterIndex() || paramIdx == grainTilt->getParameterIndex()) {
-      updateGrainEnvelopeLUT(grainEnvLUT, grainShape->get(), grainTilt->get());
-    } else if (paramIdx == filterType->getParameterIndex()) {
-      switch (filterType->getIndex()) {
-        case Utils::FilterType::LOWPASS: {
-          filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-          break;
-        }
-        case Utils::FilterType::HIGHPASS: {
-          filter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
-          break;
-        }
-        case Utils::FilterType::BANDPASS: {
-          filter.setType(juce::dsp::StateVariableTPTFilterType::bandpass);
-          break;
-        }
-        default:
-          break;
-      }
-    } else if (paramIdx == filterCutoff->getParameterIndex()) {
-      filter.setCutoffFrequency(filterCutoff->get());
-    } else if (paramIdx == filterResonance->getParameterIndex()) {
-      filter.setResonance(filterResonance->get());
-    }
-  };
-  void parameterGestureChanged(int, bool) override {}
-
-  void addListener(juce::AudioProcessorParameter::Listener* listener);
-  void removeListener(juce::AudioProcessorParameter::Listener* listener);
+struct ParamGlobal : ParamCommon {
+  ParamGlobal() {}
+  ~ParamGlobal() {}
 
   void addParams(juce::AudioProcessor& p);
-  void resetParams();
-
-  juce::AudioParameterFloat* gain = nullptr;
-  juce::AudioParameterFloat* attack = nullptr;
-  juce::AudioParameterFloat* decay = nullptr;
-  juce::AudioParameterFloat* sustain = nullptr;
-  juce::AudioParameterFloat* release = nullptr;
-  juce::AudioParameterFloat* filterCutoff = nullptr;
-  juce::AudioParameterFloat* filterResonance = nullptr;
-  juce::AudioParameterChoice* filterType = nullptr;
-  juce::AudioParameterFloat* grainShape = nullptr;
-  juce::AudioParameterFloat* grainTilt = nullptr;
-  juce::AudioParameterFloat* grainRate = nullptr;
-  juce::AudioParameterFloat* grainDuration = nullptr;
-  juce::AudioParameterBool* grainSync = nullptr;
-  juce::AudioParameterFloat* pitchAdjust = nullptr;
-  juce::AudioParameterFloat* pitchSpray = nullptr;
-  juce::AudioParameterFloat* positionAdjust = nullptr;
-  juce::AudioParameterFloat* positionSpray = nullptr;
-
-  // State variable filter for generator
-  double sampleRate = 48000;
-  juce::dsp::StateVariableTPTFilter<float> filter;
-  // LUT of the grain envelope
-  std::vector<float> grainEnvLUT;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
 };
@@ -476,7 +527,6 @@ struct Parameters {
   // Called when current selected note or generator changes
   // Should be used only by PluginEditor and passed on to subcomponents
   std::function<void()> onSelectedChange = nullptr;
-  // Keeps track of the current selected note or generator for parameter editing
-  Utils::PitchClass selectedNote = Utils::PitchClass::NONE;
-  int selectedGenerator = -1;
+  // Keeps track of the current selected global/note/generator parameters for editing, global by default
+  ParamCommon* selectedParams = &global;
 };

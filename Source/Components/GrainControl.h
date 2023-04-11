@@ -30,6 +30,8 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
 
   void timerCallback() override;
 
+  void updateSelectedParams();
+
  private:
   static constexpr const char* SECTION_TITLE = "grain control";
 

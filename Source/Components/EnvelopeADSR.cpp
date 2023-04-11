@@ -106,6 +106,8 @@ void EnvelopeADSR::timerCallback() {
   }
 }
 
+void EnvelopeADSR::updateSelectedParams() { repaint(); }
+
 void EnvelopeADSR::selectPitchClass(Utils::PitchClass pitchClass) { 
   // Remove listeners from old generator and note
   //mParameters.note.notes[mSelPitchClass]->removeListener(mCurSelectedGenerator, this);

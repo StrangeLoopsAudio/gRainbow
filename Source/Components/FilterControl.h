@@ -33,6 +33,8 @@ class FilterControl : public juce::Component, juce::AudioProcessorParameter::Lis
 
   void timerCallback() override;
 
+  void updateSelectedParams();
+
  private:
   static constexpr int FILTER_TYPE_BUTTON_HEIGHT = 30;
   static constexpr const char* SECTION_TITLE = "filter control";

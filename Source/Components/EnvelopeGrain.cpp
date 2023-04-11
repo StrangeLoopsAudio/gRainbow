@@ -108,6 +108,8 @@ void EnvelopeGrain::timerCallback() {
   }
 }
 
+void EnvelopeGrain::updateSelectedParams() { repaint(); }
+
 void EnvelopeGrain::paint(juce::Graphics& g) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
 

@@ -30,7 +30,9 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
 
-    void timerCallback() override;
+  void timerCallback() override;
+
+  void updateSelectedParams();
 
  private:
   static constexpr const char* SECTION_TITLE = "amplitude envelope";
