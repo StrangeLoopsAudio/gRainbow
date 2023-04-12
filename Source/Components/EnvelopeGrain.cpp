@@ -13,6 +13,7 @@
 
 EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
     : mParameters(parameters),
+      mCurSelectedParams(parameters.selectedParams),
       mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
 
   juce::Colour colour = Utils::GLOBAL_COLOUR;
@@ -29,7 +30,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderShape.setRange(0, 1, 0.01);
   mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
   mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  // mSliderShape.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderShape.getValue()); };
+  mSliderShape.onValueChange = [this] { ParamHelper::setParam(mParameters.selectedParams->grainShape, mSliderShape.getValue()); };
   addAndMakeVisible(mSliderShape);
 
   mLabelShape.setText("Shape", juce::dontSendNotification);
@@ -45,7 +46,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderTilt.setRange(0, 1, 0.01);
   mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
   mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  // mSliderTilt.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderTilt.getValue()); };
+  mSliderTilt.onValueChange = [this] { ParamHelper::setParam(mParameters.selectedParams->grainTilt, mSliderTilt.getValue()); };
   addAndMakeVisible(mSliderTilt);
 
   mLabelTilt.setText("Tilt", juce::dontSendNotification);
@@ -61,7 +62,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
   mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  // mSliderRate.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderRate.getValue()); };
+  mSliderRate.onValueChange = [this] { ParamHelper::setParam(mParameters.selectedParams->grainRate, mSliderRate.getValue()); };
   addAndMakeVisible(mSliderRate);
 
   mLabelRate.setText("Rate", juce::dontSendNotification);
@@ -78,7 +79,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderDuration.setTextValueSuffix("s");
   mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
   mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  // mSliderDuration.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderDuration.getValue()); };
+  mSliderDuration.onValueChange = [this] { ParamHelper::setParam(mParameters.selectedParams->grainDuration, mSliderDuration.getValue()); };
   addAndMakeVisible(mSliderDuration);
 
   mLabelDuration.setText("Duration", juce::dontSendNotification);
@@ -92,10 +93,19 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mBtnSync.setColour(juce::TextButton::buttonOnColourId, juce::Colour(GRAIN_SYNC_COLOURS_HEX[1]));
   mBtnSync.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
   mBtnSync.setColour(juce::TextButton::textColourOnId, juce::Colours::black);
-  // mBtnSync.onClick = [this]() { ParamHelper::setParam(getCurrentGenerator()->grainSync, !mBtnSync.getToggleState()); };
+  mBtnSync.onClick = [this]() {
+    ParamHelper::setParam(mParameters.selectedParams->grainSync, !mBtnSync.getToggleState());
+  };
   addAndMakeVisible(mBtnSync);
 
+  mCurSelectedParams->addListener(this);
+
   startTimer(500);
+}
+
+EnvelopeGrain::~EnvelopeGrain() { 
+  mCurSelectedParams->removeListener(this);
+  stopTimer();
 }
 
 void EnvelopeGrain::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
@@ -108,7 +118,12 @@ void EnvelopeGrain::timerCallback() {
   }
 }
 
-void EnvelopeGrain::updateSelectedParams() { repaint(); }
+void EnvelopeGrain::updateSelectedParams() { 
+  if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
+  mCurSelectedParams = mParameters.selectedParams;
+  mCurSelectedParams->addListener(this);
+  repaint();
+}
 
 void EnvelopeGrain::paint(juce::Graphics& g) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;

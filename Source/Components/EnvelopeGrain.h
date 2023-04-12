@@ -19,7 +19,7 @@
 class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
   EnvelopeGrain(Parameters& parameters);
-  ~EnvelopeGrain() override {}
+  ~EnvelopeGrain();
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -76,6 +76,7 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
 
   // Bookkeeping
   Parameters& mParameters;
+  ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
 
   // UI values saved on resize

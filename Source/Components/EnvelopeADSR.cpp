@@ -12,7 +12,7 @@
 #include "../Utils.h"
 
 //==============================================================================
-EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
+EnvelopeADSR::EnvelopeADSR(Parameters& parameters) : mParameters(parameters), mCurSelectedParams(parameters.selectedParams) {
   juce::Colour knobColour = Utils::GLOBAL_COLOUR;
   // Knob params
   auto rotaryParams = juce::Slider::RotaryParameters();
@@ -28,7 +28,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
   mSliderAttack.setTextValueSuffix("s");
   mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
   mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  //mSliderAttack.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderAttack.getValue()); };
+  mSliderAttack.onValueChange = [this] { ParamHelper::setParam(mCurSelectedParams->attack, mSliderAttack.getValue()); };
   addAndMakeVisible(mSliderAttack);
 
   mLabelAttack.setText("Attack", juce::dontSendNotification);
@@ -45,7 +45,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
   mSliderDecay.setTextValueSuffix("s");
   mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
   mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  //mSliderDecay.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->decay, mSliderDecay.getValue()); };
+  mSliderDecay.onValueChange = [this] { ParamHelper::setParam(mCurSelectedParams->decay, mSliderDecay.getValue()); };
   addAndMakeVisible(mSliderDecay);
 
   mLabelDecay.setText("Decay", juce::dontSendNotification);
@@ -61,7 +61,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
   mSliderSustain.setRange(0.0, 1.0, 0.01);
   mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
   mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  //mSliderSustain.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->sustain, mSliderSustain.getValue()); };
+  mSliderSustain.onValueChange = [this] { ParamHelper::setParam(mCurSelectedParams->sustain, mSliderSustain.getValue()); };
   addAndMakeVisible(mSliderSustain);
 
   mLabelSustain.setText("Sustain", juce::dontSendNotification);
@@ -78,7 +78,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
   mSliderRelease.setTextValueSuffix("s");
   mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
   mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  //mSliderRelease.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->release, mSliderRelease.getValue()); };
+  mSliderRelease.onValueChange = [this] { ParamHelper::setParam(mCurSelectedParams->release, mSliderRelease.getValue()); };
   addAndMakeVisible(mSliderRelease);
 
   mLabelRelease.setText("Release", juce::dontSendNotification);
@@ -88,12 +88,14 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters): mParameters(parameters) {
 
   mParameters.global.addListener(this);
 
+  mCurSelectedParams->addListener(this);
+
   startTimer(500);
 }
 
 EnvelopeADSR::~EnvelopeADSR() { 
-  mParameters.global.removeListener(this);
-  //mParameters.note.notes[mSelPitchClass]->removeListener(mCurSelectedGenerator, this);
+  mCurSelectedParams->removeListener(this);
+  stopTimer();
 }
 
 void EnvelopeADSR::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
@@ -106,15 +108,11 @@ void EnvelopeADSR::timerCallback() {
   }
 }
 
-void EnvelopeADSR::updateSelectedParams() { repaint(); }
-
-void EnvelopeADSR::selectPitchClass(Utils::PitchClass pitchClass) { 
-  // Remove listeners from old generator and note
-  //mParameters.note.notes[mSelPitchClass]->removeListener(mCurSelectedGenerator, this);
-  // Add listeners to new generator and note
-  //mParamsNote.notes[mCurPitchClass]->addListener(mCurSelectedGenerator, this);
-  
-  mSelPitchClass = pitchClass; 
+void EnvelopeADSR::updateSelectedParams() { 
+  if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
+  mCurSelectedParams = mParameters.selectedParams;
+  mCurSelectedParams->addListener(this);
+  repaint();
 }
 
 void EnvelopeADSR::paint(juce::Graphics& g) {

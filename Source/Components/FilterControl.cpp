@@ -12,8 +12,7 @@
 #include "../Utils.h"
 
 //==============================================================================
-FilterControl::FilterControl(Parameters& parameters): mParameters(parameters) {
-
+FilterControl::FilterControl(Parameters& parameters) : mParameters(parameters), mCurSelectedParams(parameters.selectedParams) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
   // Knob params
   auto rotaryParams = juce::Slider::RotaryParameters();
@@ -29,7 +28,7 @@ FilterControl::FilterControl(Parameters& parameters): mParameters(parameters) {
   mSliderCutoff.setTextValueSuffix("Hz");
   mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
   mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  // mSliderCutoff.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderCutoff.getValue()); };
+  mSliderCutoff.onValueChange = [this] { ParamHelper::setParam(mCurSelectedParams->filterCutoff, mSliderCutoff.getValue()); };
   addAndMakeVisible(mSliderCutoff);
 
   mLabelCutoff.setText("Cutoff", juce::dontSendNotification);
@@ -45,7 +44,9 @@ FilterControl::FilterControl(Parameters& parameters): mParameters(parameters) {
   mSliderResonance.setRange(ParamRanges::RESONANCE.start, ParamRanges::RESONANCE.end, 0.01);
   mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
   mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  // mSliderResonance.onValueChange = [this] { ParamHelper::setParam(getCurrentGenerator()->attack, mSliderResonance.getValue()); };
+  mSliderResonance.onValueChange = [this] {
+    ParamHelper::setParam(mCurSelectedParams->filterResonance, mSliderResonance.getValue());
+  };
   addAndMakeVisible(mSliderResonance);
 
   mLabelResonance.setText("Resonance", juce::dontSendNotification);
@@ -53,22 +54,31 @@ FilterControl::FilterControl(Parameters& parameters): mParameters(parameters) {
   mLabelResonance.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelResonance);
 
+  mCurSelectedParams->addListener(this);
+
   startTimer(500);
 }
 
-FilterControl::~FilterControl() {}
+FilterControl::~FilterControl() { 
+  mCurSelectedParams->removeListener(this);
+  stopTimer();
+}
 
 void FilterControl::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
 
 void FilterControl::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    // TODO: all like this
-    // mSliderAttack.setValue(mParameters.global.attack->get(), juce::dontSendNotification);
+    //mSliderCutoff.setValue(mCurSelectedParams.attack->get(), juce::dontSendNotification);
   }
 }
 
-void FilterControl::updateSelectedParams() { repaint(); }
+void FilterControl::updateSelectedParams() { 
+  if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
+  mCurSelectedParams = mParameters.selectedParams;
+  mCurSelectedParams->addListener(this);
+  repaint();
+}
 
 
 void FilterControl::paint(juce::Graphics& g) {

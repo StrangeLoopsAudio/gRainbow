@@ -47,6 +47,7 @@ class FilterControl : public juce::Component, juce::AudioProcessorParameter::Lis
 
   // Bookkeeping
   Parameters& mParameters;
+  ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
   Utils::FilterType mCurHoverFilterType = Utils::FilterType::NO_FILTER;
 

@@ -25,8 +25,6 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
   void paint(juce::Graphics&) override;
   void resized() override;
 
-  void selectPitchClass(Utils::PitchClass pitchClass);
-
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
 
@@ -49,8 +47,10 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
 
   // Bookkeeping
   Parameters& mParameters;
+  ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
-  Utils::PitchClass mSelPitchClass = Utils::PitchClass::NONE;
+
+  // UI rects updated at resize()
   juce::Rectangle<float> mTitleRect;
   juce::Rectangle<float> mVizRect;
 
