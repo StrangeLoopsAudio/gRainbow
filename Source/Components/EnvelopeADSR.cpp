@@ -12,23 +12,22 @@
 #include "../Utils.h"
 
 //==============================================================================
-EnvelopeADSR::EnvelopeADSR(Parameters& parameters) : mParameters(parameters), mCurSelectedParams(parameters.selectedParams) {
+EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
+    : mParameters(parameters),
+      mCurSelectedParams(parameters.selectedParams),
+      mSliderAttack(parameters, ParamCommon::Type::ATTACK),
+      mSliderDecay(parameters, ParamCommon::Type::DECAY),
+      mSliderSustain(parameters, ParamCommon::Type::SUSTAIN),
+      mSliderRelease(parameters, ParamCommon::Type::RELEASE)
+{
   juce::Colour knobColour = Utils::GLOBAL_COLOUR;
-  // Knob params
-  auto rotaryParams = juce::Slider::RotaryParameters();
-  rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
-  rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi;
-  rotaryParams.stopAtEnd = true;
   // Attack
-  mSliderAttack.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderAttack.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderAttack.setRotaryParameters(rotaryParams);
   mSliderAttack.setNumDecimalPlacesToDisplay(2);
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end, 0.01);
   mSliderAttack.setTextValueSuffix("s");
-  mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  mSliderAttack.onValueChange = [this] { ParamHelper::setParam(mCurSelectedParams->attack, mSliderAttack.getValue()); };
+  mSliderAttack.onValueChange = [this] {
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::ATTACK]), mSliderAttack.getValue());
+  };
   addAndMakeVisible(mSliderAttack);
 
   mLabelAttack.setText("Attack", juce::dontSendNotification);
@@ -37,15 +36,12 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters) : mParameters(parameters), mC
   addAndMakeVisible(mLabelAttack);
 
   // Decay
-  mSliderDecay.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderDecay.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderDecay.setRotaryParameters(rotaryParams);
   mSliderDecay.setNumDecimalPlacesToDisplay(2);
   mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
   mSliderDecay.setTextValueSuffix("s");
-  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  mSliderDecay.onValueChange = [this] { ParamHelper::setParam(mCurSelectedParams->decay, mSliderDecay.getValue()); };
+  mSliderDecay.onValueChange = [this] {
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::DECAY]), mSliderDecay.getValue());
+  };
   addAndMakeVisible(mSliderDecay);
 
   mLabelDecay.setText("Decay", juce::dontSendNotification);
@@ -54,14 +50,11 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters) : mParameters(parameters), mC
   addAndMakeVisible(mLabelDecay);
 
   // Sustain
-  mSliderSustain.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderSustain.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderSustain.setRotaryParameters(rotaryParams);
   mSliderSustain.setNumDecimalPlacesToDisplay(2);
   mSliderSustain.setRange(0.0, 1.0, 0.01);
-  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  mSliderSustain.onValueChange = [this] { ParamHelper::setParam(mCurSelectedParams->sustain, mSliderSustain.getValue()); };
+  mSliderSustain.onValueChange = [this] {
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::SUSTAIN]), mSliderSustain.getValue());
+  };
   addAndMakeVisible(mSliderSustain);
 
   mLabelSustain.setText("Sustain", juce::dontSendNotification);
@@ -70,15 +63,12 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters) : mParameters(parameters), mC
   addAndMakeVisible(mLabelSustain);
 
   // Release
-  mSliderRelease.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderRelease.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderRelease.setRotaryParameters(rotaryParams);
   mSliderRelease.setNumDecimalPlacesToDisplay(2);
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
   mSliderRelease.setTextValueSuffix("s");
-  mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, knobColour);
-  mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, knobColour);
-  mSliderRelease.onValueChange = [this] { ParamHelper::setParam(mCurSelectedParams->release, mSliderRelease.getValue()); };
+  mSliderRelease.onValueChange = [this] {
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::RELEASE]), mSliderRelease.getValue());
+  };
   addAndMakeVisible(mSliderRelease);
 
   mLabelRelease.setText("Release", juce::dontSendNotification);
@@ -90,7 +80,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters) : mParameters(parameters), mC
 
   mCurSelectedParams->addListener(this);
 
-  startTimer(500);
+  startTimer(100);
 }
 
 EnvelopeADSR::~EnvelopeADSR() { 
@@ -103,8 +93,10 @@ void EnvelopeADSR::parameterValueChanged(int idx, float value) { mParamHasChange
 void EnvelopeADSR::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    //TODO: all like this
-    //mSliderAttack.setValue(mParameters.global.attack->get(), juce::dontSendNotification);
+    mSliderAttack.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::ATTACK])->get(), juce::dontSendNotification);
+    mSliderDecay.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::DECAY])->get(), juce::dontSendNotification);
+    mSliderSustain.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::SUSTAIN])->get(), juce::dontSendNotification);
+    mSliderRelease.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::RELEASE])->get(), juce::dontSendNotification);
   }
 }
 
@@ -112,6 +104,12 @@ void EnvelopeADSR::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
+  mParamColour = mParameters.getSelectedParamColour();
+  mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mParamHasChanged.store(true);
   repaint();
 }
 
@@ -125,10 +123,10 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
   // TODO: include other non-global values as well
-  float attack = ParamRanges::ATTACK.convertTo0to1(mParameters.global.attack->get());
-  float decay = ParamRanges::DECAY.convertTo0to1(mParameters.global.decay->get());
-  float sustain = mParameters.global.sustain->get();
-  float release = ParamRanges::RELEASE.convertTo0to1(mParameters.global.release->get());
+  float attack = ParamRanges::ATTACK.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::ATTACK])->get());
+  float decay = ParamRanges::DECAY.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::DECAY])->get());
+  float sustain = ParamRanges::SUSTAIN.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::SUSTAIN])->get());
+  float release = ParamRanges::RELEASE.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::RELEASE])->get());
 
   // Draw ADSR path
   g.setFillType(juce::ColourGradient(envColour, mVizRect.getTopLeft(), envColour.withAlpha(0.4f), mVizRect.getBottomLeft(), false));

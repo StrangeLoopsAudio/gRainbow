@@ -82,7 +82,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     bodyColour = bodyColour.darker();
   }
 
-  g.setColour(isPitchSelected ? keyColour : bodyColour);
+  g.setColour(isPitchSelected ? keyColour.darker() : bodyColour);
 
   juce::Rectangle<float> area = mNoteRectMap[pitchClass];
   g.fillRoundedRectangle(area, Utils::ROUNDED_AMOUNT);
@@ -123,9 +123,9 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   for (int i = 0; i < numGens; ++i) {
     bool isGenSelected = mParameters.selectedParams == mParameters.note.notes[pitchClass]->generators[i].get();
     if (isGenSelected) selectedGen = i;
-    juce::Colour genColour = (mHoverGenRect == mNoteGenRectMap[pitchClass][i]) ? keyColour.withSaturation(NOTE_BODY_SATURATION).darker()
-                                 : keyColour.withSaturation(NOTE_BODY_SATURATION);
-    genColour = isGenSelected ? keyColour : genColour;
+    juce::Colour genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).brighter((i+1) * Utils::GENERATOR_BRIGHTNESS_ADD);
+    if (mHoverGenRect == mNoteGenRectMap[pitchClass][i]) genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).darker();
+    if (isGenSelected) genColour = keyColour.darker();
     g.setColour(genColour);
     g.fillRoundedRectangle(mNoteGenRectMap[pitchClass][i], Utils::ROUNDED_AMOUNT);
     g.setColour(keyColour);

@@ -12,6 +12,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "../Parameters.h"
+#include "../RainbowLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -40,8 +41,8 @@ class FilterControl : public juce::Component, juce::AudioProcessorParameter::Lis
   static constexpr const char* SECTION_TITLE = "filter control";
 
   // Components
-  juce::Slider mSliderCutoff;
-  juce::Slider mSliderResonance;
+  RainbowSlider mSliderCutoff;
+  RainbowSlider mSliderResonance;
   juce::Label mLabelCutoff;
   juce::Label mLabelResonance;
 
@@ -49,6 +50,7 @@ class FilterControl : public juce::Component, juce::AudioProcessorParameter::Lis
   Parameters& mParameters;
   ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
+  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
   Utils::FilterType mCurHoverFilterType = Utils::FilterType::NO_FILTER;
 
   // UI values saved on resize

@@ -14,23 +14,18 @@
 EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
     : mParameters(parameters),
       mCurSelectedParams(parameters.selectedParams),
+      mSliderShape(parameters, ParamCommon::Type::GRAIN_SHAPE),
+      mSliderTilt(parameters, ParamCommon::Type::GRAIN_TILT),
+      mSliderRate(parameters, ParamCommon::Type::GRAIN_RATE),
+      mSliderDuration(parameters, ParamCommon::Type::GRAIN_DURATION),
       mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
 
   juce::Colour colour = Utils::GLOBAL_COLOUR;
-  // Knob params
-  auto rotaryParams = juce::Slider::RotaryParameters();
-  rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
-  rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi;
-  rotaryParams.stopAtEnd = true;
-  // Shape
-  mSliderShape.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderShape.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderShape.setRotaryParameters(rotaryParams);
   mSliderShape.setNumDecimalPlacesToDisplay(2);
   mSliderShape.setRange(0, 1, 0.01);
-  mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  mSliderShape.onValueChange = [this] { ParamHelper::setParam(mParameters.selectedParams->grainShape, mSliderShape.getValue()); };
+  mSliderShape.onValueChange = [this] {
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SHAPE]), mSliderShape.getValue());
+  };
   addAndMakeVisible(mSliderShape);
 
   mLabelShape.setText("Shape", juce::dontSendNotification);
@@ -39,14 +34,11 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   addAndMakeVisible(mLabelShape);
 
   // Tilt
-  mSliderTilt.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderTilt.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderTilt.setRotaryParameters(rotaryParams);
   mSliderTilt.setNumDecimalPlacesToDisplay(2);
   mSliderTilt.setRange(0, 1, 0.01);
-  mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  mSliderTilt.onValueChange = [this] { ParamHelper::setParam(mParameters.selectedParams->grainTilt, mSliderTilt.getValue()); };
+  mSliderTilt.onValueChange = [this] {
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_TILT]), mSliderTilt.getValue());
+  };
   addAndMakeVisible(mSliderTilt);
 
   mLabelTilt.setText("Tilt", juce::dontSendNotification);
@@ -55,14 +47,11 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   addAndMakeVisible(mLabelTilt);
   
   // Rate
-  mSliderRate.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderRate.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderRate.setRotaryParameters(rotaryParams);
   mSliderRate.setNumDecimalPlacesToDisplay(2);
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
-  mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  mSliderRate.onValueChange = [this] { ParamHelper::setParam(mParameters.selectedParams->grainRate, mSliderRate.getValue()); };
+  mSliderRate.onValueChange = [this] {
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_RATE]), mSliderRate.getValue());
+  };
   addAndMakeVisible(mSliderRate);
 
   mLabelRate.setText("Rate", juce::dontSendNotification);
@@ -71,15 +60,12 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   addAndMakeVisible(mLabelRate);
 
   // Duration
-  mSliderDuration.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderDuration.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderDuration.setRotaryParameters(rotaryParams);
   mSliderDuration.setNumDecimalPlacesToDisplay(2);
   mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start, ParamRanges::GRAIN_DURATION.end, 0.01);
   mSliderDuration.setTextValueSuffix("s");
-  mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  mSliderDuration.onValueChange = [this] { ParamHelper::setParam(mParameters.selectedParams->grainDuration, mSliderDuration.getValue()); };
+  mSliderDuration.onValueChange = [this] {
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_DURATION]), mSliderDuration.getValue());
+  };
   addAndMakeVisible(mSliderDuration);
 
   mLabelDuration.setText("Duration", juce::dontSendNotification);
@@ -94,13 +80,13 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mBtnSync.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
   mBtnSync.setColour(juce::TextButton::textColourOnId, juce::Colours::black);
   mBtnSync.onClick = [this]() {
-    ParamHelper::setParam(mParameters.selectedParams->grainSync, !mBtnSync.getToggleState());
+    ParamHelper::setParam(P_BOOL(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SYNC]), !mBtnSync.getToggleState());
   };
   addAndMakeVisible(mBtnSync);
 
   mCurSelectedParams->addListener(this);
 
-  startTimer(500);
+  startTimer(100);
 }
 
 EnvelopeGrain::~EnvelopeGrain() { 
@@ -113,8 +99,13 @@ void EnvelopeGrain::parameterValueChanged(int idx, float value) { mParamHasChang
 void EnvelopeGrain::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    // TODO: all like this
-    // mSliderAttack.setValue(mParameters.global.attack->get(), juce::dontSendNotification);
+    mSliderShape.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SHAPE])->get(),
+                          juce::dontSendNotification);
+    mSliderTilt.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_TILT])->get(), juce::dontSendNotification);
+    mSliderRate.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_RATE])->get(), juce::dontSendNotification);
+    mSliderDuration.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_DURATION])->get(),
+                             juce::dontSendNotification);
+    mBtnSync.setToggleState(P_BOOL(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SYNC])->get(), juce::dontSendNotification);
   }
 }
 
@@ -122,6 +113,12 @@ void EnvelopeGrain::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
+  mParamColour = mParameters.getSelectedParamColour();
+  mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mParamHasChanged.store(true);
   repaint();
 }
 
@@ -134,22 +131,27 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
+  float duration = P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_DURATION])->get();
+  float rate = P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_RATE])->get();
+
   float envWidth;
   float envOffset;
-  if (mParameters.global.grainSync->get()) {
-    float durDiv = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * mParameters.global.grainDuration->get()));
+  if (P_BOOL(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SYNC])->get()) {
+    float durDiv = std::pow(2, (int)(duration));
     envWidth = mVizRect.getWidth() / durDiv;
-    float rateDiv = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * mParameters.global.grainRate->get()));
+    float rateDiv = std::pow(2, (int)(rate));
     envOffset = envWidth / rateDiv;
   } else {
-    envWidth = juce::jmap(mParameters.global.grainDuration->get(), mVizRect.getWidth() / MAX_NUM_ENVS, mVizRect.getWidth());
-    envOffset = juce::jmap(mParameters.global.grainRate->get(), envWidth * MIN_RATE_RATIO, envWidth * MAX_RATE_RATIO);
+    envWidth = juce::jmap(duration,
+                          mVizRect.getWidth() / MAX_NUM_ENVS, mVizRect.getWidth());
+    envOffset = juce::jmap(rate, envWidth * MIN_RATE_RATIO,
+                           envWidth * MAX_RATE_RATIO);
   }
 
-  float shapeWidth = envWidth * mParameters.global.grainShape->get() / 2.0f;
+  float shapeWidth = envWidth * P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SHAPE])->get() / 2.0f;
 
   // Draw darker odd numbered envelopes
-  float tilt = mParameters.global.grainTilt->get();
+  float tilt = P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_TILT])->get();
   float curXStart = mVizRect.getX() + envOffset;
   juce::Colour envColour = colour.darker(0.5f);
   while (curXStart < mVizRect.getWidth()) {

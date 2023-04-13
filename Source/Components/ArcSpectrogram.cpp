@@ -94,11 +94,12 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
         return;
       }
 
-      float xRatio = candidate->posRatio + (candidate->duration * grain.paramGenerator->positionAdjust->get());
+      float xRatio = candidate->posRatio + (candidate->duration * P_FLOAT(grain.paramGenerator->common[ParamCommon::Type::POS_ADJUST])->get());
       float grainProg = (grain.numFramesActive * grain.envIncSamples) / ENV_LUT_SIZE;
       xRatio += (candidate->duration / candidate->pbRate) * grainProg;
       float pitchClass = noteIdx - (std::log(candidate->pbRate) / std::log(Utils::TIMESTRETCH_RATIO));
-      float yRatio = (pitchClass + 0.25f + (grain.paramGenerator->pitchAdjust->get() * 6.0f)) / (float)Utils::PitchClass::COUNT;
+      float yRatio = (pitchClass + 0.25f + (P_FLOAT(grain.paramGenerator->common[ParamCommon::Type::PITCH_ADJUST])->get() * 6.0f)) /
+                     (float)Utils::PitchClass::COUNT;
       int grainRad = mStartRadius + (yRatio * mBowWidth);
       juce::Point<float> grainPoint = mCenterPoint.getPointOnCircumference(
           grainRad, (1.5f * juce::MathConstants<float>::pi) + (xRatio * juce::MathConstants<float>::pi));

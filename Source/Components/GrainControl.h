@@ -13,6 +13,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "PositionChanger.h"
 #include "../Parameters.h"
+#include "../RainbowLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -38,18 +39,20 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
   // Components
   // -- Generator Adjustments
   PositionChanger mPositionChanger;
-  juce::Slider mSliderPitchAdjust;
+  RainbowSlider mSliderPitchAdjust;
   juce::Label mLabelPitchAdjust;
-  juce::Slider mSliderPitchSpray;
+  RainbowSlider mSliderPitchSpray;
   juce::Label mLabelPitchSpray;
-  juce::Slider mSliderPosAdjust;
+  RainbowSlider mSliderPosAdjust;
   juce::Label mLabelPosAdjust;
-  juce::Slider mSliderPosSpray;
+  RainbowSlider mSliderPosSpray;
   juce::Label mLabelPosSpray;
 
   // Bookkeeping
   Parameters& mParameters;
   std::atomic<bool> mParamHasChanged;
+  ParamCommon* mCurSelectedParams;
+  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
 
   // UI values saved on resize
   juce::Rectangle<float> mTitleRect;

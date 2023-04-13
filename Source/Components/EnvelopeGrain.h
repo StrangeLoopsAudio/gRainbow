@@ -12,6 +12,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "../Parameters.h"
+#include "../RainbowLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -39,10 +40,11 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   static constexpr int MAX_NUM_ENVS = 6;
   static constexpr juce::int64 GRAIN_SYNC_COLOURS_HEX[2] = {0xFF20FFD4, 0xFFFFD420};
 
-  class QuantizedSlider : public juce::Slider {
+  class QuantizedSlider : public RainbowSlider {
    public:
-    QuantizedSlider() : mSync(false), juce::Slider() {}
-    QuantizedSlider(juce::NormalisableRange<float> range) : mRange(range), juce::Slider() {}
+    QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : mSync(false), RainbowSlider(parameters, type) {}
+    QuantizedSlider(Parameters& parameters, ParamCommon::Type type, juce::NormalisableRange<float> range)
+        : mRange(range), RainbowSlider(parameters, type) {}
     void setSync(bool sync) { mSync = sync; }
 
     juce::String getTextFromValue(double value) override {
@@ -64,8 +66,8 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   juce::PathStrokeType mPathStroke;
 
   // Components
-  juce::Slider mSliderShape;
-  juce::Slider mSliderTilt;
+  RainbowSlider mSliderShape;
+  RainbowSlider mSliderTilt;
   QuantizedSlider mSliderRate;
   QuantizedSlider mSliderDuration;
   juce::TextButton mBtnSync;
@@ -78,6 +80,7 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   Parameters& mParameters;
   ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
+  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
 
   // UI values saved on resize
   juce::Rectangle<float> mTitleRect;

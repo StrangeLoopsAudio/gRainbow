@@ -12,23 +12,19 @@
 #include "../Utils.h"
 
 //==============================================================================
-FilterControl::FilterControl(Parameters& parameters) : mParameters(parameters), mCurSelectedParams(parameters.selectedParams) {
+FilterControl::FilterControl(Parameters& parameters)
+    : mParameters(parameters),
+      mCurSelectedParams(parameters.selectedParams),
+      mSliderCutoff(parameters, ParamCommon::Type::FILT_CUTOFF),
+      mSliderResonance(parameters, ParamCommon::Type::FILT_RESONANCE) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
-  // Knob params
-  auto rotaryParams = juce::Slider::RotaryParameters();
-  rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
-  rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi;
-  rotaryParams.stopAtEnd = true;
-  // Cutoff
-  mSliderCutoff.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderCutoff.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderCutoff.setRotaryParameters(rotaryParams);
+  
   mSliderCutoff.setNumDecimalPlacesToDisplay(2);
   mSliderCutoff.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, 0.01);
   mSliderCutoff.setTextValueSuffix("Hz");
-  mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
-  mSliderCutoff.onValueChange = [this] { ParamHelper::setParam(mCurSelectedParams->filterCutoff, mSliderCutoff.getValue()); };
+  mSliderCutoff.onValueChange = [this] {
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF]), mSliderCutoff.getValue());
+  };
   addAndMakeVisible(mSliderCutoff);
 
   mLabelCutoff.setText("Cutoff", juce::dontSendNotification);
@@ -37,15 +33,10 @@ FilterControl::FilterControl(Parameters& parameters) : mParameters(parameters), 
   addAndMakeVisible(mLabelCutoff);
 
   // Resonance
-  mSliderResonance.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-  mSliderResonance.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  mSliderResonance.setRotaryParameters(rotaryParams);
   mSliderResonance.setNumDecimalPlacesToDisplay(2);
   mSliderResonance.setRange(ParamRanges::RESONANCE.start, ParamRanges::RESONANCE.end, 0.01);
-  mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderFillColourId, colour);
-  mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, colour);
   mSliderResonance.onValueChange = [this] {
-    ParamHelper::setParam(mCurSelectedParams->filterResonance, mSliderResonance.getValue());
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_RESONANCE]), mSliderResonance.getValue());
   };
   addAndMakeVisible(mSliderResonance);
 
@@ -56,7 +47,7 @@ FilterControl::FilterControl(Parameters& parameters) : mParameters(parameters), 
 
   mCurSelectedParams->addListener(this);
 
-  startTimer(500);
+  startTimer(100);
 }
 
 FilterControl::~FilterControl() { 
@@ -69,7 +60,9 @@ void FilterControl::parameterValueChanged(int idx, float value) { mParamHasChang
 void FilterControl::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    //mSliderCutoff.setValue(mCurSelectedParams.attack->get(), juce::dontSendNotification);
+    mSliderCutoff.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF])->get(), juce::dontSendNotification);
+    mSliderResonance.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_RESONANCE])->get(),
+                              juce::dontSendNotification);
   }
 }
 
@@ -77,6 +70,10 @@ void FilterControl::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
+  mParamColour = mParameters.getSelectedParamColour();
+  mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mParamHasChanged.store(true);
   repaint();
 }
 
@@ -120,15 +117,17 @@ void FilterControl::paint(juce::Graphics& g) {
   // Draw selected filter path
   juce::Path mFilterPath;
   int resPadding = mVizRect.getHeight() * 0.3f; // both width and height max size of resonance peak
-  float cutoffWidth = mVizRect.getWidth() * ParamRanges::CUTOFF.convertTo0to1(mParameters.global.filterCutoff->get());
+  float cutoffWidth = mVizRect.getWidth() *
+                      ParamRanges::CUTOFF.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF])->get());
   float resHeight =
-      mVizRect.getHeight() * 0.3f * ParamRanges::RESONANCE.convertTo0to1(mParameters.global.filterResonance->get());
+      mVizRect.getHeight() * 0.3f *
+      ParamRanges::RESONANCE.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_RESONANCE])->get());
 
   juce::Point<float> startPt = mVizRect.getBottomLeft();
   juce::Point<float> midPt1, midPt2, midPt3, midPt4;
   juce::Point<float> endPt = mVizRect.getBottomRight();
 
-  switch (mParameters.global.filterType->getIndex()) {
+  switch (P_CHOICE(mCurSelectedParams->common[ParamCommon::Type::FILT_TYPE])->getIndex()) {
     case (Utils::FilterType::LOWPASS):
       midPt1 = juce::Point<float>(mVizRect.getX(), mVizRect.getY() + resPadding);
       midPt2 = juce::Point<float>(mVizRect.getX() + cutoffWidth - resPadding / 2, mVizRect.getY() + resPadding);
@@ -233,22 +232,26 @@ void FilterControl::mouseExit(const juce::MouseEvent& event) {
 void FilterControl::mouseUp(const juce::MouseEvent& event) {
   if (event.eventComponent != this) return;
   Utils::FilterType newFilterType = getFilterTypeFromMouse(event);
-  if (newFilterType == mParameters.global.filterType->getIndex()) {
-    ParamHelper::setParam(mParameters.global.filterType, Utils::FilterType::NO_FILTER);
+  if (newFilterType == P_CHOICE(mCurSelectedParams->common[ParamCommon::Type::FILT_TYPE])->getIndex()) {
+    ParamHelper::setParam(P_CHOICE(mCurSelectedParams->common[ParamCommon::Type::FILT_TYPE]), Utils::FilterType::NO_FILTER);
   } else {
-    ParamHelper::setParam(mParameters.global.filterType, newFilterType);
+    ParamHelper::setParam(P_CHOICE(mCurSelectedParams->common[ParamCommon::Type::FILT_TYPE]), newFilterType);
     switch (newFilterType) {
       case (Utils::FilterType::LOWPASS):
-        ParamHelper::setParam(mParameters.global.filterCutoff, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+        ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF]),
+                              ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
         break;
       case (Utils::FilterType::HIGHPASS):
-        ParamHelper::setParam(mParameters.global.filterCutoff, ParamDefaults::FILTER_HP_CUTOFF_DEFAULT_HZ);
+        ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF]),
+                              ParamDefaults::FILTER_HP_CUTOFF_DEFAULT_HZ);
         break;
       case (Utils::FilterType::BANDPASS):
-        ParamHelper::setParam(mParameters.global.filterCutoff, ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
+        ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF]),
+                              ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
         break;
     }
-    ParamHelper::setParam(mParameters.global.filterResonance, ParamDefaults::FILTER_RESONANCE_DEFAULT);
+    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_RESONANCE]),
+                          ParamDefaults::FILTER_RESONANCE_DEFAULT);
   }
   
   repaint();

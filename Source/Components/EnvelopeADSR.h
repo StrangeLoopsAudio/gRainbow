@@ -13,6 +13,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "../Parameters.h"
+#include "../RainbowLookAndFeel.h"
 
 //==============================================================================
 /*
@@ -36,10 +37,10 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
   static constexpr const char* SECTION_TITLE = "amplitude envelope";
 
   // Components
-  juce::Slider mSliderAttack;
-  juce::Slider mSliderDecay;
-  juce::Slider mSliderSustain;
-  juce::Slider mSliderRelease;
+  RainbowSlider mSliderAttack;
+  RainbowSlider mSliderDecay;
+  RainbowSlider mSliderSustain;
+  RainbowSlider mSliderRelease;
   juce::Label mLabelAttack;
   juce::Label mLabelDecay;
   juce::Label mLabelSustain;
@@ -49,6 +50,7 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
   Parameters& mParameters;
   ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
+  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
 
   // UI rects updated at resize()
   juce::Rectangle<float> mTitleRect;
