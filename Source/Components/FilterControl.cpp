@@ -74,12 +74,14 @@ void FilterControl::updateSelectedParams() {
 
 
 void FilterControl::paint(juce::Graphics& g) {
-  juce::Colour colour = Utils::GLOBAL_COLOUR;
+  juce::Colour colour = mParamColour;
   g.setFont(14.0f);
 
   // Section title
-  g.setColour(colour);
+  g.setColour(Utils::GLOBAL_COLOUR);
   g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
+  g.setColour(colour);
+  g.drawRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT, 2.0f);
   g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 

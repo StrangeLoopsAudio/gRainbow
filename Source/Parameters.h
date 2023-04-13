@@ -328,24 +328,6 @@ static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GA
                                                                ParamDefaults::POSITION_ADJUST_DEFAULT,
                                                                ParamDefaults::POSITION_SPRAY_DEFAULT};
 
-static float COMMON_RANGES[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GAIN_DEFAULT,
-                                                               ParamDefaults::ATTACK_DEFAULT_SEC,
-                                                               ParamDefaults::DECAY_DEFAULT_SEC,
-                                                               ParamDefaults::SUSTAIN_DEFAULT,
-                                                               ParamDefaults::RELEASE_DEFAULT_SEC,
-                                                               ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ,
-                                                               ParamDefaults::FILTER_RESONANCE_DEFAULT,
-                                                               0,
-                                                               ParamDefaults::GRAIN_SHAPE_DEFAULT,
-                                                               ParamDefaults::GRAIN_TILT_DEFAULT,
-                                                               ParamDefaults::GRAIN_RATE_DEFAULT,
-                                                               ParamDefaults::GRAIN_DURATION_DEFAULT,
-                                                               0,
-                                                               ParamDefaults::PITCH_ADJUST_DEFAULT,
-                                                               ParamDefaults::PITCH_SPRAY_DEFAULT,
-                                                               ParamDefaults::POSITION_ADJUST_DEFAULT,
-                                                               ParamDefaults::POSITION_SPRAY_DEFAULT};
-
 struct ParamCandidate {
   float posRatio;
   float pbRate;

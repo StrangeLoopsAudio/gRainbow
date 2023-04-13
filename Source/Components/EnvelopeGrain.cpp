@@ -113,11 +113,13 @@ void EnvelopeGrain::updateSelectedParams() {
 }
 
 void EnvelopeGrain::paint(juce::Graphics& g) {
-  juce::Colour colour = Utils::GLOBAL_COLOUR;
+  juce::Colour colour = mParamColour;
 
   // Section title
-  g.setColour(colour);
+  g.setColour(Utils::GLOBAL_COLOUR);
   g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
+  g.setColour(colour);
+  g.drawRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT, 2.0f);
   g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
@@ -172,7 +174,7 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
 
   g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f);
 
-  g.setColour(colour);
+  g.setColour(mParamColour);
   g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 

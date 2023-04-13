@@ -184,6 +184,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     // it might to use it and the undefined data will cause a crash eventually
     const int activeNoteSize = mActiveNotes.size();
     for (int noteIndex = 0; noteIndex < activeNoteSize; noteIndex++) {
+      // TODO: fix bug where gNote is null here in Debug
       GrainNote& gNote = mActiveNotes.getReference(noteIndex);
 
       // Add contributions from the grains in this generator
@@ -438,7 +439,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
   }
 
   // Delete expired notes
-  mActiveNotes.removeIf([this](GrainNote& gNote) { return mTotalSamps >= gNote.removeTs; });
+  mActiveNotes.removeIf([this](GrainNote& gNote) { return gNote.removeTs != -1 && mTotalSamps >= gNote.removeTs; });
 }
 
 void GranularSynth::setInputBuffer(juce::AudioBuffer<float>* audioBuffer, double sampleRate) {

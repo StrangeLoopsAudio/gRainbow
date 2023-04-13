@@ -10,6 +10,7 @@
 
 #include "RainbowKeyboard.h"
 #include "Settings.h"
+#include "BinaryData.h"
 
 //==============================================================================
 RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state, Parameters& parameters) : mState(state), mParameters(parameters) {
@@ -40,8 +41,10 @@ void RainbowKeyboard::fillNoteRectangleMap() {
   const float componentHeight = static_cast<float>(getHeight());
 
   juce::Rectangle<float> r = getLocalBounds().toFloat();
+
+  r.removeFromTop(BTN_RETURN_HEIGHT);
   
-  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().toFloat().getCentre());
+  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(r.getCentre());
 
   // key width = leftover width after padding / num pitch classes * component width
   const float keyWidth = (r.getWidth() - (Utils::PADDING * (Utils::PitchClass::COUNT - 1))) / Utils::PitchClass::COUNT;
@@ -73,6 +76,25 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   const float velocity = mNoteVelocity[pitchClass];
   const bool isDown = (velocity > 0.0f);
   const bool isPitchSelected = mParameters.selectedParams == mParameters.note.notes[pitchClass].get();
+
+  // Make return button if anything other than global is selected
+  if (mParameters.selectedParams->type != ParamType::GLOBAL) {
+    juce::Path btnReturnPath;
+    const int width = getWidth();
+    const float halfRound = Utils::ROUNDED_AMOUNT / 2.0f;
+    btnReturnPath.startNewSubPath(0, BTN_RETURN_HEIGHT);
+    btnReturnPath.lineTo(0, Utils::ROUNDED_AMOUNT);
+    btnReturnPath.cubicTo(0, halfRound, halfRound, 0, Utils::ROUNDED_AMOUNT, 0);
+    btnReturnPath.lineTo(width - Utils::ROUNDED_AMOUNT, 0);
+    btnReturnPath.cubicTo(width - halfRound, 0, width, halfRound, width, Utils::ROUNDED_AMOUNT);
+    btnReturnPath.lineTo(width, BTN_RETURN_HEIGHT);
+    btnReturnPath.closeSubPath();
+    g.setColour(mIsHoverBtnReturn ? Utils::GLOBAL_COLOUR.brighter() : Utils::GLOBAL_COLOUR);
+    g.fillPath(btnReturnPath);
+    // Draw return text over the top
+    g.setColour(juce::Colours::white);
+    g.drawText(TEXT_RETURN, getLocalBounds().removeFromTop(BTN_RETURN_HEIGHT), juce::Justification::centred);
+  }
 
   // if down, extra dark
   // if no note is down, lightly darken if mouse is hovering it
@@ -119,10 +141,8 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   int genHeight = getHeight() * (1.0f - NOTE_BODY_HEIGHT) / 4;
   int numGens = mParameters.note.notes[pitchClass]->numActiveGens;
   juce::Rectangle<int> genRect = juce::Rectangle<int>(area.getWidth(), genHeight);
-  int selectedGen = -1;
   for (int i = 0; i < numGens; ++i) {
     bool isGenSelected = mParameters.selectedParams == mParameters.note.notes[pitchClass]->generators[i].get();
-    if (isGenSelected) selectedGen = i;
     juce::Colour genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).brighter((i+1) * Utils::GENERATOR_BRIGHTNESS_ADD);
     if (mHoverGenRect == mNoteGenRectMap[pitchClass][i]) genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).darker();
     if (isGenSelected) genColour = keyColour.darker();
@@ -134,7 +154,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 
   // Draw the add generator button if more can still be added
   // Also disable add button if note or gen is selected (for neatness)
-  if (numGens < Utils::NUM_GEN && !isPitchSelected && selectedGen == -1) {
+  if (numGens < Utils::NUM_GEN) {
     juce::Colour addColour = (mHoverGenRect == mNoteAddGenRectMap[pitchClass]) ? keyColour.withSaturation(0.4f).darker()
                                                                                : keyColour.withSaturation(0.4f);
     g.setColour(addColour);
@@ -144,15 +164,14 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     g.setColour(juce::Colours::black);
     g.drawText("+", mNoteAddGenRectMap[pitchClass], juce::Justification::centred);
   }
-
   
-  if (isPitchSelected) {
+  /*if (isPitchSelected) {
     g.setColour(keyColour);
     g.drawLine(juce::Line<float>(area.getCentre(), area.getCentre().withY(0)), 2.0f);
   } else if (selectedGen != -1) {
     juce::Rectangle<float> selGenRect = mNoteGenRectMap[pitchClass][selectedGen];
     g.drawLine(juce::Line<float>(selGenRect.getCentre(), selGenRect.getCentre().withY(0)), 2.0f);
-  }
+  } */
 
 }
 
@@ -208,6 +227,19 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
   const juce::Point<float> pos = e.getEventRelativeTo(this).position;
   mHoverGenRect = juce::Rectangle<float>();
   mHoverNote = xyMouseToNote(pos, isClick);
+
+  // Test for return button hover/click
+  if (mParameters.selectedParams->type != ParamType::GLOBAL &&
+      getLocalBounds().removeFromTop(BTN_RETURN_HEIGHT).contains(pos.toInt())) {
+    mIsHoverBtnReturn = true;
+    if (isClick) {
+      mParameters.selectedParams = &mParameters.global;
+      if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
+      mIsHoverBtnReturn = false;
+    }
+  } else {
+    mIsHoverBtnReturn = false;
+  }
 
   // Will be invalid if mouse is dragged outside of keyboard
   bool isValidNote = mHoverNote.pitch != Utils::PitchClass::NONE;

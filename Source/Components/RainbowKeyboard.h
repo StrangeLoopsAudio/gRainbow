@@ -44,16 +44,18 @@ class RainbowKeyboard : public juce::Component {
 
  private:
   static constexpr int MIDI_CHANNEL = 1;
-  static constexpr float NOTE_BODY_HEIGHT = 0.5f;
+  static constexpr float NOTE_BODY_HEIGHT = 0.45f;
   static constexpr float GEN_NODE_HEIGHT = 0.08f;
   static constexpr float NOTE_BODY_SATURATION = 0.5f;
   static constexpr float NOTE_LABEL_SIZE = 22;
   static constexpr float ADD_GEN_SIZE = 18;
+  static constexpr float BTN_RETURN_HEIGHT = 18;
+  static constexpr const char* TEXT_RETURN = "return to global parameters";
 
+  // Bookkeeping
   juce::Random mRandom;
   juce::MidiKeyboardState& mState;
   Parameters& mParameters;
-
   // holds the velocity of each pitch class, if zero, then note is not played
   std::array<float, Utils::PitchClass::COUNT> mNoteVelocity;
 
@@ -66,6 +68,7 @@ class RainbowKeyboard : public juce::Component {
   juce::Rectangle<float> mHoverGenRect;
   // Keeps track of the note being played because of the mouse injected input
   Utils::MidiNote mMouseNote;
+  bool mIsHoverBtnReturn = false;
 
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectMap[Utils::PitchClass::COUNT];

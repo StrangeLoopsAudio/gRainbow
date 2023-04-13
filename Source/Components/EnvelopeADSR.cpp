@@ -103,11 +103,13 @@ void EnvelopeADSR::updateSelectedParams() {
 }
 
 void EnvelopeADSR::paint(juce::Graphics& g) {
-  juce::Colour envColour = Utils::GLOBAL_COLOUR;
+  juce::Colour colour = mParamColour;
 
   // Section title
-  g.setColour(envColour);
+  g.setColour(Utils::GLOBAL_COLOUR);
   g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
+  g.setColour(colour);
+  g.drawRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT, 2.0f);
   g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
@@ -118,7 +120,7 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   float release = ParamRanges::RELEASE.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::RELEASE])->get());
 
   // Draw ADSR path
-  g.setFillType(juce::ColourGradient(envColour, mVizRect.getTopLeft(), envColour.withAlpha(0.4f), mVizRect.getBottomLeft(), false));
+  g.setFillType(juce::ColourGradient(colour, mVizRect.getTopLeft(), colour.withAlpha(0.4f), mVizRect.getBottomLeft(), false));
 
   juce::Path adsrPath;
   juce::Point<float> startPt = mVizRect.getBottomLeft();
@@ -137,7 +139,7 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
 
   // Draw highlight lines on top of each segment
   float highlightWidth = 3.0f;
-  g.setColour(envColour);
+  g.setColour(colour);
   g.drawLine(juce::Line<float>(startPt, attackPt), highlightWidth);
   g.drawLine(juce::Line<float>(attackPt, decayPt), highlightWidth);
   g.drawLine(juce::Line<float>(decayPt, sustainPt), highlightWidth);
@@ -145,7 +147,7 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
 
   g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f);
 
-  g.setColour(envColour);
+  g.setColour(colour);
   g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 
