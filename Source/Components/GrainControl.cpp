@@ -25,9 +25,6 @@ GrainControl::GrainControl(Parameters& parameters)
   // Adjust pitch
   mSliderPitchAdjust.setNumDecimalPlacesToDisplay(2);
   mSliderPitchAdjust.setRange(ParamRanges::PITCH_ADJUST.start, ParamRanges::PITCH_ADJUST.end, 0.01);
-  mSliderPitchAdjust.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::PITCH_ADJUST]), mSliderPitchAdjust.getValue());
-  };
   addAndMakeVisible(mSliderPitchAdjust);
 
   mLabelPitchAdjust.setText("Pitch Adjust", juce::dontSendNotification);
@@ -43,9 +40,6 @@ GrainControl::GrainControl(Parameters& parameters)
   mSliderPitchSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
   mSliderPitchSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
   mSliderPitchSpray.setRange(ParamRanges::PITCH_SPRAY.start, ParamRanges::PITCH_SPRAY.end, 0.005);
-  mSliderPitchSpray.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::PITCH_SPRAY]), mSliderPitchSpray.getValue());
-  };
   addAndMakeVisible(mSliderPitchSpray);
 
   mLabelPitchSpray.setText("Pitch Spray", juce::dontSendNotification);
@@ -56,9 +50,6 @@ GrainControl::GrainControl(Parameters& parameters)
   // Adjust position
   mSliderPosAdjust.setNumDecimalPlacesToDisplay(2);
   mSliderPosAdjust.setRange(ParamRanges::POSITION_ADJUST.start, ParamRanges::POSITION_ADJUST.end, 0.01);
-  mSliderPosAdjust.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::POS_ADJUST]), mSliderPosAdjust.getValue());
-  };
   addAndMakeVisible(mSliderPosAdjust);
 
   mLabelPosAdjust.setText("Position Adjust", juce::dontSendNotification);
@@ -74,9 +65,6 @@ GrainControl::GrainControl(Parameters& parameters)
   mSliderPosSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
   mSliderPosSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
   mSliderPosSpray.setRange(ParamRanges::POSITION_SPRAY.start, ParamRanges::POSITION_SPRAY.end, 0.005);
-  mSliderPosSpray.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::POS_SPRAY]), mSliderPosSpray.getValue());
-  };
   addAndMakeVisible(mSliderPosSpray);
 
   mLabelPosSpray.setText("Position Spray", juce::dontSendNotification);
@@ -126,10 +114,10 @@ void GrainControl::updateSelectedParams() {
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  mSliderPitchAdjust.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
-  mSliderPitchSpray.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
-  mSliderPosAdjust.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
-  mSliderPosSpray.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderPitchAdjust.updateSelectedParams();
+  mSliderPitchSpray.updateSelectedParams();
+  mSliderPosAdjust.updateSelectedParams();
+  mSliderPosSpray.updateSelectedParams();
   // TODO: disable position changer if not generator type
   mParamHasChanged.store(true);
   repaint();

@@ -22,9 +22,6 @@ FilterControl::FilterControl(Parameters& parameters)
   mSliderCutoff.setNumDecimalPlacesToDisplay(2);
   mSliderCutoff.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, 0.01);
   mSliderCutoff.setTextValueSuffix("Hz");
-  mSliderCutoff.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF]), mSliderCutoff.getValue());
-  };
   addAndMakeVisible(mSliderCutoff);
 
   mLabelCutoff.setText("Cutoff", juce::dontSendNotification);
@@ -35,9 +32,6 @@ FilterControl::FilterControl(Parameters& parameters)
   // Resonance
   mSliderResonance.setNumDecimalPlacesToDisplay(2);
   mSliderResonance.setRange(ParamRanges::RESONANCE.start, ParamRanges::RESONANCE.end, 0.01);
-  mSliderResonance.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_RESONANCE]), mSliderResonance.getValue());
-  };
   addAndMakeVisible(mSliderResonance);
 
   mLabelResonance.setText("Resonance", juce::dontSendNotification);
@@ -71,8 +65,8 @@ void FilterControl::updateSelectedParams() {
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  mSliderCutoff.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
-  mSliderResonance.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderCutoff.updateSelectedParams();
+  mSliderResonance.updateSelectedParams();
   mParamHasChanged.store(true);
   repaint();
 }

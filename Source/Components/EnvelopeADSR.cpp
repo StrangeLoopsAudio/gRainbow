@@ -25,9 +25,6 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderAttack.setNumDecimalPlacesToDisplay(2);
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end, 0.01);
   mSliderAttack.setTextValueSuffix("s");
-  mSliderAttack.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::ATTACK]), mSliderAttack.getValue());
-  };
   addAndMakeVisible(mSliderAttack);
 
   mLabelAttack.setText("Attack", juce::dontSendNotification);
@@ -39,9 +36,6 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderDecay.setNumDecimalPlacesToDisplay(2);
   mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
   mSliderDecay.setTextValueSuffix("s");
-  mSliderDecay.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::DECAY]), mSliderDecay.getValue());
-  };
   addAndMakeVisible(mSliderDecay);
 
   mLabelDecay.setText("Decay", juce::dontSendNotification);
@@ -52,9 +46,6 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   // Sustain
   mSliderSustain.setNumDecimalPlacesToDisplay(2);
   mSliderSustain.setRange(0.0, 1.0, 0.01);
-  mSliderSustain.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::SUSTAIN]), mSliderSustain.getValue());
-  };
   addAndMakeVisible(mSliderSustain);
 
   mLabelSustain.setText("Sustain", juce::dontSendNotification);
@@ -66,9 +57,6 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderRelease.setNumDecimalPlacesToDisplay(2);
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
   mSliderRelease.setTextValueSuffix("s");
-  mSliderRelease.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::RELEASE]), mSliderRelease.getValue());
-  };
   addAndMakeVisible(mSliderRelease);
 
   mLabelRelease.setText("Release", juce::dontSendNotification);
@@ -105,10 +93,10 @@ void EnvelopeADSR::updateSelectedParams() {
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  mSliderAttack.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
-  mSliderDecay.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
-  mSliderSustain.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
-  mSliderRelease.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderAttack.updateSelectedParams();
+  mSliderDecay.updateSelectedParams();
+  mSliderSustain.updateSelectedParams();
+  mSliderRelease.updateSelectedParams();
   mParamHasChanged.store(true);
   repaint();
 }

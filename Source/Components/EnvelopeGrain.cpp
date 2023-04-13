@@ -23,9 +23,6 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   juce::Colour colour = Utils::GLOBAL_COLOUR;
   mSliderShape.setNumDecimalPlacesToDisplay(2);
   mSliderShape.setRange(0, 1, 0.01);
-  mSliderShape.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SHAPE]), mSliderShape.getValue());
-  };
   addAndMakeVisible(mSliderShape);
 
   mLabelShape.setText("Shape", juce::dontSendNotification);
@@ -36,9 +33,6 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   // Tilt
   mSliderTilt.setNumDecimalPlacesToDisplay(2);
   mSliderTilt.setRange(0, 1, 0.01);
-  mSliderTilt.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_TILT]), mSliderTilt.getValue());
-  };
   addAndMakeVisible(mSliderTilt);
 
   mLabelTilt.setText("Tilt", juce::dontSendNotification);
@@ -49,9 +43,6 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   // Rate
   mSliderRate.setNumDecimalPlacesToDisplay(2);
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
-  mSliderRate.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_RATE]), mSliderRate.getValue());
-  };
   addAndMakeVisible(mSliderRate);
 
   mLabelRate.setText("Rate", juce::dontSendNotification);
@@ -63,9 +54,6 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderDuration.setNumDecimalPlacesToDisplay(2);
   mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start, ParamRanges::GRAIN_DURATION.end, 0.01);
   mSliderDuration.setTextValueSuffix("s");
-  mSliderDuration.onValueChange = [this] {
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_DURATION]), mSliderDuration.getValue());
-  };
   addAndMakeVisible(mSliderDuration);
 
   mLabelDuration.setText("Duration", juce::dontSendNotification);
@@ -114,10 +102,10 @@ void EnvelopeGrain::updateSelectedParams() {
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  mSliderShape.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
-  mSliderTilt.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
-  mSliderRate.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
-  mSliderDuration.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParamColour);
+  mSliderShape.updateSelectedParams();
+  mSliderTilt.updateSelectedParams();
+  mSliderRate.updateSelectedParams();
+  mSliderDuration.updateSelectedParams();
   mParamHasChanged.store(true);
   repaint();
 }
