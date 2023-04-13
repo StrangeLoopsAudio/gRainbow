@@ -67,6 +67,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mParameters.global.addListener(this);
 
   mCurSelectedParams->addListener(this);
+  updateSelectedParams();
 
   startTimer(100);
 }
@@ -81,10 +82,10 @@ void EnvelopeADSR::parameterValueChanged(int idx, float value) { mParamHasChange
 void EnvelopeADSR::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    mSliderAttack.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::ATTACK])->get(), juce::dontSendNotification);
-    mSliderDecay.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::DECAY])->get(), juce::dontSendNotification);
-    mSliderSustain.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::SUSTAIN])->get(), juce::dontSendNotification);
-    mSliderRelease.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::RELEASE])->get(), juce::dontSendNotification);
+    mSliderAttack.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::ATTACK), juce::dontSendNotification);
+    mSliderDecay.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::DECAY), juce::dontSendNotification);
+    mSliderSustain.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::SUSTAIN), juce::dontSendNotification);
+    mSliderRelease.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::RELEASE), juce::dontSendNotification);
   }
 }
 

@@ -40,6 +40,7 @@ FilterControl::FilterControl(Parameters& parameters)
   addAndMakeVisible(mLabelResonance);
 
   mCurSelectedParams->addListener(this);
+  updateSelectedParams();
 
   startTimer(100);
 }
@@ -54,8 +55,8 @@ void FilterControl::parameterValueChanged(int idx, float value) { mParamHasChang
 void FilterControl::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    mSliderCutoff.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF])->get(), juce::dontSendNotification);
-    mSliderResonance.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_RESONANCE])->get(),
+    mSliderCutoff.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::FILT_CUTOFF), juce::dontSendNotification);
+    mSliderResonance.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::FILT_RESONANCE),
                               juce::dontSendNotification);
   }
 }

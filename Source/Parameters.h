@@ -607,48 +607,72 @@ struct Parameters {
 
   // Finds the lowest level parameter that's different from its parent
   // Hierarchy (high to low): global, note, generator
-  float getFloatParam(ParamGenerator* gen, ParamCommon::Type type) {
+  float getFloatParam(ParamCommon* common, ParamCommon::Type type) {
     float defaultVal = COMMON_DEFAULTS[type];
-    // If gen value is different from default, return it
-    juce::AudioParameterFloat* genParam = P_FLOAT(gen->common[type]);
-    if (genParam->get() != defaultVal) {
-      return genParam->get();
+    ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
+    if (pGen != nullptr) {
+      // If gen value is different from default, return it
+      float value = P_FLOAT(pGen->common[type])->get();
+      if (value != defaultVal) {
+        return value;
+      }
+      pNote = note.notes[pGen->noteIdx].get();
     }
-    // Otherwise if note value is different from default, return it
-    juce::AudioParameterFloat* noteParam = P_FLOAT(note.notes[gen->noteIdx]->common[type]);
-    if (noteParam->get() != defaultVal) {
-      return noteParam->get();
+    if (pNote != nullptr) {
+      // Otherwise if note value is different from default, return it
+      float value = P_FLOAT(pNote->common[type])->get();
+      if (value != defaultVal) {
+        return value;
+      }
     }
+
     // Both note and generator are still defaults, so let's use the global value
     return P_FLOAT(global.common[type])->get();
   }
-  int getChoiceParam(ParamGenerator* gen, ParamCommon::Type type) {
+  int getChoiceParam(ParamCommon* common, ParamCommon::Type type) {
     int defaultVal = COMMON_DEFAULTS[type];
-    // If gen value is different from default, return it
-    juce::AudioParameterChoice* genParam = P_CHOICE(gen->common[type]);
-    if (genParam->getIndex() != defaultVal) {
-      return genParam->getIndex();
+    ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
+    if (pGen != nullptr) {
+      // If gen value is different from default, return it
+      int value = P_CHOICE(pGen->common[type])->getIndex();
+      if (value != defaultVal) {
+        return value;
+      }
+      pNote = note.notes[pGen->noteIdx].get();
     }
-    // Otherwise if note value is different from default, return it
-    juce::AudioParameterChoice* noteParam = P_CHOICE(note.notes[gen->noteIdx]->common[type]);
-    if (noteParam->getIndex() != defaultVal) {
-      return noteParam->getIndex();
+    if (pNote != nullptr) {
+      // Otherwise if note value is different from default, return it
+      int value = P_CHOICE(pNote->common[type])->getIndex();
+      if (value != defaultVal) {
+        return value;
+      }
     }
+
     // Both note and generator are still defaults, so let's use the global value
     return P_CHOICE(global.common[type])->getIndex();
   }
-  int getBoolParam(ParamGenerator* gen, ParamCommon::Type type) {
+  int getBoolParam(ParamCommon* common, ParamCommon::Type type) {
     int defaultVal = COMMON_DEFAULTS[type];
-    // If gen value is different from default, return it
-    juce::AudioParameterBool* genParam = P_BOOL(gen->common[type]);
-    if (genParam->get() != defaultVal) {
-      return genParam->get();
+    ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
+    if (pGen != nullptr) {
+      // If gen value is different from default, return it
+      bool value = P_BOOL(pGen->common[type])->get();
+      if (value != defaultVal) {
+        return value;
+      }
+      pNote = note.notes[pGen->noteIdx].get();
     }
-    // Otherwise if note value is different from default, return it
-    juce::AudioParameterBool* noteParam = P_BOOL(note.notes[gen->noteIdx]->common[type]);
-    if (noteParam->get() != defaultVal) {
-      return noteParam->get();
+    if (pNote != nullptr) {
+      // Otherwise if note value is different from default, return it
+      bool value = P_BOOL(pNote->common[type])->get();
+      if (value != defaultVal) {
+        return value;
+      }
     }
+
     // Both note and generator are still defaults, so let's use the global value
     return P_BOOL(global.common[type])->get();
   }

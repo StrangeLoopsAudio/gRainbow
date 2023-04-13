@@ -86,6 +86,9 @@ GrainControl::GrainControl(Parameters& parameters)
   mPositionChanger.setColour(colour);
   addAndMakeVisible(mPositionChanger);
 
+  mCurSelectedParams->addListener(this);
+  updateSelectedParams();
+
   startTimer(100);
 }
 
@@ -94,13 +97,13 @@ void GrainControl::parameterValueChanged(int idx, float value) { mParamHasChange
 void GrainControl::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    mSliderPitchAdjust.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::PITCH_ADJUST])->get(),
+    mSliderPitchAdjust.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PITCH_ADJUST),
                                 juce::dontSendNotification);
-    mSliderPitchSpray.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::PITCH_SPRAY])->get(),
+    mSliderPitchSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PITCH_SPRAY),
                                juce::dontSendNotification);
-    mSliderPosAdjust.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::POS_ADJUST])->get(),
+    mSliderPosAdjust.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::POS_ADJUST),
                               juce::dontSendNotification);
-    mSliderPosSpray.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::POS_SPRAY])->get(),
+    mSliderPosSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::POS_SPRAY),
                              juce::dontSendNotification);
     if (mCurSelectedParams->type == ParamType::GENERATOR) {
       ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);

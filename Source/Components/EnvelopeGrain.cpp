@@ -73,6 +73,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   addAndMakeVisible(mBtnSync);
 
   mCurSelectedParams->addListener(this);
+  updateSelectedParams();
 
   startTimer(100);
 }
@@ -87,13 +88,14 @@ void EnvelopeGrain::parameterValueChanged(int idx, float value) { mParamHasChang
 void EnvelopeGrain::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    mSliderShape.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SHAPE])->get(),
+    mSliderShape.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GRAIN_SHAPE),
                           juce::dontSendNotification);
-    mSliderTilt.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_TILT])->get(), juce::dontSendNotification);
-    mSliderRate.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_RATE])->get(), juce::dontSendNotification);
-    mSliderDuration.setValue(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_DURATION])->get(),
+    mSliderTilt.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GRAIN_TILT), juce::dontSendNotification);
+    mSliderRate.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GRAIN_RATE), juce::dontSendNotification);
+    mSliderDuration.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GRAIN_DURATION),
                              juce::dontSendNotification);
-    mBtnSync.setToggleState(P_BOOL(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SYNC])->get(), juce::dontSendNotification);
+    mBtnSync.setToggleState(mParameters.getBoolParam(mCurSelectedParams, ParamCommon::Type::GRAIN_SYNC),
+                            juce::dontSendNotification);
   }
 }
 
