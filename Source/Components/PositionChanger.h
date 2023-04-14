@@ -29,6 +29,7 @@ class PositionChanger : public juce::Component {
   void mouseEnter(const juce::MouseEvent&) override;
   void mouseExit(const juce::MouseEvent&) override;
 
+  void setActive(bool isActive);
   void setSolo(bool isSolo);
   void setColour(juce::Colour colour);
   void setNumPositions(int numPositions);
@@ -45,12 +46,11 @@ class PositionChanger : public juce::Component {
   static constexpr auto BUBBLE_PADDING = 5;
   static constexpr auto SOLO_HEIGHT_PERC = 0.4;
 
+  bool mIsActive = false;
   bool mIsSolo = false;
   juce::Colour mColour;
   int mNumPositions = 0;
-  int mIndexInBoxes;  // Index among other boxes on screen
   int mPosition;      // Position index
-  bool mIsClickingArrow = false;
   bool mIsOverLeftArrow = false;
   bool mIsOverRightArrow = false;
   bool mIsOverSolo = false;
@@ -63,7 +63,7 @@ class PositionChanger : public juce::Component {
   juce::Rectangle<int> mTitleRect;
   juce::Rectangle<float> mSoloRect;
 
-  void updateMouseOver(const juce::MouseEvent& e, bool isDown);
+  void updateMouseOver(const juce::MouseEvent& e, bool isClick);
   bool isLeftArrow(juce::Point<float> point);
   bool isRightArrow(juce::Point<float> point);
   void positionChanged(bool isRight);

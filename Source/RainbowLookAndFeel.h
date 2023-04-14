@@ -97,14 +97,13 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     }
 
     // Draw current value line on end of arc
-    juce::Colour outlineCol = slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
-    g.setColour(outlineCol);
+    g.setColour(rainbowCol);
     g.drawLine(juce::Line<float>(center.getPointOnCircumference(startRadius, startRadius, endRadians),
                                  center.getPointOnCircumference(endRadius, endRadius, endRadians)),
                3.0f);
 
     // Draw outline arcs
-    g.setColour(outlineCol);
+    g.setColour(rainbowCol);
     rainbowPath.clear();
     rainbowPath.addCentredArc(center.x, center.y, endRadius, endRadius, 0, startRadians,
                               2.5f * juce::MathConstants<float>::pi, true);
@@ -118,6 +117,37 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     if (text.getLastCharacter() == '.') text += "0";
     g.setColour(juce::Colours::black);
     g.drawFittedText(text, textRect, juce::Justification::centredBottom, 1);
+  }
+
+  void drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPos, float minPos, float maxPos,
+                        const juce::Slider::SliderStyle style, juce::Slider& slider) override {
+    // Get RainbowSlider version of the slider
+    RainbowSlider& rbSlider = dynamic_cast<RainbowSlider&>(slider);
+    juce::Colour rainbowCol = slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
+
+    // Draw Current value bar
+    g.setColour(rainbowCol.withAlpha(0.4f));
+    g.fillRect(0, 0, (int)sliderPos, height);
+
+    // Draw note-level lines
+    const float noteStripeInterval = (float)(height - 4) / Utils::PitchClass::COUNT;
+    float curStripeY = height - 2;
+    for (int i = 0; i < Utils::PitchClass::COUNT; ++i) {
+      if (rbSlider.mArcs.contains((Utils::PitchClass)i)) {
+        float stripeX = rbSlider.mArcs[(Utils::PitchClass)i] * width;
+        g.setColour(Utils::getRainbow12Colour(i));
+        g.drawLine(0, curStripeY, stripeX, curStripeY, noteStripeInterval);
+      }
+      curStripeY -= noteStripeInterval;
+    }
+
+    // Vertical line at position
+    g.setColour(rainbowCol);
+    g.drawLine(sliderPos, 0, sliderPos, height, 2);
+
+    // Outline
+    g.setColour(rainbowCol);
+    g.drawRect(1, 1, width, height, 2);
   }
 
   void drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted,

@@ -72,11 +72,17 @@ GrainControl::GrainControl(Parameters& parameters)
   mLabelPosSpray.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPosSpray);
 
-  /*mPositionChanger.onPositionChanged = [this](bool isRight) {
-    if (onPositionChanged != nullptr) {
-      onPositionChanged(mCurSelectedGenerator, isRight);
-    }
-  }; */
+  mPositionChanger.onPositionChanged = [this](bool isRight) {
+    ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mParameters.selectedParams);
+    jassert(gen != nullptr);
+    int numCandidates = mParameters.note.notes[gen->noteIdx]->candidates.size();
+    int pos = gen->candidate->get();
+    if (numCandidates == 0) return pos;
+    int newPos = isRight ? pos + 1 : pos - 1;
+    newPos = (newPos + numCandidates) % numCandidates;
+    ParamHelper::setParam(gen->candidate, newPos);
+    mPositionChanger.setPositionNumber(newPos);
+  };
   mPositionChanger.onSoloChanged = [this](bool isSolo) {
     if (mCurSelectedParams->type == ParamType::GENERATOR) {
       ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
@@ -107,7 +113,10 @@ void GrainControl::timerCallback() {
                              juce::dontSendNotification);
     if (mCurSelectedParams->type == ParamType::GENERATOR) {
       ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
+      mPositionChanger.setPositionNumber(gen->candidate->get());
       mPositionChanger.setSolo(mParameters.note.notes[gen->noteIdx]->soloIdx->get() == gen->genIdx);
+    } else {
+      mPositionChanger.setSolo(false);
     }
   }
 }
@@ -116,12 +125,22 @@ void GrainControl::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
+
   mParamColour = mParameters.getSelectedParamColour();
   mSliderPitchAdjust.updateSelectedParams();
   mSliderPitchSpray.updateSelectedParams();
   mSliderPosAdjust.updateSelectedParams();
   mSliderPosSpray.updateSelectedParams();
   // TODO: disable position changer if not generator type
+  bool isGen = mCurSelectedParams->type == ParamType::GENERATOR;
+  mPositionChanger.setActive(isGen);
+  if (isGen) {
+    ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
+    mPositionChanger.setNumPositions(mParameters.note.notes[gen->noteIdx]->candidates.size());
+    mPositionChanger.setPositionNumber(gen->candidate->get());
+    mPositionChanger.setColour(mParamColour);
+  }
+  
   mParamHasChanged.store(true);
   repaint();
 }

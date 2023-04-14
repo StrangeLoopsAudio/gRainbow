@@ -502,16 +502,6 @@ void GranularSynth::processInput(juce::Range<juce::int64> range, bool preset) {
   }
 }
 
-int GranularSynth::incrementPosition(int genIdx, bool lookRight) {
-  int numCandidates = mParameters.note.notes[mLastPitchClass]->candidates.size();
-  int pos = mParameters.note.notes[mLastPitchClass]->generators[genIdx]->candidate->get();
-  if (numCandidates == 0) return pos;
-  int newPos = lookRight ? pos + 1 : pos - 1;
-  newPos = (newPos + numCandidates) % numCandidates;
-  ParamHelper::setParam(mParameters.note.notes[mLastPitchClass]->generators[genIdx]->candidate, newPos);
-  return newPos;
-}
-
 std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
   std::vector<ParamCandidate*> candidates;
   for (int i = 0; i < NUM_GENERATORS; ++i) {

@@ -278,6 +278,7 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
   if (!reallyContains(pos.toInt(), false)) return Utils::MidiNote();
 
   for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
+    ParamNote* note = mParameters.note.notes[pitchClass].get();
     // First check general note area
     if (mNoteRectMap[pitchClass].contains(pos.withY(mNoteRectMap[pitchClass].getCentreY()))) {
       // Now check note body and generators
@@ -289,12 +290,11 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
       } else {
         // Check generators and add gen button for hover
         // TODO: switch selected gen/handle add gen click
-        int numGens = mParameters.note.notes[pitchClass]->numActiveGens;
-        for (int i = 0; i < numGens; ++i) {
+        for (int i = 0; i < note->numActiveGens; ++i) {
           if (mNoteGenRectMap[pitchClass][i].contains(pos)) {
             if (isClick) {
               // Select current generator for parameter edits and send update
-              mParameters.selectedParams = mParameters.note.notes[pitchClass]->generators[i].get();
+              mParameters.selectedParams = note->generators[i].get();
               if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
             }
             mHoverGenRect = mNoteGenRectMap[pitchClass][i];
@@ -302,10 +302,11 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
             return Utils::MidiNote();
           }
         }
-        if (mNoteAddGenRectMap[pitchClass].contains(pos) && numGens < Utils::NUM_GEN) {
+        if (mNoteAddGenRectMap[pitchClass].contains(pos) && note->numActiveGens < Utils::NUM_GEN) {
           if (isClick) {
             // Add another generator
-            mParameters.note.notes[pitchClass]->numActiveGens++;
+            ParamHelper::setParam(note->generators[note->numActiveGens++]->enable, true);
+            note->numActiveGens++;
             resized();
           }
           mHoverGenRect = mNoteAddGenRectMap[pitchClass];
