@@ -1,8 +1,8 @@
 /*
   ==============================================================================
 
-    EnvelopeADSR.h
-    Created: 12 Jul 2021 12:02:12am
+    GrainControl.h
+    Created: 23 Jun 2021 8:34:54pm
     Author:  brady
 
   ==============================================================================
@@ -11,17 +11,17 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include <juce_audio_processors/juce_audio_processors.h>
+#include "PositionChanger.h"
 #include "../Parameters.h"
 #include "../RainbowLookAndFeel.h"
 
 //==============================================================================
 /*
  */
-class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
+class GrainControl : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
-  EnvelopeADSR(Parameters& parameters);
-  ~EnvelopeADSR();
+  GrainControl(Parameters& parameters);
+  ~GrainControl() override {}
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -34,27 +34,28 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
   void updateSelectedParams();
 
  private:
-  static constexpr const char* SECTION_TITLE = "amplitude envelope";
+  static constexpr const char* SECTION_TITLE = "grain control";
 
   // Components
-  RainbowSlider mSliderAttack;
-  RainbowSlider mSliderDecay;
-  RainbowSlider mSliderSustain;
-  RainbowSlider mSliderRelease;
-  juce::Label mLabelAttack;
-  juce::Label mLabelDecay;
-  juce::Label mLabelSustain;
-  juce::Label mLabelRelease;
+  // -- Generator Adjustments
+  PositionChanger mPositionChanger;
+  RainbowSlider mSliderPitchAdjust;
+  juce::Label mLabelPitchAdjust;
+  RainbowSlider mSliderPitchSpray;
+  juce::Label mLabelPitchSpray;
+  RainbowSlider mSliderPosAdjust;
+  juce::Label mLabelPosAdjust;
+  RainbowSlider mSliderPosSpray;
+  juce::Label mLabelPosSpray;
 
   // Bookkeeping
   Parameters& mParameters;
-  ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
+  ParamCommon* mCurSelectedParams;
   juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
 
-  // UI rects updated at resize()
+  // UI values saved on resize
   juce::Rectangle<float> mTitleRect;
-  juce::Rectangle<float> mVizRect;
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeADSR)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GrainControl)
 };

@@ -11,15 +11,15 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "../Utils.h"
 #include "../Parameters.h"
+#include "../RainbowLookAndFeel.h"
 
 //==============================================================================
 /*
  */
-class FilterControl : public juce::Component {
+class FilterControl : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
-  FilterControl();
+  FilterControl(Parameters& parameters);
   ~FilterControl() override;
 
   void paint(juce::Graphics&) override;
@@ -29,42 +29,39 @@ class FilterControl : public juce::Component {
   void mouseExit(const juce::MouseEvent& event) override;
   void mouseUp(const juce::MouseEvent& event) override;
 
-  // static enum FilterType { NONE, LOWPASS, HIGHPASS, BANDPASS };
-  void setActive(bool isActive);
-  void setCutoff(float cutoff);
-  void setResonance(float resonance);
-  void setColour(juce::Colour colour);
-  // void setFilterType(Utils::FilterType filterType);
-  void setFilterType(int filterTypeIndex);
-  float filterTypeToCutoff(Utils::FilterType filterType);
+  void parameterValueChanged(int idx, float value) override;
+  void parameterGestureChanged(int, bool) override {}
 
-  std::function<void(Utils::FilterType filterType)> onFilterTypeChange = nullptr;
+  void timerCallback() override;
+
+  void updateSelectedParams();
 
  private:
-  /* Parameters */
-  bool mIsActive = false;
-  float mCutoff = 0.0f;
-  float mResonance = ParamDefaults::FILTER_RESONANCE_DEFAULT;
-  Utils::FilterType mFilterType = Utils::FilterType::LOWPASS;
-  static constexpr auto FILTER_TYPE_BUTTON_HEIGHT = 30;
-  juce::Colour mColour;
-  int mFilter = 0;
-  Utils::FilterType mCurHoverFilterType = Utils::NO_FILTER;
-  Utils::FilterType mCurSelectedFilterType = Utils::NO_FILTER;
+  static constexpr int FILTER_TYPE_BUTTON_HEIGHT = 30;
+  static constexpr const char* SECTION_TITLE = "filter control";
+
+  // Components
+  RainbowSlider mSliderCutoff;
+  RainbowSlider mSliderResonance;
+  juce::Label mLabelCutoff;
+  juce::Label mLabelResonance;
+
+  // Bookkeeping
+  Parameters& mParameters;
+  ParamCommon* mCurSelectedParams;
+  std::atomic<bool> mParamHasChanged;
+  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
+  Utils::FilterType mCurHoverFilterType = Utils::FilterType::NO_FILTER;
 
   // UI values saved on resize
   juce::Rectangle<float> mLowPassRect;
-  juce::Rectangle<float> mLowPassTextRect;
   juce::Rectangle<float> mHighPassRect;
-  juce::Rectangle<float> mHighPassTextRect;
   juce::Rectangle<float> mBandPassRect;
-  juce::Rectangle<float> mBandPassTextRect;
-  int mBtnPadding;
-  int mBtnResPadding;  // with MAX_RES_HEIGHT
+  juce::Rectangle<float> mTitleRect;
+  juce::Rectangle<float> mVizRect;
 
-  static constexpr auto PADDING_SIZE = 5;
-  static constexpr auto MAX_RES_HEIGHT = 20;
-  static constexpr auto RES_WIDTH = 20;
+  Utils::FilterType getFilterTypeFromMouse(const juce::MouseEvent& event);
+  float filterTypeToCutoff(Utils::FilterType filterType);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterControl)
 };

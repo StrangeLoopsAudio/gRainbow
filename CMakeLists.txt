@@ -76,14 +76,10 @@ set(SourceFiles
     Source/Components/RainbowKeyboard.cpp
     Source/Components/PositionChanger.h
     Source/Components/PositionChanger.cpp
-    Source/Components/NoteGrid.h
-    Source/Components/NoteGrid.cpp
     Source/Components/FilterControl.h
     Source/Components/FilterControl.cpp
-    Source/Components/GeneratorsBox.h
-    Source/Components/GeneratorsBox.cpp
-    Source/Components/GlobalParamBox.h
-    Source/Components/GlobalParamBox.cpp
+    Source/Components/GrainControl.h
+    Source/Components/GrainControl.cpp
     Source/DSP/AudioRecorder.h
     Source/DSP/AudioRecorder.cpp
     Source/DSP/TransientDetector.h

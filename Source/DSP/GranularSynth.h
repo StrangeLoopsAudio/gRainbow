@@ -83,14 +83,15 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
     return std::vector<Utils::SpecBuffer*>(mProcessedSpecs.begin(), mProcessedSpecs.end());
   }
 
-  ParamsNote& getParamsNote() { return mParamsNote; }
-  ParamGlobal& getParamGlobal() { return mParamGlobal; }
-  double& getLoadingProgress() { return mLoadingProgress; }
-  const juce::Array<Utils::MidiNote>& getMidiNotes() { return mMidiNotes; }
-
-  ParamUI& getParamUI() { return mParamUI; }
+  Parameters& getParams() { return mParameters; }
+  ParamsNote& getParamsNote() { return mParameters.note; }
+  ParamGlobal& getParamGlobal() { return mParameters.global; }
+  ParamUI& getParamUI() { return mParameters.ui; }
   void resetParameters(bool fullClear = true);
   int incrementPosition(int genIdx, bool lookRight);
+  
+  double& getLoadingProgress() { return mLoadingProgress; }
+  const juce::Array<Utils::MidiNote>& getMidiNotes() { return mMidiNotes; }
   std::vector<ParamCandidate*> getActiveCandidates();
   Utils::PitchClass getLastPitchClass() { return mLastPitchClass; }
 
@@ -108,12 +109,12 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   typedef struct GrainNote {
     Utils::PitchClass pitchClass;
     float velocity;
-    Utils::EnvelopeADSR ampEnv;
+    int removeTs = -1;
     std::array<Utils::EnvelopeADSR, NUM_GENERATORS> genAmpEnvs;
     std::array<juce::Array<Grain>, NUM_GENERATORS> genGrains;  // Active grains for note per generator
     std::array<float, NUM_GENERATORS> grainTriggers;           // Keeps track of triggering grains from each generator
     GrainNote(Utils::PitchClass pitchClass, float velocity, Utils::EnvelopeADSR ampEnv)
-        : pitchClass(pitchClass), velocity(velocity), ampEnv(ampEnv) {
+        : pitchClass(pitchClass), velocity(velocity) {
       // Initialize grain triggering timestamps
       grainTriggers.fill(-1.0f);  // Trigger first set of grains right away
       for (int i = 0; i < NUM_GENERATORS; ++i) {
@@ -145,9 +146,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   juce::Array<Utils::MidiNote> mMidiNotes;
 
   // Parameters
-  ParamsNote mParamsNote;
-  ParamGlobal mParamGlobal;
-  ParamUI mParamUI;
+  Parameters mParameters;
 
   void handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
   void handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;

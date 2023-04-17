@@ -14,22 +14,36 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <chrono>
 
-
 namespace Utils {
 typedef std::vector<std::vector<float>> SpecBuffer;
 
-// american gold, light silver, metallic bronze, rich purple
-static constexpr juce::int64 GENERATOR_COLOURS_HEX[4] = {0xFFD6AF36, 0xFFD7D7D7, 0xFFA77044, 0xFFA34827};
+// UI spacing and colours
+static constexpr int PADDING = 6;
+static constexpr int TITLE_HEIGHT = 20;
+static constexpr int LABEL_HEIGHT = 20;
+static constexpr int KNOB_HEIGHT = 40;
+static constexpr float ROUNDED_AMOUNT = 10.0f;
+static const juce::Colour GLOBAL_COLOUR = juce::Colours::black;
+static constexpr float GENERATOR_BRIGHTNESS_ADD = 0.2f;  // Amount to make brighter per generator
 
-//enum FilterType { LOWPASS, HIGHPASS, BANDPASS };
-
-// Tetradic colours
-enum GeneratorColour { BLUE = 0, PURPLE, ORANGE, GREEN, NUM_GEN };
-
-enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
+// Number of generators available
+static constexpr int NUM_GEN = 4;
+// Constant used for pitch shifting by semitones
+static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
 
 // All util logic around the notes/pitchClasses
 enum PitchClass { NONE = -1, C = 0, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, COUNT };
+// Use initializer_list to do "for (PitchClass key : ALL_PITCH_CLASS)" logic
+static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
+    PitchClass::C,  PitchClass::Cs, PitchClass::D,  PitchClass::Ds, PitchClass::E,  PitchClass::F,
+    PitchClass::Fs, PitchClass::G,  PitchClass::Gs, PitchClass::A,  PitchClass::As, PitchClass::B};
+
+// Slightly different from Parameters::PITCH_CLASS_NAMES for displaying to user, (e.g, replaces Cs with C#)
+static juce::Array<juce::String> PITCH_CLASS_DISP_NAMES{"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+
+enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
+enum FilterType { NO_FILTER, LOWPASS, HIGHPASS, BANDPASS };
+
 static inline PitchClass getPitchClass(int midiNoteNumber) { return (PitchClass)(midiNoteNumber % PitchClass::COUNT); }
 // A "Note" is a wrapper to hold all the information about notes from a MidiMessage we care about sharing around classes
 struct MidiNote {
@@ -43,15 +57,7 @@ struct MidiNote {
   bool operator!=(const MidiNote& other) const { return pitch != other.pitch; }
 };
 
-enum FilterType { NO_FILTER, LOWPASS, HIGHPASS, BANDPASS };
 
-// Use initializer_list to do "for (PitchClass key : ALL_PITCH_CLASS)" logic
-static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
-    PitchClass::C,  PitchClass::Cs, PitchClass::D,  PitchClass::Ds, PitchClass::E,  PitchClass::F,
-    PitchClass::Fs, PitchClass::G,  PitchClass::Gs, PitchClass::A,  PitchClass::As, PitchClass::B};
-
-// Constant used for pitch shifting by semitones
-static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
 
 typedef struct EnvelopeADSR {
   // All adsr params are in samples (except for sustain amp)
@@ -315,4 +321,5 @@ class BPF {
     return (x - _xPoints[j]) * _slopes[j] + _yPoints[j];
   }
 };
+
 };  // namespace Utils
