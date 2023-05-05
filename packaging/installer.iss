@@ -1,5 +1,5 @@
 #define Version Trim(FileRead(FileOpen("..\VERSION")))
-#define PluginName "MouseModulator"
+#define PluginName "gRainbow"
 #define Publisher "StrangeLoops"
 #define Year GetDateTimeString("yyyy","","")
 
