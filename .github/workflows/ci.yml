@@ -113,12 +113,12 @@ jobs:
         key: v3-${{ matrix.os }}-${{ matrix.type }}
         variant: ${{ matrix.ccache }}
 
-    - name: Import Certificates (macOS)
-      uses: apple-actions/import-codesign-certs@v1
-      if: ${{ matrix.name == 'macOS' }}
-      with:
-        p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
-        p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
+#    - name: Import Certificates (macOS)
+#      uses: apple-actions/import-codesign-certs@v1
+#      if: ${{ matrix.name == 'macOS' }}
+#      with:
+#        p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
+#        p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
 
     - name: Configure
       shell: bash
@@ -140,31 +140,31 @@ jobs:
         7z x pluginval_${{ matrix.name }}.zip
         ${{ matrix.pluginval-binary }} --strictness-level 10 --verbose --validate "${{ env.VST3_PATH }}"
 
-    - name: Codesign (macOS)
-      working-directory: ${{ env.BUILD_DIR }}
-      if: ${{ matrix.name == 'macOS' }}
-      run: |
-        # Each plugin must be code signed
-        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.VST3_PATH }} --deep --strict --options=runtime --timestamp
-        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.AU_PATH }} --deep --strict --options=runtime --timestamp
+#    - name: Codesign (macOS)
+#      working-directory: ${{ env.BUILD_DIR }}
+#      if: ${{ matrix.name == 'macOS' }}
+#      run: |
+#        # Each plugin must be code signed
+#        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.VST3_PATH }} --deep --strict --options=runtime --timestamp
+#        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.AU_PATH }} --deep --strict --options=runtime --timestamp
 
-    - name: Add Custom Icons (macOS)
-      if: ${{ matrix.name == 'macOS' }}
-      working-directory: ${{ env.BUILD_DIR }}
-      run: |
-        # add the icns as its own icon resource (meta!)
-        sips -i ../packaging/pamplejuce.icns
-
-        # Grab the resource, put in tempfile
-        DeRez -only icns ../packaging/pamplejuce.icns > /tmp/icons
-
-        # Stuff the resource into the strange Icon? file's resource fork
-        Rez -a /tmp/icons -o ${{ env.VST3_PATH }}/Icon$'\r'
-        Rez -a /tmp/icons -o ${{ env.AU_PATH }}/Icon$'\r'
-
-        # Set custom icon attribute
-        SetFile -a C ${{ env.VST3_PATH }}
-        SetFile -a C ${{ env.AU_PATH }}
+#    - name: Add Custom Icons (macOS)
+#      if: ${{ matrix.name == 'macOS' }}
+#      working-directory: ${{ env.BUILD_DIR }}
+#      run: |
+#        # add the icns as its own icon resource (meta!)
+#        sips -i ../packaging/pamplejuce.icns
+#
+#        # Grab the resource, put in tempfile
+#        DeRez -only icns ../packaging/pamplejuce.icns > /tmp/icons
+#
+#        # Stuff the resource into the strange Icon? file's resource fork
+#        Rez -a /tmp/icons -o ${{ env.VST3_PATH }}/Icon$'\r'
+#        Rez -a /tmp/icons -o ${{ env.AU_PATH }}/Icon$'\r'
+#
+#        # Set custom icon attribute
+#        SetFile -a C ${{ env.VST3_PATH }}
+#        SetFile -a C ${{ env.AU_PATH }}
 
     - name: Create DMG, Notarize and Staple (macOS)
       if: ${{ matrix.name == 'macOS' }}
@@ -181,8 +181,8 @@ jobs:
         
         # Run appdmg to create the .dmg
         cd packaging && appdmg dmg.json ${{ env.PRODUCT_NAME}}.dmg
-        codesign -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" --timestamp -i com.strangeloops.grainbow --force ${{ env.PRODUCT_NAME }}.dmg
-        xcrun notarytool submit ${{ env.PRODUCT_NAME }}.dmg --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
+#        codesign -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" --timestamp -i com.strangeloops.grainbow --force ${{ env.PRODUCT_NAME }}.dmg
+#        xcrun notarytool submit ${{ env.PRODUCT_NAME }}.dmg --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
         xcrun stapler staple ${{ env.PRODUCT_NAME }}.dmg
 
     - name: Zip

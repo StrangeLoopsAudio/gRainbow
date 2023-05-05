@@ -306,7 +306,6 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
           if (isClick) {
             // Add another generator
             ParamHelper::setParam(note->generators[note->numActiveGens++]->enable, true);
-            note->numActiveGens++;
             resized();
           }
           mHoverGenRect = mNoteAddGenRectMap[pitchClass];

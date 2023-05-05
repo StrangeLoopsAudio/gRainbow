@@ -196,7 +196,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         const float sustain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::SUSTAIN);
         const float release = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::RELEASE);
         const float grainGain = gNote.genAmpEnvs[genIdx].getAmplitude(mTotalSamps, attack * mSampleRate, decay * mSampleRate, sustain,
-                                                                release * mSampleRate);
+                                                                release * mSampleRate) * 0.2f; // Temporary hardcoded gain to scale down
         for (Grain& grain : gNote.genGrains[genIdx]) {
           genSample += grain.process(mAudioBuffer, grainGain, mTotalSamps);
         }
