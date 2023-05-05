@@ -37,3 +37,10 @@ out/*
 *.exe
 *.out
 *.app
+
+# CLion stuff
+cmake-build*/
+.idea/
+
+# Good habit - have an ignore directory
+ignore/

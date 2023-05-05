@@ -48,7 +48,7 @@ class GRainbowLogo : public juce::Component {
  * @brief The "Main component" that parents all UI elements.
  */
 class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                     juce::FileDragAndDropTarget,
+                                     public juce::FileDragAndDropTarget,
                                      juce::Timer {
  public:
   GRainbowAudioProcessorEditor(GranularSynth& synth);

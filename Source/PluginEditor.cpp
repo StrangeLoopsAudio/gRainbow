@@ -422,7 +422,7 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
                                                        "*.wav;*.mp3;*.gbow", true);
 
     int openFlags =
-        juce::FileBrowserComponent::FileChooserFlags::openMode;
+        juce::FileBrowserComponent::FileChooserFlags::openMode | juce::FileBrowserComponent::canSelectFiles;
 
   mFileChooser->launchAsync(openFlags, [this](const juce::FileChooser& fc) {
       auto file = fc.getResult();
