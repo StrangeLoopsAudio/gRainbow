@@ -24,7 +24,7 @@ class RainbowSlider : public juce::Slider {
     rotaryParams.endAngleRadians = 2.6f * juce::MathConstants<float>::pi;
     rotaryParams.stopAtEnd = true;
     setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-    setSliderStyle(juce::Slider::SliderStyle::Rotary);
+    setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag);
     setRotaryParameters(rotaryParams);
     setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::GLOBAL_COLOUR);
     setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
