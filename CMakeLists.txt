@@ -44,7 +44,7 @@ juce_add_plugin("${PROJECT_NAME}"
     # VERSION ...                               # Set this if the plugin version is different to the project version
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
     # ICON_SMALL ...
-    COMPANY_NAME StrangeLoops
+    COMPANY_NAME strangeloops
     BUNDLE_ID com.strangeloops.grainbow
     IS_SYNTH TRUE                       # Is this a synth or an effect?
     NEEDS_MIDI_INPUT TRUE               # Does the plugin need midi input?
