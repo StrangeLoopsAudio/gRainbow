@@ -5,13 +5,12 @@
 
 ; 'Types': What get displayed during the setup
 [Types]
-Name: "standalone";     Description: "Standalone application";
-Name: "vst3";      Description: "VST3 plugin";
+Name: "custom"; Description: "Custom installation";
 
 ; Components are used inside the script and can be composed of a set of 'Types'
 [Components]
-Name: "standalone";     Description: "Standalone application";   Types: standalone
-Name: "vst3";      Description: "VST3 plugin";   Types: vst3
+Name: "standalone"; Description: "Standalone application"; Types: custom
+Name: "vst3"; Description: "VST3 plugin"; Types: custom
 
 [Setup]
 ArchitecturesInstallIn64BitMode=x64
@@ -32,7 +31,7 @@ Type: filesandordirs; Name: "{commoncf64}\VST3\{#PluginName}Data"
 ; MSVC adds a .ilk when building the plugin. Let's not include that.
 [Files]
 Source: "..\Builds\gRainbow_artefacts\Release\VST3\{#PluginName}.vst3\*"; DestDir: "{commoncf64}\VST3\{#PluginName}.vst3\"; Excludes: *.ilk; Flags: ignoreversion recursesubdirs; Components: vst3
-Source: "..\Builds\gRainbow_artefacts\Release\Standalone\{#PluginName}.exe"; DestDir: "{commonpf64}\{#Publisher}\{#PluginName}.exe"; Flags: ignoreversion; Components: standalone
+Source: "..\Builds\gRainbow_artefacts\Release\Standalone\{#PluginName}.exe"; DestDir: "{commonpf64}\{#Publisher}\{#PluginName}"; Flags: ignoreversion; Components: standalone
 
 [Run]
 Filename: "{cmd}"; \
