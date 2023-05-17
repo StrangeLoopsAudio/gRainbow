@@ -414,6 +414,15 @@ struct ParamNote : ParamCommon {
     return nullptr;
   }
 
+  void enableNextAvailableGen() {
+    for (int i = 0; i < Utils::NUM_GEN; ++i) {
+      if (!generators[i]->enable->get()) {
+        ParamHelper::setParam(generators[i]->enable, true);
+        break;
+      }
+    }
+  }
+
   void addParams(juce::AudioProcessor& p);
 
   void addListener(juce::AudioProcessorParameter::Listener* listener) {

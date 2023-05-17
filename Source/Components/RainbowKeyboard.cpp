@@ -221,7 +221,23 @@ void RainbowKeyboard::mouseDrag(const juce::MouseEvent& e) { updateMouseState(e,
 
 void RainbowKeyboard::mouseDown(const juce::MouseEvent& e) { updateMouseState(e, true, false); }
 
-void RainbowKeyboard::mouseUp(const juce::MouseEvent& e) { updateMouseState(e, false, true); }
+void RainbowKeyboard::mouseUp(const juce::MouseEvent& e) { 
+  updateMouseState(e, false, true);
+  if (mHoverGenRect != juce::Rectangle<float>() && e.mods.isRightButtonDown()) {
+    juce::PopupMenu menu;
+    menu.addItem(1, "Delete generator", true);
+    menu.showMenuAsync(juce::PopupMenu::Options(), [this](int result) {
+      if (result == 1) {
+        // Disable the currently selected generator
+        ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mParameters.selectedParams);
+        jassert(gen != nullptr);
+        ParamHelper::setParam(gen->enable, false);
+        mParameters.selectedParams = &mParameters.global;
+        if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
+      }
+    });
+  }
+}
 
 void RainbowKeyboard::mouseEnter(const juce::MouseEvent& e) {
   // This is NOT called if mouseDrag() is still happening
@@ -323,7 +339,7 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
         if (mNoteAddGenRectMap[pitchClass].contains(pos) && note->getNumEnabledGens() < Utils::NUM_GEN) {
           if (isClick) {
             // Add another generator
-            ParamHelper::setParam(note->generators[note->getNumEnabledGens()]->enable, true);
+            note->enableNextAvailableGen();
             resized();
           }
           mHoverGenRect = mNoteAddGenRectMap[pitchClass];

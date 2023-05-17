@@ -72,6 +72,8 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
   // Keeps track of the note being played because of the mouse injected input
   Utils::MidiNote mMouseNote;
   bool mIsHoverBtnReturn = false;
+  // Popup menu for right clicks
+  juce::PopupMenu menu;
 
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectMap[Utils::PitchClass::COUNT];
