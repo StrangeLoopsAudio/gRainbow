@@ -122,6 +122,8 @@ set(BinaryResources
 
 juce_add_binary_data(Assets SOURCES ${BinaryResources})
 
+juce_add_module(${CMAKE_CURRENT_SOURCE_DIR}/libs/ff_meters)
+
 # Required for Linux happiness:
 # See https://forum.juce.com/t/loading-pytorch-model-using-binarydata/39997/2
 set_target_properties(Assets PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
@@ -164,6 +166,7 @@ target_link_libraries("${PROJECT_NAME}"
     PRIVATE
     Assets
     ${JUCE_DEPENDENCIES}
+    ff_meters
     PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
