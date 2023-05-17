@@ -578,6 +578,7 @@ void GRainbowAudioProcessorEditor::processPreset(juce::File file) {
     mSynth.processInput(juce::Range<juce::int64>(), true);
     mArcSpec.loadWaveformBuffer(&mSynth.getAudioBuffer());
     mLabelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
+    resized();
   } else {
     displayError(juce::String::formatted("The file failed to open because %s", input.getStatus().getErrorMessage().toRawUTF8()));
     return;

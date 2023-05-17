@@ -16,7 +16,7 @@ class Grain {
  public:
   Grain() : duration(0), pbRate(1.0), startPos(0), trigTs(0), gain(0.0) {}
   Grain(std::vector<float> env, int duration, float pbRate, int startPos, int trigTs, float gain)
-      : mEnv(env), duration(duration), pbRate(pbRate), startPos(startPos), trigTs(trigTs), gain(gain) {}
+      : mEnv(env), duration(duration), pbRate(pbRate), startPos(juce::jmax(0, startPos)), trigTs(trigTs), gain(gain) {}
   ~Grain() {}
 
   float process(const juce::AudioBuffer<float>& audioBuffer, float gain, int time);

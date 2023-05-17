@@ -21,13 +21,16 @@
 
   The RainbowKeyboard is able to detect mouse input and inject midi inputs
 */
-class RainbowKeyboard : public juce::Component {
+class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::Listener {
  public:
   RainbowKeyboard(juce::MidiKeyboardState& state, Parameters& parameters);
   ~RainbowKeyboard() override;
 
   void paint(juce::Graphics&) override;
   void resized() override;
+
+  void parameterValueChanged(int parameterIndex, float newValue) override;
+  void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}
 
   void mouseMove(const juce::MouseEvent&) override;
   void mouseDrag(const juce::MouseEvent&) override;

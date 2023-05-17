@@ -120,7 +120,7 @@ static float GRAIN_DURATION_DEFAULT = 0.2f;
 static float PITCH_ADJUST_DEFAULT = 0.0f;
 static float PITCH_SPRAY_DEFAULT = 0.01f;
 static float POSITION_ADJUST_DEFAULT = 0.0f;
-static float POSITION_SPRAY_DEFAULT = 0.0f;
+static float POSITION_SPRAY_DEFAULT = 0.05f;
 }  // namespace ParamDefaults
 
 enum ParamType { GLOBAL, NOTE, GENERATOR };
@@ -232,12 +232,12 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     ParamHelper::setParam(P_FLOAT(common[FILT_CUTOFF]), ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
     ParamHelper::setParam(P_FLOAT(common[FILT_RESONANCE]), ParamDefaults::FILTER_RESONANCE_DEFAULT);
     ParamHelper::setParam(P_CHOICE(common[FILT_TYPE]), 0);
-    ParamHelper::setParam(P_FLOAT(common[PITCH_ADJUST]), 0.0f);
-    ParamHelper::setParam(P_FLOAT(common[PITCH_SPRAY]), 0.0f);
-    ParamHelper::setParam(P_FLOAT(common[POS_ADJUST]), 0.0f);
+    ParamHelper::setParam(P_FLOAT(common[PITCH_ADJUST]), ParamDefaults::PITCH_ADJUST_DEFAULT);
+    ParamHelper::setParam(P_FLOAT(common[PITCH_SPRAY]), ParamDefaults::PITCH_SPRAY_DEFAULT);
+    ParamHelper::setParam(P_FLOAT(common[POS_ADJUST]), ParamDefaults::POSITION_ADJUST_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[POS_SPRAY]), ParamDefaults::POSITION_SPRAY_DEFAULT);
-    ParamHelper::setParam(P_FLOAT(common[GRAIN_SHAPE]), 0.5f);
-    ParamHelper::setParam(P_FLOAT(common[GRAIN_TILT]), 0.5f);
+    ParamHelper::setParam(P_FLOAT(common[GRAIN_SHAPE]), ParamDefaults::GRAIN_SHAPE_DEFAULT);
+    ParamHelper::setParam(P_FLOAT(common[GRAIN_TILT]), ParamDefaults::GRAIN_TILT_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[GRAIN_RATE]), ParamDefaults::GRAIN_RATE_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[GRAIN_DURATION]), ParamDefaults::GRAIN_DURATION_DEFAULT);
     ParamHelper::setParam(P_BOOL(common[GRAIN_SYNC]), false);
@@ -371,6 +371,12 @@ struct ParamGenerator : ParamCommon {
     candidate->removeListener(listener);
   }
 
+  void resetParams(bool fullClear) { 
+    ParamCommon::resetParams(fullClear);
+    ParamHelper::setParam(enable, genIdx == 0);
+    ParamHelper::setParam(candidate, genIdx);
+  }
+
   int noteIdx;
   int genIdx;
 
@@ -381,10 +387,31 @@ struct ParamGenerator : ParamCommon {
 };
 
 struct ParamNote : ParamCommon {
-  ParamNote(int noteIdx) : ParamCommon(ParamType::NOTE), noteIdx(noteIdx), numActiveGens(1) {
+  ParamNote(int noteIdx) : ParamCommon(ParamType::NOTE), noteIdx(noteIdx) {
     for (int i = 0; i < NUM_GENERATORS; ++i) {
       generators.emplace_back(new ParamGenerator(noteIdx, i));
     }
+  }
+
+  // Returns the number of enabled generators
+  int getNumEnabledGens() { 
+    int numEnabled = 0;
+    for (auto& gen : generators) {
+      if (gen->enable->get()) numEnabled++;
+    }
+    return numEnabled;
+  }
+
+  // Gets list of enabled generators, then returns the one at idx, or nullptr if idx > num enabled gens
+  ParamGenerator* getEnabledGenByIdx(int idx) {
+    int numEnabled = 0;
+    for (int i = 0; i < Utils::NUM_GEN; ++i) {
+      if (generators[i]->enable->get()) {
+        if (numEnabled == idx) return generators[i].get();
+        numEnabled++;
+      }
+    }
+    return nullptr;
   }
 
   void addParams(juce::AudioProcessor& p);
@@ -401,7 +428,7 @@ struct ParamNote : ParamCommon {
   void resetParams(bool fullClear) {
     ParamCommon::resetParams(fullClear);
     for (auto& generator : generators) {
-      generator->resetParams();
+      generator->resetParams(fullClear);
     }
     if (fullClear) {
       candidates.clear();
@@ -414,7 +441,6 @@ struct ParamNote : ParamCommon {
   void setStartingCandidatePosition();
 
   int noteIdx;
-  int numActiveGens;
 
   std::vector<std::unique_ptr<ParamGenerator>> generators;
   std::vector<ParamCandidate> candidates;

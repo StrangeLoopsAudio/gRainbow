@@ -16,9 +16,22 @@
 RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state, Parameters& parameters) : mState(state), mParameters(parameters) {
   mNoteVelocity.fill(0.0f);
   mRandom.setSeed(juce::Time::currentTimeMillis());
+  for (auto& note : mParameters.note.notes) {
+    for (auto& gen : note->generators) {
+      gen->enable->addListener(this);
+    }
+  }
 }
 
-RainbowKeyboard::~RainbowKeyboard() {}
+RainbowKeyboard::~RainbowKeyboard() {
+  for (auto& note : mParameters.note.notes) {
+    for (auto& gen : note->generators) {
+      gen->enable->removeListener(this);
+    }
+  }
+}
+
+void RainbowKeyboard::parameterValueChanged(int parameterIndex, float newValue) { resized(); }
 
 void RainbowKeyboard::paint(juce::Graphics& g) {
   //g.fillAll(juce::Colours::transparentBlack);
@@ -64,7 +77,7 @@ void RainbowKeyboard::fillNoteRectangleMap() {
     // Make add generator button for each note
     mNoteAddGenRectMap[key] = mNoteRectMap[key]
                                   .withSizeKeepingCentre(ADD_GEN_SIZE, ADD_GEN_SIZE)
-                                  .withBottomY(mNoteRectMap[key].getY() - (genHeight * mParameters.note.notes[key]->numActiveGens) - Utils::PADDING);
+            .withBottomY(mNoteRectMap[key].getY() - (genHeight * mParameters.note.notes[key]->getNumEnabledGens()) - Utils::PADDING);
     
     r.removeFromLeft(Utils::PADDING);
   }
@@ -139,10 +152,11 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 
   // Draw the active generators on top of each key
   int genHeight = getHeight() * (1.0f - NOTE_BODY_HEIGHT) / 4;
-  int numGens = mParameters.note.notes[pitchClass]->numActiveGens;
   juce::Rectangle<int> genRect = juce::Rectangle<int>(area.getWidth(), genHeight);
-  for (int i = 0; i < numGens; ++i) {
-    bool isGenSelected = mParameters.selectedParams == mParameters.note.notes[pitchClass]->generators[i].get();
+  for (int i = 0; i < mParameters.note.notes[pitchClass]->getNumEnabledGens(); ++i) {
+    ParamGenerator* gen = mParameters.note.notes[pitchClass]->getEnabledGenByIdx(i);
+    jassert(gen != nullptr);
+    bool isGenSelected = mParameters.selectedParams == gen;
     juce::Colour genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).brighter((i+1) * Utils::GENERATOR_BRIGHTNESS_ADD);
     if (mHoverGenRect == mNoteGenRectMap[pitchClass][i]) genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).darker();
     if (isGenSelected) genColour = keyColour.darker();
@@ -150,11 +164,14 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     g.fillRoundedRectangle(mNoteGenRectMap[pitchClass][i], Utils::ROUNDED_AMOUNT);
     g.setColour(keyColour);
     g.drawRoundedRectangle(mNoteGenRectMap[pitchClass][i], Utils::ROUNDED_AMOUNT, 2.0f);
+    g.setColour(juce::Colours::black);
+    g.drawFittedText(juce::String::repeatedString("*", gen->genIdx + 1), mNoteGenRectMap[pitchClass][i].toNearestInt(),
+                     juce::Justification::centred, 1);
   }
 
   // Draw the add generator button if more can still be added
   // Also disable add button if note or gen is selected (for neatness)
-  if (numGens < Utils::NUM_GEN) {
+  if (mParameters.note.notes[pitchClass]->getNumEnabledGens() < Utils::NUM_GEN) {
     juce::Colour addColour = (mHoverGenRect == mNoteAddGenRectMap[pitchClass]) ? keyColour.withSaturation(0.4f).darker()
                                                                                : keyColour.withSaturation(0.4f);
     g.setColour(addColour);
@@ -289,12 +306,13 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
         return Utils::MidiNote(pitchClass, velocity);
       } else {
         // Check generators and add gen button for hover
-        // TODO: switch selected gen/handle add gen click
-        for (int i = 0; i < note->numActiveGens; ++i) {
+        for (int i = 0; i < note->getNumEnabledGens(); ++i) {
           if (mNoteGenRectMap[pitchClass][i].contains(pos)) {
             if (isClick) {
               // Select current generator for parameter edits and send update
-              mParameters.selectedParams = note->generators[i].get();
+              ParamGenerator* gen = note->getEnabledGenByIdx(i);
+              jassert(gen != nullptr);
+              mParameters.selectedParams = gen;
               if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
             }
             mHoverGenRect = mNoteGenRectMap[pitchClass][i];
@@ -302,10 +320,10 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
             return Utils::MidiNote();
           }
         }
-        if (mNoteAddGenRectMap[pitchClass].contains(pos) && note->numActiveGens < Utils::NUM_GEN) {
+        if (mNoteAddGenRectMap[pitchClass].contains(pos) && note->getNumEnabledGens() < Utils::NUM_GEN) {
           if (isClick) {
             // Add another generator
-            ParamHelper::setParam(note->generators[note->numActiveGens++]->enable, true);
+            ParamHelper::setParam(note->generators[note->getNumEnabledGens()]->enable, true);
             resized();
           }
           mHoverGenRect = mNoteAddGenRectMap[pitchClass];
