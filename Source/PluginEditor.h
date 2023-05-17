@@ -18,6 +18,7 @@
 #include "Components/EnvelopeADSR.h"
 #include "Components/EnvelopeGrain.h"
 #include "Components/GrainControl.h"
+#include "Components/MasterControl.h"
 #include "Components/FilterControl.h"
 #include "Components/TrimSelection.h"
 #include "Components/Settings.h"
@@ -79,6 +80,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   static constexpr int NOTE_BULB_SIZE = 10;
   static constexpr int NOTE_DISPLAY_HEIGHT = 20;
   static constexpr float KEYBOARD_HEIGHT = 0.27f;
+  static constexpr float SIMPLE_PANEL_HEIGHT = (Utils::PADDING * 3) + Utils::TITLE_HEIGHT + Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT;
   static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
 
   // DSP Modules
@@ -95,6 +97,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   FilterControl mFilterControl;
   EnvelopeGrain mEnvGrain;
   GrainControl mGrainControl;
+  MasterControl mMasterControl;
   juce::Rectangle<float> mNoteDisplayRect;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;

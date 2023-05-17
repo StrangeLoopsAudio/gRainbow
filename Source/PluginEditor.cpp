@@ -39,6 +39,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mEnvAdsr(synth.getParams()),
       mEnvGrain(synth.getParams()),
       mGrainControl(synth.getParams()),
+      mMasterControl(synth.getParams()),
       mFilterControl(synth.getParams()),
       mProgressBar(synth.getLoadingProgress()),
       mTrimSelection(mFormatManager, synth.getParamUI()) {
@@ -131,6 +132,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     mEnvGrain.updateSelectedParams();
     mFilterControl.updateSelectedParams();
     mGrainControl.updateSelectedParams();
+    mMasterControl.updateSelectedParams();
   };
   addAndMakeVisible(mKeyboard);
 
@@ -144,6 +146,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mEnvGrain);
   addAndMakeVisible(mFilterControl);
   addAndMakeVisible(mGrainControl);
+  addAndMakeVisible(mMasterControl);
 
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
 
@@ -354,11 +357,12 @@ void GRainbowAudioProcessorEditor::resized() {
   // Left and right panels
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
   mEnvGrain.setBounds(leftPanel.removeFromTop(leftPanel.getHeight() / 2.0f));
-  mGrainControl.setBounds(leftPanel);
+  mEnvAdsr.setBounds(leftPanel);
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
   mResourceUsage.setBounds(rightPanel.removeFromBottom(12));
-  mEnvAdsr.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2.0f));
+  mMasterControl.setBounds(rightPanel.removeFromTop(SIMPLE_PANEL_HEIGHT));
+  mGrainControl.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2.5f));
   mFilterControl.setBounds(rightPanel);  
 
   // Open and record buttons

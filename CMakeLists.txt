@@ -80,6 +80,8 @@ set(SourceFiles
     Source/Components/FilterControl.cpp
     Source/Components/GrainControl.h
     Source/Components/GrainControl.cpp
+    Source/Components/MasterControl.h
+    Source/Components/MasterControl.cpp
     Source/DSP/AudioRecorder.h
     Source/DSP/AudioRecorder.cpp
     Source/DSP/TransientDetector.h

@@ -131,7 +131,7 @@ void GrainControl::updateSelectedParams() {
   mSliderPitchSpray.updateSelectedParams();
   mSliderPosAdjust.updateSelectedParams();
   mSliderPosSpray.updateSelectedParams();
-  // TODO: disable position changer if not generator type
+
   bool isGen = mCurSelectedParams->type == ParamType::GENERATOR;
   mPositionChanger.setActive(isGen);
   if (isGen) {
@@ -156,51 +156,6 @@ void GrainControl::paint(juce::Graphics& g) {
   g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
-  /*float envWidth;
-  float envOffset;
-  if (mParameters.global.grainSync->get()) {
-    float durDiv = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * mParameters.global.grainDuration->get()));
-    envWidth = mVizRect.getWidth() / durDiv;
-    float rateDiv = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * mParameters.global.grainRate->get()));
-    envOffset = envWidth / rateDiv;
-  } else {
-    envWidth = juce::jmap(mParameters.global.grainDuration->get(), mVizRect.getWidth() / MAX_NUM_ENVS, mVizRect.getWidth());
-    envOffset = juce::jmap(mParameters.global.grainRate->get(), envWidth * MIN_RATE_RATIO, envWidth * MAX_RATE_RATIO);
-  }
-
-  float shapeWidth = envWidth * mParameters.global.grainShape->get() / 2.0f;
-
-  // Draw darker odd numbered envelopes
-  float tilt = mParameters.global.grainTilt->get();
-  float curXStart = mVizRect.getX() + envOffset;
-  juce::Colour envColour = colour.darker(0.5f);
-  while (curXStart < mVizRect.getWidth()) {
-    juce::Path envPath;
-    envPath.startNewSubPath(juce::Point<float>(curXStart, mVizRect.getBottom()));
-    envPath.lineTo(juce::Point<float>(limitEnvX(juce::jmax(curXStart, curXStart + (tilt * envWidth) - shapeWidth)), mVizRect.getY()));
-    envPath.lineTo(
-        juce::Point<float>(limitEnvX(juce::jmin(curXStart + envWidth, curXStart + (tilt * envWidth) + shapeWidth)), mVizRect.getY()));
-    envPath.lineTo(juce::Point<float>(limitEnvX(curXStart + envWidth), mVizRect.getBottom()));
-    g.setColour(envColour);
-    g.strokePath(envPath, mPathStroke);
-    curXStart += (envOffset * 2.0f);
-  }
-  curXStart = mVizRect.getX();
-  // Draw brighter even numbered envelopes
-  envColour = colour.brighter(0.5f);
-  while (curXStart < mVizRect.getWidth()) {
-    juce::Path envPath;
-    envPath.startNewSubPath(juce::Point<float>(curXStart, mVizRect.getBottom()));
-    envPath.lineTo(juce::Point<float>(limitEnvX(juce::jmax(curXStart, curXStart + (tilt * envWidth) - shapeWidth)), mVizRect.getY()));
-    envPath.lineTo(
-        juce::Point<float>(limitEnvX(juce::jmin(curXStart + envWidth, curXStart + (tilt * envWidth) + shapeWidth)), mVizRect.getY()));
-    envPath.lineTo(juce::Point<float>(limitEnvX(curXStart + envWidth), mVizRect.getBottom()));
-    g.setColour(envColour);
-    g.strokePath(envPath, mPathStroke);
-    curXStart += (envOffset * 2.0f);
-  }
-
-  g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f); */
   g.setColour(mParamColour);
   g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
