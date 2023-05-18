@@ -13,6 +13,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Utils.h"
 #include "Parameters.h"
+#include "ff_meters/ff_meters.h"
 
 // Enables more than one slider value to be displayed at once in a rainbow fashion
 class RainbowSlider : public juce::Slider {
@@ -165,4 +166,33 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
   }
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowLookAndFeel)
+};
+
+class MeterLookAndFeel : public foleys::LevelMeterLookAndFeel {
+ public:
+  MeterLookAndFeel() {}
+
+ private:
+  // Disables meter tick marks
+  juce::Rectangle<float> getMeterTickmarksBounds(juce::Rectangle<float> bounds,
+                                                 foleys::LevelMeter::MeterFlags meterType) const override {
+    return juce::Rectangle<float>();
+  }
+
+  // Disables meter clip light
+  juce::Rectangle<float> getMeterClipIndicatorBounds(juce::Rectangle<float> bounds,
+                                                     foleys::LevelMeter::MeterFlags meterType) const override {
+    return juce::Rectangle<float>();
+  }
+
+  // Disable meter max number
+  juce::Rectangle<float> getMeterMaxNumberBounds(juce::Rectangle<float> bounds,
+                                                 foleys::LevelMeter::MeterFlags meterType) const override {
+    return juce::Rectangle<float>();
+  }
+
+  // Just use the regular bounds, no margins
+  juce::Rectangle<float> getMeterBarBounds(juce::Rectangle<float> bounds, foleys::LevelMeter::MeterFlags meterType) const override {
+    return bounds;
+  }
 };

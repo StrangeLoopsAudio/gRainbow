@@ -42,6 +42,8 @@ static juce::String notePitchAdjust{"_note_pitch_adjust"};
 static juce::String notePitchSpray{"_note_pitch_spray"};
 static juce::String notePositionAdjust{"_note_position_adjust"};
 static juce::String notePositionSpray{"_note_position_spray"};
+static juce::String notePanAdjust{"_note_pan_adjust"};
+static juce::String notePanSpray{"_note_pan_spray"};
 // Generator params
 static juce::String genEnable{"_enable_gen_"};
 static juce::String genCandidate{"_candidate_gen_"};
@@ -62,6 +64,8 @@ static juce::String genPitchAdjust{"_pitch_adjust_gen_"};
 static juce::String genPitchSpray{"_pitch_spray_gen_"};
 static juce::String genPositionAdjust{"_position_adjust_gen_"};
 static juce::String genPositionSpray{"_position_spray_gen_"};
+static juce::String genPanAdjust{"_pan_adjust_gen_"};
+static juce::String genPanSpray{"_pan_spray_gen_"};
 // Global params
 static juce::String globalGain{"global_gain"};
 static juce::String globalAttack{"global_attack"};
@@ -80,7 +84,9 @@ static juce::String globalPitchAdjust{"global_pitch_adjust"};
 static juce::String globalPitchSpray{"global_pitch_spray"};
 static juce::String globalPositionAdjust{"global_position_adjust"};
 static juce::String globalPositionSpray{"global_position_spray"};
-}  // namespace ParamIDs
+static juce::String globalPanAdjust{"global_pan_adjust"};
+static juce::String globalPanSpray{"global_pan_spray"};
+} // namespace ParamIDs
 
 namespace ParamRanges {
 static juce::NormalisableRange<float> GAIN(0.0f, 1.0f);
@@ -98,6 +104,8 @@ static juce::NormalisableRange<float> PITCH_ADJUST(-0.25f, 0.25f);
 static juce::NormalisableRange<float> PITCH_SPRAY(0.0f, 0.1f);
 static juce::NormalisableRange<float> POSITION_ADJUST(-0.5f, 0.5f);
 static juce::NormalisableRange<float> POSITION_SPRAY(0.0f, 0.3f);
+static juce::NormalisableRange<float> PAN_ADJUST(-1.0f, 1.0f);
+static juce::NormalisableRange<float> PAN_SPRAY(0.0f, 1.0f);
 
 static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
@@ -113,7 +121,7 @@ static float FILTER_HP_CUTOFF_DEFAULT_HZ = 800.0f;
 static float FILTER_BP_CUTOFF_DEFAULT_HZ = 1200.0f;
 static float FILTER_RESONANCE_DEFAULT = 0.707f;
 static juce::String FILTER_TYPE_DEFAULT = "none";
-static float GRAIN_SHAPE_DEFAULT = 0.75f;
+static float GRAIN_SHAPE_DEFAULT = 0.25f;
 static float GRAIN_TILT_DEFAULT = 0.5f;
 static float GRAIN_RATE_DEFAULT = 0.33f;
 static float GRAIN_DURATION_DEFAULT = 0.2f;
@@ -121,6 +129,8 @@ static float PITCH_ADJUST_DEFAULT = 0.0f;
 static float PITCH_SPRAY_DEFAULT = 0.01f;
 static float POSITION_ADJUST_DEFAULT = 0.0f;
 static float POSITION_SPRAY_DEFAULT = 0.05f;
+static float PAN_ADJUST_DEFAULT = 0.0f;
+static float PAN_SPRAY_DEFAULT = 0.05f;
 }  // namespace ParamDefaults
 
 enum ParamType { GLOBAL, NOTE, GENERATOR };
@@ -181,6 +191,8 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     PITCH_SPRAY,
     POS_ADJUST,
     POS_SPRAY,
+    PAN_ADJUST,
+    PAN_SPRAY,
     NUM_COMMON
   };
 
@@ -202,6 +214,8 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     common[PITCH_SPRAY]->addListener(listener);
     common[POS_ADJUST]->addListener(listener);
     common[POS_SPRAY]->addListener(listener);
+    common[PAN_ADJUST]->addListener(listener);
+    common[PAN_SPRAY]->addListener(listener);
   }
   void removeListener(juce::AudioProcessorParameter::Listener* listener) {
     common[GAIN]->removeListener(listener);
@@ -221,6 +235,8 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     common[PITCH_SPRAY]->removeListener(listener);
     common[POS_ADJUST]->removeListener(listener);
     common[POS_SPRAY]->removeListener(listener);
+    common[PAN_ADJUST]->removeListener(listener);
+    common[PAN_SPRAY]->removeListener(listener);
   }
 
   void resetParams(bool fullClear = true) {
@@ -236,6 +252,8 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     ParamHelper::setParam(P_FLOAT(common[PITCH_SPRAY]), ParamDefaults::PITCH_SPRAY_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[POS_ADJUST]), ParamDefaults::POSITION_ADJUST_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[POS_SPRAY]), ParamDefaults::POSITION_SPRAY_DEFAULT);
+    ParamHelper::setParam(P_FLOAT(common[PAN_ADJUST]), ParamDefaults::PAN_ADJUST_DEFAULT);
+    ParamHelper::setParam(P_FLOAT(common[PAN_SPRAY]), ParamDefaults::PAN_SPRAY_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[GRAIN_SHAPE]), ParamDefaults::GRAIN_SHAPE_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[GRAIN_TILT]), ParamDefaults::GRAIN_TILT_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[GRAIN_RATE]), ParamDefaults::GRAIN_RATE_DEFAULT);
@@ -326,7 +344,9 @@ static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GA
                                                                ParamDefaults::PITCH_ADJUST_DEFAULT,
                                                                ParamDefaults::PITCH_SPRAY_DEFAULT,
                                                                ParamDefaults::POSITION_ADJUST_DEFAULT,
-                                                               ParamDefaults::POSITION_SPRAY_DEFAULT};
+                                                               ParamDefaults::POSITION_SPRAY_DEFAULT,
+                                                               ParamDefaults::PAN_ADJUST_DEFAULT,
+                                                               ParamDefaults::PAN_SPRAY_DEFAULT};
 
 struct ParamCandidate {
   float posRatio;

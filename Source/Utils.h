@@ -19,7 +19,7 @@ typedef std::vector<std::vector<float>> SpecBuffer;
 
 // UI spacing and colours
 static constexpr int PADDING = 6;
-static constexpr int TITLE_HEIGHT = 20;
+static constexpr int TITLE_HEIGHT = 16;
 static constexpr int LABEL_HEIGHT = 20;
 static constexpr int KNOB_HEIGHT = 40;
 static constexpr float ROUNDED_AMOUNT = 10.0f;

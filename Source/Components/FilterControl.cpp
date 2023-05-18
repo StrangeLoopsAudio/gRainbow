@@ -39,6 +39,15 @@ FilterControl::FilterControl(Parameters& parameters)
   mLabelResonance.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelResonance);
 
+  for (int i = 0; i < FILTER_TYPE_NAMES.size(); ++i) {
+    mFilterType.addItem(FILTER_TYPE_NAMES[i], i + 1);
+  }
+  mFilterType.onChange = [this]() { 
+    int type = mFilterType.getSelectedId() - 1;
+    ParamHelper::setParam(P_CHOICE(mCurSelectedParams->common[ParamCommon::Type::FILT_TYPE]), type);
+  };
+  addAndMakeVisible(mFilterType);
+
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
 
@@ -57,6 +66,8 @@ void FilterControl::timerCallback() {
     mParamHasChanged.store(false);
     mSliderCutoff.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::FILT_CUTOFF), juce::dontSendNotification);
     mSliderResonance.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::FILT_RESONANCE),
+                              juce::dontSendNotification);
+    mFilterType.setSelectedId(mParameters.getChoiceParam(mCurSelectedParams, ParamCommon::Type::FILT_TYPE) + 1,
                               juce::dontSendNotification);
   }
 }
@@ -84,32 +95,6 @@ void FilterControl::paint(juce::Graphics& g) {
   g.drawRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT, 2.0f);
   g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
-
-  // draw filter type rectangles
-  g.setColour(colour);
-  g.drawRoundedRectangle(mLowPassRect, Utils::ROUNDED_AMOUNT, 2.0f);
-  g.drawRoundedRectangle(mHighPassRect, Utils::ROUNDED_AMOUNT, 2.0f);
-  g.drawRoundedRectangle(mBandPassRect, Utils::ROUNDED_AMOUNT, 2.0f);
-
-  // Select current filter type
-  switch (mCurHoverFilterType) {
-    g.setColour(colour.withAlpha(0.3f));
-    case (Utils::FilterType::LOWPASS):
-      g.fillRoundedRectangle(mLowPassRect, Utils::ROUNDED_AMOUNT);
-      break;
-    case (Utils::FilterType::HIGHPASS):
-      g.fillRoundedRectangle(mHighPassRect, Utils::ROUNDED_AMOUNT);
-      break;
-    case (Utils::FilterType::BANDPASS):
-      g.fillRoundedRectangle(mBandPassRect, Utils::ROUNDED_AMOUNT);
-      break;
-  }
-
-  // Label filter types
-  g.setColour(Utils::GLOBAL_COLOUR);
-  g.drawText(FILTER_TYPE_NAMES[1], mLowPassRect, juce::Justification::centred);
-  g.drawText(FILTER_TYPE_NAMES[2], mHighPassRect, juce::Justification::centred);
-  g.drawText(FILTER_TYPE_NAMES[3], mBandPassRect, juce::Justification::centred);
 
   // Draw selected filter path
   juce::Path mFilterPath;
@@ -182,89 +167,32 @@ void FilterControl::paint(juce::Graphics& g) {
 }
 
 void FilterControl::resized() {
-  juce::Rectangle<float> r = getLocalBounds().toFloat();
+  juce::Rectangle<int> r = getLocalBounds();
   // Remove padding
-  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().toFloat().getCentre());
+  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().getCentre());
 
   // Make title rect
-  mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT);
-
-  r.removeFromTop(Utils::PADDING);
-  
-  // Make button rects
-  juce::Rectangle<float> buttonPanel = r.removeFromTop(FILTER_TYPE_BUTTON_HEIGHT); 
-  int buttonWidth = buttonPanel.getWidth() / 3;
-  mLowPassRect = buttonPanel.removeFromLeft(buttonWidth);
-  mHighPassRect = buttonPanel.removeFromLeft(buttonWidth);
-  mBandPassRect = buttonPanel;
+  mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT).toFloat();
 
   r.removeFromTop(Utils::PADDING);
 
-  // Place labels
-  juce::Rectangle<int> labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT).toNearestInt();
-  int labelWidth = labelPanel.getWidth() / 2;
-  mLabelCutoff.setBounds(labelPanel.removeFromLeft(labelWidth));
-  mLabelResonance.setBounds(labelPanel.removeFromLeft(labelWidth));
+  int panelWidth = r.getWidth() / 3.0f;
+  juce::Rectangle<int> knobPanel = r.removeFromBottom(Utils::LABEL_HEIGHT + Utils::KNOB_HEIGHT);
+  juce::Rectangle<int> panel = knobPanel.removeFromLeft(panelWidth);
+  mLabelCutoff.setBounds(panel.removeFromBottom(Utils::LABEL_HEIGHT));
+  mSliderCutoff.setBounds(panel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
 
-  // Place sliders
-  juce::Rectangle<int> knobPanel = r.removeFromBottom(Utils::KNOB_HEIGHT).toNearestInt();
-  juce::Rectangle<int> knobRect = juce::Rectangle<int>(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT);
-  mSliderCutoff.setBounds(knobRect.withCentre(juce::Point<int>(knobPanel.getX() + knobPanel.getWidth() * 0.25f, knobPanel.getCentreY())));
+  panel = knobPanel.removeFromRight(panelWidth);
+  mLabelResonance.setBounds(panel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderResonance.setBounds(
-      knobRect.withCentre(juce::Point<int>(knobPanel.getX() + knobPanel.getWidth() * 0.75f, knobPanel.getCentreY())));
+      panel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+
+
+  mFilterType.setBounds(knobPanel);
 
   r.removeFromBottom(Utils::PADDING);
 
-  mVizRect = r;
-}
-
-void FilterControl::mouseMove(const juce::MouseEvent& event) {
-  mCurHoverFilterType = getFilterTypeFromMouse(event);
-  repaint();
-}
-void FilterControl::mouseExit(const juce::MouseEvent& event) {
-  mCurHoverFilterType = Utils::NO_FILTER;
-  repaint();
-}
-void FilterControl::mouseUp(const juce::MouseEvent& event) {
-  if (event.eventComponent != this) return;
-  Utils::FilterType newFilterType = getFilterTypeFromMouse(event);
-  if (newFilterType == P_CHOICE(mCurSelectedParams->common[ParamCommon::Type::FILT_TYPE])->getIndex()) {
-    ParamHelper::setParam(P_CHOICE(mCurSelectedParams->common[ParamCommon::Type::FILT_TYPE]), Utils::FilterType::NO_FILTER);
-  } else {
-    ParamHelper::setParam(P_CHOICE(mCurSelectedParams->common[ParamCommon::Type::FILT_TYPE]), newFilterType);
-    switch (newFilterType) {
-      case (Utils::FilterType::LOWPASS):
-        ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF]),
-                              ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
-        break;
-      case (Utils::FilterType::HIGHPASS):
-        ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF]),
-                              ParamDefaults::FILTER_HP_CUTOFF_DEFAULT_HZ);
-        break;
-      case (Utils::FilterType::BANDPASS):
-        ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF]),
-                              ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
-        break;
-    }
-    ParamHelper::setParam(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_RESONANCE]),
-                          ParamDefaults::FILTER_RESONANCE_DEFAULT);
-  }
-  
-  repaint();
-}
-
-Utils::FilterType FilterControl::getFilterTypeFromMouse(const juce::MouseEvent& event) {
-  juce::Point<float> pos = event.getEventRelativeTo(this).getPosition().toFloat();
-  if (mLowPassRect.contains(pos)) {
-    return Utils::FilterType::LOWPASS;
-  } else if (mHighPassRect.contains(pos)) {
-    return Utils::FilterType::HIGHPASS;
-  } else if (mBandPassRect.contains(pos)) {
-    return Utils::FilterType::BANDPASS;
-  } else {
-    return Utils::FilterType::NO_FILTER;
-  }
+  mVizRect = r.toFloat();
 }
 
 float FilterControl::filterTypeToCutoff(Utils::FilterType filterType) {

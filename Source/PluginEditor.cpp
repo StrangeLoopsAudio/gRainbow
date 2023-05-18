@@ -38,8 +38,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mKeyboard(synth.getKeyboardState(), synth.getParams()),
       mEnvAdsr(synth.getParams()),
       mEnvGrain(synth.getParams()),
-      mGrainControl(synth.getParams()),
-      mMasterControl(synth.getParams(), synth.getMeterSource()),
+      mGrainControl(synth.getParams(), synth.getMeterSource()),
       mFilterControl(synth.getParams()),
       mProgressBar(synth.getLoadingProgress()),
       mTrimSelection(mFormatManager, synth.getParamUI()) {
@@ -89,9 +88,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   }
   addAndMakeVisible(mLabelFileName);
 
-  mResourceUsage.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
-  addAndMakeVisible(mResourceUsage);
-
   // Arc spectrogram
   mArcSpec.onImagesComplete = [this]() {
     const juce::MessageManagerLock lock;
@@ -132,7 +128,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     mEnvGrain.updateSelectedParams();
     mFilterControl.updateSelectedParams();
     mGrainControl.updateSelectedParams();
-    mMasterControl.updateSelectedParams();
   };
   addAndMakeVisible(mKeyboard);
 
@@ -146,7 +141,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mEnvGrain);
   addAndMakeVisible(mFilterControl);
   addAndMakeVisible(mGrainControl);
-  addAndMakeVisible(mMasterControl);
 
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
 
@@ -231,7 +225,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   mKeyboard.setMidiNotes(midiNotes);
   mArcSpec.setMidiNotes(midiNotes);
 
-  if (PowerUserSettings::get().getResourceUsage()) {
+  /* if (PowerUserSettings::get().getResourceUsage()) {
     const double cpuPerc = mAudioDeviceManager.getCpuUsage() * 100;
     size_t virtual_memory = 0;
     size_t resident_memory = 0;
@@ -257,8 +251,8 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     mResourceUsage.setText(juce::String(cpuPerc, 1) + "% CPU | Virtual " + juce::String(virtual_memory >> 20) + " MB" +
                                " | Resident " +
                                juce::String(resident_memory >> 20) + " MB",
-                           juce::dontSendNotification);
-  }
+                           juce::dontSendNotification); 
+  }*/
 
   repaint();
 }
@@ -356,14 +350,15 @@ void GRainbowAudioProcessorEditor::resized() {
 
   // Left and right panels
   auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
-  mEnvGrain.setBounds(leftPanel.removeFromTop(leftPanel.getHeight() / 2.0f));
-  mEnvAdsr.setBounds(leftPanel);
+  int subPanelHeight = leftPanel.getHeight() / 3.0f;
+  mEnvGrain.setBounds(leftPanel.removeFromTop(subPanelHeight));
+  mEnvAdsr.setBounds(leftPanel.removeFromTop(subPanelHeight));
+  mFilterControl.setBounds(leftPanel);
 
   auto rightPanel = r.removeFromRight(PANEL_WIDTH);
-  mResourceUsage.setBounds(rightPanel.removeFromBottom(12));
-  mMasterControl.setBounds(rightPanel.removeFromTop(SIMPLE_PANEL_HEIGHT));
-  mGrainControl.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2.5f));
-  mFilterControl.setBounds(rightPanel);  
+  // TODO: add back in resource usage
+  // TODO: add modulators
+  mGrainControl.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2.0f));
 
   // Open and record buttons
   auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT + BTN_PADDING);

@@ -11,16 +11,32 @@
 #include "GrainControl.h"
 #include "../Utils.h"
 
-GrainControl::GrainControl(Parameters& parameters)
+GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& meterSource)
     : mParameters(parameters),
       mCurSelectedParams(parameters.selectedParams),
       mSliderPitchAdjust(parameters, ParamCommon::Type::PITCH_ADJUST),
       mSliderPitchSpray(parameters, ParamCommon::Type::PITCH_SPRAY),
       mSliderPosAdjust(parameters, ParamCommon::Type::POS_ADJUST),
-      mSliderPosSpray(parameters, ParamCommon::Type::POS_SPRAY)
-{
+      mSliderPosSpray(parameters, ParamCommon::Type::POS_SPRAY),
+      mSliderPanAdjust(parameters, ParamCommon::Type::PAN_ADJUST),
+      mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY),
+      mSliderGain(parameters, ParamCommon::Type::GAIN) {
 
   juce::Colour colour = Utils::GLOBAL_COLOUR;
+
+  // Gain and meter
+  mMeter.setMeterSource(&meterSource);
+  mMeter.setLookAndFeel(&mMeterLookAndFeel);
+  addAndMakeVisible(mMeter);
+
+  mSliderGain.setNumDecimalPlacesToDisplay(2);
+  mSliderGain.setRange(ParamRanges::GAIN.start, ParamRanges::GAIN.end, 0.01);
+  addAndMakeVisible(mSliderGain);
+
+  mLabelGain.setText("Gain", juce::dontSendNotification);
+  mLabelGain.setColour(juce::Label::ColourIds::textColourId, colour);
+  mLabelGain.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelGain);
 
   // Adjust pitch
   mSliderPitchAdjust.setNumDecimalPlacesToDisplay(2);
@@ -72,6 +88,31 @@ GrainControl::GrainControl(Parameters& parameters)
   mLabelPosSpray.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPosSpray);
 
+  // Adjust pan
+  mSliderPanAdjust.setNumDecimalPlacesToDisplay(2);
+  mSliderPanAdjust.setRange(ParamRanges::PAN_ADJUST.start, ParamRanges::PAN_ADJUST.end, 0.01);
+  addAndMakeVisible(mSliderPanAdjust);
+
+  mLabelPanAdjust.setText("Pan Adjust", juce::dontSendNotification);
+  mLabelPanAdjust.setColour(juce::Label::ColourIds::textColourId, colour);
+  mLabelPanAdjust.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelPanAdjust);
+
+  // Pan spray
+  mSliderPanSpray.setTextValueSuffix("s");
+  mSliderPanSpray.setSliderStyle(juce::Slider::SliderStyle::LinearBar);
+  mSliderPanSpray.setNumDecimalPlacesToDisplay(3);
+  mSliderPanSpray.setColour(juce::Slider::ColourIds::textBoxOutlineColourId, colour);
+  mSliderPanSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
+  mSliderPanSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
+  mSliderPanSpray.setRange(ParamRanges::PAN_SPRAY.start, ParamRanges::PAN_SPRAY.end, 0.005);
+  addAndMakeVisible(mSliderPanSpray);
+
+  mLabelPanSpray.setText("Pan Spray", juce::dontSendNotification);
+  mLabelPanSpray.setColour(juce::Label::ColourIds::textColourId, colour);
+  mLabelPanSpray.setJustificationType(juce::Justification::centredTop);
+  addAndMakeVisible(mLabelPanSpray);
+
   mPositionChanger.onPositionChanged = [this](bool isRight) {
     ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mParameters.selectedParams);
     jassert(gen != nullptr);
@@ -98,11 +139,14 @@ GrainControl::GrainControl(Parameters& parameters)
   startTimer(100);
 }
 
+GrainControl::~GrainControl() { mMeter.setLookAndFeel(nullptr); }
+
 void GrainControl::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
 
 void GrainControl::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
+    mSliderGain.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GAIN), juce::dontSendNotification);
     mSliderPitchAdjust.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PITCH_ADJUST),
                                 juce::dontSendNotification);
     mSliderPitchSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PITCH_SPRAY),
@@ -110,6 +154,10 @@ void GrainControl::timerCallback() {
     mSliderPosAdjust.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::POS_ADJUST),
                               juce::dontSendNotification);
     mSliderPosSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::POS_SPRAY),
+                             juce::dontSendNotification);
+    mSliderPanAdjust.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PAN_ADJUST),
+                              juce::dontSendNotification);
+    mSliderPanSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PAN_SPRAY),
                              juce::dontSendNotification);
     if (mCurSelectedParams->type == ParamType::GENERATOR) {
       ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
@@ -127,10 +175,13 @@ void GrainControl::updateSelectedParams() {
   mCurSelectedParams->addListener(this);
 
   mParamColour = mParameters.getSelectedParamColour();
+  mSliderGain.updateSelectedParams();
   mSliderPitchAdjust.updateSelectedParams();
   mSliderPitchSpray.updateSelectedParams();
   mSliderPosAdjust.updateSelectedParams();
   mSliderPosSpray.updateSelectedParams();
+  mSliderPanAdjust.updateSelectedParams();
+  mSliderPanSpray.updateSelectedParams();
 
   bool isGen = mCurSelectedParams->type == ParamType::GENERATOR;
   mPositionChanger.setActive(isGen);
@@ -169,30 +220,43 @@ void GrainControl::resized() {
   mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT).toFloat();
 
   r.removeFromTop(Utils::PADDING);
+  
+  int knobWidth = r.getWidth() / 3;
 
-  int panelWidth = r.getWidth() / 3;
-  int panelHeight = Utils::LABEL_HEIGHT * 3 + Utils::KNOB_HEIGHT;
+  r.removeFromLeft(Utils::PADDING);
 
-  juce::Rectangle<int> paramPanel = r.removeFromBottom(panelHeight);
-
-  // Pitch components
-  juce::Rectangle<int> pitchPanel = paramPanel.removeFromLeft(panelWidth);
-  mLabelPitchSpray.setBounds(pitchPanel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mSliderPitchSpray.setBounds(pitchPanel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mLabelPitchAdjust.setBounds(pitchPanel.removeFromBottom(Utils::LABEL_HEIGHT));
+  // Pitch spray and adjust
+  juce::Rectangle<int> knobPanel = r.removeFromLeft(knobWidth);
+  mLabelPitchSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
+  mSliderPitchSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
+  mLabelPitchAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPitchAdjust.setBounds(
-      pitchPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+      knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
 
-  // Position components
-  juce::Rectangle<int> positionPanel = paramPanel.removeFromRight(panelWidth);
-  mLabelPosSpray.setBounds(positionPanel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mSliderPosSpray.setBounds(positionPanel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mLabelPosAdjust.setBounds(positionPanel.removeFromBottom(Utils::LABEL_HEIGHT));
+  // Gain
+  mLabelGain.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
+  mSliderGain.setBounds(
+      knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+
+  // Position spray and adjust
+  knobPanel = r.removeFromRight(knobWidth);
+  mLabelPosSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
+  mSliderPosSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
+  mLabelPosAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPosAdjust.setBounds(
-      positionPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+      knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
 
   // Candidate changer
-  mPositionChanger.setBounds(paramPanel.withSizeKeepingCentre(paramPanel.getWidth(), paramPanel.getHeight() / 2));
+  mPositionChanger.setBounds(knobPanel.removeFromBottom(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT).reduced(Utils::PADDING));
 
-  // TODO: param viz rect
+  // Pan spray and adjust
+  knobPanel = r;
+  mLabelPanSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
+  mSliderPanSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
+  mLabelPanAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
+  mSliderPanAdjust.setBounds(
+      knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+
+  // Meter
+  mMeter.setBounds(knobPanel.removeFromBottom(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT).reduced(Utils::PADDING));
 }

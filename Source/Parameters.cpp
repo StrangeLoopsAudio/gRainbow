@@ -35,10 +35,10 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
 
   // Shape and Tilt have listeners as changing then will change the envolope LUT
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat(ParamIDs::globalGrainShape, "Master Grain Shape",
-                                                                     ParamRanges::GRAIN_SHAPE, 0.5f));
+                                                                     ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
   common[GRAIN_SHAPE]->addListener(this);
-  p.addParameter(common[GRAIN_TILT] =
-                     new juce::AudioParameterFloat(ParamIDs::globalGrainTilt, "Master Grain Tilt", ParamRanges::GRAIN_TILT, 0.5f));
+  p.addParameter(common[GRAIN_TILT] = new juce::AudioParameterFloat(ParamIDs::globalGrainTilt, "Master Grain Tilt",
+                                                                    ParamRanges::GRAIN_TILT, ParamDefaults::GRAIN_TILT_DEFAULT));
   common[GRAIN_TILT]->addListener(this);
 
   p.addParameter(common[GRAIN_RATE] = new juce::AudioParameterFloat(ParamIDs::globalGrainRate, "Master Grain Rate",
@@ -48,15 +48,22 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                    ParamRanges::GRAIN_DURATION, ParamDefaults::GRAIN_DURATION_DEFAULT));
   p.addParameter(common[GRAIN_SYNC] = new juce::AudioParameterBool(ParamIDs::globalGrainSync, "Master Grain Sync", false));
 
-  p.addParameter(common[PITCH_ADJUST] = new juce::AudioParameterFloat(ParamIDs::globalPitchAdjust, "Master Pitch Adjust",
-                                                                      ParamRanges::PITCH_ADJUST, 0.0f));
+  p.addParameter(common[PITCH_ADJUST] =
+                     new juce::AudioParameterFloat(ParamIDs::globalPitchAdjust, "Master Pitch Adjust", ParamRanges::PITCH_ADJUST,
+                                                   ParamDefaults::PITCH_ADJUST_DEFAULT));
   p.addParameter(common[PITCH_SPRAY] = new juce::AudioParameterFloat(ParamIDs::globalPitchSpray, "Master Pitch Spray",
-                                                                     ParamRanges::PITCH_SPRAY, 0.0f));
-  p.addParameter(common[POS_ADJUST] = new juce::AudioParameterFloat(ParamIDs::globalPositionAdjust, "Master Position Adjust",
-                                                                    ParamRanges::POSITION_ADJUST, 0.0f));
+                                                                     ParamRanges::PITCH_SPRAY, ParamDefaults::PITCH_SPRAY_DEFAULT));
+  p.addParameter(common[POS_ADJUST] =
+                     new juce::AudioParameterFloat(ParamIDs::globalPositionAdjust, "Master Position Adjust",
+                                                   ParamRanges::POSITION_ADJUST, ParamDefaults::POSITION_ADJUST_DEFAULT));
   p.addParameter(common[POS_SPRAY] =
                      new juce::AudioParameterFloat(ParamIDs::globalPositionSpray, "Master Position Spray",
                                                    ParamRanges::POSITION_SPRAY, ParamDefaults::POSITION_SPRAY_DEFAULT));
+
+  p.addParameter(common[PAN_ADJUST] = new juce::AudioParameterFloat(ParamIDs::globalPanAdjust, "Master Pan Adjust",
+                                                                    ParamRanges::PAN_ADJUST, ParamDefaults::PAN_ADJUST_DEFAULT));
+  p.addParameter(common[PAN_SPRAY] = new juce::AudioParameterFloat(ParamIDs::globalPanSpray, "Master Pan Spray",
+                                                                   ParamRanges::PAN_SPRAY, ParamDefaults::PAN_SPRAY_DEFAULT));
 }
 
 void ParamGenerator::addParams(juce::AudioProcessor& p) {
@@ -92,15 +99,23 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   p.addParameter(common[FILT_TYPE] = new juce::AudioParameterChoice(filterTypeId, filterTypeId, FILTER_TYPE_NAMES, 0));
   common[FILT_TYPE]->addListener(this);
   juce::String pitchAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchAdjust + juce::String(genIdx);
-  p.addParameter(common[PITCH_ADJUST] =
-                     new juce::AudioParameterFloat(pitchAdjustId, pitchAdjustId, ParamRanges::PITCH_ADJUST, 0.0f));
+  p.addParameter(common[PITCH_ADJUST] = new juce::AudioParameterFloat(pitchAdjustId, pitchAdjustId, ParamRanges::PITCH_ADJUST,
+                                                                      ParamDefaults::PITCH_ADJUST_DEFAULT));
   juce::String pitchSprayId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchSpray + juce::String(genIdx);
-  p.addParameter(common[PITCH_SPRAY] = new juce::AudioParameterFloat(pitchSprayId, pitchSprayId, ParamRanges::PITCH_SPRAY, 0.0f));
+  p.addParameter(common[PITCH_SPRAY] = new juce::AudioParameterFloat(pitchSprayId, pitchSprayId, ParamRanges::PITCH_SPRAY,
+                                                                     ParamDefaults::PITCH_SPRAY_DEFAULT));
   juce::String posAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPositionAdjust + juce::String(genIdx);
-  p.addParameter(common[POS_ADJUST] = new juce::AudioParameterFloat(posAdjustId, posAdjustId, ParamRanges::POSITION_ADJUST, 0.0f));
+  p.addParameter(common[POS_ADJUST] = new juce::AudioParameterFloat(posAdjustId, posAdjustId, ParamRanges::POSITION_ADJUST,
+                                                                    ParamDefaults::POSITION_ADJUST_DEFAULT));
   juce::String posSprayId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPositionSpray + juce::String(genIdx);
   p.addParameter(common[POS_SPRAY] = new juce::AudioParameterFloat(posSprayId, posSprayId, ParamRanges::POSITION_SPRAY,
                                                                    ParamDefaults::POSITION_SPRAY_DEFAULT));
+  juce::String panAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPanAdjust + juce::String(genIdx);
+  p.addParameter(common[PAN_ADJUST] = new juce::AudioParameterFloat(panAdjustId, panAdjustId, ParamRanges::PAN_ADJUST,
+                                                                    ParamDefaults::PAN_ADJUST_DEFAULT));
+  juce::String panSprayId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPanSpray + juce::String(genIdx);
+  p.addParameter(common[PAN_SPRAY] = new juce::AudioParameterFloat(panSprayId, panSprayId, ParamRanges::PAN_SPRAY,
+                                                                   ParamDefaults::PAN_SPRAY_DEFAULT));
 
   // Shape and Tilt have listeners as changing then will change the envolope LUT
   juce::String shapeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainShape + juce::String(genIdx);
@@ -152,11 +167,11 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
   common[FILT_TYPE]->addListener(this);
 
   // Shape and Tilt have listeners as changing then will change the envolope LUT
-  p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat(
-                     notePrefix + ParamIDs::noteGrainShape, notePrefix + ParamIDs::noteGrainShape, ParamRanges::GRAIN_SHAPE, 0.5f));
+  p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat(notePrefix + ParamIDs::noteGrainShape, notePrefix + ParamIDs::noteGrainShape,
+                                                   ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
   common[GRAIN_SHAPE]->addListener(this);
-  p.addParameter(common[GRAIN_TILT] = new juce::AudioParameterFloat(
-                     notePrefix + ParamIDs::noteGrainTilt, notePrefix + ParamIDs::noteGrainTilt, ParamRanges::GRAIN_TILT, 0.5f));
+  p.addParameter(common[GRAIN_TILT] = new juce::AudioParameterFloat(notePrefix + ParamIDs::noteGrainTilt, notePrefix + ParamIDs::noteGrainTilt,
+                                                   ParamRanges::GRAIN_TILT, ParamDefaults::GRAIN_TILT_DEFAULT));
   common[GRAIN_TILT]->addListener(this);
 
   p.addParameter(common[GRAIN_RATE] =
@@ -170,15 +185,22 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
 
   p.addParameter(common[PITCH_ADJUST] =
                      new juce::AudioParameterFloat(notePrefix + ParamIDs::notePitchAdjust, notePrefix + ParamIDs::notePitchAdjust,
-                                                   ParamRanges::PITCH_ADJUST, 0.0f));
-  p.addParameter(common[PITCH_SPRAY] = new juce::AudioParameterFloat(
-                     notePrefix + ParamIDs::notePitchSpray, notePrefix + ParamIDs::notePitchSpray, ParamRanges::PITCH_SPRAY, 0.0f));
-  p.addParameter(common[POS_ADJUST] =
-                     new juce::AudioParameterFloat(notePrefix + ParamIDs::notePositionAdjust,
-                                                   notePrefix + ParamIDs::notePositionAdjust, ParamRanges::POSITION_ADJUST, 0.0f));
+                                                   ParamRanges::PITCH_ADJUST, ParamDefaults::PITCH_ADJUST_DEFAULT));
+  p.addParameter(common[PITCH_SPRAY] =
+                     new juce::AudioParameterFloat(notePrefix + ParamIDs::notePitchSpray, notePrefix + ParamIDs::notePitchSpray,
+                                                   ParamRanges::PITCH_SPRAY, ParamDefaults::PITCH_SPRAY_DEFAULT));
+  p.addParameter(common[POS_ADJUST] = new juce::AudioParameterFloat(
+                     notePrefix + ParamIDs::notePositionAdjust, notePrefix + ParamIDs::notePositionAdjust,
+                     ParamRanges::POSITION_ADJUST, ParamDefaults::POSITION_ADJUST_DEFAULT));
   p.addParameter(common[POS_SPRAY] = new juce::AudioParameterFloat(
                      notePrefix + ParamIDs::notePositionSpray, notePrefix + ParamIDs::notePositionSpray,
                      ParamRanges::POSITION_SPRAY, ParamDefaults::POSITION_SPRAY_DEFAULT));
+  p.addParameter(common[PAN_ADJUST] =
+                     new juce::AudioParameterFloat(notePrefix + ParamIDs::notePanAdjust, notePrefix + ParamIDs::notePanAdjust,
+                                                   ParamRanges::PAN_ADJUST, ParamDefaults::PAN_ADJUST_DEFAULT));
+  p.addParameter(common[PAN_SPRAY] =
+                     new juce::AudioParameterFloat(notePrefix + ParamIDs::notePanSpray, notePrefix + ParamIDs::notePanSpray,
+                                                   ParamRanges::PAN_SPRAY, ParamDefaults::PAN_SPRAY_DEFAULT));
 
   // Then make each of its generators
   for (auto& generator : generators) {

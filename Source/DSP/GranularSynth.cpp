@@ -110,7 +110,7 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
   mSampleRate = sampleRate;
   for (auto&& note : mParameters.note.notes) {
     for (auto&& gen : note->generators) {
-      gen->filter.prepare({sampleRate, (juce::uint32)samplesPerBlock, 1});
+      gen->filter.prepare({sampleRate, (juce::uint32)samplesPerBlock, (unsigned int)getTotalNumOutputChannels()});
       gen->sampleRate = sampleRate;
     }
   }
@@ -189,32 +189,31 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
       GrainNote& gNote = mActiveNotes.getReference(noteIndex);
 
       // Add contributions from the grains in this generator
-      float genSample = 0.0f;
+
       for (int genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
         ParamGenerator* paramGenerator = mParameters.note.notes[gNote.pitchClass]->generators[genIdx].get();
+        const float gain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GAIN);
         const float attack = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::ATTACK);
         const float decay = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::DECAY);
         const float sustain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::SUSTAIN);
         const float release = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::RELEASE);
-        const float grainGain = gNote.genAmpEnvs[genIdx].getAmplitude(mTotalSamps, attack * mSampleRate, decay * mSampleRate, sustain,
-                                                                release * mSampleRate) * 0.2f; // Temporary hardcoded gain to scale down
-        const float gain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GAIN);
-        for (Grain& grain : gNote.genGrains[genIdx]) {
-          genSample += grain.process(mAudioBuffer, grainGain * gain, mTotalSamps);
-        }
-
-        // Process filter and optionally use for output
-        const float filterOutput = paramGenerator->filter.processSample(0, genSample);
-
-        // If filter type isn't "none", use its output
-        const int filtType = mParameters.getChoiceParam(paramGenerator, ParamCommon::Type::FILT_TYPE);
-        if (filtType != Utils::FilterType::NO_FILTER) {
-          genSample = filterOutput;
-        }
-
-        // Add sample to all channels
-        // TODO: panning here
+        const float grainGain =
+            gNote.genAmpEnvs[genIdx].getAmplitude(mTotalSamps, attack * mSampleRate, decay * mSampleRate, sustain,
+                                                  release * mSampleRate) *
+            gain * 0.4f;  // Temporary hardcoded gain to scale down
         for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+          float genSample = 0.0f;
+          for (Grain& grain : gNote.genGrains[genIdx]) {
+            genSample += grain.process(ch / (float)(buffer.getNumChannels() - 1), mAudioBuffer, grainGain, mTotalSamps);
+          }
+          // Process filter and optionally use for output
+          const float filterOutput = paramGenerator->filter.processSample(ch, genSample);
+          // If filter type isn't "none", use its output
+          const int filtType = mParameters.getChoiceParam(paramGenerator, ParamCommon::Type::FILT_TYPE);
+          if (filtType != Utils::FilterType::NO_FILTER) {
+            genSample = filterOutput;
+          }
+
           bufferChannels[ch][i] += genSample;
         }
       }
@@ -370,6 +369,8 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           const float pitchSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PITCH_SPRAY);
           const float posAdjust = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::POS_ADJUST);
           const float posSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::POS_SPRAY);
+          const float panAdjust = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_ADJUST);
+          const float panSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_SPRAY);
 
           if (grainSync) {
             float div = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_DURATION.convertTo0to1(grainDuration)));
@@ -397,12 +398,15 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             float durSamples = mSampleRate * durSec * (1.0f / paramCandidate->pbRate);
             /* Position calculation */
             juce::Random random;
-            float posSprayOffset =
-                juce::jmap(random.nextFloat(), ParamRanges::POSITION_SPRAY.start, posSpray) *
-                mSampleRate;
+            float posSprayOffset = juce::jmap(random.nextFloat(), ParamRanges::POSITION_SPRAY.start, posSpray) * mSampleRate;
             if (random.nextFloat() > 0.5f) posSprayOffset = -posSprayOffset;
             float posOffset = posAdjust * durSamples + posSprayOffset;
             float posSamples = paramCandidate->posRatio * mAudioBuffer.getNumSamples() + posOffset;
+
+            /* Pan offset */
+            float panSprayOffset = random.nextFloat() * panSpray;
+            if (random.nextFloat() > 0.5f) panSprayOffset = -panSprayOffset;
+            const float panOffset = juce::jlimit(ParamRanges::PAN_ADJUST.start, ParamRanges::PAN_ADJUST.end, panAdjust + panSprayOffset);
 
             /* Pitch calculation */
             float pitchSprayOffset = juce::jmap(random.nextFloat(), 0.0f, pitchSpray);
@@ -411,8 +415,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             jassert(paramCandidate->pbRate > 0.1f);
 
             /* Add grain */
-            auto grain =
-                Grain(paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples, mTotalSamps, gain);
+            auto grain = Grain(paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples, mTotalSamps, gain, panOffset);
             gNote.genGrains[i].add(grain);
 
             /* Trigger grain in arcspec */

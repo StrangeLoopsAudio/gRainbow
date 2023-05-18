@@ -14,14 +14,15 @@
 #include "PositionChanger.h"
 #include "../Parameters.h"
 #include "../RainbowLookAndFeel.h"
+#include "ff_meters/ff_meters.h"
 
 //==============================================================================
 /*
  */
 class GrainControl : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
-  GrainControl(Parameters& parameters);
-  ~GrainControl() override {}
+  GrainControl(Parameters& parameters, foleys::LevelMeterSource& meterSource);
+  ~GrainControl();
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -34,7 +35,7 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
   void updateSelectedParams();
 
  private:
-  static constexpr const char* SECTION_TITLE = "grain control";
+  static constexpr const char* SECTION_TITLE = "controls";
 
   // Components
   // -- Generator Adjustments
@@ -47,12 +48,20 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
   juce::Label mLabelPosAdjust;
   RainbowSlider mSliderPosSpray;
   juce::Label mLabelPosSpray;
+  RainbowSlider mSliderPanAdjust;
+  juce::Label mLabelPanAdjust;
+  RainbowSlider mSliderPanSpray;
+  juce::Label mLabelPanSpray;
+  RainbowSlider mSliderGain;
+  juce::Label mLabelGain;
+  foleys::LevelMeter mMeter{foleys::LevelMeter::Horizontal};
 
   // Bookkeeping
   Parameters& mParameters;
   std::atomic<bool> mParamHasChanged;
   ParamCommon* mCurSelectedParams;
   juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
+  MeterLookAndFeel mMeterLookAndFeel;
 
   // UI values saved on resize
   juce::Rectangle<float> mTitleRect;
