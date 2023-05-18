@@ -1,6 +1,6 @@
 #define Version Trim(FileRead(FileOpen("..\VERSION")))
 #define PluginName "gRainbow"
-#define Publisher "strangeloops"
+#define Publisher "StrangeLoops"
 #define Year GetDateTimeString("yyyy","","")
 
 ; 'Types': What get displayed during the setup
