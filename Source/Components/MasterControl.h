@@ -13,13 +13,14 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "../Parameters.h"
 #include "../RainbowLookAndFeel.h"
+#include "ff_meters/ff_meters.h"
 
 //==============================================================================
 /*
  */
 class MasterControl : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
-  MasterControl(Parameters& parameters);
+  MasterControl(Parameters& parameters, foleys::LevelMeterSource& meterSource);
   ~MasterControl() override {}
 
   void paint(juce::Graphics&) override;
@@ -39,6 +40,7 @@ class MasterControl : public juce::Component, juce::AudioProcessorParameter::Lis
   // -- Generator Adjustments
   RainbowSlider mSliderGain;
   juce::Label mLabelGain;
+  foleys::LevelMeter mMeter{foleys::LevelMeter::Minimal | foleys::LevelMeter::SingleChannel | foleys::LevelMeter::Horizontal};
 
   // Bookkeeping
   Parameters& mParameters;

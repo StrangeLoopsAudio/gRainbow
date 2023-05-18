@@ -114,6 +114,7 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
       gen->sampleRate = sampleRate;
     }
   }
+  mMeterSource.resize(getTotalNumOutputChannels(), sampleRate * 0.1 / samplesPerBlock);
 }
 
 void GranularSynth::releaseResources() {
@@ -241,6 +242,8 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
       }
     } */
   }
+
+  mMeterSource.measureBlock(buffer);
 }
 
 //==============================================================================

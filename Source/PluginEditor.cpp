@@ -39,7 +39,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mEnvAdsr(synth.getParams()),
       mEnvGrain(synth.getParams()),
       mGrainControl(synth.getParams()),
-      mMasterControl(synth.getParams()),
+      mMasterControl(synth.getParams(), synth.getMeterSource()),
       mFilterControl(synth.getParams()),
       mProgressBar(synth.getLoadingProgress()),
       mTrimSelection(mFormatManager, synth.getParamUI()) {

@@ -11,11 +11,14 @@
 #include "MasterControl.h"
 #include "../Utils.h"
 
-MasterControl::MasterControl(Parameters& parameters)
+MasterControl::MasterControl(Parameters& parameters, foleys::LevelMeterSource& meterSource)
     : mParameters(parameters),
       mCurSelectedParams(parameters.selectedParams),
       mSliderGain(parameters, ParamCommon::Type::GAIN)
 {
+
+  mMeter.setMeterSource(&meterSource);
+  addAndMakeVisible(mMeter);
 
   juce::Colour colour = Utils::GLOBAL_COLOUR;
 
@@ -82,6 +85,11 @@ void MasterControl::resized() {
 
   r.removeFromTop(Utils::PADDING);
 
-  mLabelGain.setBounds(r.removeFromBottom(Utils::LABEL_HEIGHT));
-  mSliderGain.setBounds(r.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+  auto gainPanel = r.removeFromLeft(Utils::KNOB_HEIGHT * 2);
+  mLabelGain.setBounds(gainPanel.removeFromBottom(Utils::LABEL_HEIGHT));
+  mSliderGain.setBounds(gainPanel);
+
+  r.removeFromLeft(Utils::PADDING);
+
+  mMeter.setBounds(r);
 }

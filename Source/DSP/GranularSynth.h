@@ -17,6 +17,7 @@
 #include "../Parameters.h"
 #include "../Utils.h"
 #include <bitset>
+#include "ff_meters/ff_meters.h"
 
 class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::Listener {
  public:
@@ -68,6 +69,8 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
   //=====================end-inherited-functions==================================
+
+  foleys::LevelMeterSource& getMeterSource() { return mMeterSource; }
 
   void getPresetParamsXml(juce::MemoryBlock& destData);
   void setPresetParamsXml(const void* data, int sizeInBytes);
@@ -144,6 +147,8 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   // threads writing to it.
   // Currently the difference between "midiNotes" and "grainNotes" are midi is a subset mainly for the UI
   juce::Array<Utils::MidiNote> mMidiNotes;
+  // Level meter source
+  foleys::LevelMeterSource mMeterSource;
 
   // Parameters
   Parameters mParameters;

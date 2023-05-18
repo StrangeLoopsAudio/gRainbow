@@ -39,6 +39,8 @@ option(JUCE_ENABLE_MODULE_SOURCE_GROUPS "Show all module sources in IDE projects
 # On Github Actions, it's managed by actions/checkout
 add_subdirectory(JUCE)
 
+juce_add_module(${CMAKE_CURRENT_SOURCE_DIR}/libs/ff_meters)
+
 # Check the readme at `docs/CMake API.md` in the JUCE repo for full config
 juce_add_plugin("${PROJECT_NAME}"
     # VERSION ...                               # Set this if the plugin version is different to the project version
@@ -122,8 +124,6 @@ set(BinaryResources
 
 juce_add_binary_data(Assets SOURCES ${BinaryResources})
 
-juce_add_module(${CMAKE_CURRENT_SOURCE_DIR}/libs/ff_meters)
-
 # Required for Linux happiness:
 # See https://forum.juce.com/t/loading-pytorch-model-using-binarydata/39997/2
 set_target_properties(Assets PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
@@ -153,7 +153,8 @@ set_target_properties(Assets PROPERTIES FOLDER "Targets")
 # We'll need to link to these from our plugin as well as our tests
 set(JUCE_DEPENDENCIES
     juce::juce_audio_utils
-    juce::juce_dsp)
+    juce::juce_dsp
+    ff_meters)
 
 target_compile_definitions("${PROJECT_NAME}"
     PUBLIC
@@ -166,7 +167,6 @@ target_link_libraries("${PROJECT_NAME}"
     PRIVATE
     Assets
     ${JUCE_DEPENDENCIES}
-    ff_meters
     PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
@@ -210,7 +210,7 @@ add_executable(Tests ${TestFiles})
 target_compile_features(Tests PRIVATE cxx_std_20)
 
 # Our test executable also wants to know about our plugin code...
-target_include_directories(Tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source)
+target_include_directories(Tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source ${CMAKE_CURRENT_SOURCE_DIR}/libs/ff_meters)
 target_link_libraries(Tests PRIVATE Catch2::Catch2WithMain "${PROJECT_NAME}" ${JUCE_DEPENDENCIES})
 
 # Make an Xcode Scheme for the test executable so we can run tests in the IDE
