@@ -11,7 +11,6 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_devices/juce_audio_devices.h>
-#include <juce_audio_formats/juce_audio_formats.h>
 
 #include "Components/ArcSpectrogram.h"
 #include "Components/RainbowKeyboard.h"
@@ -113,11 +112,9 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::AudioDeviceManager mAudioDeviceManager;
   bool mIsFileHovering = false;
   RainbowLookAndFeel mRainbowLookAndFeel;
-  juce::AudioFormatManager mFormatManager;
 
   void openNewFile(const char* path = nullptr);
-  void processFile(juce::File file);
-  void processPreset(juce::File file);
+  void loadFile(juce::File file);
   void startRecording();
   void stopRecording();
   void savePreset();

@@ -78,10 +78,19 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   double getSampleRate() { return mSampleRate; }
   juce::AudioBuffer<float>& getAudioBuffer() { return mAudioBuffer; }
   juce::MidiKeyboardState& getKeyboardState() { return mKeyboardState; }
+  juce::AudioFormatManager& getFormatManager() { return mFormatManager; }
+  juce::AudioBuffer<float>& getInputBuffer() { return mInputBuffer; }
+  Utils::Result loadAudioFile(juce::File file, bool process);
+  Utils::Result loadPreset(juce::File file);
+  // Audio buffer processing
+  void resampleAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer, double inputSampleRate,
+                           double outputSampleRate, bool clearInput = false);
+  
+  void trimAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
+                       juce::Range<juce::int64> range, bool clearInput = false);
 
-  void setInputBuffer(juce::AudioBuffer<float>* audioBuffer, double sampleRate);
-  const juce::AudioBuffer<float>& getInputBuffer() { return mInputBuffer; }
-  void processInput(juce::Range<juce::int64> range, bool preset);
+  void extractPitches();
+  void extractSpectrograms();
   std::vector<Utils::SpecBuffer*> getProcessedSpecs() {
     return std::vector<Utils::SpecBuffer*>(mProcessedSpecs.begin(), mProcessedSpecs.end());
   }
@@ -91,7 +100,6 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   ParamGlobal& getParamGlobal() { return mParameters.global; }
   ParamUI& getParamUI() { return mParameters.ui; }
   void resetParameters(bool fullClear = true);
-  int incrementPosition(int genIdx, bool lookRight);
   
   double& getLoadingProgress() { return mLoadingProgress; }
   const juce::Array<Utils::MidiNote>& getMidiNotes() { return mMidiNotes; }
@@ -104,10 +112,11 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   static constexpr auto HOP_SIZE = 4096;  // Larger because don't need high resolution for spectrogram
   static constexpr double DEFAULT_BPM = 120.0f;
   // Param bounds
-  static constexpr auto MIN_RATE_RATIO = .25f;
-  static constexpr auto MAX_RATE_RATIO = 1.0f;
-  static constexpr auto MIN_CANDIDATE_SALIENCE = 0.5f;
-  static constexpr auto MAX_GRAINS = 20;  // Max grains active at once
+  static constexpr float MIN_RATE_RATIO = .25f;
+  static constexpr float MAX_RATE_RATIO = 1.0f;
+  static constexpr float MIN_CANDIDATE_SALIENCE = 0.5f;
+  static constexpr int MAX_GRAINS = 20;  // Max grains active at once
+  static constexpr double INVALID_SAMPLE_RATE = -1.0;  // Max grains active at once
 
   typedef struct GrainNote {
     Utils::PitchClass pitchClass;
@@ -135,9 +144,10 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   juce::AudioBuffer<float> mInputBuffer;  // incoming buffer from file or other source
   juce::AudioBuffer<float> mAudioBuffer;  // final buffer used for actual synth
   std::array<Utils::SpecBuffer*, ParamUI::SpecType::COUNT> mProcessedSpecs;
-  double mSampleRate;
+  double mSampleRate = INVALID_SAMPLE_RATE;
   juce::MidiKeyboardState mKeyboardState;
   double mLoadingProgress = 0.0;
+  juce::AudioFormatManager mFormatManager;
 
   // Grain control
   long mTotalSamps;

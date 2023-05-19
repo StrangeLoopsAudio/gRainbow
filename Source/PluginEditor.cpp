@@ -41,7 +41,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mGrainControl(synth.getParams(), synth.getMeterSource()),
       mFilterControl(synth.getParams()),
       mProgressBar(synth.getLoadingProgress()),
-      mTrimSelection(mFormatManager, synth.getParamUI()) {
+      mTrimSelection(synth.getFormatManager(), synth.getParamUI()) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mErrorMessage.clear();
 
@@ -81,6 +81,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mBtnPreset.setEnabled(mParameters.ui.specComplete);
 
   // File info label
+  mLabelFileName.setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
   mLabelFileName.setJustificationType(juce::Justification::centred);
   if (!mParameters.ui.fileName.isEmpty()) {
     // Set if saved from reopening plugin
@@ -104,6 +105,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   };
 
   mTrimSelection.onProcessSelection = [this](juce::Range<double> range) {
+    // Convert time to sample range
     const double sampleLength = static_cast<double>(mSynth.getInputBuffer().getNumSamples());
     const double secondLength = sampleLength / mSynth.getSampleRate();
     juce::int64 start = static_cast<juce::int64>(sampleLength * (range.getStart() / secondLength));
@@ -112,13 +114,19 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     if (start == end) {
       displayError("Attempted to select an empty range");
     } else {
-      mSynth.processInput(juce::Range<juce::int64>(start, end), false);
+      mParameters.ui.trimPlaybackOn = false;
+      mSynth.resetParameters();
+      mSynth.trimAudioBuffer(mSynth.getInputBuffer(), mSynth.getAudioBuffer(), juce::Range<juce::int64>(start, end));
+      mSynth.extractSpectrograms();
+      mSynth.extractPitches();
+      mSynth.getInputBuffer();
       // Reset any UI elements that will need to wait until processing
       mArcSpec.reset();
       mBtnPreset.setEnabled(false);
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
       mArcSpec.loadWaveformBuffer(&mSynth.getAudioBuffer());
       mParameters.ui.loadedFileName = mParameters.ui.fileName;
+      mParameters.ui.trimRange = range;
     }
   };
   
@@ -146,14 +154,10 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   mAudioDeviceManager.addAudioCallback(&mRecorder);
 
-  mFormatManager.registerBasicFormats();
-
   // Only want keyboard input focus for standalone as DAW will have own input
   // mappings
   if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
     setWantsKeyboardFocus(true);
-    // Standalone will persist between usages
-    mSynth.resetParameters();
   }
 
   mTooltipWindow->setMillisecondsBeforeTipAppears(500);  // default is 700ms
@@ -169,6 +173,12 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 #endif
 
   setSize(editorWidth, editorHeight);
+
+  // 
+  if (mSynth.getLoadingProgress() == 1.0 && !mParameters.ui.specComplete) {
+    mSynth.extractSpectrograms();
+    mArcSpec.loadWaveformBuffer(&mSynth.getAudioBuffer());
+  }
 
   // Will update to be what it was when editor was last closed
   updateCenterComponent(mParameters.ui.centerComponent);
@@ -408,7 +418,7 @@ void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files, 
   jassert(files.size() == 1);
   mIsFileHovering = false;
   repaint();
-  processFile(juce::File(files[0]));
+  loadFile(juce::File(files[0]));
 }
 
 /** Pauses audio to open file
@@ -425,11 +435,11 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
 
   mFileChooser->launchAsync(openFlags, [this](const juce::FileChooser& fc) {
       auto file = fc.getResult();
-      processFile(file);
+      if (file.existsAsFile()) loadFile(file);
     });
   } else {
     auto file = juce::File(juce::String(path));
-    processFile(file);
+  if (file.existsAsFile()) loadFile(file);
   }
 }
 
@@ -458,7 +468,7 @@ void GRainbowAudioProcessorEditor::startRecording() {
 void GRainbowAudioProcessorEditor::stopRecording() {
   mRecorder.stop();
 
-  processFile(mRecordedFile);
+  loadFile(mRecordedFile);
 
   mRecordedFile = juce::File();
 
@@ -469,118 +479,39 @@ void GRainbowAudioProcessorEditor::stopRecording() {
   repaint();
 }
 
-void GRainbowAudioProcessorEditor::processFile(juce::File file) {
+void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
 
   if (file.getFileExtension() == ".gbow") {
-    processPreset(file);
-    updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
-  } else {
-    // Show users which file is being loaded/processed
-    mParameters.ui.fileName = file.getFileName();
-    mLabelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
-
-    juce::AudioFormatReader* formatReader = mFormatManager.createReaderFor(file);
-    if (formatReader == nullptr) {
-      displayError("Unable to read the file.");
-      return;
-    }
-
-    juce::AudioBuffer<float> fileAudioBuffer;
-    const int length = static_cast<int>(formatReader->lengthInSamples);
-    fileAudioBuffer.setSize(formatReader->numChannels, length);
-    formatReader->read(&fileAudioBuffer, 0, length, 0, true, true);
-
-    // .mp3 files, unlike .wav files, can contain PCM values greater than abs(1.0) (aka, clipping) which will produce aweful
-    // sounding grains, so normalize the gain of any mp3 file clipping before using anywhere
-    if (file.getFileExtension() == ".mp3") {
-      float absMax = 0.0f;
-      for (int i = 0; i < fileAudioBuffer.getNumChannels(); i++) {
-        juce::Range<float> range =
-            juce::FloatVectorOperations::findMinAndMax(fileAudioBuffer.getReadPointer(i), fileAudioBuffer.getNumSamples());
-        absMax = juce::jmax(absMax, std::abs(range.getStart()), std::abs(range.getEnd()));
-      }
-      if (absMax > 1.0) {
-        fileAudioBuffer.applyGain(1.0f / absMax);
-      }
-    }
-
-    mSynth.setInputBuffer(&fileAudioBuffer, formatReader->sampleRate);
-    // should not need the file anymore as we want to work with the resampled input buffer across the rest of the plugin
-    delete (formatReader);
-
-    mTrimSelection.parse(mSynth.getInputBuffer(), mSynth.getSampleRate(), mErrorMessage);
-    if (mErrorMessage.isEmpty()) {
-      // display screen to trim sample
-      updateCenterComponent(ParamUI::CenterComponent::TRIM_SELECTION);
+    Utils::Result r = mSynth.loadPreset(file);
+    if (r.success) {
+      mBtnPreset.setEnabled(true);
+      mArcSpec.loadPreset();
+      updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
+      mParameters.ui.fileName = file.getFullPathName();
+      mLabelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
+      resized();
     } else {
-      displayError(mErrorMessage);
-      mErrorMessage.clear();
-      return;
+      displayError(r.message);
     }
-  }
-
-}
-
-void GRainbowAudioProcessorEditor::processPreset(juce::File file) {
-  Preset::Header header;
-  juce::FileInputStream input(file);
-  if (input.openedOk()) {
-    input.read(&header, sizeof(header));
-
-    if (header.magic != Preset::MAGIC) {
-      displayError("The file is not recognized as a valid .gbow preset file.");
-      return;
-    }
-
-    juce::AudioBuffer<float> fileAudioBuffer;
-    double sampleRate;
-
-    // Currently there is only a VERSION_MAJOR of 0
-    if (header.versionMajor == 0) {
-      // Get Audio Buffer blob
-      fileAudioBuffer.setSize(header.audioBufferChannel, header.audioBufferNumberOfSamples);
-      input.read(fileAudioBuffer.getWritePointer(0), header.audioBufferSize);
-      sampleRate = header.audioBufferSamplerRate;
-
-      // Get offsets and load all png for spec images
-      uint32_t maxSpecImageSize =
-          juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize, header.specImageDetectedSize);
-      void* specImageData = malloc(maxSpecImageSize);
-      jassert(specImageData != nullptr);
-      input.read(specImageData, header.specImageSpectrogramSize);
-      mParameters.ui.specImages[ParamUI::SpecType::SPECTROGRAM] =
-          juce::PNGImageFormat::loadFrom(specImageData, header.specImageSpectrogramSize);
-      input.read(specImageData, header.specImageHpcpSize);
-      mParameters.ui.specImages[ParamUI::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(specImageData, header.specImageHpcpSize);
-      input.read(specImageData, header.specImageDetectedSize);
-      mParameters.ui.specImages[ParamUI::SpecType::DETECTED] =
-          juce::PNGImageFormat::loadFrom(specImageData, header.specImageDetectedSize);
-      free(specImageData);
-
-      // juce::FileInputStream uses 'int' to read
-      int xmlSize = static_cast<int>(input.getTotalLength() - input.getPosition());
-      void* xmlData = malloc(xmlSize);
-      jassert(xmlData != nullptr);
-      input.read(xmlData, xmlSize);
-      mSynth.setPresetParamsXml(xmlData, xmlSize);
-      free(xmlData);
-    } else {
-      displayError(juce::String::formatted(
-          "The file is gbow version %u.%u and is not supported. This copy of gRainbow can open files up to version %u.%u",
-          header.versionMajor, header.versionMinor, Preset::VERSION_MAJOR, Preset::VERSION_MINOR));
-      return;
-    }
-
-    mBtnPreset.setEnabled(true);
-    mArcSpec.loadPreset();
-    mSynth.setInputBuffer(&fileAudioBuffer, sampleRate);
-    mSynth.processInput(juce::Range<juce::int64>(), true);
-    mArcSpec.loadWaveformBuffer(&mSynth.getAudioBuffer());
-    mLabelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
-    resized();
   } else {
-    displayError(juce::String::formatted("The file failed to open because %s", input.getStatus().getErrorMessage().toRawUTF8()));
-    return;
+    Utils::Result r = mSynth.loadAudioFile(file, true);
+    if (r.success) {
+      // Show users which file is being loaded/processed
+      mParameters.ui.fileName = file.getFullPathName();
+      mLabelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
+
+      mTrimSelection.parse(mSynth.getInputBuffer(), mSynth.getSampleRate(), mErrorMessage);
+      if (mErrorMessage.isEmpty()) {
+        // display screen to trim sample
+        updateCenterComponent(ParamUI::CenterComponent::TRIM_SELECTION);
+      } else {
+        displayError(mErrorMessage);
+        mErrorMessage.clear();
+        return;
+      }
+    } else {
+      displayError(r.message);
+    }
   }
 }
 
@@ -665,7 +596,7 @@ void GRainbowAudioProcessorEditor::displayError(juce::String message) {
 
   juce::Rectangle<int> area(0, 0, 400, 300);
   options.content->setSize(area.getWidth(), area.getHeight());
-  options.dialogTitle = "gRainbow Error Message";
+  options.dialogTitle = "gRainbow Error";
   options.dialogBackgroundColour = juce::Colour(0xff0e345a);
   options.escapeKeyTriggersCloseButton = true;
   options.useNativeTitleBar = false;

@@ -26,6 +26,11 @@ static constexpr float ROUNDED_AMOUNT = 10.0f;
 static const juce::Colour GLOBAL_COLOUR = juce::Colours::black;
 static constexpr float GENERATOR_BRIGHTNESS_ADD = 0.2f;  // Amount to make brighter per generator
 
+typedef struct Result {
+  bool success;
+  juce::String message;
+} Result;
+
 // Number of generators available
 static constexpr int NUM_GEN = 4;
 // Constant used for pitch shifting by semitones

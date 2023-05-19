@@ -488,6 +488,7 @@ struct ParamNote : ParamCommon {
     jassert(xml->hasTagName("ParamNote"));
     candidates.clear();
     for (auto* children : xml->getChildIterator()) {
+      DBG(children->toString());
       if (children->hasTagName("ParamCandidate")) {
         candidates.push_back(ParamCandidate(children));
       }
@@ -534,7 +535,7 @@ struct ParamsNote {
     jassert(xml->hasTagName("NotesParams"));
     // Currently all child elements are NotesParam elements
     for (size_t i = 0; i < notes.size(); i++) {
-      notes[i].get()->setXml(xml->getChildElement(i));
+      notes[i]->setXml(xml->getChildElement(i));
     }
   }
 
@@ -565,9 +566,11 @@ struct ParamUI {
     if (xml != nullptr) {
       loadedFileName = xml->getStringAttribute("fileName");
       fileName = loadedFileName;
-      generatorTab = xml->getIntAttribute("generatorTab");
       pitchClass = xml->getIntAttribute("pitchClass");
       specType = (SpecType)xml->getIntAttribute("specType");
+      centerComponent = (CenterComponent)xml->getIntAttribute("centerComponent");
+      trimRange.setStart(xml->getDoubleAttribute("trimRangeStart"));
+      trimRange.setEnd(xml->getDoubleAttribute("trimRangeEnd"));
     }
   }
 
@@ -575,9 +578,11 @@ struct ParamUI {
   juce::XmlElement* getXml() {
     juce::XmlElement* xml = new juce::XmlElement("ParamUI");
     xml->setAttribute("fileName", loadedFileName);
-    xml->setAttribute("generatorTab", generatorTab);
     xml->setAttribute("pitchClass", pitchClass);
     xml->setAttribute("specType", static_cast<int>(specType));
+    xml->setAttribute("centerComponent", static_cast<int>(centerComponent));
+    xml->setAttribute("trimRangeStart", trimRange.getStart());
+    xml->setAttribute("trimRangeEnd", trimRange.getEnd());
     return xml;
   }
 
@@ -593,7 +598,7 @@ struct ParamUI {
 
   juce::String fileName = "";        // currently being viewed
   juce::String loadedFileName = "";  // name of what was loaded last
-  int generatorTab = 0;
+  juce::Range<double> trimRange;
   // default when new instance is loaded
   int pitchClass = Utils::PitchClass::C;
 
@@ -601,7 +606,7 @@ struct ParamUI {
   SpecType specType = ParamUI::SpecType::INVALID;
   std::array<juce::Image, SpecType::COUNT> specImages;
   // Where ArcSpectrogram can let others know when it is "complete"
-  // Makes no scenes to save to preset file
+  // Makes no sense to save to preset file
   bool specComplete = false;
 
   // Tracks what component is being displayed

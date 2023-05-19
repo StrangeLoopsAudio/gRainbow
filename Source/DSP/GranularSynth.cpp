@@ -9,9 +9,9 @@
 */
 
 #include <juce_core/juce_core.h>
-
+#include <juce_audio_formats/juce_audio_formats.h>
 #include "GranularSynth.h"
-
+#include "../Preset.h"
 #include "../PluginEditor.h"
 #include "../Components/Settings.h"
 
@@ -37,6 +37,8 @@ GranularSynth::GranularSynth()
   mProcessedSpecs.fill(nullptr);
 
   mKeyboardState.addListener(this);
+
+  mFormatManager.registerBasicFormats();
 
   mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
     mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = &spectrum;
@@ -107,7 +109,24 @@ void GranularSynth::changeProgramName(int index, const juce::String& newName) {}
 
 //==============================================================================
 void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
+  if (mSampleRate != INVALID_SAMPLE_RATE && mInputBuffer.getNumSamples() != 0) {
+    // File loaded from state but couldn't resample and trim until now
+    // Make a temporary buffer copy for resampling
+    juce::AudioSampleBuffer inputBuffer = mInputBuffer;
+    resampleAudioBuffer(inputBuffer, mInputBuffer, mSampleRate, sampleRate);
+
+    // Convert time to sample range
+    const double sampleLength = static_cast<double>(mInputBuffer.getNumSamples());
+    const double secondLength = sampleLength / sampleRate;
+    juce::int64 start = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getStart() / secondLength));
+    juce::int64 end = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getEnd() / secondLength));
+    trimAudioBuffer(mInputBuffer, mAudioBuffer, juce::Range<juce::int64>(start, end));
+    mInputBuffer.setSize(1, 1);
+    mLoadingProgress = 1.0f;
+  }
+  
   mSampleRate = sampleRate;
+
   for (auto&& note : mParameters.note.notes) {
     for (auto&& gen : note->generators) {
       gen->filter.prepare({sampleRate, (juce::uint32)samplesPerBlock, (unsigned int)getTotalNumOutputChannels()});
@@ -269,6 +288,7 @@ void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
   }
 
   xml.addChildElement(params);
+  xml.addChildElement(mParameters.note.getXml());
   xml.addChildElement(mParameters.ui.getXml());
 
   copyXmlToBinary(xml, destData);
@@ -278,6 +298,7 @@ void GranularSynth::setStateInformation(const void* data, int sizeInBytes) {
   auto xml = getXmlFromBinary(data, sizeInBytes);
 
   if (xml != nullptr) {
+    // Set audio parameters
     auto params = xml->getChildByName("AudioParams");
     if (params != nullptr) {
       for (auto& param : getParameters()) {
@@ -285,9 +306,23 @@ void GranularSynth::setStateInformation(const void* data, int sizeInBytes) {
       }
     }
 
+    // Load candidates
+    params = xml->getChildByName("NotesParams");
+    if (params != nullptr) {
+      mParameters.note.setXml(params);
+    }
+
+    // Set UI state
     params = xml->getChildByName("ParamUI");
     if (params != nullptr) {
       mParameters.ui.setXml(params);
+    }
+
+    // Load the file if we haven't yet
+    if (mAudioBuffer.getNumSamples() == 0 && mParameters.ui.loadedFileName.isNotEmpty()) {
+      juce::File file = juce::File(mParameters.ui.loadedFileName);
+      if (file.getFileExtension() == ".gbow") loadPreset(file);
+      else loadAudioFile(juce::File(mParameters.ui.loadedFileName), false);
     }
   }
 }
@@ -449,64 +484,171 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
   mActiveNotes.removeIf([this](GrainNote& gNote) { return gNote.removeTs != -1 && mTotalSamps >= gNote.removeTs; });
 }
 
-void GranularSynth::setInputBuffer(juce::AudioBuffer<float>* audioBuffer, double sampleRate) {
-  // resamples the buffer from the file sampler rate to the the proper sampler
-  // rate set from the DAW in prepareToPlay.
-  const double ratioToInput = sampleRate / mSampleRate;   // input / output
-  const double ratioToOutput = mSampleRate / sampleRate;  // output / input
-  // The output buffer needs to be size that matches the new sample rate
-  const int resampleSize = static_cast<int>(static_cast<double>(audioBuffer->getNumSamples()) * ratioToOutput);
-  mParameters.ui.trimPlaybackMaxSample = resampleSize;
-  mInputBuffer.setSize(audioBuffer->getNumChannels(), resampleSize);
+Utils::Result GranularSynth::loadAudioFile(juce::File file, bool process) {
+  juce::AudioFormatReader* formatReader = mFormatManager.createReaderFor(file);
+  if (formatReader == nullptr) return {false, "Opening failed: unsupported file format"};
 
-  const float* const* inputs = audioBuffer->getArrayOfReadPointers();
-  float* const* outputs = mInputBuffer.getArrayOfWritePointers();
+  juce::AudioBuffer<float> fileAudioBuffer;
+  const int length = static_cast<int>(formatReader->lengthInSamples);
+  fileAudioBuffer.setSize(formatReader->numChannels, length);
+  formatReader->read(&fileAudioBuffer, 0, length, 0, true, true);
 
-  std::unique_ptr<juce::LagrangeInterpolator> resampler = std::make_unique<juce::LagrangeInterpolator>();
-  for (int c = 0; c < mInputBuffer.getNumChannels(); c++) {
-    resampler->reset();
-    resampler->process(ratioToInput, inputs[c], outputs[c], mInputBuffer.getNumSamples());
+  // .mp3 files, unlike .wav files, can contain PCM values greater than abs(1.0) (aka, clipping) which will produce aweful
+  // sounding grains, so normalize the gain of any mp3 file clipping before using anywhere
+  if (file.getFileExtension() == ".mp3") {
+    float absMax = 0.0f;
+    for (int i = 0; i < fileAudioBuffer.getNumChannels(); i++) {
+      juce::Range<float> range =
+          juce::FloatVectorOperations::findMinAndMax(fileAudioBuffer.getReadPointer(i), fileAudioBuffer.getNumSamples());
+      absMax = juce::jmax(absMax, std::abs(range.getStart()), std::abs(range.getEnd()));
+    }
+    if (absMax > 1.0) {
+      fileAudioBuffer.applyGain(1.0f / absMax);
+    }
   }
+
+  if (process) {
+    resampleAudioBuffer(fileAudioBuffer, mInputBuffer, formatReader->sampleRate, mSampleRate);
+    // processAudioBuffer() will be called after trimming in UI, so we don't have to do it here
+  }
+  else {
+    if (mSampleRate != INVALID_SAMPLE_RATE) {
+      resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, formatReader->sampleRate, mSampleRate);
+      mLoadingProgress = 1.0f;
+    }
+    else {
+      mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
+      mSampleRate = formatReader->sampleRate;  // A bit hacky, but we need to store the file's smaple rate for resampling
+    }
+  }
+  // should not need the file anymore as we want to work with the resampled input buffer across the rest of the plugin
+  delete (formatReader);
+
+  return {true, ""};
 }
 
-void GranularSynth::processInput(juce::Range<juce::int64> range, bool preset) {
-  // Cancel processing if in progress
-  mFft.stopThread(4000);
-  mPitchDetector.cancelProcessing();
+Utils::Result GranularSynth::loadPreset(juce::File file) {
+  Preset::Header header;
+  juce::FileInputStream input(file);
+  if (input.openedOk()) {
+    input.read(&header, sizeof(header));
 
-  // TODO - we clear mInputBuffer here, but processBlock still in theory might need it one last time. Find a proper system for
-  // knowing when the buffer is not needed (Or find a way to have a single buffer as stated in the TODO where it is cleared)
-  mParameters.ui.trimPlaybackOn = false;
+    if (header.magic != Preset::MAGIC) {
+      return {false, "The file is not recognized as a valid .gbow preset file."};
+    }
 
-  // If a range to trim is provided then
+    juce::AudioBuffer<float> fileAudioBuffer;
+    double sampleRate;
+
+    // Currently there is only a VERSION_MAJOR of 0
+    if (header.versionMajor == 0) {
+      // Get Audio Buffer blob
+      fileAudioBuffer.setSize(header.audioBufferChannel, header.audioBufferNumberOfSamples);
+      input.read(fileAudioBuffer.getWritePointer(0), header.audioBufferSize);
+      sampleRate = header.audioBufferSamplerRate;
+
+      // Get offsets and load all png for spec images
+      uint32_t maxSpecImageSize =
+          juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize, header.specImageDetectedSize);
+      void* specImageData = malloc(maxSpecImageSize);
+      jassert(specImageData != nullptr);
+      input.read(specImageData, header.specImageSpectrogramSize);
+      mParameters.ui.specImages[ParamUI::SpecType::SPECTROGRAM] =
+          juce::PNGImageFormat::loadFrom(specImageData, header.specImageSpectrogramSize);
+      input.read(specImageData, header.specImageHpcpSize);
+      mParameters.ui.specImages[ParamUI::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(specImageData, header.specImageHpcpSize);
+      input.read(specImageData, header.specImageDetectedSize);
+      mParameters.ui.specImages[ParamUI::SpecType::DETECTED] =
+          juce::PNGImageFormat::loadFrom(specImageData, header.specImageDetectedSize);
+      mParameters.ui.specComplete = true;
+      free(specImageData);
+
+      // juce::FileInputStream uses 'int' to read
+      int xmlSize = static_cast<int>(input.getTotalLength() - input.getPosition());
+      void* xmlData = malloc(xmlSize);
+      jassert(xmlData != nullptr);
+      input.read(xmlData, xmlSize);
+      setPresetParamsXml(xmlData, xmlSize);
+      free(xmlData);
+    } else {
+      juce::String error = "The file is .gbow version " + juce::String(header.versionMajor) + "." +
+                           juce::String(header.versionMinor) +
+                           " and is not supported. This copy of gRainbow can open files up to version " +
+                           juce::String(Preset::VERSION_MAJOR) + "." + juce::String(Preset::VERSION_MINOR);
+      return {false, error};
+    }
+
+    if (mSampleRate != INVALID_SAMPLE_RATE) {
+      resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
+      // Convert time to sample range
+      const double sampleLength = static_cast<double>(mInputBuffer.getNumSamples());
+      const double secondLength = sampleLength / mSampleRate;
+      juce::int64 start = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getStart() / secondLength));
+      juce::int64 end = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getEnd() / secondLength));
+      trimAudioBuffer(mInputBuffer, mAudioBuffer, juce::Range<juce::int64>(start, end));
+      mInputBuffer.setSize(1, 1);
+    } else {
+      mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
+      mSampleRate = sampleRate;        // A bit hacky, but we need to store the file's smaple rate for resampling
+    }
+  } else {
+    juce::String error = "The file failed to open with message: " + input.getStatus().getErrorMessage();
+    return {false, error};
+  }
+  mLoadingProgress = 1.0f;
+  return {true, ""};
+}
+
+void GranularSynth::resampleAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
+                                        double inputSampleRate, double outputSampleRate, bool clearInput) {
+  // resamples the buffer from the file sampler rate to the the proper sampler
+  // rate set from the DAW in prepareToPlay.
+  const double ratioToInput = inputSampleRate / outputSampleRate;   // input / output
+  const double ratioToOutput = outputSampleRate / inputSampleRate;  // output / input
+  // The output buffer needs to be size that matches the new sample rate
+  const int resampleSize = static_cast<int>(static_cast<double>(inputBuffer.getNumSamples()) * ratioToOutput);
+  mParameters.ui.trimPlaybackMaxSample = resampleSize;
+  outputBuffer.setSize(inputBuffer.getNumChannels(), resampleSize);
+
+  const float* const* inputs = inputBuffer.getArrayOfReadPointers();
+  float* const* outputs = outputBuffer.getArrayOfWritePointers();
+
+  std::unique_ptr<juce::LagrangeInterpolator> resampler = std::make_unique<juce::LagrangeInterpolator>();
+  for (int c = 0; c < outputBuffer.getNumChannels(); c++) {
+    resampler->reset();
+    resampler->process(ratioToInput, inputs[c], outputs[c], outputBuffer.getNumSamples());
+  }
+  if (clearInput) inputBuffer.setSize(1, 1);
+}
+
+void GranularSynth::trimAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
+                                    juce::Range<juce::int64> range, bool clearInput) {
   if (range.isEmpty()) {
-    mAudioBuffer.setSize(mInputBuffer.getNumChannels(), mInputBuffer.getNumSamples());
-    mAudioBuffer = mInputBuffer;
+    outputBuffer.setSize(inputBuffer.getNumChannels(), inputBuffer.getNumSamples());
+    outputBuffer.makeCopyOf(inputBuffer);
   } else {
     juce::AudioBuffer<float> fileAudioBuffer;
     const int sampleLength = static_cast<int>(range.getLength());
-    mAudioBuffer.setSize(mInputBuffer.getNumChannels(), sampleLength);
-    for (int c = 0; c < mInputBuffer.getNumChannels(); c++) {
-      mAudioBuffer.copyFrom(c, 0, mInputBuffer, c, range.getStart(), sampleLength);
+    outputBuffer.setSize(inputBuffer.getNumChannels(), sampleLength);
+    for (int c = 0; c < inputBuffer.getNumChannels(); c++) {
+      outputBuffer.copyFrom(c, 0, inputBuffer, c, range.getStart(), sampleLength);
     }
   }
-  // set input buffer to 1 to reduce memory pressure, should not be needed anymore
-  // clear() keeps memory around
-  // TODO - Find a way to trim the mInputBuffer without having to make another copy. Or find a way so only 1 of these needs to live
-  // on the heap and the other can be remove after used on the stack
-  mInputBuffer.setSize(1, 1);
+  if (clearInput) inputBuffer.setSize(1, 1);
+}
 
-  // preset don't need to generate things again
-  if (!preset) {
-    // Only place that should reset params on loading files/presets
-    resetParameters();
-    mLoadingProgress = 0.0;
-    mProcessedSpecs.fill(nullptr);
-    mFft.process(&mAudioBuffer);
-    mPitchDetector.process(&mAudioBuffer, mSampleRate);
-  } else {
-    mLoadingProgress = 1.0;
-  }
+void GranularSynth::extractPitches() {
+  // Cancel processing if in progress
+  mPitchDetector.cancelProcessing();
+  mLoadingProgress = 0.0;
+  mPitchDetector.process(&mAudioBuffer, mSampleRate);
+}
+
+void GranularSynth::extractSpectrograms() {
+  // Cancel processing if in progress
+  mFft.stopThread(4000);
+  mProcessedSpecs.fill(nullptr);
+  mFft.process(&mAudioBuffer);
 }
 
 std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
