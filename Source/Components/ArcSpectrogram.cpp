@@ -31,10 +31,10 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
 
   // ComboBox for some reason is not zero indexed like the rest of JUCE and C++
   // for adding items we go by 'id' base but everything else is 'index' based
-  mSpecType.addItem("Spectrogram", (int)ParamUI::SpecType::SPECTROGRAM + 1);
-  mSpecType.addItem("Harmonic Profile", (int)ParamUI::SpecType::HPCP + 1);
-  mSpecType.addItem("Detected Pitches", (int)ParamUI::SpecType::DETECTED + 1);
-  mSpecType.addItem("Audio Waveform", (int)ParamUI::SpecType::WAVEFORM + 1);
+  mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::SPECTROGRAM], (int)ParamUI::SpecType::SPECTROGRAM + 1);
+  mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::HPCP], (int)ParamUI::SpecType::HPCP + 1);
+  mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::DETECTED], (int)ParamUI::SpecType::DETECTED + 1);
+  mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::WAVEFORM], (int)ParamUI::SpecType::WAVEFORM + 1);
   mSpecType.setTooltip("Select different spectrum type");
   mSpecType.onChange = [this](void) {
     // Will get called from user using UI ComboBox and from inside this class

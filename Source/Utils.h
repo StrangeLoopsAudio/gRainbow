@@ -46,6 +46,8 @@ static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
 // Slightly different from Parameters::PITCH_CLASS_NAMES for displaying to user, (e.g, replaces Cs with C#)
 static juce::Array<juce::String> PITCH_CLASS_DISP_NAMES{"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
+static juce::Array<juce::String> SpecTypeNames{"Spectrogram", "Harmonic Profile", "Detected Pitches", "Audio Waveform"};
+
 enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
 enum FilterType { NO_FILTER, LOWPASS, HIGHPASS, BANDPASS };
 

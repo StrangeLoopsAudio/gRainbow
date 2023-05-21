@@ -174,12 +174,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   setSize(editorWidth, editorHeight);
 
-  // 
-  if (mSynth.getLoadingProgress() == 1.0 && !mParameters.ui.specComplete) {
-    mSynth.extractSpectrograms();
-    mArcSpec.loadWaveformBuffer(&mSynth.getAudioBuffer());
-  }
-
   // Will update to be what it was when editor was last closed
   updateCenterComponent(mParameters.ui.centerComponent);
 }
@@ -544,7 +538,7 @@ void GRainbowAudioProcessorEditor::savePreset() {
       // There is no way in JUCE to be able to know the size of the
       // png/imageFormat blob until after it is written into the outstream which
       // is too late. To keep things working, just do a double copy to a
-      // internal memory object so the size is know prior to writtin the image
+      // internal memory object so the size is know prior to writing the image
       // data to the stream.
       juce::MemoryOutputStream spectrogramStaging;
       if (!mParameters.ui.saveSpecImage(spectrogramStaging, ParamUI::SpecType::SPECTROGRAM)) {

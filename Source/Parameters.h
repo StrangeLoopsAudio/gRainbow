@@ -560,6 +560,7 @@ struct ParamUI {
   ParamUI() = default;
 
   enum SpecType { INVALID = -1, SPECTROGRAM = 0, HPCP, DETECTED, WAVEFORM, COUNT };
+
   // Get it from the plugin state
   // will only set xml-able items (floats/int/strings)
   void setXml(juce::XmlElement* xml) {
@@ -571,6 +572,18 @@ struct ParamUI {
       centerComponent = (CenterComponent)xml->getIntAttribute("centerComponent");
       trimRange.setStart(xml->getDoubleAttribute("trimRangeStart"));
       trimRange.setEnd(xml->getDoubleAttribute("trimRangeEnd"));
+      if (auto images = xml->getChildByName("Images")) {
+        for (int i = 0; i < ParamUI::SpecType::COUNT; ++i) {
+          juce::String attrName = "image" + juce::String(i);
+          if (images->hasAttribute(attrName)) {
+            juce::MemoryBlock imageData;
+            if (imageData.fromBase64Encoding(images->getStringAttribute(attrName, ""))) {
+              juce::MemoryInputStream in(imageData.getData(), imageData.getSize(), true);
+              specImages[i] = juce::PNGImageFormat::loadFrom(in);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -583,6 +596,14 @@ struct ParamUI {
     xml->setAttribute("centerComponent", static_cast<int>(centerComponent));
     xml->setAttribute("trimRangeStart", trimRange.getStart());
     xml->setAttribute("trimRangeEnd", trimRange.getEnd());
+    juce::XmlElement* images = new juce::XmlElement("Images");
+    for (int i = 0; i < ParamUI::SpecType::COUNT; ++i) {
+      juce::MemoryOutputStream out;
+      saveSpecImage(out, i);
+      juce::MemoryBlock imageData(out.getData(), out.getDataSize());
+      images->setAttribute("image" + juce::String(i), imageData.toBase64Encoding());
+    }
+    xml->addChildElement(images);
     return xml;
   }
 
