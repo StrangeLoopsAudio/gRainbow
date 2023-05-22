@@ -40,9 +40,6 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
   for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
     drawKey(g, key);
   }
-
-  g.setColour(Utils::GLOBAL_COLOUR);
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 
 float RainbowKeyboard::getPitchXRatio(Utils::PitchClass pitchClass) {

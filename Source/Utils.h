@@ -18,13 +18,20 @@ namespace Utils {
 typedef std::vector<std::vector<float>> SpecBuffer;
 
 // UI spacing and colours
+static constexpr int EDITOR_WIDTH = 1000;
+static constexpr int EDITOR_HEIGHT = 550;
+static constexpr int PANEL_WIDTH = 270;
 static constexpr int PADDING = 6;
-static constexpr int TITLE_HEIGHT = 16;
-static constexpr int LABEL_HEIGHT = 20;
-static constexpr int KNOB_HEIGHT = 40;
-static constexpr float ROUNDED_AMOUNT = 10.0f;
+static constexpr int TITLE_HEIGHT = 17;
+static constexpr int LABEL_HEIGHT = TITLE_HEIGHT;
+static constexpr int KNOB_WIDTH = (PANEL_WIDTH - (PADDING * 2)) / 4;
+static constexpr int KNOB_HEIGHT = KNOB_WIDTH / 2;
+static constexpr float ROUNDED_AMOUNT = 6.0f;
 static const juce::Colour GLOBAL_COLOUR = juce::Colours::black;
 static constexpr float GENERATOR_BRIGHTNESS_ADD = 0.2f;  // Amount to make brighter per generator
+
+static const juce::Colour BG_BASE_COLOUR = juce::Colours::lightskyblue;
+static const juce::ColourGradient BG_GRADIENT = juce::ColourGradient(BG_BASE_COLOUR, 0, 0, BG_BASE_COLOUR.brighter(0.7f), 0, 0, false);
 
 typedef struct Result {
   bool success;

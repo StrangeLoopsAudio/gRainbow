@@ -72,13 +72,13 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   // Preset button
   juce::Image presetNormal = juce::PNGImageFormat::loadFrom(BinaryData::presetNormal_png, BinaryData::presetNormal_pngSize);
   juce::Image presetOver = juce::PNGImageFormat::loadFrom(BinaryData::presetOver_png, BinaryData::presetOver_pngSize);
-  mBtnPreset.setImages(false, true, true, presetNormal, 1.0f, juce::Colours::transparentBlack, presetOver, 1.0f,
+  mBtnSavePreset.setImages(false, true, true, presetNormal, 1.0f, juce::Colours::transparentBlack, presetOver, 1.0f,
                        juce::Colours::transparentBlack, presetOver, 1.0f, juce::Colours::transparentBlack);
-  mBtnPreset.onClick = [this] { savePreset(); };
-  mBtnPreset.setTooltip("Save everything as a preset");
-  addAndMakeVisible(mBtnPreset);
+  mBtnSavePreset.onClick = [this] { savePreset(); };
+  mBtnSavePreset.setTooltip("Save everything as a preset");
+  addAndMakeVisible(mBtnSavePreset);
   // if reloading and images are done, then enable right away
-  mBtnPreset.setEnabled(mParameters.ui.specComplete);
+  mBtnSavePreset.setEnabled(mParameters.ui.specComplete);
 
   // File info label
   mLabelFileName.setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
@@ -94,7 +94,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     const juce::MessageManagerLock lock;
     jassert(mParameters.ui.specComplete);
     mArcSpec.setSpecType(ParamUI::SpecType::WAVEFORM);
-    mBtnPreset.setEnabled(true);
+    mBtnSavePreset.setEnabled(true);
   };
 
   mTrimSelection.onCancel = [this]() {
@@ -122,7 +122,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mSynth.getInputBuffer();
       // Reset any UI elements that will need to wait until processing
       mArcSpec.reset();
-      mBtnPreset.setEnabled(false);
+      mBtnSavePreset.setEnabled(false);
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
       mArcSpec.loadWaveformBuffer(&mSynth.getAudioBuffer());
       mParameters.ui.loadedFileName = mParameters.ui.fileName;
@@ -150,6 +150,9 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mFilterControl);
   addAndMakeVisible(mGrainControl);
 
+  mCloudLeft = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeft_png, BinaryData::cloudLeft_pngSize);
+  mCloudRight = juce::PNGImageFormat::loadFrom(BinaryData::cloudRight_png, BinaryData::cloudRight_pngSize);
+
   mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
 
   mAudioDeviceManager.addAudioCallback(&mRecorder);
@@ -164,15 +167,12 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   startTimer(50);
 
-  int editorWidth = 1200;
-  int editorHeight = 650;
-
 #ifndef GRAINBOW_PRODUCTION
   addAndMakeVisible(mSettings);
-  editorHeight += mSettings.getHeight();
+  Utils::EDITOR_HEIGHT += mSettings.getHeight();
 #endif
 
-  setSize(editorWidth, editorHeight);
+  setSize(Utils::EDITOR_WIDTH, Utils::EDITOR_HEIGHT);
 
   // Will update to be what it was when editor was last closed
   updateCenterComponent(mParameters.ui.centerComponent);
@@ -264,9 +264,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
 //==============================================================================
 void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   // Set gradient
-  juce::Colour colour = juce::Colours::lightgrey;
-  g.setFillType(juce::ColourGradient(colour, getLocalBounds().getTopLeft().toFloat(), colour.withAlpha(0.4f),
-                                     getLocalBounds().getBottomLeft().toFloat(), false));
+  g.setFillType(Utils::BG_GRADIENT);
   g.fillRect(getLocalBounds());
 
   // Draw background for open file button
@@ -279,7 +277,7 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
 
   // Draw background for preset button
   g.setColour(juce::Colours::darkgrey);
-  g.fillRoundedRectangle(mBtnPreset.getBounds().toFloat(), 14);
+  g.fillRoundedRectangle(mBtnSavePreset.getBounds().toFloat(), 14);
 }
 
 /**
@@ -292,7 +290,8 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
 
   // Right now just give last note played, not truely polyphony yet
   const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
-  if (!midiNotes.isEmpty()) {
+  // TODO: new note displaying
+  /*if (!midiNotes.isEmpty()) {
     // If there are not candidates, will just not draw any arrows/lines
     std::vector<ParamCandidate*> candidates = mSynth.getActiveCandidates();
     if (!candidates.empty()) {
@@ -329,15 +328,30 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
           g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
                         NOTE_BULB_SIZE, NOTE_BULB_SIZE);
         }
-      }
+      } 
     }
-  }
+  }*/
 
   // When dragging a file over, give feedback it will be accepted when released
   if (mIsFileHovering) {
     g.setColour(juce::Colours::white.withAlpha(0.2f));
     g.fillRect(getLocalBounds());
   }
+
+  // Border path
+  g.setColour(Utils::GLOBAL_COLOUR);
+  g.strokePath(mBorderPath, juce::PathStrokeType(2));
+
+  // Clouds
+  const int expansion = mCloudLeft.getWidth() / 4.0f;
+  const int translation = expansion * 2;
+  auto center = mArcSpec.getBounds().getBottomLeft().translated(translation, 0);
+  g.drawImage(mCloudLeft, mCloudLeft.getBounds().expanded(expansion).withCentre(center).toFloat(),
+              juce::RectanglePlacement::fillDestination);
+  center = mArcSpec.getBounds().getBottomRight().translated(-translation, 0);
+  g.drawImage(mCloudRight, mCloudRight.getBounds().expanded(expansion).withCentre(center).toFloat(),
+              juce::RectanglePlacement::fillDestination);
+
 }
 
 void GRainbowAudioProcessorEditor::resized() {
@@ -350,37 +364,29 @@ void GRainbowAudioProcessorEditor::resized() {
   // Rainbow keyboard
   juce::Rectangle<int> keyboardRect = r.removeFromBottom(r.getHeight() * KEYBOARD_HEIGHT);
   mKeyboard.setBounds(keyboardRect);
-  mNoteDisplayRect = r.removeFromBottom(NOTE_DISPLAY_HEIGHT).toFloat();
 
   // Left and right panels
-  auto leftPanel = r.removeFromLeft(PANEL_WIDTH);
-  int subPanelHeight = leftPanel.getHeight() / 3.0f;
-  mEnvGrain.setBounds(leftPanel.removeFromTop(subPanelHeight));
-  mEnvAdsr.setBounds(leftPanel.removeFromTop(subPanelHeight));
-  mFilterControl.setBounds(leftPanel);
+  auto leftPanel = r.removeFromLeft(Utils::PANEL_WIDTH);
+  mEnvGrain.setBounds(leftPanel.removeFromTop(leftPanel.getHeight() / 2.0f));
+  mEnvAdsr.setBounds(leftPanel);
 
-  auto rightPanel = r.removeFromRight(PANEL_WIDTH);
+  auto rightPanel = r.removeFromRight(Utils::PANEL_WIDTH);
   // TODO: add back in resource usage
   // TODO: add modulators
   mGrainControl.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2.0f));
+  mFilterControl.setBounds(rightPanel);
 
   // Open and record buttons
-  auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT + BTN_PADDING);
-  filePanel.removeFromTop(BTN_PADDING);
-  filePanel.removeFromLeft(BTN_PADDING);
-  mBtnOpenFile.setBounds(filePanel.removeFromLeft(OPEN_FILE_WIDTH));
-  filePanel.removeFromLeft(BTN_PADDING);
-  mBtnRecord.setBounds(filePanel.removeFromLeft(OPEN_FILE_WIDTH));
+  auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT).reduced(Utils::PADDING);
+  const auto filePanelPersistent = filePanel.toFloat(); // Used in border path calculation below
+  const int btnWidth = filePanel.getHeight();
+  mBtnOpenFile.setBounds(filePanel.removeFromLeft(btnWidth));
+  filePanel.removeFromLeft(Utils::PADDING);
+  mBtnRecord.setBounds(filePanel.removeFromLeft(btnWidth));
   // preset button
-  filePanel.removeFromRight(BTN_PADDING);
-  mBtnPreset.setBounds(filePanel.removeFromRight(OPEN_FILE_WIDTH));
-  // no button currntly, but add padding as if one was present
-  filePanel.removeFromRight(BTN_PADDING);
-  filePanel.removeFromRight(OPEN_FILE_WIDTH);
+  mBtnSavePreset.setBounds(filePanel.removeFromRight(btnWidth));
   // remaining space on sides remaing is for file information
-  mLabelFileName.setBounds(filePanel.removeFromTop(BTN_PANEL_HEIGHT));
-
-  r.removeFromTop(NOTE_DISPLAY_HEIGHT);  // Just padding
+  mLabelFileName.setBounds(filePanel);
 
   // Center middle space
   const juce::Rectangle<int> centerRect = r.removeFromTop(r.getWidth() / 2.0f);
@@ -388,6 +394,38 @@ void GRainbowAudioProcessorEditor::resized() {
   mLogo.setBounds(centerRect);
   mTrimSelection.setBounds(centerRect);
   mProgressBar.setBounds(centerRect.withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
+
+  // Border path around children
+  const float halfRound = Utils::ROUNDED_AMOUNT / 2.0f;
+  mBorderPath.clear();
+  auto mArcBounds = mArcSpec.getBounds().toFloat();
+  mBorderPath.startNewSubPath(mArcBounds.getTopLeft().translated(Utils::ROUNDED_AMOUNT, 0));
+  auto point = mArcBounds.getTopRight().translated(-Utils::ROUNDED_AMOUNT, 0);
+  mBorderPath.lineTo(point);
+  mBorderPath.cubicTo(point.translated(halfRound, 0), point.translated(Utils::ROUNDED_AMOUNT, halfRound),
+                      point.translated(Utils::ROUNDED_AMOUNT, Utils::ROUNDED_AMOUNT));
+  point = mArcBounds.getBottomRight().withY(mKeyboard.getBounds().getY() - Utils::ROUNDED_AMOUNT);
+  mBorderPath.lineTo(point);
+  mBorderPath.cubicTo(point.translated(0, halfRound), point.translated(halfRound, Utils::ROUNDED_AMOUNT),
+                      point.translated(Utils::ROUNDED_AMOUNT, Utils::ROUNDED_AMOUNT));
+  point = mKeyboard.getBounds().getTopRight().toFloat().translated(-Utils::ROUNDED_AMOUNT, 0);
+  mBorderPath.lineTo(point);
+  mBorderPath.cubicTo(point.translated(halfRound, 0), point.translated(Utils::ROUNDED_AMOUNT, halfRound),
+                      point.translated(Utils::ROUNDED_AMOUNT, Utils::ROUNDED_AMOUNT));
+  mBorderPath.lineTo(getBounds().getBottomRight().toFloat());
+  mBorderPath.lineTo(getBounds().getBottomLeft().toFloat());
+  point = mKeyboard.getBounds().getTopLeft().toFloat().translated(0, Utils::ROUNDED_AMOUNT);
+  mBorderPath.lineTo(point);
+  mBorderPath.cubicTo(point.translated(0, -halfRound), point.translated(halfRound, -Utils::ROUNDED_AMOUNT),
+                      point.translated(Utils::ROUNDED_AMOUNT, -Utils::ROUNDED_AMOUNT));
+  point = mArcBounds.getBottomLeft().withY(mKeyboard.getBounds().getY()).translated(-Utils::ROUNDED_AMOUNT, 0);
+  mBorderPath.lineTo(point);
+  mBorderPath.cubicTo(point.translated(halfRound, 0), point.translated(Utils::ROUNDED_AMOUNT, -halfRound),
+                      point.translated(Utils::ROUNDED_AMOUNT, -Utils::ROUNDED_AMOUNT));
+  point = mArcBounds.getTopLeft().translated(0, Utils::ROUNDED_AMOUNT);
+  mBorderPath.lineTo(point);
+  mBorderPath.cubicTo(point.translated(0, -halfRound), point.translated(halfRound, -Utils::ROUNDED_AMOUNT),
+                      point.translated(Utils::ROUNDED_AMOUNT, -Utils::ROUNDED_AMOUNT));
 }
 
 bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files) {
@@ -478,7 +516,7 @@ void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
   if (file.getFileExtension() == ".gbow") {
     Utils::Result r = mSynth.loadPreset(file);
     if (r.success) {
-      mBtnPreset.setEnabled(true);
+      mBtnSavePreset.setEnabled(true);
       mArcSpec.loadPreset();
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
       mParameters.ui.fileName = file.getFullPathName();

@@ -68,15 +68,9 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
 
  private:
   // UI Layout
-  static constexpr int BTN_PANEL_HEIGHT = 50;
-  static constexpr int BTN_PADDING = 5;
-  static constexpr int OPEN_FILE_WIDTH = 80;
-  static constexpr int PANEL_WIDTH = 300;
-  static constexpr int KNOB_HEIGHT = 50;
-  static constexpr int TABS_HEIGHT = 30;
+  static constexpr int BTN_PANEL_HEIGHT = 65;
   static constexpr int PROGRESS_SIZE = 80;
   static constexpr int NOTE_BULB_SIZE = 10;
-  static constexpr int NOTE_DISPLAY_HEIGHT = 20;
   static constexpr float KEYBOARD_HEIGHT = 0.27f;
   static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
 
@@ -87,7 +81,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   // UI Components
   juce::ImageButton mBtnOpenFile;
   juce::ImageButton mBtnRecord;
-  juce::ImageButton mBtnPreset;
+  juce::ImageButton mBtnSavePreset;
   juce::Label mLabelFileName;
   RainbowKeyboard mKeyboard;
   EnvelopeADSR mEnvAdsr;
@@ -112,6 +106,8 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::AudioDeviceManager mAudioDeviceManager;
   bool mIsFileHovering = false;
   RainbowLookAndFeel mRainbowLookAndFeel;
+  juce::Path mBorderPath;
+  juce::Image mCloudLeft, mCloudRight;
 
   void openNewFile(const char* path = nullptr);
   void loadFile(juce::File file);

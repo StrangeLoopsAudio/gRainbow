@@ -118,7 +118,9 @@ set(BinaryResources
     Source/Resources/openFileNormal.png
     Source/Resources/openFileOver.png
     Source/Resources/presetNormal.png
-    Source/Resources/presetOver.png)
+    Source/Resources/presetOver.png
+    Source/Resources/cloudLeft.png
+    Source/Resources/cloudRight.png)
 
 juce_add_binary_data(Assets SOURCES ${BinaryResources})
 

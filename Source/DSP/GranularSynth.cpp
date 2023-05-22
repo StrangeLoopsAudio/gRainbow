@@ -14,7 +14,6 @@
 #include "../Preset.h"
 #include "../PluginEditor.h"
 #include "../Components/Settings.h"
-#include "BinaryData.h"
 
 GranularSynth::GranularSynth()
 #ifndef JucePlugin_PreferredChannelConfigurations

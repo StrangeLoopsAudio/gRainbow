@@ -161,9 +161,6 @@ void FilterControl::paint(juce::Graphics& g) {
 
   g.setColour(colour);
   g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f);
-
-  g.setColour(colour);
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 
 void FilterControl::resized() {

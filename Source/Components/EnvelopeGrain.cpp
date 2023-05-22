@@ -173,9 +173,6 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   }
 
   g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f);
-
-  g.setColour(mParamColour);
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 
 void EnvelopeGrain::resized() {
@@ -203,6 +200,8 @@ void EnvelopeGrain::resized() {
   mSliderTilt.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderDuration.setBounds(knobPanel.removeFromLeft(knobWidth));
+
+  r.removeFromBottom(Utils::PADDING);
 
   // Place button
   juce::Rectangle<int> syncPanel = r.removeFromRight(r.getWidth() * 0.25f).toNearestInt();

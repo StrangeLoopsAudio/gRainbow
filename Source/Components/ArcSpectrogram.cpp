@@ -66,7 +66,9 @@ ArcSpectrogram::~ArcSpectrogram() {
 }
 
 void ArcSpectrogram::paint(juce::Graphics& g) {
-  g.fillAll(juce::Colours::black);
+  // Set gradient
+  g.setFillType(Utils::BG_GRADIENT);
+  g.fillAll();
 
   // if nothing has been loaded skip image, progress bar will fill in void space
   if (mParamUI.specType != ParamUI::SpecType::INVALID) {

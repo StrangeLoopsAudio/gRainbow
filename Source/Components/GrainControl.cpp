@@ -206,9 +206,6 @@ void GrainControl::paint(juce::Graphics& g) {
   g.drawRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT, 2.0f);
   g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
-
-  g.setColour(mParamColour);
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 
 void GrainControl::resized() {
@@ -229,6 +226,7 @@ void GrainControl::resized() {
   juce::Rectangle<int> knobPanel = r.removeFromLeft(knobWidth);
   mLabelPitchSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPitchSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
+  knobPanel.removeFromBottom(Utils::PADDING);
   mLabelPitchAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPitchAdjust.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
@@ -242,6 +240,7 @@ void GrainControl::resized() {
   knobPanel = r.removeFromRight(knobWidth);
   mLabelPosSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPosSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
+  knobPanel.removeFromBottom(Utils::PADDING);
   mLabelPosAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPosAdjust.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
@@ -253,6 +252,7 @@ void GrainControl::resized() {
   knobPanel = r;
   mLabelPanSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPanSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
+  knobPanel.removeFromBottom(Utils::PADDING);
   mLabelPanAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPanAdjust.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));

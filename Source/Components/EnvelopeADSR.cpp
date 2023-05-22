@@ -146,9 +146,6 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   g.drawLine(juce::Line<float>(sustainPt.translated(0, -1), endPt), highlightWidth);
 
   g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f);
-
-  g.setColour(colour);
-  g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 
 void EnvelopeADSR::resized() {
@@ -175,6 +172,8 @@ void EnvelopeADSR::resized() {
   mSliderDecay.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderSustain.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderRelease.setBounds(knobPanel.removeFromLeft(knobWidth));
+
+  r.removeFromBottom(Utils::PADDING);
 
   mVizRect = r.toFloat();
 }
