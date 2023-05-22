@@ -67,7 +67,7 @@ ArcSpectrogram::~ArcSpectrogram() {
 
 void ArcSpectrogram::paint(juce::Graphics& g) {
   // Set gradient
-  g.setFillType(Utils::BG_GRADIENT);
+  g.setFillType(Utils::getBgGradient(getBounds()));
   g.fillAll();
 
   // if nothing has been loaded skip image, progress bar will fill in void space
@@ -133,16 +133,13 @@ void ArcSpectrogram::resized() {
   mSpecType.setBounds(r.removeFromRight(SPEC_TYPE_WIDTH).removeFromTop(SPEC_TYPE_HEIGHT));
 
   mCenterPoint = juce::Point<float>(getWidth() / 2.0f, getHeight());
-  mStartRadius = getHeight() / 4.0f;
-  mEndRadius = getHeight();
+  mStartRadius = getHeight() / 2.6f;
+  mEndRadius = getHeight() - 20;
   mBowWidth = mEndRadius - mStartRadius;
 }
 
 void ArcSpectrogram::run() {
   // Initialize rainbow parameters
-  int startRadius = getHeight() / 4.0f;
-  int endRadius = getHeight();
-  int bowWidth = endRadius - startRadius;
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
   mParamUI.specImages[mParamUI.specType] = juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
   juce::Graphics g(mParamUI.specImages[mParamUI.specType]);
@@ -154,13 +151,15 @@ void ArcSpectrogram::run() {
     float maxMagnitude = audioBuffer->getMagnitude(0, audioBuffer->getNumSamples());
 
     // Draw NUM_COLS worth of audio samples
-    juce::Point<float> prevPoint = startPoint.getPointOnCircumference(startRadius + bowWidth / 2.0f, startRadius + bowWidth / 2.0f,
+    juce::Point<float> prevPoint = startPoint.getPointOnCircumference(
+        mStartRadius + mBowWidth / 2.0f, mStartRadius + mBowWidth / 2.0f,
                                                                       -(juce::MathConstants<float>::pi / 2.0f));
     juce::Colour prevColour = juce::Colours::black;
     for (auto i = 0; i < NUM_COLS; ++i) {
       if (threadShouldExit()) return;
       int sampleIdx = ((float)i / NUM_COLS) * audioBuffer->getNumSamples();
-      float sampleRadius = juce::jmap(bufferSamples[sampleIdx], -maxMagnitude, maxMagnitude, (float)startRadius, (float)endRadius);
+      float sampleRadius =
+          juce::jmap(bufferSamples[sampleIdx], -maxMagnitude, maxMagnitude, (float)mStartRadius, (float)mEndRadius);
 
       // Choose rainbow color depending on radius
       auto rainbowColour =
@@ -188,8 +187,8 @@ void ArcSpectrogram::run() {
       if (threadShouldExit()) return;
       auto specCol = ((float)i / NUM_COLS) * spec.size();
       // Draw each row of frequencies
-      for (auto curRadius = startRadius; curRadius < endRadius; curRadius += 1) {
-        float radPerc = (curRadius - startRadius) / (float)bowWidth;
+      for (auto curRadius = mStartRadius; curRadius < mEndRadius; curRadius += 1) {
+        float radPerc = (curRadius - mStartRadius) / (float)mBowWidth;
         auto specRow = radPerc * maxRow;
 
         // Choose rainbow color depending on radius

@@ -71,7 +71,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   static constexpr int BTN_PANEL_HEIGHT = 65;
   static constexpr int PROGRESS_SIZE = 80;
   static constexpr int NOTE_BULB_SIZE = 10;
-  static constexpr float KEYBOARD_HEIGHT = 0.27f;
   static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
 
   // DSP Modules

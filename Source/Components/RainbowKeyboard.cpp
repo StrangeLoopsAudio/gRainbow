@@ -83,6 +83,7 @@ void RainbowKeyboard::fillNoteRectangleMap() {
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   juce::Colour keyColour = Utils::getRainbow12Colour(pitchClass);
   juce::Colour bodyColour = keyColour.withSaturation(NOTE_BODY_SATURATION);
+  juce::Colour borderColour = keyColour.darker();
   const float velocity = mNoteVelocity[pitchClass];
   const bool isDown = (velocity > 0.0f);
   const bool isPitchSelected = mParameters.selectedParams == mParameters.note.notes[pitchClass].get();
@@ -118,7 +119,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 
   juce::Rectangle<float> area = mNoteRectMap[pitchClass];
   g.fillRoundedRectangle(area, Utils::ROUNDED_AMOUNT);
-  g.setColour(keyColour);
+  g.setColour(borderColour);
   g.drawRoundedRectangle(area, Utils::ROUNDED_AMOUNT, 2.0f);
 
   // display animation to show the velocity level of the note
@@ -141,7 +142,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   juce::Rectangle<float> labelRect = area.withTrimmedTop(5).withTrimmedLeft(5).withSize(NOTE_LABEL_SIZE, NOTE_LABEL_SIZE);
   g.setColour(keyColour.withSaturation(0.4f));
   g.fillRoundedRectangle(labelRect, 5.0f);
-  g.setColour(keyColour);
+  g.setColour(borderColour);
   g.drawRoundedRectangle(labelRect, 5.0f, 2.0f);
   g.setColour(juce::Colours::black);
   g.drawFittedText(Utils::PITCH_CLASS_DISP_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred,
@@ -159,7 +160,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     if (isGenSelected) genColour = keyColour.darker();
     g.setColour(genColour);
     g.fillRoundedRectangle(mNoteGenRectMap[pitchClass][i], Utils::ROUNDED_AMOUNT);
-    g.setColour(keyColour);
+    g.setColour(borderColour);
     g.drawRoundedRectangle(mNoteGenRectMap[pitchClass][i], Utils::ROUNDED_AMOUNT, 2.0f);
     g.setColour(juce::Colours::black);
     g.drawFittedText(juce::String::repeatedString("*", gen->genIdx + 1), mNoteGenRectMap[pitchClass][i].toNearestInt(),
@@ -173,7 +174,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
                                                                                : keyColour.withSaturation(0.4f);
     g.setColour(addColour);
     g.fillRoundedRectangle(mNoteAddGenRectMap[pitchClass], 5.0f);
-    g.setColour(keyColour);
+    g.setColour(borderColour);
     g.drawRoundedRectangle(mNoteAddGenRectMap[pitchClass], 5.0f, 2.0f);
     g.setColour(juce::Colours::black);
     g.drawText("+", mNoteAddGenRectMap[pitchClass], juce::Justification::centred);

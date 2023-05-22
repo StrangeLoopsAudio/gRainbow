@@ -40,10 +40,6 @@ void PositionChanger::paint(juce::Graphics& g) {
   g.setColour(blackColour);
   g.drawArrow(mRightArrowLine, 2, 6, 6);
 
-  /* Fill in title section to mask ellipses */
-  g.setColour(juce::Colours::transparentBlack);
-  g.fillRect(mTitleRect.reduced(2, 0));
-
   /* Draw top/bottom borders */
   g.setColour(bgColour);
   g.drawRect(mTitleRect, 2);
@@ -66,7 +62,7 @@ void PositionChanger::paint(juce::Graphics& g) {
   }
   g.setColour(mIsActive ? juce::Colours::blue : juce::Colours::darkgrey);
   g.drawRect(mSoloRect, 2.0f);
-  g.setColour(juce::Colours::white);
+  g.setColour(blackColour);
   g.drawFittedText("solo", mSoloRect.reduced(4).toNearestInt(), juce::Justification::centred, 1);
 }
 

@@ -21,6 +21,7 @@ typedef std::vector<std::vector<float>> SpecBuffer;
 static constexpr int EDITOR_WIDTH = 1000;
 static constexpr int EDITOR_HEIGHT = 550;
 static constexpr int PANEL_WIDTH = 270;
+static constexpr int KEYBOARD_HEIGHT = 200;
 static constexpr int PADDING = 6;
 static constexpr int TITLE_HEIGHT = 17;
 static constexpr int LABEL_HEIGHT = TITLE_HEIGHT;
@@ -30,8 +31,14 @@ static constexpr float ROUNDED_AMOUNT = 6.0f;
 static const juce::Colour GLOBAL_COLOUR = juce::Colours::black;
 static constexpr float GENERATOR_BRIGHTNESS_ADD = 0.2f;  // Amount to make brighter per generator
 
-static const juce::Colour BG_BASE_COLOUR = juce::Colours::lightskyblue;
-static const juce::ColourGradient BG_GRADIENT = juce::ColourGradient(BG_BASE_COLOUR, 0, 0, BG_BASE_COLOUR.brighter(0.7f), 0, 0, false);
+static const juce::ColourGradient BG_GRADIENT = juce::ColourGradient(juce::Colours::lightcyan, EDITOR_WIDTH / 2, 0, juce::Colours::skyblue, EDITOR_WIDTH / 2, EDITOR_HEIGHT, false);
+
+static inline juce::ColourGradient getBgGradient(juce::Rectangle<int> boundsRelativeToEditor) { 
+  juce::ColourGradient grad = BG_GRADIENT;
+  grad.point1.y = grad.point1.y - boundsRelativeToEditor.getY();
+  grad.point2.y = grad.point2.y - boundsRelativeToEditor.getY();
+  return grad;
+}
 
 typedef struct Result {
   bool success;

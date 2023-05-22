@@ -69,6 +69,7 @@ void FilterControl::timerCallback() {
                               juce::dontSendNotification);
     mFilterType.setSelectedId(mParameters.getChoiceParam(mCurSelectedParams, ParamCommon::Type::FILT_TYPE) + 1,
                               juce::dontSendNotification);
+    repaint();
   }
 }
 
@@ -80,7 +81,6 @@ void FilterControl::updateSelectedParams() {
   mSliderCutoff.updateSelectedParams();
   mSliderResonance.updateSelectedParams();
   mParamHasChanged.store(true);
-  repaint();
 }
 
 
@@ -100,16 +100,15 @@ void FilterControl::paint(juce::Graphics& g) {
   juce::Path mFilterPath;
   int resPadding = mVizRect.getHeight() * 0.3f; // both width and height max size of resonance peak
   float cutoffWidth = mVizRect.getWidth() *
-                      ParamRanges::CUTOFF.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_CUTOFF])->get());
+                      ParamRanges::CUTOFF.convertTo0to1(mSliderCutoff.getValue());
   float resHeight =
-      mVizRect.getHeight() * 0.3f *
-      ParamRanges::RESONANCE.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::FILT_RESONANCE])->get());
+      mVizRect.getHeight() * 0.3f * ParamRanges::RESONANCE.convertTo0to1(mSliderResonance.getValue());
 
   juce::Point<float> startPt = mVizRect.getBottomLeft();
   juce::Point<float> midPt1, midPt2, midPt3, midPt4;
   juce::Point<float> endPt = mVizRect.getBottomRight();
 
-  switch (P_CHOICE(mCurSelectedParams->common[ParamCommon::Type::FILT_TYPE])->getIndex()) {
+  switch (mFilterType.getSelectedId() - 1) {
     case (Utils::FilterType::LOWPASS):
       midPt1 = juce::Point<float>(mVizRect.getX(), mVizRect.getY() + resPadding);
       midPt2 = juce::Point<float>(mVizRect.getX() + cutoffWidth - resPadding / 2, mVizRect.getY() + resPadding);

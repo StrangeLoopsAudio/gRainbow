@@ -362,7 +362,7 @@ void GRainbowAudioProcessorEditor::resized() {
 #endif
 
   // Rainbow keyboard
-  juce::Rectangle<int> keyboardRect = r.removeFromBottom(r.getHeight() * KEYBOARD_HEIGHT);
+  juce::Rectangle<int> keyboardRect = r.removeFromBottom(Utils::KEYBOARD_HEIGHT);
   mKeyboard.setBounds(keyboardRect);
 
   // Left and right panels

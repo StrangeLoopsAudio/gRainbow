@@ -658,11 +658,11 @@ struct Parameters {
         return Utils::GLOBAL_COLOUR;
         break;
       case ParamType::NOTE:
-        return Utils::getRainbow12Colour(dynamic_cast<ParamNote*>(selectedParams)->noteIdx);
+        return Utils::getRainbow12Colour(dynamic_cast<ParamNote*>(selectedParams)->noteIdx).darker();
         break;
       case ParamType::GENERATOR:
         ParamGenerator* gen = dynamic_cast<ParamGenerator*>(selectedParams);
-        return Utils::getRainbow12Colour(gen->noteIdx).brighter(gen->genIdx * Utils::GENERATOR_BRIGHTNESS_ADD);
+        return Utils::getRainbow12Colour(gen->noteIdx).brighter(gen->genIdx * Utils::GENERATOR_BRIGHTNESS_ADD).darker();
         break;
     }
     return juce::Colours::black;

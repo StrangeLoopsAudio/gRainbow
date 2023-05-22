@@ -123,12 +123,12 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   g.setColour(juce::Colours::white);
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
-  float duration = P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_DURATION])->get();
-  float rate = P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_RATE])->get();
+  float duration = mSliderDuration.getValue();
+  float rate = mSliderRate.getValue();
 
   float envWidth;
   float envOffset;
-  if (P_BOOL(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SYNC])->get()) {
+  if (mBtnSync.getToggleState()) {
     float durDiv = std::pow(2, (int)(duration));
     envWidth = mVizRect.getWidth() / durDiv;
     float rateDiv = std::pow(2, (int)(rate));
@@ -140,10 +140,10 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
                            envWidth * MAX_RATE_RATIO);
   }
 
-  float shapeWidth = envWidth * P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SHAPE])->get() / 2.0f;
+  float shapeWidth = envWidth * mSliderShape.getValue() / 2.0f;
 
   // Draw darker odd numbered envelopes
-  float tilt = P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::GRAIN_TILT])->get();
+  float tilt = mSliderTilt.getValue();
   float curXStart = mVizRect.getX() + envOffset;
   juce::Colour envColour = colour.darker(0.5f);
   while (curXStart < mVizRect.getWidth()) {

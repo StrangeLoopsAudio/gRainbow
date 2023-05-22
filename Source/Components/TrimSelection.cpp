@@ -150,8 +150,8 @@ void TrimSelection::parse(const juce::AudioBuffer<float>& audioBuffer, double sa
   cleanup();  // in case while trim selecting, user selects a new file
   const double duration = static_cast<double>(audioBuffer.getNumSamples()) / sampleRate;
   if (duration <= MIN_SELECTION_SEC) {
-    error =
-        juce::String::formatted("The audio file is  %.1f seconds but must be greater than %d seconds", duration, MIN_SELECTION_SEC);
+    error = juce::String("The audio file is  ") + juce::String(duration) + " seconds but must be greater than " +
+            juce::String(MIN_SELECTION_SEC) + " seconds.";
     // If another valid file was opened, cancel as that selection will now fail as the formatReader is bad now
     onCancel();
     return;

@@ -246,7 +246,7 @@ void GrainControl::resized() {
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
 
   // Candidate changer
-  mPositionChanger.setBounds(knobPanel.removeFromBottom(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT).reduced(Utils::PADDING));
+  mPositionChanger.setBounds(knobPanel.removeFromBottom(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT));
 
   // Pan spray and adjust
   knobPanel = r;

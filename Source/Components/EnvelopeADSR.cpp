@@ -114,10 +114,10 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
 
   // TODO: include other non-global values as well
-  float attack = ParamRanges::ATTACK.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::ATTACK])->get());
-  float decay = ParamRanges::DECAY.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::DECAY])->get());
-  float sustain = ParamRanges::SUSTAIN.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::SUSTAIN])->get());
-  float release = ParamRanges::RELEASE.convertTo0to1(P_FLOAT(mCurSelectedParams->common[ParamCommon::Type::RELEASE])->get());
+  float attack = ParamRanges::ATTACK.convertTo0to1(mSliderAttack.getValue());
+  float decay = ParamRanges::DECAY.convertTo0to1(mSliderDecay.getValue());
+  float sustain = ParamRanges::SUSTAIN.convertTo0to1(mSliderSustain.getValue());
+  float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
 
   // Draw ADSR path
   g.setFillType(juce::ColourGradient(colour, mVizRect.getTopLeft(), colour.withAlpha(0.4f), mVizRect.getBottomLeft(), false));
