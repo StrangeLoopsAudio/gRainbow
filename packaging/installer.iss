@@ -5,12 +5,13 @@
 
 ; 'Types': What get displayed during the setup
 [Types]
-Name: "custom"; Description: "Custom installation";
+Name: "full"; Description: "Full installation"
+Name: "custom"; Description: "Custom installation"; Flags: iscustom
 
 ; Components are used inside the script and can be composed of a set of 'Types'
 [Components]
-Name: "standalone"; Description: "Standalone application"; Types: custom
-Name: "vst3"; Description: "VST3 plugin"; Types: custom
+Name: "standalone"; Description: "Standalone application"; Types: full custom
+Name: "vst3"; Description: "VST3 plugin"; Types: full custom
 
 [Setup]
 ArchitecturesInstallIn64BitMode=x64

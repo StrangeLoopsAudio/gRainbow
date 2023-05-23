@@ -1,7 +1,7 @@
 {
   "title": "gRainbow",
   "icon": "pamplejuce.icns",
-  "background": "background.jpg",
+  "background": "background.png",
   "window": {
     "position": {
       "x": 100,
@@ -14,9 +14,10 @@
   },
   "format": "UDZO",
   "contents": [
-    { "x": 250, "y": 245, "type": "file", "path": "dmg/gRainbow.component" },
-    { "x": 480, "y": 245, "type": "file", "path": "dmg/Your Mac's Component Folder" },
-    { "x": 250, "y": 405, "type": "file", "path": "dmg/gRainbow.vst3" },
-    { "x": 480, "y": 405, "type": "file", "path": "dmg/Your Mac's VST3 Folder" }
+    { "x": 250, "y": 200, "type": "file", "path": "dmg/gRainbow.app" },
+    { "x": 480, "y": 250, "type": "file", "path": "/Applications/gRainbow" },
+    { "x": 250, "y": 300, "type": "file", "path": "dmg/gRainbow.vst3" },
+    { "x": 480, "y": 300, "type": "file", "path": "/Library/Audio/Plug-Ins/VST3" },
+    { "x": 250, "y": 405, "type": "file", "path": "dmg/gRainbow.appex" }
   ]
 }
