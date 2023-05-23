@@ -72,6 +72,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   static constexpr int PROGRESS_SIZE = 80;
   static constexpr int NOTE_BULB_SIZE = 10;
   static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
+  static constexpr const char* MANUAL_URL = "https://github.com/bboettcher3/gRainbow/blob/development/README.md";
 
   // DSP Modules
   GranularSynth& mSynth;
@@ -80,6 +81,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   // UI Components
   juce::ImageButton mBtnOpenFile;
   juce::ImageButton mBtnRecord;
+  juce::ImageButton mBtnInfo;
   juce::ImageButton mBtnSavePreset;
   juce::Label mLabelFileName;
   RainbowKeyboard mKeyboard;

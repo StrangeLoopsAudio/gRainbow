@@ -3,8 +3,6 @@ name: gRainbow
 on:
   workflow_dispatch: # lets you run a build from the UI
   push:
-    tags:
-      - '*'
 
 # When pushing new commits, cancel any running builds on that branch
 concurrency:

@@ -22,11 +22,14 @@
 #include <Psapi.h>
 #endif
 
-GRainbowLogo::GRainbowLogo() { mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize); }
+GRainbowLogo::GRainbowLogo() { 
+  mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize);
+}
 
 void GRainbowLogo::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::transparentBlack);
-  g.drawImage(mLogoImage, getLocalBounds().toFloat(), juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
+  g.drawImage(mLogoImage, getLocalBounds().toFloat(),
+              juce::RectanglePlacement(juce::RectanglePlacement::yBottom | juce::RectanglePlacement::yTop), false);
 }
 
 //==============================================================================
@@ -46,19 +49,19 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mErrorMessage.clear();
 
   // Open file button
-  juce::Image openFileNormal = juce::PNGImageFormat::loadFrom(BinaryData::openFileNormal_png, BinaryData::openFileNormal_pngSize);
-  juce::Image openFileOver = juce::PNGImageFormat::loadFrom(BinaryData::openFileOver_png, BinaryData::openFileOver_pngSize);
-  mBtnOpenFile.setImages(false, true, true, openFileNormal, 1.0f, juce::Colours::transparentBlack, openFileOver, 1.0f,
-                         juce::Colours::transparentBlack, openFileOver, 1.0f, juce::Colours::transparentBlack);
+  juce::Image normal = juce::PNGImageFormat::loadFrom(BinaryData::openFileNormal_png, BinaryData::openFileNormal_pngSize);
+  juce::Image over = juce::PNGImageFormat::loadFrom(BinaryData::openFileOver_png, BinaryData::openFileOver_pngSize);
+  mBtnOpenFile.setImages(false, true, true, normal, 1.0f, juce::Colours::transparentBlack, over, 1.0f,
+                         juce::Colours::transparentBlack, over, 1.0f, juce::Colours::transparentBlack);
   mBtnOpenFile.onClick = [this] { openNewFile(); };
   mBtnOpenFile.setTooltip("Load new sample from file or preset");
   addAndMakeVisible(mBtnOpenFile);
 
   // Recording button
-  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
-  juce::Image recordOver = juce::PNGImageFormat::loadFrom(BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
-  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f, juce::Colours::transparentBlack, recordOver, 1.0f,
-                       juce::Colours::transparentBlack, recordOver, 1.0f, juce::Colours::transparentBlack);
+  normal = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
+  over = juce::PNGImageFormat::loadFrom(BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
+  mBtnRecord.setImages(false, true, true, normal, 1.0f, juce::Colours::transparentBlack, over, 1.0f,
+                       juce::Colours::transparentBlack, over, 1.0f, juce::Colours::transparentBlack);
   mBtnRecord.onClick = [this] {
     if (mRecorder.isRecording()) {
       stopRecording();
@@ -70,15 +73,24 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mBtnRecord);
 
   // Preset button
-  juce::Image presetNormal = juce::PNGImageFormat::loadFrom(BinaryData::presetNormal_png, BinaryData::presetNormal_pngSize);
-  juce::Image presetOver = juce::PNGImageFormat::loadFrom(BinaryData::presetOver_png, BinaryData::presetOver_pngSize);
-  mBtnSavePreset.setImages(false, true, true, presetNormal, 1.0f, juce::Colours::transparentBlack, presetOver, 1.0f,
-                       juce::Colours::transparentBlack, presetOver, 1.0f, juce::Colours::transparentBlack);
+  normal = juce::PNGImageFormat::loadFrom(BinaryData::presetNormal_png, BinaryData::presetNormal_pngSize);
+  over = juce::PNGImageFormat::loadFrom(BinaryData::presetOver_png, BinaryData::presetOver_pngSize);
+  mBtnSavePreset.setImages(false, true, true, normal, 1.0f, juce::Colours::transparentBlack, over, 1.0f,
+                       juce::Colours::transparentBlack, over, 1.0f, juce::Colours::transparentBlack);
   mBtnSavePreset.onClick = [this] { savePreset(); };
   mBtnSavePreset.setTooltip("Save everything as a preset");
   addAndMakeVisible(mBtnSavePreset);
   // if reloading and images are done, then enable right away
   mBtnSavePreset.setEnabled(mParameters.ui.specComplete);
+
+  // Plugin info button
+  normal = juce::PNGImageFormat::loadFrom(BinaryData::infoNormal_png, BinaryData::infoNormal_pngSize);
+  over = juce::PNGImageFormat::loadFrom(BinaryData::infoOver_png, BinaryData::infoOver_pngSize);
+  mBtnInfo.setImages(false, true, true, normal, 1.0f, juce::Colours::transparentBlack, over, 1.0f,
+                           juce::Colours::transparentBlack, over, 1.0f, juce::Colours::transparentBlack);
+  mBtnInfo.onClick = [this] { juce::URL(MANUAL_URL).launchInDefaultBrowser(); };
+  mBtnInfo.setTooltip("Open gRainbow manual");
+  addAndMakeVisible(mBtnInfo);
 
   // File info label
   mLabelFileName.setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
@@ -266,7 +278,7 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   // Set gradient
   g.setFillType(Utils::BG_GRADIENT);
   g.fillRect(getLocalBounds());
-
+  /*
   // Draw background for open file button
   g.setColour(juce::Colours::darkgrey);
   g.fillRoundedRectangle(mBtnOpenFile.getBounds().toFloat(), 14);
@@ -278,15 +290,16 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   // Draw background for preset button
   g.setColour(juce::Colours::darkgrey);
   g.fillRoundedRectangle(mBtnSavePreset.getBounds().toFloat(), 14);
+
+  // Draw background for info button
+  g.setColour(juce::Colours::darkgrey);
+  g.fillRoundedRectangle(mBtnInfo.getBounds().toFloat(), 14);*/
 }
 
 /**
   @brief Draw note display (the small section between the keyboard and arc spectrogram)
 */
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
-  if (!PowerUserSettings::get().getAnimated() || mParameters.ui.centerComponent != ParamUI::CenterComponent::ARC_SPEC) {
-    return;
-  }
 
   // Right now just give last note played, not truely polyphony yet
   const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
@@ -343,14 +356,16 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
   g.strokePath(mBorderPath, juce::PathStrokeType(2));
 
   // Clouds
-  const int expansion = mCloudLeft.getWidth() / 4.0f;
-  const int translation = expansion * 2;
-  auto center = mArcSpec.getBounds().getBottomLeft().translated(translation, 0);
-  g.drawImage(mCloudLeft, mCloudLeft.getBounds().expanded(expansion).withCentre(center).toFloat(),
-              juce::RectanglePlacement::fillDestination);
-  center = mArcSpec.getBounds().getBottomRight().translated(-translation, 0);
-  g.drawImage(mCloudRight, mCloudRight.getBounds().expanded(expansion).withCentre(center).toFloat(),
-              juce::RectanglePlacement::fillDestination);
+  if (mParameters.ui.centerComponent == ParamUI::CenterComponent::ARC_SPEC) {
+    const int expansion = mCloudLeft.getWidth() / 4.0f;
+    const int translation = expansion * 2;
+    auto center = mArcSpec.getBounds().getBottomLeft().translated(translation, 0);
+    g.drawImage(mCloudLeft, mCloudLeft.getBounds().expanded(expansion).withCentre(center).toFloat(),
+                juce::RectanglePlacement::fillDestination);
+    center = mArcSpec.getBounds().getBottomRight().translated(-translation, 0);
+    g.drawImage(mCloudRight, mCloudRight.getBounds().expanded(expansion).withCentre(center).toFloat(),
+                juce::RectanglePlacement::fillDestination);
+  }
 
 }
 
@@ -385,13 +400,16 @@ void GRainbowAudioProcessorEditor::resized() {
   mBtnRecord.setBounds(filePanel.removeFromLeft(btnWidth));
   // preset button
   mBtnSavePreset.setBounds(filePanel.removeFromRight(btnWidth));
+  filePanel.removeFromLeft(Utils::PADDING);
+  // info button
+  mBtnInfo.setBounds(filePanel.removeFromRight(btnWidth));
   // remaining space on sides remaing is for file information
   mLabelFileName.setBounds(filePanel);
 
   // Center middle space
+  mLogo.setBounds(r.reduced(r.getHeight() / 4.0f));
   const juce::Rectangle<int> centerRect = r.removeFromTop(r.getWidth() / 2.0f);
   mArcSpec.setBounds(centerRect);
-  mLogo.setBounds(centerRect);
   mTrimSelection.setBounds(centerRect);
   mProgressBar.setBounds(centerRect.withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
 
