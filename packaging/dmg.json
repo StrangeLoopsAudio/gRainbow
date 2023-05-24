@@ -16,8 +16,10 @@
   "contents": [
     { "x": 250, "y": 200, "type": "file", "path": "dmg/gRainbow.app" },
     { "x": 480, "y": 250, "type": "file", "path": "/Applications/gRainbow" },
-    { "x": 250, "y": 300, "type": "file", "path": "dmg/gRainbow.vst3" },
-    { "x": 480, "y": 300, "type": "file", "path": "/Library/Audio/Plug-Ins/VST3" },
-    { "x": 250, "y": 405, "type": "file", "path": "dmg/gRainbow.appex" }
+    { "x": 250, "y": 300, "type": "file", "path": "dmg/gRainbow.component" },
+    { "x": 480, "y": 300, "type": "file", "path": "/Library/Audio/Plug-Ins/Components" },
+    { "x": 250, "y": 405, "type": "file", "path": "dmg/gRainbow.vst3" },
+    { "x": 480, "y": 405, "type": "file", "path": "/Library/Audio/Plug-Ins/VST3" },
+
   ]
 }
