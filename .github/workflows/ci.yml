@@ -172,9 +172,9 @@ jobs:
         mkdir -p packaging/dmg
         
         # Move built files to dmg folder
-        mv "${{ env.STANDALONE_PATH }}" packaging/dmg
-        mv "${{ env.VST3_PATH }}" packaging/dmg
-        mv "${{ env.AUV3_PATH }}" packaging/dmg
+        mv "${{ env.BUILD_DIR }}/${{ env.STANDALONE_PATH }}" packaging/dmg
+        mv "${{ env.BUILD_DIR }}/${{ env.VST3_PATH }}" packaging/dmg
+        mv "${{ env.BUILD_DIR }}/${{ env.AUV3_PATH }}" packaging/dmg
         
         # Run appdmg to create the .dmg
         cd packaging && appdmg dmg.json ${{ env.PRODUCT_NAME}}.dmg
