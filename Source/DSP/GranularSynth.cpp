@@ -579,7 +579,7 @@ Utils::Result GranularSynth::loadPreset(juce::File file) {
     }
 
     if (mSampleRate != INVALID_SAMPLE_RATE) {
-      resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
+      resampleAudioBuffer(fileAudioBuffer, mInputBuffer, sampleRate, mSampleRate);
       // Convert time to sample range
       const double sampleLength = static_cast<double>(mInputBuffer.getNumSamples());
       const double secondLength = sampleLength / mSampleRate;

@@ -64,8 +64,6 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mLabelRelease.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRelease);
 
-  mParameters.global.addListener(this);
-
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
 
