@@ -8,7 +8,7 @@ set(FORMATS VST3 Standalone)
 
 # Build LV2 only on Linux
 if(UNIX AND NOT APPLE)
-    list(APPEND JUCE_FORMATS LV2)
+    list(APPEND FORMATS LV2)
 endif()
 
 # Build AU only on MacOS
