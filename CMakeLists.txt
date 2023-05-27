@@ -4,7 +4,17 @@ set(PROJECT_NAME "gRainbow")
 
 # Set the plugin formats you'll be building here.
 # Valid formats: AAX Unity VST AU AUv3 Standalone
-set(FORMATS VST3 AU Standalone)
+set(FORMATS VST3 Standalone)
+
+# Build LV2 only on Linux
+if(UNIX AND NOT APPLE)
+    list(APPEND JUCE_FORMATS LV2)
+endif()
+
+# Build AU only on MacOS
+if(APPLE)
+    list(APPEND FORMATS AU)
+endif()
 
 # Reads in VERSION file and sticks in it CURRENT_VERSION variable
 # Be sure the file has no newlines
