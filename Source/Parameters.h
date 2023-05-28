@@ -488,7 +488,6 @@ struct ParamNote : ParamCommon {
     jassert(xml->hasTagName("ParamNote"));
     candidates.clear();
     for (auto* children : xml->getChildIterator()) {
-      DBG(children->toString());
       if (children->hasTagName("ParamCandidate")) {
         candidates.push_back(ParamCandidate(children));
       }
@@ -671,12 +670,12 @@ struct Parameters {
   // Finds the lowest level parameter that's different from its parent
   // Hierarchy (high to low): global, note, generator
   float getFloatParam(ParamCommon* common, ParamCommon::Type type) {
-    float defaultVal = COMMON_DEFAULTS[type];
-    ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+    const float defaultVal = COMMON_DEFAULTS[type];
+    const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
     ParamNote* pNote = dynamic_cast<ParamNote*>(common);
     if (pGen != nullptr) {
       // If gen value is different from default, return it
-      float value = P_FLOAT(pGen->common[type])->get();
+      const float value = P_FLOAT(pGen->common[type])->get();
       if (value != defaultVal) {
         return value;
       }
@@ -684,7 +683,7 @@ struct Parameters {
     }
     if (pNote != nullptr) {
       // Otherwise if note value is different from default, return it
-      float value = P_FLOAT(pNote->common[type])->get();
+      const float value = P_FLOAT(pNote->common[type])->get();
       if (value != defaultVal) {
         return value;
       }
@@ -694,12 +693,12 @@ struct Parameters {
     return P_FLOAT(global.common[type])->get();
   }
   int getChoiceParam(ParamCommon* common, ParamCommon::Type type) {
-    int defaultVal = COMMON_DEFAULTS[type];
-    ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+    const int defaultVal = COMMON_DEFAULTS[type];
+    const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
     ParamNote* pNote = dynamic_cast<ParamNote*>(common);
     if (pGen != nullptr) {
       // If gen value is different from default, return it
-      int value = P_CHOICE(pGen->common[type])->getIndex();
+      const int value = P_CHOICE(pGen->common[type])->getIndex();
       if (value != defaultVal) {
         return value;
       }
@@ -707,7 +706,7 @@ struct Parameters {
     }
     if (pNote != nullptr) {
       // Otherwise if note value is different from default, return it
-      int value = P_CHOICE(pNote->common[type])->getIndex();
+      const int value = P_CHOICE(pNote->common[type])->getIndex();
       if (value != defaultVal) {
         return value;
       }
@@ -717,12 +716,12 @@ struct Parameters {
     return P_CHOICE(global.common[type])->getIndex();
   }
   int getBoolParam(ParamCommon* common, ParamCommon::Type type) {
-    int defaultVal = COMMON_DEFAULTS[type];
-    ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+    const int defaultVal = COMMON_DEFAULTS[type];
+    const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
     ParamNote* pNote = dynamic_cast<ParamNote*>(common);
     if (pGen != nullptr) {
       // If gen value is different from default, return it
-      bool value = P_BOOL(pGen->common[type])->get();
+      const bool value = P_BOOL(pGen->common[type])->get();
       if (value != defaultVal) {
         return value;
       }
@@ -730,7 +729,7 @@ struct Parameters {
     }
     if (pNote != nullptr) {
       // Otherwise if note value is different from default, return it
-      bool value = P_BOOL(pNote->common[type])->get();
+      const bool value = P_BOOL(pNote->common[type])->get();
       if (value != defaultVal) {
         return value;
       }
@@ -738,5 +737,31 @@ struct Parameters {
 
     // Both note and generator are still defaults, so let's use the global value
     return P_BOOL(global.common[type])->get();
+  }
+  std::vector<float> getGrainEnv(ParamCommon* common) {
+    const int defaultShape = COMMON_DEFAULTS[ParamCommon::Type::GRAIN_SHAPE];
+    const int defaultTilt = COMMON_DEFAULTS[ParamCommon::Type::GRAIN_TILT];
+    const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
+    if (pGen != nullptr) {
+      // If gen value is different from default, return it
+      const float shape = P_FLOAT(pGen->common[ParamCommon::Type::GRAIN_SHAPE])->get();
+      const float tilt = P_FLOAT(pGen->common[ParamCommon::Type::GRAIN_TILT])->get();
+      if (shape != defaultShape || tilt != defaultTilt) {
+        return pGen->grainEnvLUT;
+      }
+      pNote = note.notes[pGen->noteIdx].get();
+    }
+    if (pNote != nullptr) {
+      // Otherwise if note value is different from default, return it
+      const float shape = P_FLOAT(pNote->common[ParamCommon::Type::GRAIN_SHAPE])->get();
+      const float tilt = P_FLOAT(pNote->common[ParamCommon::Type::GRAIN_TILT])->get();
+      if (shape != defaultShape || tilt != defaultTilt) {
+        return pNote->grainEnvLUT;
+      }
+    }
+
+    // Both note and generator are still defaults, so let's use the global value
+    return global.grainEnvLUT;
   }
 };

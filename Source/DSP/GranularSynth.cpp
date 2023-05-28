@@ -406,7 +406,8 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           const float posSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::POS_SPRAY);
           const float panAdjust = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_ADJUST);
           const float panSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_SPRAY);
-
+          const std::vector<float> grainEnv = mParameters.getGrainEnv(paramGenerator);
+          
           if (grainSync) {
             float div = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_DURATION.convertTo0to1(grainDuration)));
             double bpm = DEFAULT_BPM;
@@ -450,7 +451,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
             jassert(paramCandidate->pbRate > 0.1f);
 
             /* Add grain */
-            auto grain = Grain(paramGenerator->grainEnvLUT, durSamples, pbRate, posSamples, mTotalSamps, gain, panOffset);
+            auto grain = Grain(grainEnv, durSamples, pbRate, posSamples, mTotalSamps, gain, panOffset);
             gNote.genGrains[i].add(grain);
 
             /* Trigger grain in arcspec */
@@ -490,8 +491,8 @@ Utils::Result GranularSynth::loadAudioFile(juce::File file, bool process) {
 
   juce::AudioBuffer<float> fileAudioBuffer;
   const int length = static_cast<int>(formatReader->lengthInSamples);
-  fileAudioBuffer.setSize(formatReader->numChannels, length);
-  formatReader->read(&fileAudioBuffer, 0, length, 0, true, true);
+  fileAudioBuffer.setSize(1, length);
+  formatReader->read(&fileAudioBuffer, 0, length, 0, true, false);
 
   // .mp3 files, unlike .wav files, can contain PCM values greater than abs(1.0) (aka, clipping) which will produce aweful
   // sounding grains, so normalize the gain of any mp3 file clipping before using anywhere

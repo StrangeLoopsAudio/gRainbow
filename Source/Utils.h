@@ -78,8 +78,6 @@ struct MidiNote {
   bool operator!=(const MidiNote& other) const { return pitch != other.pitch; }
 };
 
-
-
 typedef struct EnvelopeADSR {
   // All adsr params are in samples (except for sustain amp)
   EnvelopeState state = EnvelopeState::ATTACK;

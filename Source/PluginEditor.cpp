@@ -537,7 +537,8 @@ void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
       mBtnSavePreset.setEnabled(true);
       mArcSpec.loadPreset();
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
-      mParameters.ui.fileName = file.getFullPathName();
+      mParameters.ui.loadedFileName = file.getFullPathName();
+      mParameters.ui.fileName = mParameters.ui.loadedFileName;
       mLabelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
       resized();
     } else {
