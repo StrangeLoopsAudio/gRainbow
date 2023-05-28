@@ -139,7 +139,10 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   startTimer(100);
 }
 
-GrainControl::~GrainControl() { mMeter.setLookAndFeel(nullptr); }
+GrainControl::~GrainControl() { 
+  mCurSelectedParams->removeListener(this);
+  mMeter.setLookAndFeel(nullptr);
+}
 
 void GrainControl::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
 
