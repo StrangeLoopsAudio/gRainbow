@@ -155,7 +155,6 @@ static constexpr auto MAX_CANDIDATES = 6;
 static constexpr auto NUM_GENERATORS = 4;
 static constexpr auto SOLO_NONE = -1;
 static constexpr auto NUM_FILTER_TYPES = 3;
-static constexpr auto ENV_LUT_SIZE = 128;  // grain env lookup table size
 
 // Common parameters types used by each generator, note and globally
 class ParamCommon : public juce::AudioProcessorParameter::Listener {
@@ -163,11 +162,8 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
   ParamCommon(ParamType type) : type(type) {
     filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
     filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
-    updateGrainEnvelopeLUT(grainEnvLUT, ParamDefaults::GRAIN_SHAPE_DEFAULT, ParamDefaults::GRAIN_TILT_DEFAULT);
   }
   ~ParamCommon() {
-    common[GRAIN_SHAPE]->removeListener(this);
-    common[GRAIN_TILT]->removeListener(this);
     common[FILT_TYPE]->removeListener(this);
     common[FILT_CUTOFF]->removeListener(this);
     common[FILT_RESONANCE]->removeListener(this);
@@ -262,9 +258,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
   }
 
   void parameterValueChanged(int paramIdx, float newValue) override {
-    if (paramIdx == common[GRAIN_SHAPE]->getParameterIndex() || paramIdx == common[GRAIN_TILT]->getParameterIndex()) {
-      updateGrainEnvelopeLUT(grainEnvLUT, P_FLOAT(common[GRAIN_SHAPE])->get(), P_FLOAT(common[GRAIN_TILT])->get());
-    } else if (paramIdx == common[FILT_TYPE]->getParameterIndex()) {
+    if (paramIdx == common[FILT_TYPE]->getParameterIndex()) {
       switch (P_CHOICE(common[FILT_TYPE])->getIndex()) {
         case Utils::FilterType::LOWPASS: {
           filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
@@ -293,37 +287,9 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
 
   // Type of derived class
   ParamType type;
-  // LUT of the grain envelope
-  std::vector<float> grainEnvLUT;
   // State variable filter for generator
   juce::dsp::StateVariableTPTFilter<float> filter;
   double sampleRate = 48000;
-
- private:
-  void updateGrainEnvelopeLUT(std::vector<float>& lut, float shape, float tilt) {
-    lut.clear();
-    /* LUT divided into 3 parts
-
-                 1.0
-                -----
-       rampUp  /     \  rampDown
-              /       \
-    */
-    float scaledShape = (shape * ENV_LUT_SIZE) / 2.0f;
-    float scaledTilt = tilt * ENV_LUT_SIZE;
-    int rampUpEndSample = juce::jmax(0.0f, scaledTilt - scaledShape);
-    int rampDownStartSample = juce::jmin((float)ENV_LUT_SIZE, scaledTilt + scaledShape);
-    for (int i = 0; i < ENV_LUT_SIZE; i++) {
-      if (i < rampUpEndSample) {
-        lut.push_back((float)i / rampUpEndSample);
-      } else if (i > rampDownStartSample) {
-        lut.push_back(1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample));
-      } else {
-        lut.push_back(1.0f);
-      }
-    }
-    juce::FloatVectorOperations::clip(lut.data(), lut.data(), 0.0f, 1.0f, lut.size());
-  }
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamCommon)
 };
@@ -748,7 +714,7 @@ struct Parameters {
       const float shape = P_FLOAT(pGen->common[ParamCommon::Type::GRAIN_SHAPE])->get();
       const float tilt = P_FLOAT(pGen->common[ParamCommon::Type::GRAIN_TILT])->get();
       if (shape != defaultShape || tilt != defaultTilt) {
-        return pGen->grainEnvLUT;
+        return Utils::getGrainEnvelopeLUT(shape, tilt);
       }
       pNote = note.notes[pGen->noteIdx].get();
     }
@@ -757,11 +723,13 @@ struct Parameters {
       const float shape = P_FLOAT(pNote->common[ParamCommon::Type::GRAIN_SHAPE])->get();
       const float tilt = P_FLOAT(pNote->common[ParamCommon::Type::GRAIN_TILT])->get();
       if (shape != defaultShape || tilt != defaultTilt) {
-        return pNote->grainEnvLUT;
+        return Utils::getGrainEnvelopeLUT(shape, tilt);
       }
     }
 
     // Both note and generator are still defaults, so let's use the global value
-    return global.grainEnvLUT;
+    const float shape = P_FLOAT(pNote->common[ParamCommon::Type::GRAIN_SHAPE])->get();
+    const float tilt = P_FLOAT(pNote->common[ParamCommon::Type::GRAIN_TILT])->get();
+    return Utils::getGrainEnvelopeLUT(shape, tilt);
   }
 };

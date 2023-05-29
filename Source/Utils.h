@@ -33,6 +33,8 @@ static constexpr float GENERATOR_BRIGHTNESS_ADD = 0.2f;  // Amount to make brigh
 
 static const juce::ColourGradient BG_GRADIENT = juce::ColourGradient(juce::Colours::lightcyan, EDITOR_WIDTH / 2, 0, juce::Colours::skyblue, EDITOR_WIDTH / 2, EDITOR_HEIGHT, false);
 
+static constexpr auto ENV_LUT_SIZE = 64;  // grain env lookup table size
+
 static inline juce::ColourGradient getBgGradient(juce::Rectangle<int> boundsRelativeToEditor) { 
   juce::ColourGradient grad = BG_GRADIENT;
   grad.point1.y = grad.point1.y - boundsRelativeToEditor.getY();
@@ -275,6 +277,32 @@ static inline juce::Colour getRainbow12Colour(int value) {
       break;
   }
   return juce::Colour(r * 255.0f, g * 255.0f, b * 255.0f);
+}
+
+static const std::vector<float> getGrainEnvelopeLUT(const float shape, const float tilt) {
+  std::vector<float> lut;
+  /* LUT divided into 3 parts
+
+               1.0
+              -----
+     rampUp  /     \  rampDown
+            /       \
+  */
+  float scaledShape = (shape * ENV_LUT_SIZE) / 2.0f;
+  float scaledTilt = tilt * ENV_LUT_SIZE;
+  int rampUpEndSample = juce::jmax(0.0f, scaledTilt - scaledShape);
+  int rampDownStartSample = juce::jmin((float)ENV_LUT_SIZE, scaledTilt + scaledShape);
+  for (int i = 0; i < ENV_LUT_SIZE; i++) {
+    if (i < rampUpEndSample) {
+      lut.push_back((float)i / rampUpEndSample);
+    } else if (i > rampDownStartSample) {
+      lut.push_back(1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample));
+    } else {
+      lut.push_back(1.0f);
+    }
+  }
+  juce::FloatVectorOperations::clip(lut.data(), lut.data(), 0.0f, 1.0f, lut.size());
+  return lut;
 }
 
 template <class TimeT = std::chrono::milliseconds, class ClockT = std::chrono::steady_clock>

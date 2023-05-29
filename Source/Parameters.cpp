@@ -33,13 +33,10 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                      new juce::AudioParameterChoice(ParamIDs::globalFilterType, "Master Filter Type", FILTER_TYPE_NAMES, 0));
   common[FILT_TYPE]->addListener(this);
 
-  // Shape and Tilt have listeners as changing then will change the envolope LUT
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat(ParamIDs::globalGrainShape, "Master Grain Shape",
                                                                      ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
-  common[GRAIN_SHAPE]->addListener(this);
   p.addParameter(common[GRAIN_TILT] = new juce::AudioParameterFloat(ParamIDs::globalGrainTilt, "Master Grain Tilt",
                                                                     ParamRanges::GRAIN_TILT, ParamDefaults::GRAIN_TILT_DEFAULT));
-  common[GRAIN_TILT]->addListener(this);
 
   p.addParameter(common[GRAIN_RATE] = new juce::AudioParameterFloat(ParamIDs::globalGrainRate, "Master Grain Rate",
                                                                     ParamRanges::GRAIN_RATE, ParamDefaults::GRAIN_RATE_DEFAULT));
@@ -117,15 +114,12 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   p.addParameter(common[PAN_SPRAY] = new juce::AudioParameterFloat(panSprayId, panSprayId, ParamRanges::PAN_SPRAY,
                                                                    ParamDefaults::PAN_SPRAY_DEFAULT));
 
-  // Shape and Tilt have listeners as changing then will change the envolope LUT
   juce::String shapeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainShape + juce::String(genIdx);
   p.addParameter(common[GRAIN_SHAPE] =
                      new juce::AudioParameterFloat(shapeId, shapeId, ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
-  common[GRAIN_SHAPE]->addListener(this);
   juce::String tiltId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainTilt + juce::String(genIdx);
   p.addParameter(common[GRAIN_TILT] =
                      new juce::AudioParameterFloat(tiltId, tiltId, ParamRanges::GRAIN_TILT, ParamDefaults::GRAIN_TILT_DEFAULT));
-  common[GRAIN_TILT]->addListener(this);
 
   juce::String rateId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainRate + juce::String(genIdx);
   p.addParameter(common[GRAIN_RATE] =
@@ -166,13 +160,10 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
                                                                     notePrefix + ParamIDs::noteFilterType, FILTER_TYPE_NAMES, 0));
   common[FILT_TYPE]->addListener(this);
 
-  // Shape and Tilt have listeners as changing then will change the envolope LUT
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat(notePrefix + ParamIDs::noteGrainShape, notePrefix + ParamIDs::noteGrainShape,
                                                    ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
-  common[GRAIN_SHAPE]->addListener(this);
   p.addParameter(common[GRAIN_TILT] = new juce::AudioParameterFloat(notePrefix + ParamIDs::noteGrainTilt, notePrefix + ParamIDs::noteGrainTilt,
                                                    ParamRanges::GRAIN_TILT, ParamDefaults::GRAIN_TILT_DEFAULT));
-  common[GRAIN_TILT]->addListener(this);
 
   p.addParameter(common[GRAIN_RATE] =
                      new juce::AudioParameterFloat(notePrefix + ParamIDs::noteGrainRate, notePrefix + ParamIDs::noteGrainRate,

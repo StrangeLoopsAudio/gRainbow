@@ -45,4 +45,3 @@ cmake-build*/
 # Good habit - have an ignore directory
 ignore/
 CMakeSettings.json
-CMakeSettings.json
