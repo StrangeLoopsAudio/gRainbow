@@ -165,10 +165,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mCloudLeft = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeft_png, BinaryData::cloudLeft_pngSize);
   mCloudRight = juce::PNGImageFormat::loadFrom(BinaryData::cloudRight_png, BinaryData::cloudRight_pngSize);
 
-  mAudioDeviceManager.initialise(1, 2, nullptr, true, {}, nullptr);
-
-  mAudioDeviceManager.addAudioCallback(&mRecorder);
-
   // Only want keyboard input focus for standalone as DAW will have own input
   // mappings
   if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
@@ -503,6 +499,9 @@ void GRainbowAudioProcessorEditor::startRecording() {
     return;
   }
 
+  mAudioDeviceManager.initialiseWithDefaultDevices(1, 0);
+  mAudioDeviceManager.addAudioCallback(&mRecorder);
+
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   parentDir.getChildFile(FILE_RECORDING).deleteFile();
   mRecordedFile = parentDir.getChildFile(FILE_RECORDING);
@@ -510,8 +509,8 @@ void GRainbowAudioProcessorEditor::startRecording() {
   mRecorder.startRecording(mRecordedFile);
 
   juce::Image recordIcon = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
-  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f, juce::Colours::transparentBlack, recordIcon, 1.0f,
-                       juce::Colours::transparentBlack, recordIcon, 1.0f, juce::Colours::transparentBlack);
+  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f, juce::Colours::red, recordIcon, 1.0f, juce::Colours::red, recordIcon,
+                       1.0f, juce::Colours::red);
   repaint();
 }
 
@@ -519,6 +518,9 @@ void GRainbowAudioProcessorEditor::stopRecording() {
   mRecorder.stop();
 
   loadFile(mRecordedFile);
+
+  mAudioDeviceManager.removeAudioCallback(&mRecorder);
+  mAudioDeviceManager.closeAudioDevice();
 
   mRecordedFile = juce::File();
 
