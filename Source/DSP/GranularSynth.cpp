@@ -580,14 +580,7 @@ Utils::Result GranularSynth::loadPreset(juce::File file) {
     }
 
     if (mSampleRate != INVALID_SAMPLE_RATE) {
-      resampleAudioBuffer(fileAudioBuffer, mInputBuffer, sampleRate, mSampleRate);
-      // Convert time to sample range
-      const double sampleLength = static_cast<double>(mInputBuffer.getNumSamples());
-      const double secondLength = sampleLength / mSampleRate;
-      juce::int64 start = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getStart() / secondLength));
-      juce::int64 end = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getEnd() / secondLength));
-      trimAudioBuffer(mInputBuffer, mAudioBuffer, juce::Range<juce::int64>(start, end));
-      mInputBuffer.setSize(1, 1);
+      resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
     } else {
       mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
       mSampleRate = sampleRate;        // A bit hacky, but we need to store the file's smaple rate for resampling

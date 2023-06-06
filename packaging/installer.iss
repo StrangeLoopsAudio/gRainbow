@@ -34,6 +34,10 @@ Type: filesandordirs; Name: "{commoncf64}\VST3\{#PluginName}Data"
 Source: "..\Builds\gRainbow_artefacts\Release\VST3\{#PluginName}.vst3\*"; DestDir: "{commoncf64}\VST3\{#PluginName}.vst3\"; Excludes: *.ilk; Flags: ignoreversion recursesubdirs; Components: vst3
 Source: "..\Builds\gRainbow_artefacts\Release\Standalone\{#PluginName}.exe"; DestDir: "{commonpf64}\{#Publisher}\{#PluginName}"; Flags: ignoreversion; Components: standalone
 
+[Icons]
+Name: "{autoprograms}\gRainbow"; Filename: "{commonpf64}\{#Publisher}\{#PluginName}\gRainbow.exe"; Components: standalone 
+Name: "{autoprograms}\Uninstall gRainbow"; Filename: "{uninstallexe}"
+
 [Run]
 Filename: "{cmd}"; \
     WorkingDir: "{commoncf64}\VST3"; \
