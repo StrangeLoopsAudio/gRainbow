@@ -148,6 +148,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   juce::MidiKeyboardState mKeyboardState;
   double mLoadingProgress = 0.0;
   juce::AudioFormatManager mFormatManager;
+  bool mNeedsResample = false;
 
   // Grain control
   long mTotalSamps;

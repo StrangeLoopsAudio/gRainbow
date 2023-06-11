@@ -109,7 +109,7 @@ void GranularSynth::changeProgramName(int index, const juce::String& newName) {}
 
 //==============================================================================
 void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
-  if (mSampleRate != INVALID_SAMPLE_RATE && mInputBuffer.getNumSamples() != 0) {
+    if (mNeedsResample) {
     // File loaded from state but couldn't resample and trim until now
     // Make a temporary buffer copy for resampling
     juce::AudioSampleBuffer inputBuffer = mInputBuffer;
@@ -121,10 +121,11 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
     juce::int64 start = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getStart() / secondLength));
     juce::int64 end = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getEnd() / secondLength));
     trimAudioBuffer(mInputBuffer, mAudioBuffer, juce::Range<juce::int64>(start, end));
-    mInputBuffer.setSize(1, 1);
+    mInputBuffer.clear();
     mLoadingProgress = 1.0f;
+    mNeedsResample = false;
   }
-  
+    
   mSampleRate = sampleRate;
 
   for (auto&& note : mParameters.note.notes) {
@@ -519,7 +520,8 @@ Utils::Result GranularSynth::loadAudioFile(juce::File file, bool process) {
     }
     else {
       mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
-      mSampleRate = formatReader->sampleRate;  // A bit hacky, but we need to store the file's smaple rate for resampling
+      mSampleRate = formatReader->sampleRate;  // A bit hacky, but we need to store the file's sample rate for resampling
+      mNeedsResample = true;
     }
   }
   // should not need the file anymore as we want to work with the resampled input buffer across the rest of the plugin
@@ -583,7 +585,8 @@ Utils::Result GranularSynth::loadPreset(juce::File file) {
       resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
     } else {
       mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
-      mSampleRate = sampleRate;        // A bit hacky, but we need to store the file's smaple rate for resampling
+      mSampleRate = sampleRate;        // A bit hacky, but we need to store the file's sample rate for resampling
+      mNeedsResample = true;
     }
   } else {
     juce::String error = "The file failed to open with message: " + input.getStatus().getErrorMessage();
