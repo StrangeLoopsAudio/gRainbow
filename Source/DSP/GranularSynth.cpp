@@ -128,9 +128,12 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
     
   mSampleRate = sampleRate;
 
+  const juce::dsp::ProcessSpec filtConfig = {sampleRate, (juce::uint32)samplesPerBlock, (unsigned int)getTotalNumOutputChannels()};
+  mParameters.global.filter.prepare(filtConfig);
   for (auto&& note : mParameters.note.notes) {
+    note->filter.prepare(filtConfig);
     for (auto&& gen : note->generators) {
-      gen->filter.prepare({sampleRate, (juce::uint32)samplesPerBlock, (unsigned int)getTotalNumOutputChannels()});
+      gen->filter.prepare(filtConfig);
       gen->sampleRate = sampleRate;
     }
   }
@@ -227,7 +230,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
             genSample += grain.process(ch / (float)(buffer.getNumChannels() - 1), mAudioBuffer, grainGain, mTotalSamps);
           }
           // Process filter and optionally use for output
-          const float filterOutput = paramGenerator->filter.processSample(ch, genSample);
+          const float filterOutput = mParameters.getFilterOutput(paramGenerator, ch, genSample);
           // If filter type isn't "none", use its output
           const int filtType = mParameters.getChoiceParam(paramGenerator, ParamCommon::Type::FILT_TYPE);
           if (filtType != Utils::FilterType::NO_FILTER) {

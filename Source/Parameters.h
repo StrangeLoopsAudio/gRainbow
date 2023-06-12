@@ -728,8 +728,40 @@ struct Parameters {
     }
 
     // Both note and generator are still defaults, so let's use the global value
-    const float shape = P_FLOAT(pNote->common[ParamCommon::Type::GRAIN_SHAPE])->get();
-    const float tilt = P_FLOAT(pNote->common[ParamCommon::Type::GRAIN_TILT])->get();
+    const float shape = P_FLOAT(global.common[ParamCommon::Type::GRAIN_SHAPE])->get();
+    const float tilt = P_FLOAT(global.common[ParamCommon::Type::GRAIN_TILT])->get();
     return Utils::getGrainEnvelopeLUT(shape, tilt);
+  }
+  float getFilterOutput(ParamCommon* common, int ch, float sample) {
+    const int defaultType = COMMON_DEFAULTS[ParamCommon::Type::FILT_TYPE];
+    const float defaultCutoff = COMMON_DEFAULTS[ParamCommon::Type::FILT_CUTOFF];
+    const int defaultRes = COMMON_DEFAULTS[ParamCommon::Type::FILT_RESONANCE];
+    ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
+    if (pGen != nullptr) {
+      // If gen value is different from default, return it
+      const int type = P_CHOICE(pGen->common[ParamCommon::Type::FILT_TYPE])->getIndex();
+      const float cutoff = P_FLOAT(pGen->common[ParamCommon::Type::FILT_CUTOFF])->get();
+      const float res = P_FLOAT(pGen->common[ParamCommon::Type::FILT_RESONANCE])->get();
+      if (type != defaultType || cutoff != defaultCutoff || res != defaultRes) {
+        return pGen->filter.processSample(ch, sample);
+      }
+      pNote = note.notes[pGen->noteIdx].get();
+    }
+    if (pNote != nullptr) {
+      // Otherwise if note value is different from default, return it
+      const int type = P_CHOICE(pNote->common[ParamCommon::Type::FILT_TYPE])->getIndex();
+      const float cutoff = P_FLOAT(pNote->common[ParamCommon::Type::FILT_CUTOFF])->get();
+      const int res = P_FLOAT(pNote->common[ParamCommon::Type::FILT_RESONANCE])->get();
+      if (type != defaultType || cutoff != defaultCutoff || res != defaultRes) {
+        return pNote->filter.processSample(ch, sample);
+      }
+    }
+
+    // Both note and generator are still defaults, so let's use the global value
+    const int type = P_CHOICE(global.common[ParamCommon::Type::FILT_TYPE])->getIndex();
+    const float cutoff = P_FLOAT(global.common[ParamCommon::Type::FILT_CUTOFF])->get();
+    const int res = P_FLOAT(global.common[ParamCommon::Type::FILT_RESONANCE])->get();
+    return global.filter.processSample(ch, sample);
   }
 };
