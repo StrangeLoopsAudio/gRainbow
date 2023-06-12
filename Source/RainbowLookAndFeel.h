@@ -30,7 +30,7 @@ class RainbowSlider : public juce::Slider {
     setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::GLOBAL_COLOUR);
     setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
     onValueChange = [this] {
-      ParamHelper::setParam(P_FLOAT(mParameters.selectedParams->common[mType]), getValue());
+      ParamHelper::setCommonParam(mParameters.selectedParams, mType, (float)getValue());
       if (mParameters.selectedParams->type == ParamType::NOTE) {
         Utils::PitchClass pitchClass = (Utils::PitchClass) dynamic_cast<ParamNote*>(mParameters.selectedParams)->noteIdx;
         float posNorm = juce::jmap(getValue(), getMinimum(), getMaximum(), 0.0, 1.0);

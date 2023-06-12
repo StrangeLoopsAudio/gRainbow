@@ -143,7 +143,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   };
   
   // Let other components know when the selected note or generator has been updated
-  mParameters.onSelectedChange = [this]() { 
+  mParameters.onSelectedChange = [this]() {
     mEnvAdsr.updateSelectedParams();
     mEnvGrain.updateSelectedParams();
     mFilterControl.updateSelectedParams();

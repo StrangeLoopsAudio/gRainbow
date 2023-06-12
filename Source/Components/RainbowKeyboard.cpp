@@ -285,8 +285,10 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
       mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch, mHoverNote.velocity);
       mMouseNote = mHoverNote;
       // Select current note for parameter edits and send update
-      mParameters.selectedParams = mParameters.note.notes[mHoverNote.pitch].get();
-      if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
+      if (mParameters.selectedParams != mParameters.note.notes[mHoverNote.pitch].get()) {
+        mParameters.selectedParams = mParameters.note.notes[mHoverNote.pitch].get();
+        if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
+      }
     }
   } else {
     if (isDown && (mMouseNote.pitch == Utils::PitchClass::NONE) && isValidNote) {
@@ -326,8 +328,11 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
               // Select current generator for parameter edits and send update
               ParamGenerator* gen = note->getEnabledGenByIdx(i);
               jassert(gen != nullptr);
-              mParameters.selectedParams = gen;
-              if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
+              if (mParameters.selectedParams != gen) {
+                mParameters.selectedParams = gen;
+                if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
+              }
+              
             }
             mHoverGenRect = mNoteGenRectMap[pitchClass][i];
             repaint();

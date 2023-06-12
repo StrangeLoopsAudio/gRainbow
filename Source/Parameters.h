@@ -120,10 +120,11 @@ static float FILTER_LP_CUTOFF_DEFAULT_HZ = 5000.0f;
 static float FILTER_HP_CUTOFF_DEFAULT_HZ = 800.0f;
 static float FILTER_BP_CUTOFF_DEFAULT_HZ = 1200.0f;
 static float FILTER_RESONANCE_DEFAULT = 0.707f;
-static juce::String FILTER_TYPE_DEFAULT = "none";
+static int   FILTER_TYPE_DEFAULT = 0;
 static float GRAIN_SHAPE_DEFAULT = 0.25f;
 static float GRAIN_TILT_DEFAULT = 0.5f;
 static float GRAIN_RATE_DEFAULT = 0.33f;
+static int   GRAIN_SYNC_DEFAULT = 0;
 static float GRAIN_DURATION_DEFAULT = 0.2f;
 static float PITCH_ADJUST_DEFAULT = 0.0f;
 static float PITCH_SPRAY_DEFAULT = 0.01f;
@@ -137,7 +138,12 @@ enum ParamType { GLOBAL, NOTE, GENERATOR };
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
 static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "lowpass", "highpass", "bandpass"};
 
-struct ParamHelper {
+static constexpr auto MAX_CANDIDATES = 6;
+static constexpr auto NUM_GENERATORS = 4;
+static constexpr auto SOLO_NONE = -1;
+static constexpr auto NUM_FILTER_TYPES = 3;
+
+namespace ParamHelper {
   static juce::String getParamID(juce::AudioProcessorParameter* param) {
     if (auto paramWithID = dynamic_cast<juce::AudioProcessorParameterWithID*>(param)) return paramWithID->paramID;
 
@@ -149,12 +155,7 @@ struct ParamHelper {
   static void setParam(juce::AudioParameterInt* param, int newValue) { *param = newValue; }
   static void setParam(juce::AudioParameterBool* param, bool newValue) { *param = newValue; }
   static void setParam(juce::AudioParameterChoice* param, int newValue) { *param = newValue; }
-};
-
-static constexpr auto MAX_CANDIDATES = 6;
-static constexpr auto NUM_GENERATORS = 4;
-static constexpr auto SOLO_NONE = -1;
-static constexpr auto NUM_FILTER_TYPES = 3;
+}
 
 // Common parameters types used by each generator, note and globally
 class ParamCommon : public juce::AudioProcessorParameter::Listener {
@@ -170,7 +171,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
   }
 
   enum Type {
-    GAIN,
+    GAIN = 0,
     ATTACK,
     DECAY,
     SUSTAIN,
@@ -243,7 +244,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     ParamHelper::setParam(P_FLOAT(common[RELEASE]), ParamDefaults::RELEASE_DEFAULT_SEC);
     ParamHelper::setParam(P_FLOAT(common[FILT_CUTOFF]), ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
     ParamHelper::setParam(P_FLOAT(common[FILT_RESONANCE]), ParamDefaults::FILTER_RESONANCE_DEFAULT);
-    ParamHelper::setParam(P_CHOICE(common[FILT_TYPE]), 0);
+    ParamHelper::setParam(P_CHOICE(common[FILT_TYPE]), ParamDefaults::FILTER_TYPE_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[PITCH_ADJUST]), ParamDefaults::PITCH_ADJUST_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[PITCH_SPRAY]), ParamDefaults::PITCH_SPRAY_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[POS_ADJUST]), ParamDefaults::POSITION_ADJUST_DEFAULT);
@@ -254,7 +255,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     ParamHelper::setParam(P_FLOAT(common[GRAIN_TILT]), ParamDefaults::GRAIN_TILT_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[GRAIN_RATE]), ParamDefaults::GRAIN_RATE_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[GRAIN_DURATION]), ParamDefaults::GRAIN_DURATION_DEFAULT);
-    ParamHelper::setParam(P_BOOL(common[GRAIN_SYNC]), false);
+    ParamHelper::setParam(P_BOOL(common[GRAIN_SYNC]), ParamDefaults::GRAIN_SYNC_DEFAULT);
   }
 
   void parameterValueChanged(int paramIdx, float newValue) override {
@@ -284,6 +285,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
   void parameterGestureChanged(int, bool) override {}
 
   juce::RangedAudioParameter* common[Type::NUM_COMMON];
+  bool isUsed[Type::NUM_COMMON]; // Flag for each parameter set to true when changed from its default
 
   // Type of derived class
   ParamType type;
@@ -301,18 +303,33 @@ static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GA
                                                                ParamDefaults::RELEASE_DEFAULT_SEC,
                                                                ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ,
                                                                ParamDefaults::FILTER_RESONANCE_DEFAULT,
-                                                               0,
+                                                               (float)ParamDefaults::FILTER_TYPE_DEFAULT,
                                                                ParamDefaults::GRAIN_SHAPE_DEFAULT,
                                                                ParamDefaults::GRAIN_TILT_DEFAULT,
                                                                ParamDefaults::GRAIN_RATE_DEFAULT,
                                                                ParamDefaults::GRAIN_DURATION_DEFAULT,
-                                                               0,
+                                                               (float)ParamDefaults::GRAIN_SYNC_DEFAULT,
                                                                ParamDefaults::PITCH_ADJUST_DEFAULT,
                                                                ParamDefaults::PITCH_SPRAY_DEFAULT,
                                                                ParamDefaults::POSITION_ADJUST_DEFAULT,
                                                                ParamDefaults::POSITION_SPRAY_DEFAULT,
                                                                ParamDefaults::PAN_ADJUST_DEFAULT,
                                                                ParamDefaults::PAN_SPRAY_DEFAULT};
+
+namespace ParamHelper {
+  static void setCommonParam(ParamCommon* common, ParamCommon::Type type, float newValue) {
+    ParamHelper::setParam(P_FLOAT(common->common[type]), newValue);
+    common->isUsed[type] = true;
+  }
+  static void setCommonParam(ParamCommon* common, ParamCommon::Type type, int newValue) {
+    ParamHelper::setParam(P_CHOICE(common->common[type]), newValue);
+    common->isUsed[type] = true;
+  }
+  static void setCommonParam(ParamCommon* common, ParamCommon::Type type, bool newValue) {
+    ParamHelper::setParam(P_BOOL(common->common[type]), newValue);
+    common->isUsed[type] = true;
+  }
+}
 
 struct ParamCandidate {
   float posRatio;
@@ -508,7 +525,12 @@ struct ParamsNote {
 };
 
 struct ParamGlobal : ParamCommon {
-  ParamGlobal() : ParamCommon(ParamType::GLOBAL) {}
+  ParamGlobal() : ParamCommon(ParamType::GLOBAL) {
+    // Default to using global parameters
+    for (auto& used : isUsed) {
+      used = true;
+    }
+  }
   ~ParamGlobal() {}
 
   void addParams(juce::AudioProcessor& p);
@@ -640,22 +662,19 @@ struct Parameters {
     const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
     ParamNote* pNote = dynamic_cast<ParamNote*>(common);
     if (pGen != nullptr) {
-      // If gen value is different from default, return it
-      const float value = P_FLOAT(pGen->common[type])->get();
-      if (value != defaultVal) {
-        return value;
+      // If gen value is used, return it
+      if (pGen->isUsed[type]) {
+        return P_FLOAT(pGen->common[type])->get();;
       }
       pNote = note.notes[pGen->noteIdx].get();
     }
     if (pNote != nullptr) {
-      // Otherwise if note value is different from default, return it
-      const float value = P_FLOAT(pNote->common[type])->get();
-      if (value != defaultVal) {
-        return value;
+      // Otherwise if note value is used, return it
+      if (pNote->isUsed[type]) {
+        return P_FLOAT(pNote->common[type])->get();;
       }
     }
-
-    // Both note and generator are still defaults, so let's use the global value
+    // Just use the global value
     return P_FLOAT(global.common[type])->get();
   }
   int getChoiceParam(ParamCommon* common, ParamCommon::Type type) {
@@ -663,105 +682,64 @@ struct Parameters {
     const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
     ParamNote* pNote = dynamic_cast<ParamNote*>(common);
     if (pGen != nullptr) {
-      // If gen value is different from default, return it
-      const int value = P_CHOICE(pGen->common[type])->getIndex();
-      if (value != defaultVal) {
-        return value;
+      // If gen value is used, return it
+      if (pGen->isUsed[type]) {
+        return P_CHOICE(pGen->common[type])->getIndex();
       }
       pNote = note.notes[pGen->noteIdx].get();
     }
     if (pNote != nullptr) {
-      // Otherwise if note value is different from default, return it
-      const int value = P_CHOICE(pNote->common[type])->getIndex();
-      if (value != defaultVal) {
-        return value;
+      // Otherwise if note value is used, return it
+      if (pNote->isUsed[type]) {
+        return P_CHOICE(pNote->common[type])->getIndex();
       }
     }
-
-    // Both note and generator are still defaults, so let's use the global value
+    // Just use the global value
     return P_CHOICE(global.common[type])->getIndex();
   }
   int getBoolParam(ParamCommon* common, ParamCommon::Type type) {
-    const int defaultVal = COMMON_DEFAULTS[type];
     const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
     ParamNote* pNote = dynamic_cast<ParamNote*>(common);
     if (pGen != nullptr) {
-      // If gen value is different from default, return it
-      const bool value = P_BOOL(pGen->common[type])->get();
-      if (value != defaultVal) {
-        return value;
+      // If gen value is used, return it
+      if (pGen->isUsed[type]) {
+        return P_BOOL(pGen->common[type])->get();
       }
       pNote = note.notes[pGen->noteIdx].get();
     }
     if (pNote != nullptr) {
-      // Otherwise if note value is different from default, return it
-      const bool value = P_BOOL(pNote->common[type])->get();
-      if (value != defaultVal) {
-        return value;
+      // Otherwise if note value is used, return it
+      if (pNote->isUsed[type]) {
+        return P_BOOL(pNote->common[type])->get();
       }
     }
 
-    // Both note and generator are still defaults, so let's use the global value
+    // Just use the global value
     return P_BOOL(global.common[type])->get();
   }
   std::vector<float> getGrainEnv(ParamCommon* common) {
-    const int defaultShape = COMMON_DEFAULTS[ParamCommon::Type::GRAIN_SHAPE];
-    const int defaultTilt = COMMON_DEFAULTS[ParamCommon::Type::GRAIN_TILT];
-    const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
-    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
-    if (pGen != nullptr) {
-      // If gen value is different from default, return it
-      const float shape = P_FLOAT(pGen->common[ParamCommon::Type::GRAIN_SHAPE])->get();
-      const float tilt = P_FLOAT(pGen->common[ParamCommon::Type::GRAIN_TILT])->get();
-      if (shape != defaultShape || tilt != defaultTilt) {
-        return Utils::getGrainEnvelopeLUT(shape, tilt);
-      }
-      pNote = note.notes[pGen->noteIdx].get();
-    }
-    if (pNote != nullptr) {
-      // Otherwise if note value is different from default, return it
-      const float shape = P_FLOAT(pNote->common[ParamCommon::Type::GRAIN_SHAPE])->get();
-      const float tilt = P_FLOAT(pNote->common[ParamCommon::Type::GRAIN_TILT])->get();
-      if (shape != defaultShape || tilt != defaultTilt) {
-        return Utils::getGrainEnvelopeLUT(shape, tilt);
-      }
-    }
-
-    // Both note and generator are still defaults, so let's use the global value
-    const float shape = P_FLOAT(global.common[ParamCommon::Type::GRAIN_SHAPE])->get();
-    const float tilt = P_FLOAT(global.common[ParamCommon::Type::GRAIN_TILT])->get();
+    const float shape = getFloatParam(common, ParamCommon::Type::GRAIN_SHAPE);
+    const float tilt = getFloatParam(common, ParamCommon::Type::GRAIN_TILT);
     return Utils::getGrainEnvelopeLUT(shape, tilt);
   }
   float getFilterOutput(ParamCommon* common, int ch, float sample) {
-    const int defaultType = COMMON_DEFAULTS[ParamCommon::Type::FILT_TYPE];
-    const float defaultCutoff = COMMON_DEFAULTS[ParamCommon::Type::FILT_CUTOFF];
-    const int defaultRes = COMMON_DEFAULTS[ParamCommon::Type::FILT_RESONANCE];
     ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
     ParamNote* pNote = dynamic_cast<ParamNote*>(common);
     if (pGen != nullptr) {
-      // If gen value is different from default, return it
-      const int type = P_CHOICE(pGen->common[ParamCommon::Type::FILT_TYPE])->getIndex();
-      const float cutoff = P_FLOAT(pGen->common[ParamCommon::Type::FILT_CUTOFF])->get();
-      const float res = P_FLOAT(pGen->common[ParamCommon::Type::FILT_RESONANCE])->get();
-      if (type != defaultType || cutoff != defaultCutoff || res != defaultRes) {
+      // If gen values are used, return it
+      if (pGen->isUsed[ParamCommon::Type::FILT_TYPE] || pGen->isUsed[ParamCommon::Type::FILT_CUTOFF] || pGen->isUsed[ParamCommon::Type::FILT_RESONANCE]) {
         return pGen->filter.processSample(ch, sample);
       }
       pNote = note.notes[pGen->noteIdx].get();
     }
     if (pNote != nullptr) {
-      // Otherwise if note value is different from default, return it
-      const int type = P_CHOICE(pNote->common[ParamCommon::Type::FILT_TYPE])->getIndex();
-      const float cutoff = P_FLOAT(pNote->common[ParamCommon::Type::FILT_CUTOFF])->get();
-      const int res = P_FLOAT(pNote->common[ParamCommon::Type::FILT_RESONANCE])->get();
-      if (type != defaultType || cutoff != defaultCutoff || res != defaultRes) {
+      // Otherwise if note value is different from global, return it
+      if (pNote->isUsed[ParamCommon::Type::FILT_TYPE] || pNote->isUsed[ParamCommon::Type::FILT_CUTOFF] || pNote->isUsed[ParamCommon::Type::FILT_RESONANCE]) {
         return pNote->filter.processSample(ch, sample);
       }
     }
 
-    // Both note and generator are still defaults, so let's use the global value
-    const int type = P_CHOICE(global.common[ParamCommon::Type::FILT_TYPE])->getIndex();
-    const float cutoff = P_FLOAT(global.common[ParamCommon::Type::FILT_CUTOFF])->get();
-    const int res = P_FLOAT(global.common[ParamCommon::Type::FILT_RESONANCE])->get();
+    // Just use the global value
     return global.filter.processSample(ch, sample);
   }
 };

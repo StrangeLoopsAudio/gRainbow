@@ -68,7 +68,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mBtnSync.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
   mBtnSync.setColour(juce::TextButton::textColourOnId, juce::Colours::black);
   mBtnSync.onClick = [this]() {
-    ParamHelper::setParam(P_BOOL(mCurSelectedParams->common[ParamCommon::Type::GRAIN_SYNC]), !mBtnSync.getToggleState());
+    ParamHelper::setCommonParam(mCurSelectedParams, ParamCommon::Type::GRAIN_SYNC, !mBtnSync.getToggleState());
   };
   addAndMakeVisible(mBtnSync);
 

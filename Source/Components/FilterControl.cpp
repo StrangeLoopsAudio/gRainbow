@@ -44,7 +44,7 @@ FilterControl::FilterControl(Parameters& parameters)
   }
   mFilterType.onChange = [this]() { 
     int type = mFilterType.getSelectedId() - 1;
-    ParamHelper::setParam(P_CHOICE(mCurSelectedParams->common[ParamCommon::Type::FILT_TYPE]), type);
+    ParamHelper::setCommonParam(mCurSelectedParams, ParamCommon::Type::FILT_TYPE, type);
   };
   addAndMakeVisible(mFilterType);
 
