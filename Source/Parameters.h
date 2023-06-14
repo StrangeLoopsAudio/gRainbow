@@ -160,11 +160,11 @@ namespace ParamHelper {
 // Common parameters types used by each generator, note and globally
 class ParamCommon : public juce::AudioProcessorParameter::Listener {
  public:
-  ParamCommon(ParamType type) : type(type) {
+  ParamCommon(ParamType _type) : type(_type) {
     filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
     filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
   }
-  ~ParamCommon() {
+  ~ParamCommon() override {
     common[FILT_TYPE]->removeListener(this);
     common[FILT_CUTOFF]->removeListener(this);
     common[FILT_RESONANCE]->removeListener(this);
@@ -236,7 +236,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     common[PAN_SPRAY]->removeListener(listener);
   }
 
-  void resetParams(bool fullClear = true) {
+  void resetParams() {
     ParamHelper::setParam(P_FLOAT(common[GAIN]), ParamDefaults::GAIN_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[ATTACK]), ParamDefaults::ATTACK_DEFAULT_SEC);
     ParamHelper::setParam(P_FLOAT(common[DECAY]), ParamDefaults::DECAY_DEFAULT_SEC);
@@ -256,9 +256,10 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     ParamHelper::setParam(P_FLOAT(common[GRAIN_RATE]), ParamDefaults::GRAIN_RATE_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[GRAIN_DURATION]), ParamDefaults::GRAIN_DURATION_DEFAULT);
     ParamHelper::setParam(P_BOOL(common[GRAIN_SYNC]), ParamDefaults::GRAIN_SYNC_DEFAULT);
+    for (auto& used : isUsed) { used = false; }
   }
 
-  void parameterValueChanged(int paramIdx, float newValue) override {
+  void parameterValueChanged(int paramIdx, float) override {
     if (paramIdx == common[FILT_TYPE]->getParameterIndex()) {
       switch (P_CHOICE(common[FILT_TYPE])->getIndex()) {
         case Utils::FilterType::LOWPASS: {
@@ -281,7 +282,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     } else if (paramIdx == common[FILT_RESONANCE]->getParameterIndex()) {
       filter.setResonance(P_FLOAT(common[FILT_RESONANCE])->get());
     }
-  };
+  }
   void parameterGestureChanged(int, bool) override {}
 
   juce::RangedAudioParameter* common[Type::NUM_COMMON];
@@ -332,13 +333,13 @@ namespace ParamHelper {
 }
 
 struct ParamCandidate {
-  float posRatio;
-  float pbRate;
-  float duration;
-  float salience;
+  double posRatio;
+  double pbRate;
+  double duration;
+  double salience;
 
-  ParamCandidate(float posRatio, float pbRate, float duration, float salience)
-      : posRatio(posRatio), pbRate(pbRate), duration(duration), salience(salience) {}
+  ParamCandidate(float _posRatio, float _pbRate, float _duration, float _salience)
+      : posRatio(_posRatio), pbRate(_pbRate), duration(_duration), salience(_salience) {}
 
   // setXml equivalent since we always need a valid candidate param  value
   ParamCandidate(juce::XmlElement* xml) {
@@ -360,7 +361,7 @@ struct ParamCandidate {
 };
 
 struct ParamGenerator : ParamCommon {
-  ParamGenerator(int noteIdx, int genIdx) : ParamCommon(ParamType::GENERATOR), noteIdx(noteIdx), genIdx(genIdx) {}
+  ParamGenerator(int _noteIdx, int _genIdx) : ParamCommon(ParamType::GENERATOR), noteIdx(_noteIdx), genIdx(_genIdx) {}
   ~ParamGenerator() {}
 
   void addParams(juce::AudioProcessor& p);
@@ -375,7 +376,7 @@ struct ParamGenerator : ParamCommon {
   }
 
   void resetParams(bool fullClear) { 
-    ParamCommon::resetParams(fullClear);
+    ParamCommon::resetParams();
     ParamHelper::setParam(enable, genIdx == 0);
     ParamHelper::setParam(candidate, genIdx);
   }
@@ -438,7 +439,7 @@ struct ParamNote : ParamCommon {
   }
 
   void resetParams(bool fullClear) {
-    ParamCommon::resetParams(fullClear);
+    ParamCommon::resetParams();
     for (auto& generator : generators) {
       generator->resetParams(fullClear);
     }

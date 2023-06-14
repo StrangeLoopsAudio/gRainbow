@@ -112,13 +112,13 @@ jobs:
         key: v3-${{ matrix.os }}-${{ matrix.type }}
         variant: ${{ matrix.ccache }}
 
-#    - name: Import Certificates (macOS)
-#      uses: apple-actions/import-codesign-certs@v1
-#      if: ${{ matrix.name == 'macOS' }}
-#      with:
-#        p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
-#        p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
-#
+    - name: Import Certificates (macOS)
+      uses: apple-actions/import-codesign-certs@v1
+      if: ${{ matrix.name == 'macOS' }}
+      with:
+        p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
+        p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
+
     - name: Configure
       shell: bash
       run: cmake -B ${{ env.BUILD_DIR }} -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} -DCMAKE_C_COMPILER_LAUNCHER=${{ matrix.ccache }} -DCMAKE_CXX_COMPILER_LAUNCHER=${{ matrix.ccache }} -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" .
@@ -139,14 +139,14 @@ jobs:
         7z x pluginval_${{ matrix.name }}.zip
         ${{ matrix.pluginval-binary }} --strictness-level 10 --verbose --validate "${{ env.VST3_PATH }}"
 
-#    - name: Codesign (macOS)
-#      working-directory: ${{ env.BUILD_DIR }}
-#      if: ${{ matrix.name == 'macOS' }}
-#      run: |
-#        # Each plugin must be code signed
-#        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.VST3_PATH }} --deep --strict --options=runtime --timestamp
-#        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.AU_PATH }} --deep --strict --options=runtime --timestamp
-#
+    - name: Codesign (macOS)
+      working-directory: ${{ env.BUILD_DIR }}
+      if: ${{ matrix.name == 'macOS' }}
+      run: |
+        # Each plugin must be code signed
+        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.VST3_PATH }} --deep --strict --options=runtime --timestamp
+        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.AU_PATH }} --deep --strict --options=runtime --timestamp
+
 #    - name: Add Custom Icons (macOS)
 #      if: ${{ matrix.name == 'macOS' }}
 #      working-directory: ${{ env.BUILD_DIR }}
@@ -178,9 +178,9 @@ jobs:
         
         # Run appdmg to create the .dmg
         cd packaging && appdmg dmg.json ${{ env.PRODUCT_NAME}}.dmg
-        # codesign -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" --timestamp -i com.StrangeLoops.grainbow --force ${{ env.PRODUCT_NAME }}.dmg
-        # xcrun notarytool submit ${{ env.PRODUCT_NAME }}.dmg --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
-        # xcrun stapler staple ${{ env.PRODUCT_NAME }}.dmg
+        codesign -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" --timestamp -i com.StrangeLoops.grainbow --force ${{ env.PRODUCT_NAME }}.dmg
+        xcrun notarytool submit ${{ env.PRODUCT_NAME }}.dmg --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
+        xcrun stapler staple ${{ env.PRODUCT_NAME }}.dmg
 
     - name: Zip
       if: ${{ matrix.name == 'Linux' }}
