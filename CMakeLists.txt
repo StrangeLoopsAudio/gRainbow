@@ -11,9 +11,19 @@ if(UNIX AND NOT APPLE)
     list(APPEND FORMATS LV2)
 endif()
 
-# Build AU only on MacOS
+# Build AU only on MacOS plus some other configurations
 if(APPLE)
     list(APPEND FORMATS AU)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Support macOS down to High Sierra")
+    # Building universal binaries on macOS increases build time
+    # This is set on CI but not during local dev
+    if ((DEFINED ENV{CI}) AND (CMAKE_BUILD_TYPE STREQUAL "Release"))
+        message("Building for Apple Silicon and x86_64")
+        set(CMAKE_OSX_ARCHITECTURES arm64 x86_64)
+    endif ()
+    set (CMAKE_XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET[arch=arm64] "11.0" CACHE STRING "arm 64 minimum deployment target" FORCE)
+    # By default we don't want Xcode schemes to be made for modules, etc
+    set(CMAKE_XCODE_GENERATE_SCHEME OFF)
 endif()
 
 # Reads in VERSION file and sticks in it CURRENT_VERSION variable
@@ -22,18 +32,6 @@ file(STRINGS VERSION CURRENT_VERSION)
 
 # For simplicity, the name of the project is also the name of the target
 project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
-
-# By default we don't want Xcode schemes to be made for modules, etc
-set(CMAKE_XCODE_GENERATE_SCHEME OFF)
-
-# Building universal binaries on macOS increases build time
-# This is set on CI but not during local dev
-if ((DEFINED ENV{CI}) AND (CMAKE_BUILD_TYPE STREQUAL "Release"))
-  message("Building for Apple Silicon and x86_64")
-  set(CMAKE_OSX_ARCHITECTURES arm64 x86_64)
-endif ()
-
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Support macOS down to High Sierra")
 
 # Adds all the module sources so they appear correctly in the IDE
 # Must be set before JUCE is added as a sub-dir (or any targets are made)
@@ -57,7 +55,7 @@ juce_add_plugin("${PROJECT_NAME}"
     ICON_BIG Source/Resources/logo.png                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
     ICON_SMALL Source/Resources/logo.png
     COMPANY_NAME StrangeLoops
-    BUNDLE_ID com.StrangeLoops.grainbow
+    BUNDLE_ID com.StrangeLoops.gRainbow
     IS_SYNTH TRUE                       # Is this a synth or an effect?
     NEEDS_MIDI_INPUT TRUE               # Does the plugin need midi input?
     NEEDS_MIDI_OUTPUT TRUE              # Does the plugin need midi output?
