@@ -102,7 +102,6 @@ jobs:
         echo "ARTIFACTS_PATH=${{ env.BUILD_DIR }}/${{ env.PROJECT_NAME }}_artefacts/${{ env.BUILD_TYPE }}" >> $GITHUB_ENV
         echo "VST3_PATH=${{ env.PROJECT_NAME }}_artefacts/${{ env.BUILD_TYPE }}/VST3/${{ env.PROJECT_NAME }}.vst3" >> $GITHUB_ENV
         echo "AU_PATH=${{ env.PROJECT_NAME }}_artefacts/${{ env.BUILD_TYPE }}/AU/${{ env.PROJECT_NAME }}.component" >> $GITHUB_ENV
-        echo "AUV3_PATH=${{ env.PROJECT_NAME }}_artefacts/${{ env.BUILD_TYPE }}/AUv3/${{ env.PROJECT_NAME }}.appex" >> $GITHUB_ENV
         echo "STANDALONE_PATH=${{ env.PROJECT_NAME }}_artefacts/${{ env.BUILD_TYPE }}/Standalone/${{ env.PROJECT_NAME }}.app" >> $GITHUB_ENV
         echo "PRODUCT_NAME=${{ env.PROJECT_NAME }}-$VERSION-${{ matrix.name }}" >> $GITHUB_ENV
 
@@ -146,6 +145,7 @@ jobs:
         # Each plugin must be code signed
         codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.VST3_PATH }} --deep --strict --options=runtime --timestamp
         codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.AU_PATH }} --deep --strict --options=runtime --timestamp
+        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v ${{ env.STANDALONE_PATH }} --deep --strict --options=runtime --timestamp
 
 #    - name: Add Custom Icons (macOS)
 #      if: ${{ matrix.name == 'macOS' }}
@@ -178,7 +178,7 @@ jobs:
         
         # Run appdmg to create the .dmg
         cd packaging && appdmg dmg.json ${{ env.PRODUCT_NAME}}.dmg
-        codesign -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" --timestamp -i com.StrangeLoops.grainbow --force ${{ env.PRODUCT_NAME }}.dmg
+        codesign -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" --timestamp -i com.StrangeLoops.gRainbow --force ${{ env.PRODUCT_NAME }}.dmg
         xcrun notarytool submit ${{ env.PRODUCT_NAME }}.dmg --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
         xcrun stapler staple ${{ env.PRODUCT_NAME }}.dmg
 
