@@ -1,4 +1,4 @@
-# gRainbow
+# gRainbow   ![GitHub release (release name instead of tag name)](https://img.shields.io/github/v/release/StrangeLoopsAudio/gRainbow) ![build (with event)](https://img.shields.io/github/actions/workflow/status/StrangeLoopsAudio/gRainbow/ci.yml) ![GitHub all releases](https://img.shields.io/github/downloads/StrangeLoopsAudio/gRainbow/total) ![contributors](https://img.shields.io/github/contributors/StrangeLoopsAudio/gRainbow) ![GitHub repo size](https://img.shields.io/github/repo-size/StrangeLoopsAudio/gRainbow)
 
 A synthesizer that uses pitch detection to choose candidates for granular synthesis or sampling.
 
