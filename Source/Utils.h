@@ -205,7 +205,7 @@ static inline juce::Colour getRainbow6Colour(int value) {
     default:
       break;
   }
-  return juce::Colour::fromFloatRGBA(r * 255.0f, g * 255.0f, b * 255.0f, 1.0f);
+  return juce::Colour::fromFloatRGBA(r, g, b, 1.0f);
 }
 
 static inline juce::Colour getRainbow12Colour(int value) {
@@ -277,7 +277,7 @@ static inline juce::Colour getRainbow12Colour(int value) {
     default:
       break;
   }
-  return juce::Colour::fromFloatRGBA(r * 255.0f, g * 255.0f, b * 255.0f, 1.0f);
+  return juce::Colour::fromFloatRGBA(r, g, b, 1.0f);
 }
 
 [[maybe_unused]] static const std::vector<float> getGrainEnvelopeLUT(const float shape, const float tilt) {
