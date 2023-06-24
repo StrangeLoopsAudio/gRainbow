@@ -37,7 +37,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
       mParameters(synth.getParams()),
-      mArcSpec(synth.getParamsNote(), synth.getParamUI()),
+      mArcSpec(synth.getParams()),
       mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
       mProgressBar(synth.getLoadingProgress()),
       mKeyboard(synth.getKeyboardState(), synth.getParams()),

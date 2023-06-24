@@ -29,7 +29,7 @@
  */
 class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
  public:
-  ArcSpectrogram(ParamsNote &paramsNote, ParamUI &paramUI);
+  ArcSpectrogram(Parameters& parameters);
   ~ArcSpectrogram() override;
 
   void update() override {}
@@ -82,8 +82,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   // Parameters
   // Use to save state since if the plugin is closed and open, will need these
   // to restore the state
-  ParamsNote &mParamsNote;
-  ParamUI &mParamUI;
+  Parameters& mParameters;
 
   // Buffers used to generate the images
   std::array<void *, ParamUI::SpecType::COUNT> mBuffers;

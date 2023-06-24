@@ -16,13 +16,13 @@
 #include "Utils/Colour.h"
 
 //==============================================================================
-ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
-    : juce::Thread("spectrogram thread"), mParamsNote(paramsNote), mParamUI(paramUI) {
+ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
+    : juce::Thread("spectrogram thread"), mParameters(parameters) {
   setFramesPerSecond(REFRESH_RATE_FPS);
   mBuffers.fill(nullptr);
 
   // check if params has images, which would mean the plugin was reopened
-  if (!mParamUI.specComplete) {
+  if (!mParameters.ui.specComplete) {
     // if not complete, we assume all images will be remade, no "half way"
     // support currently
     for (int i = 0; i < (int)ParamUI::SpecType::COUNT; i++) {
@@ -40,7 +40,7 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
   mSpecType.onChange = [this](void) {
     // Will get called from user using UI ComboBox and from inside this class
     // when loading buffers
-    mParamUI.specType = (ParamUI::SpecType)mSpecType.getSelectedItemIndex();
+    mParameters.ui.specType = (ParamUI::SpecType)mSpecType.getSelectedItemIndex();
     repaint();
   };
   mSpecType.setTooltip("Change Spectrogram type to view");
@@ -48,12 +48,12 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
 
   mActivePitchClass.reset(false);
 
-  mParamsNote.onGrainCreated = [this](Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain) {
+  mParameters.note.onGrainCreated = [this](Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain) {
     // always get the callback, but ignore it if note was released or over grain max
     if (!mActivePitchClass[pitchClass] || mArcGrains.size() >= MAX_NUM_GRAINS) {
       return;
     }
-    ParamGenerator* gen = mParamsNote.notes[pitchClass]->generators[genIdx].get();
+    ParamGenerator* gen = mParameters.note.notes[pitchClass]->generators[genIdx].get();
     float envIncSamples = Utils::ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
     mArcGrains.add(ArcGrain(gen, envGain, envIncSamples, pitchClass));
   };
@@ -62,7 +62,7 @@ ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
 }
 
 ArcSpectrogram::~ArcSpectrogram() {
-  mParamsNote.onGrainCreated = nullptr;
+  mParameters.note.onGrainCreated = nullptr;
   stopThread(4000);
 }
 
@@ -72,16 +72,16 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   g.fillAll();
 
   // if nothing has been loaded skip image, progress bar will fill in void space
-  if (mParamUI.specType != ParamUI::SpecType::INVALID) {
+  if (mParameters.ui.specType != ParamUI::SpecType::INVALID) {
     int imageIndex = mSpecType.getSelectedItemIndex();
     // When loading up a plugin a second time, need to set the ComboBox state,
     // but can't in the constructor so there is the first spot we can enforce
     // it. Without this, the logo will appear when reopening the plugin
     if (imageIndex == -1) {
-      mSpecType.setSelectedItemIndex(mParamUI.specType, juce::dontSendNotification);
-      imageIndex = (int)mParamUI.specType;
+      mSpecType.setSelectedItemIndex(mParameters.ui.specType, juce::dontSendNotification);
+      imageIndex = (int)mParameters.ui.specType;
     }
-    g.drawImage(mParamUI.specImages[imageIndex], getLocalBounds().toFloat(),
+    g.drawImage(mParameters.ui.specImages[imageIndex], getLocalBounds().toFloat(),
                 juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
   }
 
@@ -141,12 +141,12 @@ void ArcSpectrogram::resized() {
 void ArcSpectrogram::run() {
   // Initialize rainbow parameters
   juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
-  mParamUI.specImages[mParamUI.specType] = juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
-  juce::Graphics g(mParamUI.specImages[mParamUI.specType]);
+  mParameters.ui.specImages[mParameters.ui.specType] = juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
+  juce::Graphics g(mParameters.ui.specImages[mParameters.ui.specType]);
 
   // Audio waveform (1D) is handled a bit differently than its 2D spectrograms
-  if (mParamUI.specType == ParamUI::SpecType::WAVEFORM) {
-    juce::AudioBuffer<float>* audioBuffer = (juce::AudioBuffer<float>*)mBuffers[mParamUI.specType];
+  if (mParameters.ui.specType == ParamUI::SpecType::WAVEFORM) {
+    juce::AudioBuffer<float>* audioBuffer = (juce::AudioBuffer<float>*)mBuffers[mParameters.ui.specType];
     const float* bufferSamples = audioBuffer->getReadPointer(0);
     float maxMagnitude = audioBuffer->getMagnitude(0, audioBuffer->getNumSamples());
 
@@ -176,11 +176,11 @@ void ArcSpectrogram::run() {
     }
   } else {
     // All other types of spectrograms
-    Utils::SpecBuffer& spec = *(Utils::SpecBuffer*)mBuffers[mParamUI.specType];  // cast to SpecBuffer
+    Utils::SpecBuffer& spec = *(Utils::SpecBuffer*)mBuffers[mParameters.ui.specType];  // cast to SpecBuffer
     if (spec.size() == 0 || threadShouldExit()) return;
 
     const float maxRow =
-        static_cast<float>((mParamUI.specType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size());
+        static_cast<float>((mParameters.ui.specType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size());
 
     // Draw each column of frequencies
     for (size_t i = 0; i < NUM_COLS; ++i) {
@@ -219,7 +219,7 @@ void ArcSpectrogram::run() {
 
   // pass type as another thread can change member variable right after run() is
   // done
-  onImageComplete(mParamUI.specType);
+  onImageComplete(mParameters.ui.specType);
   mIsProcessing = false;
 }
 
@@ -230,20 +230,20 @@ void ArcSpectrogram::onImageComplete(ParamUI::SpecType specType) {
       return;
     }
   }
-  mParamUI.specComplete = true;
+  mParameters.ui.specComplete = true;
   // Lets UI know it so it can enable other UI components
   onImagesComplete();
 }
 
 void ArcSpectrogram::reset() {
   // Reset all images
-  for (size_t i = 0; i < mParamUI.specImages.size(); i++) {
-    mParamUI.specImages[i].clear(mParamUI.specImages[i].getBounds());
+  for (size_t i = 0; i < mParameters.ui.specImages.size(); i++) {
+    mParameters.ui.specImages[i].clear(mParameters.ui.specImages[i].getBounds());
   }
   for (int i = 0; i < (int)ParamUI::SpecType::COUNT; i++) {
     mImagesComplete[(ParamUI::SpecType)i] = false;
   }
-  mParamUI.specComplete = false;
+  mParameters.ui.specComplete = false;
   // might be lingering grains
   mArcGrains.clear();
 }
@@ -253,14 +253,14 @@ void ArcSpectrogram::loadSpecBuffer(Utils::SpecBuffer* buffer, ParamUI::SpecType
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   if (mImagesComplete[type]) return;
 
-  mParamUI.specType = type;
-  mBuffers[mParamUI.specType] = buffer;
+  mParameters.ui.specType = type;
+  mBuffers[mParameters.ui.specType] = buffer;
 
   // As each buffer is loaded, want to display it being generated
   // Will be loaded in what ever order loaded from async callbacks
   // The last item loaded will be the first item selected in ComboBox
-  if ((int)mParamUI.specType < mSpecType.getNumItems()) {
-    mSpecType.setSelectedItemIndex(mParamUI.specType, juce::sendNotification);
+  if ((int)mParameters.ui.specType < mSpecType.getNumItems()) {
+    mSpecType.setSelectedItemIndex(mParameters.ui.specType, juce::sendNotification);
   }
   // Only make image if component size has been set
   if (getWidth() > 0 && getHeight() > 0) {
@@ -274,8 +274,8 @@ void ArcSpectrogram::loadWaveformBuffer(juce::AudioBuffer<float>* audioBuffer) {
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   if (mImagesComplete[ParamUI::SpecType::WAVEFORM]) return;
 
-  mParamUI.specType = ParamUI::SpecType::WAVEFORM;
-  mBuffers[mParamUI.specType] = audioBuffer;
+  mParameters.ui.specType = ParamUI::SpecType::WAVEFORM;
+  mBuffers[mParameters.ui.specType] = audioBuffer;
 
   // Only make image if component size has been set
   if (getWidth() > 0 && getHeight() > 0) {
@@ -287,8 +287,8 @@ void ArcSpectrogram::loadWaveformBuffer(juce::AudioBuffer<float>* audioBuffer) {
 // loadSpecBuffer is never called when a preset is loaded
 void ArcSpectrogram::loadPreset() {
   // make visible if preset was loaded first
-  mParamUI.specComplete = true;
-  mSpecType.setSelectedItemIndex(mParamUI.specType, juce::dontSendNotification);
+  mParameters.ui.specComplete = true;
+  mSpecType.setSelectedItemIndex(mParameters.ui.specType, juce::dontSendNotification);
   repaint();
 }
 

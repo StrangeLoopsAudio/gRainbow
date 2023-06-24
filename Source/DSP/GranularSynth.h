@@ -136,7 +136,9 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
       }
     }
     // Retriggers a note from a new starting timestamp
-    void retrigger(long timestamp) {
+    void retrigger(float _velocity, long timestamp) {
+      velocity = _velocity;
+      removeTs = -1;
       for (size_t i = 0; i < NUM_GENERATORS; ++i) {
         genAmpEnvs[i].noteOn(timestamp);  // Set note on for each position with new timestamp
       }
