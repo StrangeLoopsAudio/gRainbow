@@ -34,7 +34,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderGain.setRange(ParamRanges::GAIN.start, ParamRanges::GAIN.end, 0.01);
   addAndMakeVisible(mSliderGain);
 
-  mLabelGain.setText("Gain", juce::dontSendNotification);
+  mLabelGain.setText("gain", juce::dontSendNotification);
   mLabelGain.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelGain.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelGain);
@@ -44,7 +44,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderPitchAdjust.setRange(ParamRanges::PITCH_ADJUST.start, ParamRanges::PITCH_ADJUST.end, 0.01);
   addAndMakeVisible(mSliderPitchAdjust);
 
-  mLabelPitchAdjust.setText("Pitch Adjust", juce::dontSendNotification);
+  mLabelPitchAdjust.setText("pitch adjust", juce::dontSendNotification);
   mLabelPitchAdjust.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPitchAdjust.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPitchAdjust);
@@ -59,7 +59,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderPitchSpray.setRange(ParamRanges::PITCH_SPRAY.start, ParamRanges::PITCH_SPRAY.end, 0.005);
   addAndMakeVisible(mSliderPitchSpray);
 
-  mLabelPitchSpray.setText("Pitch Spray", juce::dontSendNotification);
+  mLabelPitchSpray.setText("pitch spray", juce::dontSendNotification);
   mLabelPitchSpray.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPitchSpray.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPitchSpray);
@@ -69,7 +69,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderPosAdjust.setRange(ParamRanges::POSITION_ADJUST.start, ParamRanges::POSITION_ADJUST.end, 0.01);
   addAndMakeVisible(mSliderPosAdjust);
 
-  mLabelPosAdjust.setText("Position Adjust", juce::dontSendNotification);
+  mLabelPosAdjust.setText("position adjust", juce::dontSendNotification);
   mLabelPosAdjust.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPosAdjust.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPosAdjust);
@@ -84,7 +84,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderPosSpray.setRange(ParamRanges::POSITION_SPRAY.start, ParamRanges::POSITION_SPRAY.end, 0.005);
   addAndMakeVisible(mSliderPosSpray);
 
-  mLabelPosSpray.setText("Position Spray", juce::dontSendNotification);
+  mLabelPosSpray.setText("position spray", juce::dontSendNotification);
   mLabelPosSpray.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPosSpray.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPosSpray);
@@ -94,7 +94,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderPanAdjust.setRange(ParamRanges::PAN_ADJUST.start, ParamRanges::PAN_ADJUST.end, 0.01);
   addAndMakeVisible(mSliderPanAdjust);
 
-  mLabelPanAdjust.setText("Pan Adjust", juce::dontSendNotification);
+  mLabelPanAdjust.setText("pan adjust", juce::dontSendNotification);
   mLabelPanAdjust.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPanAdjust.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPanAdjust);
@@ -109,7 +109,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderPanSpray.setRange(ParamRanges::PAN_SPRAY.start, ParamRanges::PAN_SPRAY.end, 0.005);
   addAndMakeVisible(mSliderPanSpray);
 
-  mLabelPanSpray.setText("Pan Spray", juce::dontSendNotification);
+  mLabelPanSpray.setText("pan spray", juce::dontSendNotification);
   mLabelPanSpray.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPanSpray.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPanSpray);

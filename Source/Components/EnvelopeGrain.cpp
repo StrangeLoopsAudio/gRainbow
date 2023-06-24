@@ -26,7 +26,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderShape.setRange(0, 1, 0.01);
   addAndMakeVisible(mSliderShape);
 
-  mLabelShape.setText("Shape", juce::dontSendNotification);
+  mLabelShape.setText("shape", juce::dontSendNotification);
   mLabelShape.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelShape.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelShape);
@@ -36,7 +36,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderTilt.setRange(0, 1, 0.01);
   addAndMakeVisible(mSliderTilt);
 
-  mLabelTilt.setText("Tilt", juce::dontSendNotification);
+  mLabelTilt.setText("tilt", juce::dontSendNotification);
   mLabelTilt.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelTilt.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelTilt);
@@ -46,7 +46,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
   addAndMakeVisible(mSliderRate);
 
-  mLabelRate.setText("Rate", juce::dontSendNotification);
+  mLabelRate.setText("rate", juce::dontSendNotification);
   mLabelRate.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelRate.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRate);
@@ -54,10 +54,10 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   // Duration
   mSliderDuration.setNumDecimalPlacesToDisplay(2);
   mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start, ParamRanges::GRAIN_DURATION.end, 0.01);
-  mSliderDuration.setTextValueSuffix("s");
+  mSliderDuration.setSuffix("s");
   addAndMakeVisible(mSliderDuration);
 
-  mLabelDuration.setText("Duration", juce::dontSendNotification);
+  mLabelDuration.setText("duration", juce::dontSendNotification);
   mLabelDuration.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelDuration.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelDuration);
@@ -97,6 +97,9 @@ void EnvelopeGrain::timerCallback() {
                              juce::dontSendNotification);
     mBtnSync.setToggleState(mParameters.getBoolParam(mCurSelectedParams, ParamCommon::Type::GRAIN_SYNC),
                             juce::dontSendNotification);
+    mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "free");
+    mSliderRate.setSync(mBtnSync.getToggleState());
+    mSliderDuration.setSync(mBtnSync.getToggleState());
   }
 }
 

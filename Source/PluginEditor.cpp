@@ -46,6 +46,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mFilterControl(synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
+  juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName("Century Gothic");
   mErrorMessage.clear();
 
   // Open file button

@@ -27,7 +27,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderAttack.setTextValueSuffix("s");
   addAndMakeVisible(mSliderAttack);
 
-  mLabelAttack.setText("Attack", juce::dontSendNotification);
+  mLabelAttack.setText("attack", juce::dontSendNotification);
   mLabelAttack.setColour(juce::Label::ColourIds::textColourId, knobColour);
   mLabelAttack.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelAttack);
@@ -38,7 +38,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderDecay.setTextValueSuffix("s");
   addAndMakeVisible(mSliderDecay);
 
-  mLabelDecay.setText("Decay", juce::dontSendNotification);
+  mLabelDecay.setText("decay", juce::dontSendNotification);
   mLabelDecay.setColour(juce::Label::ColourIds::textColourId, knobColour);
   mLabelDecay.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelDecay);
@@ -48,7 +48,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderSustain.setRange(0.0, 1.0, 0.01);
   addAndMakeVisible(mSliderSustain);
 
-  mLabelSustain.setText("Sustain", juce::dontSendNotification);
+  mLabelSustain.setText("sustain", juce::dontSendNotification);
   mLabelSustain.setColour(juce::Label::ColourIds::textColourId, knobColour);
   mLabelSustain.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelSustain);
@@ -59,7 +59,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderRelease.setTextValueSuffix("s");
   addAndMakeVisible(mSliderRelease);
 
-  mLabelRelease.setText("Release", juce::dontSendNotification);
+  mLabelRelease.setText("release", juce::dontSendNotification);
   mLabelRelease.setColour(juce::Label::ColourIds::textColourId, knobColour);
   mLabelRelease.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRelease);

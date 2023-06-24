@@ -45,7 +45,12 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
     QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : RainbowSlider(parameters, type), mSync(false) {}
     QuantizedSlider(Parameters& parameters, ParamCommon::Type type, juce::NormalisableRange<float> range)
         : RainbowSlider(parameters, type), mRange(range) {}
-    void setSync(bool sync) { mSync = sync; }
+    void setSync(bool sync) {
+      mSync = sync;
+      setTextValueSuffix(sync ? "" : suffix);
+    }
+    
+    void setSuffix(juce::String _suffix) { suffix = _suffix; }
 
     juce::String getTextFromValue(double) override {
       if (mSync) {
@@ -58,6 +63,7 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
 
    private:
     bool mSync;
+    juce::String suffix;
     juce::NormalisableRange<float> mRange;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(QuantizedSlider)

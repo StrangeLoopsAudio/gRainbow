@@ -165,7 +165,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     g.setColour(borderColour);
     g.drawRoundedRectangle(mNoteGenRectMap[pitchClass][i], Utils::ROUNDED_AMOUNT, 2.0f);
     g.setColour(juce::Colours::black);
-    g.drawFittedText(juce::String::repeatedString("*", gen->genIdx + 1), mNoteGenRectMap[pitchClass][i].toNearestInt(),
+    g.drawFittedText(juce::String::repeatedString("|", gen->genIdx + 1), mNoteGenRectMap[pitchClass][i].toNearestInt(),
                      juce::Justification::centred, 1);
   }
 

@@ -26,7 +26,7 @@ FilterControl::FilterControl(Parameters& parameters)
   mSliderCutoff.setTextValueSuffix("Hz");
   addAndMakeVisible(mSliderCutoff);
 
-  mLabelCutoff.setText("Cutoff", juce::dontSendNotification);
+  mLabelCutoff.setText("cutoff", juce::dontSendNotification);
   mLabelCutoff.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelCutoff.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelCutoff);
@@ -36,7 +36,7 @@ FilterControl::FilterControl(Parameters& parameters)
   mSliderResonance.setRange(ParamRanges::RESONANCE.start, ParamRanges::RESONANCE.end, 0.01);
   addAndMakeVisible(mSliderResonance);
 
-  mLabelResonance.setText("Resonance", juce::dontSendNotification);
+  mLabelResonance.setText("resonance", juce::dontSendNotification);
   mLabelResonance.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelResonance.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelResonance);
@@ -135,10 +135,10 @@ void FilterControl::paint(juce::Graphics& g) {
                                   mVizRect.getBottom());
       break;
     case (Utils::FilterType::NO_FILTER):
-      midPt1 = juce::Point<float>(mVizRect.getTopLeft());
-      midPt2 = juce::Point<float>(mVizRect.getTopLeft());
-      midPt3 = juce::Point<float>(mVizRect.getTopRight());
-      midPt4 = juce::Point<float>(mVizRect.getTopRight());
+      midPt1 = juce::Point<float>(mVizRect.getTopLeft().translated(0, resPadding));
+      midPt2 = juce::Point<float>(mVizRect.getTopLeft().translated(0, resPadding));
+      midPt3 = juce::Point<float>(mVizRect.getTopRight().translated(0, resPadding));
+      midPt4 = juce::Point<float>(mVizRect.getTopRight().translated(0, resPadding));
       break;
   }
 

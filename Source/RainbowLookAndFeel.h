@@ -169,7 +169,7 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
   void drawButtonBackground(juce::Graphics& g, juce::Button& btn, const juce::Colour&, bool shouldDrawButtonAsHighlighted, bool) override {
     juce::Colour btnColour = btn.getToggleState() ? btn.findColour(juce::TextButton::ColourIds::buttonOnColourId) : btn.findColour(juce::TextButton::ColourIds::buttonColourId);
     if (shouldDrawButtonAsHighlighted && !btn.getToggleState()) {
-      btnColour = btnColour.interpolatedWith(juce::Colours::black, 0.8);
+      btnColour = btnColour.darker();
     }
     g.setColour(btnColour);
     g.fillRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT);
