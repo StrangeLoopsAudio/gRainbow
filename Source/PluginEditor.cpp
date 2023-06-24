@@ -44,6 +44,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mGrainControl(synth.getParams(), synth.getMeterSource()),
       mFilterControl(synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
+  mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
   mErrorMessage.clear();
 
   // Open file button
@@ -146,6 +147,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     mEnvGrain.updateSelectedParams();
     mFilterControl.updateSelectedParams();
     mGrainControl.updateSelectedParams();
+    mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, mParameters.getSelectedParamColour());
   };
   addAndMakeVisible(mKeyboard);
 

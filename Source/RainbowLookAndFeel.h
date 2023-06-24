@@ -174,6 +174,28 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     g.setColour(juce::Colours::black);
     g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT, 2.0f);
   }
+  
+  void drawComboBox(juce::Graphics& g, int, int, bool isButtonDown, int, int, int, int, juce::ComboBox& box) override {
+    // Draw background
+    g.setColour(box.findColour(juce::ComboBox::ColourIds::backgroundColourId));
+    g.fillRoundedRectangle(box.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT);
+    // Draw arrow
+    
+  }
+  
+  void drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int> &area, bool, bool, bool isHighlighted, bool, bool, const juce::String& text, const juce::String&, const juce::Drawable*, const juce::Colour*) override {
+    // Fill background
+    if (isHighlighted) {
+      g.setColour(findColour(juce::PopupMenu::ColourIds::backgroundColourId).darker());
+      g.fillRect(area);
+    }
+    g.setColour(juce::Colours::white);
+    g.drawFittedText(text, area, juce::Justification::centred, 1);
+  }
+  
+  void positionComboBoxText(juce::ComboBox& box, juce::Label& labelToPosition) override {
+    labelToPosition.setBounds(box.getLocalBounds());
+  }
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowLookAndFeel)
 };

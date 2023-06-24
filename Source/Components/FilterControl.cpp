@@ -39,6 +39,8 @@ FilterControl::FilterControl(Parameters& parameters)
   mLabelResonance.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelResonance);
 
+  mFilterType.setJustificationType(juce::Justification::centred);
+  mFilterType.setColour(juce::ComboBox::ColourIds::backgroundColourId, colour);
   for (int i = 0; i < FILTER_TYPE_NAMES.size(); ++i) {
     mFilterType.addItem(FILTER_TYPE_NAMES[i], i + 1);
   }
@@ -80,6 +82,7 @@ void FilterControl::updateSelectedParams() {
   mParamColour = mParameters.getSelectedParamColour();
   mSliderCutoff.updateSelectedParams();
   mSliderResonance.updateSelectedParams();
+  mFilterType.setColour(juce::ComboBox::ColourIds::backgroundColourId, mParamColour);
   mParamHasChanged.store(true);
 }
 
