@@ -43,7 +43,7 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
   p.addParameter(common[GRAIN_DURATION] =
                      new juce::AudioParameterFloat({ParamIDs::globalGrainDuration, 1}, "Master Grain Duration",
                                                    ParamRanges::GRAIN_DURATION, ParamDefaults::GRAIN_DURATION_DEFAULT));
-  p.addParameter(common[GRAIN_SYNC] = new juce::AudioParameterBool({ParamIDs::globalGrainSync, 1}, "Master Grain Sync", false));
+  p.addParameter(common[GRAIN_SYNC] = new juce::AudioParameterBool({ParamIDs::globalGrainSync, 1}, "Master Grain Sync", ParamDefaults::GRAIN_SYNC_DEFAULT));
 
   p.addParameter(common[PITCH_ADJUST] =
                      new juce::AudioParameterFloat({ParamIDs::globalPitchAdjust, 1}, "Master Pitch Adjust", ParamRanges::PITCH_ADJUST,
@@ -128,7 +128,7 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   p.addParameter(common[GRAIN_DURATION] = new juce::AudioParameterFloat({durationId, 1}, durationId, ParamRanges::GRAIN_DURATION,
                                                                         ParamDefaults::GRAIN_DURATION_DEFAULT));
   juce::String syncId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainSync + juce::String(genIdx);
-  p.addParameter(common[GRAIN_SYNC] = new juce::AudioParameterBool({syncId, 1}, syncId, false));
+  p.addParameter(common[GRAIN_SYNC] = new juce::AudioParameterBool({syncId, 1}, syncId, ParamDefaults::GRAIN_SYNC_DEFAULT));
 }
 
 void ParamNote::addParams(juce::AudioProcessor& p) {
@@ -172,7 +172,7 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
                      notePrefix + ParamIDs::noteGrainDuration, 1}, notePrefix + ParamIDs::noteGrainDuration,
                      ParamRanges::GRAIN_DURATION, ParamDefaults::GRAIN_DURATION_DEFAULT));
   p.addParameter(common[GRAIN_SYNC] = new juce::AudioParameterBool({notePrefix + ParamIDs::noteGrainSync, 1},
-                                                                   notePrefix + ParamIDs::noteGrainSync, false));
+                                                                   notePrefix + ParamIDs::noteGrainSync, ParamDefaults::GRAIN_SYNC_DEFAULT));
 
   p.addParameter(common[PITCH_ADJUST] =
                      new juce::AudioParameterFloat({notePrefix + ParamIDs::notePitchAdjust, 1}, notePrefix + ParamIDs::notePitchAdjust,

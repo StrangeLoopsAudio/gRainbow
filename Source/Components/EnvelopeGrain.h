@@ -38,7 +38,6 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   static constexpr float MAX_RATE_RATIO = 1.0f;
   static constexpr float GAIN_HEIGHT = 0.8f;
   static constexpr int MAX_NUM_ENVS = 6;
-  static constexpr juce::int64 GRAIN_SYNC_COLOURS_HEX[2] = {0xFF20FFD4, 0xFFFFD420};
 
   class QuantizedSlider : public RainbowSlider {
    public:

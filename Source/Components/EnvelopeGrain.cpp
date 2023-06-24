@@ -68,12 +68,11 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
 
   // Sync
   mBtnSync.setButtonText("free");
-  mBtnSync.setColour(juce::TextButton::buttonColourId, juce::Colour(GRAIN_SYNC_COLOURS_HEX[0]));
-  mBtnSync.setColour(juce::TextButton::buttonOnColourId, juce::Colour(GRAIN_SYNC_COLOURS_HEX[1]));
-  mBtnSync.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+  mBtnSync.setToggleable(true);
+  mBtnSync.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
   mBtnSync.setColour(juce::TextButton::textColourOnId, juce::Colours::black);
   mBtnSync.onClick = [this]() {
-    ParamHelper::setCommonParam(mCurSelectedParams, ParamCommon::Type::GRAIN_SYNC, !mBtnSync.getToggleState());
+    ParamHelper::setCommonParam(mParameters.selectedParams, ParamCommon::Type::GRAIN_SYNC, !mBtnSync.getToggleState());
   };
   addAndMakeVisible(mBtnSync);
 
@@ -116,6 +115,8 @@ void EnvelopeGrain::updateSelectedParams() {
   mSliderTilt.updateSelectedParams();
   mSliderRate.updateSelectedParams();
   mSliderDuration.updateSelectedParams();
+  mBtnSync.setColour(juce::TextButton::buttonColourId, mParamColour);
+  mBtnSync.setColour(juce::TextButton::buttonOnColourId, mParamColour.interpolatedWith(juce::Colours::white, 0.6f));
   mParamHasChanged.store(true);
   repaint();
 }
