@@ -179,23 +179,26 @@ void ArcSpectrogram::run() {
     Utils::SpecBuffer& spec = *(Utils::SpecBuffer*)mBuffers[mParamUI.specType];  // cast to SpecBuffer
     if (spec.size() == 0 || threadShouldExit()) return;
 
-    size_t maxRow = (mParamUI.specType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size();
+    const float maxRow =
+        static_cast<float>((mParamUI.specType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size());
 
     // Draw each column of frequencies
     for (size_t i = 0; i < NUM_COLS; ++i) {
       if (threadShouldExit()) return;
-      size_t specCol = (i / NUM_COLS) * spec.size();
+      const float specCol = ((float)i / NUM_COLS) * spec.size();
       // Draw each row of frequencies
       for (auto curRadius = mStartRadius; curRadius < mEndRadius; curRadius += 1) {
-        float radPerc = (curRadius - mStartRadius) / (float)mBowWidth;
-        size_t specRow = static_cast<size_t>(radPerc) * maxRow;
+        const float radPerc = (curRadius - mStartRadius) / (float)mBowWidth;
+        const float specRow = radPerc * maxRow;
 
         // Choose rainbow color depending on radius
-        auto level = juce::jlimit(0.0f, 1.0f, spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
+        const size_t colIndex = static_cast<size_t>(specCol);
+        const size_t rowIndex = static_cast<size_t>(specRow);
+        const float level = juce::jlimit(0.0f, 1.0f, spec[colIndex][rowIndex] * spec[colIndex][rowIndex] * COLOUR_MULTIPLIER);
         auto rainbowColour = juce::Colour::fromHSV(radPerc, 1.0, 1.0f, level);
         g.setColour(rainbowColour);
 
-        float xPerc = (float)specCol / spec.size();
+        float xPerc = specCol / static_cast<float>(spec.size());
         float angleRad = (juce::MathConstants<float>::pi * xPerc) - (juce::MathConstants<float>::pi / 2.0f);
 
         // Create and rotate a rectangle to represent the "pixel"

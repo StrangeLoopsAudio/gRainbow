@@ -71,10 +71,10 @@ void PitchDetector::getSegmentedPitchBuffer() {
     std::vector<Pitch>& pitchVec = mPitchMap.getReference(i);
     for (size_t j = 0; j < pitchVec.size(); ++j) {
       auto pitch = pitchVec[j];
-      size_t duration = static_cast<size_t>(pitch.duration) * mHPCP.size();
+      const float duration = pitch.duration * static_cast<float>(mHPCP.size());
       const int frame = pitch.posRatio * (mHPCP.size() - 1);
-      const int bin = pitch.pitchClass * (NUM_HPCP_BINS / 12);
-      for (size_t k = 0; k < duration; ++k) {
+      const int bin = (pitch.pitchClass * (NUM_HPCP_BINS / 12));
+      for (float k = 0; k < duration; ++k) {
         mSegmentedPitches[frame + k][bin] = pitch.gain;
       }
     }
