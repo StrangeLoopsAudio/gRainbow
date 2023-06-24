@@ -107,24 +107,27 @@ void RainbowKeyboard::fillNoteRectangleMap() {
 }
 
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
-  juce::Colour keyColour = Utils::getRainbow12Colour(pitchClass);
-  juce::Colour bodyColour = keyColour.withSaturation(NOTE_BODY_SATURATION);
-  juce::Colour borderColour = keyColour.darker();
   const float velocity = mNoteVelocity[pitchClass];
   const bool isDown = (velocity > 0.0f);
   const bool isPitchSelected = mParameters.selectedParams == mParameters.note.notes[pitchClass].get();
   const ParamNote& paramNote = *mParameters.note.notes[pitchClass];
   const bool noCandidates = paramNote.candidates.empty();
 
+  const juce::Colour keyColour = Utils::getRainbow12Colour(pitchClass);
+  juce::Colour bodyColour = keyColour.withSaturation(NOTE_BODY_SATURATION);
+  const juce::Colour borderColour = keyColour.darker();
+
   // if down, extra dark
   // if no note is down, lightly darken if mouse is hovering it
-  if (isDown) {
+  if (noCandidates) {
+    bodyColour = juce::Colours::grey;
+  } else if (isDown) {
     bodyColour = bodyColour.darker().darker();
   } else if (pitchClass == mHoverNote.pitch) {
     bodyColour = bodyColour.darker();
   }
 
-  g.setColour((isPitchSelected || noCandidates) ? keyColour.darker() : bodyColour);
+  g.setColour(noCandidates ? juce::Colours::grey : (isPitchSelected ? keyColour.darker() : bodyColour));
 
   juce::Rectangle<float> area = mNoteRectMap[pitchClass];
   g.fillRoundedRectangle(area, Utils::ROUNDED_AMOUNT);
@@ -133,7 +136,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 
   // Pitch class label
   juce::Rectangle<float> labelRect = area.withTrimmedTop(5).withTrimmedLeft(5).withSize(NOTE_LABEL_SIZE, NOTE_LABEL_SIZE);
-  g.setColour(keyColour.withSaturation(0.4f));
+  g.setColour(noCandidates ? juce::Colours::grey : keyColour.withSaturation(0.4f));
   g.fillRoundedRectangle(labelRect, 5.0f);
   g.setColour(borderColour);
   g.drawRoundedRectangle(labelRect, 5.0f, 2.0f);
@@ -205,7 +208,6 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     juce::Rectangle<float> selGenRect = mNoteGenRectMap[pitchClass][selectedGen];
     g.drawLine(juce::Line<float>(selGenRect.getCentre(), selGenRect.getCentre().withY(0)), 2.0f);
   } */
-
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
