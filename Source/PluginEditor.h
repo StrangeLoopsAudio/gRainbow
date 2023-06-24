@@ -25,8 +25,7 @@
 #include "DSP/TransientDetector.h"
 #include "DSP/GranularSynth.h"
 #include "RainbowLookAndFeel.h"
-#include "Utils.h"
-
+#include "Utils/Utils.h"
 
 /**
  * @brief Used on startup to fill unused area with the logo

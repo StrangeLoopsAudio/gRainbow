@@ -19,9 +19,9 @@
 #include <random>
 #include <bitset>
 
-#include "../DSP/Fft.h"
-#include "../Parameters.h"
-#include "../Utils.h"
+#include "DSP/Fft.h"
+#include "Parameters.h"
+#include "Utils/Utils.h"
 
 //==============================================================================
 /*

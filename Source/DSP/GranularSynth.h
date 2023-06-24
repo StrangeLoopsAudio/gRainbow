@@ -14,8 +14,8 @@
 
 #include "Grain.h"
 #include "PitchDetector.h"
-#include "../Parameters.h"
-#include "../Utils.h"
+#include "Parameters.h"
+#include "Utils/Utils.h"
 #include <bitset>
 #include "ff_meters/ff_meters.h"
 

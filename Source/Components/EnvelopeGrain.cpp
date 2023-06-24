@@ -9,7 +9,7 @@
 */
 
 #include "EnvelopeGrain.h"
-#include "../Utils.h"
+#include "Utils/Utils.h"
 
 EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
     : mParameters(parameters),

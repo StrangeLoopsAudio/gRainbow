@@ -12,7 +12,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_utils/juce_audio_utils.h>
-#include "../Parameters.h"
+#include "Parameters.h"
 
 /**
  * @brief Small triangles used to select trim range

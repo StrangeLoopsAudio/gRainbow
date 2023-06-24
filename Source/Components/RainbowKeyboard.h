@@ -12,8 +12,8 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_basics/juce_audio_basics.h>
-#include "../Parameters.h"
-#include "../Utils.h"
+#include "Parameters.h"
+#include "Utils/Utils.h"
 
 /**
   @brief The RainbowKeyboard is for displaying the keys being pressed, but all the actual listening of midi inputs will come from

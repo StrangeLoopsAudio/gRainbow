@@ -11,7 +11,7 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "Utils.h"
+#include "Utils/Utils.h"
 #include "Parameters.h"
 #include "ff_meters/ff_meters.h"
 
@@ -163,7 +163,7 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     g.setColour(btnColour);
     g.fillRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT);
   }
-  
+
   void drawButtonBackground(juce::Graphics& g, juce::Button& btn, const juce::Colour&, bool shouldDrawButtonAsHighlighted, bool) override {
     juce::Colour btnColour = btn.getToggleState() ? btn.findColour(juce::TextButton::ColourIds::buttonOnColourId) : btn.findColour(juce::TextButton::ColourIds::buttonColourId);
     if (shouldDrawButtonAsHighlighted && !btn.getToggleState()) {

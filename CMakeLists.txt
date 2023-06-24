@@ -43,9 +43,9 @@ option(JUCE_ENABLE_MODULE_SOURCE_GROUPS "Show all module sources in IDE projects
 # Locally, you'll need to run `git submodule update --init --recursive` once
 # and `git submodule update --remote --merge` to keep it up to date
 # On Github Actions, it's managed by actions/checkout
-add_subdirectory(JUCE)
+add_subdirectory(external/JUCE)
 
-juce_add_module(${CMAKE_CURRENT_SOURCE_DIR}/libs/ff_meters)
+juce_add_module(${CMAKE_CURRENT_SOURCE_DIR}/external/ff_meters)
 
 # Check the readme at `docs/CMake API.md` in the JUCE repo for full config
 juce_add_plugin(gRainbow
@@ -69,7 +69,7 @@ juce_add_plugin(gRainbow
 target_compile_features(gRainbow PRIVATE cxx_std_20)
 
 set(SOURCE_UTILS
-    Source/Utils.h
+    Source/Utils/Utils.h
 )
 
 # Manually list all .h and .cpp files for the plugin
@@ -122,6 +122,10 @@ target_sources(gRainbow PRIVATE ${SOURCE_UTILS} ${SOURCE_COMPONENTS} ${SOURCE_DS
 
 # No, we don't want our source buried in extra nested folders
 set_target_properties(gRainbow PROPERTIES FOLDER "")
+
+target_include_directories(gRainbow PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Source
+    ${CMAKE_CURRENT_SOURCE_DIR}/external)
 
 # The Xcode source tree should uhhh, still look like the source tree, yo
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/Source PREFIX "" FILES

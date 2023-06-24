@@ -9,7 +9,7 @@
 */
 
 #include "FilterControl.h"
-#include "../Utils.h"
+#include "Utils/Utils.h"
 
 //==============================================================================
 FilterControl::FilterControl(Parameters& parameters)

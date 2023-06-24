@@ -9,7 +9,7 @@
 */
 
 #include "GrainControl.h"
-#include "../Utils.h"
+#include "Utils/Utils.h"
 
 GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& meterSource)
     : mParameters(parameters),

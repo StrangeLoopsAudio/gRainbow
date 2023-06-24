@@ -1,6 +1,6 @@
 [submodule "JUCE"]
-	path = JUCE
+	path = external/JUCE
 	url = https://github.com/juce-framework/JUCE.git
 [submodule "libs/ff_meters"]
-	path = libs/ff_meters
+	path = external/ff_meters
 	url = https://github.com/ffAudio/ff_meters.git

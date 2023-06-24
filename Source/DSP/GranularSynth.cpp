@@ -11,9 +11,9 @@
 #include <juce_core/juce_core.h>
 #include <juce_audio_formats/juce_audio_formats.h>
 #include "GranularSynth.h"
-#include "../Preset.h"
-#include "../PluginEditor.h"
-#include "../Components/Settings.h"
+#include "Preset.h"
+#include "PluginEditor.h"
+#include "Components/Settings.h"
 
 GranularSynth::GranularSynth()
 #ifndef JucePlugin_PreferredChannelConfigurations
