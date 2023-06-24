@@ -223,7 +223,7 @@ void RainbowKeyboard::mouseDown(const juce::MouseEvent& e) { updateMouseState(e,
 void RainbowKeyboard::mouseUp(const juce::MouseEvent& e) {
   updateMouseState(e, false, true);
   if (mHoverGenRect != juce::Rectangle<float>() && e.mods.isRightButtonDown()) {
-    juce::PopupMenu menu;  // TODO - Remove?
+    juce::PopupMenu menu;
     menu.addItem(1, "Delete generator", true);
     menu.showMenuAsync(juce::PopupMenu::Options(), [this](int result) {
       if (result == 1) {
