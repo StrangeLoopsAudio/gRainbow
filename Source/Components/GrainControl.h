@@ -11,7 +11,6 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "PositionChanger.h"
 #include "Parameters.h"
 #include "RainbowSlider.h"
 #include "MeterLookAndFeel.h"
@@ -47,7 +46,6 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
 
   // Components
   // -- Generator Adjustments
-  PositionChanger mPositionChanger;
   RainbowSlider mSliderPitchAdjust;
   juce::Label mLabelPitchAdjust;
   RainbowSlider mSliderPitchSpray;

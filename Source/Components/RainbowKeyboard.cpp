@@ -93,7 +93,11 @@ void RainbowKeyboard::fillNoteRectangleMap() {
 
     // Generators on top of the note
     for (int i = 0; i < NUM_GENERATORS; ++i) {
-      mNoteGenRectMap[key][i] = keyRect.removeFromBottom(genHeight);
+      const auto genRect = keyRect.removeFromBottom(genHeight);
+      mNoteGenRectMap[key][i] = genRect;
+      const float offset = genRect.getWidth() * .8f;
+      mNoteGenRectIncreaseMap[key][i] = genRect.withTrimmedLeft(offset);
+      mNoteGenRectDecreaseMap[key][i] = genRect.withTrimmedRight(offset);
     }
 
     // Make add generator button for each note
@@ -157,18 +161,32 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   for (int i = 0; i < numEnabledGens; ++i) {
     ParamGenerator* gen = paramNote.getEnabledGenByIdx(i);
     jassert(gen != nullptr);
-    bool isGenSelected = mParameters.selectedParams == gen;
+    const bool isGenSelected = mParameters.selectedParams == gen;
     const auto& noteGenRect = mNoteGenRectMap[pitchClass][i];
+    const bool isGenHovering = (mHoverGenRect == noteGenRect);
+
     juce::Colour genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).brighter((i+1) * Utils::GENERATOR_BRIGHTNESS_ADD);
-    if (mHoverGenRect == noteGenRect) genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).darker();
+    if (isGenHovering) genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).darker();
     if (isGenSelected) genColour = keyColour.darker();
+
     g.setColour(genColour);
     g.fillRoundedRectangle(noteGenRect, Utils::ROUNDED_AMOUNT);
     g.setColour(borderColour);
     g.drawRoundedRectangle(noteGenRect, Utils::ROUNDED_AMOUNT, 2.0f);
     g.setColour(juce::Colours::black);
-    g.drawFittedText(juce::String::repeatedString("|", gen->genIdx + 1), noteGenRect.toNearestInt(), juce::Justification::centred,
-                     1);
+    g.drawFittedText(juce::String(gen->candidate->get() + 1), noteGenRect.toNearestInt(), juce::Justification::centred, 1);
+
+    if (isGenHovering) {
+      const auto rightBox = mNoteGenRectIncreaseMap[pitchClass][i];
+      const auto leftBox = mNoteGenRectDecreaseMap[pitchClass][i];
+      g.setColour(mHoverGenIncrease ? keyColour : keyColour.withAlpha(0.5f));
+      g.fillRoundedRectangle(rightBox, Utils::ROUNDED_AMOUNT);
+      g.setColour(mHoverGenDecrease ? keyColour : keyColour.withAlpha(0.5f));
+      g.fillRoundedRectangle(leftBox, Utils::ROUNDED_AMOUNT);
+      g.setColour(juce::Colours::black);
+      g.drawFittedText({">"}, rightBox.toNearestInt(), juce::Justification::centred, 1);
+      g.drawFittedText({"<"}, leftBox.toNearestInt(), juce::Justification::centred, 1);
+    }
   }
 
   // Draw the add generator button if more can still be added
@@ -269,7 +287,12 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
 */
 void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, bool isClick) {
   const juce::Point<float> pos = e.getEventRelativeTo(this).position;
+
+  // reset each update
   mHoverGenRect = juce::Rectangle<float>();
+  mHoverGenIncrease = false;
+  mHoverGenDecrease = false;
+
   mHoverNote = xyMouseToNote(pos, isClick);
 
   // Test for return button hover/click
@@ -320,33 +343,46 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
   repaint();
 }
 
+void RainbowKeyboard::generatorOnClick(ParamGenerator* gen) {
+  if (mHoverGenIncrease || mHoverGenDecrease) {
+    const size_t numCandidates = mParameters.note.notes[gen->noteIdx]->candidates.size();
+    if (numCandidates == 0) return;
+    const int pos = gen->candidate->get();
+    int newPos = mHoverGenIncrease ? pos + 1 : pos - 1;
+    newPos = (newPos + numCandidates) % numCandidates;
+    ParamHelper::setParam(gen->candidate, newPos);
+  }
+  // If you have selected Gen "X" and then Increase on gen "Y", it will swap to "Y" on top of increasing the candidate value
+  if (mParameters.selectedParams != gen) {
+    mParameters.selectedParams = gen;
+    if (mParameters.onSelectedChange != nullptr) {
+      mParameters.onSelectedChange();
+    }
+  }
+}
+
 Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isClick) {
   if (!reallyContains(pos.toInt(), false)) return Utils::MidiNote();
 
   for (Utils::PitchClass pitchClass : Utils::ALL_PITCH_CLASS) {
     ParamNote* note = mParameters.note.notes[pitchClass].get();
     // First check general note area
-    if (mNoteRectMap[pitchClass].contains(pos.withY(mNoteRectMap[pitchClass].getCentreY()))) {
+    const auto& noteRect = mNoteRectMap[pitchClass];
+    if (noteRect.contains(pos.withY(noteRect.getCentreY()))) {
       // Now check note body and generators
-      if (mNoteRectMap[pitchClass].contains(pos)) {
-        // TODO: recheck velocity calc for new key design
-        float velocity =
-            juce::jmax(0.0f, 1.0f - ((pos.y - mNoteRectMap[pitchClass].getY()) / mNoteRectMap[pitchClass].getHeight()));
+      if (noteRect.contains(pos)) {
+        float velocity = juce::jmax(0.0f, 1.0f - ((pos.y - noteRect.getY()) / noteRect.getHeight()));
         return Utils::MidiNote(pitchClass, velocity);
       } else {
         // Check generators and add gen button for hover
         for (int i = 0; i < note->getNumEnabledGens(); ++i) {
           if (mNoteGenRectMap[pitchClass][i].contains(pos)) {
-            if (isClick) {
-              // Select current generator for parameter edits and send update
-              ParamGenerator* gen = note->getEnabledGenByIdx(i);
-              jassert(gen != nullptr);
-              if (mParameters.selectedParams != gen) {
-                mParameters.selectedParams = gen;
-                if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
-              }
-            }
+            mHoverGenIncrease = mNoteGenRectIncreaseMap[pitchClass][i].contains(pos);
+            mHoverGenDecrease = mNoteGenRectDecreaseMap[pitchClass][i].contains(pos);
             mHoverGenRect = mNoteGenRectMap[pitchClass][i];
+            if (isClick) {
+              generatorOnClick(note->getEnabledGenByIdx(i));
+            }
             repaint();
             return Utils::MidiNote();
           }

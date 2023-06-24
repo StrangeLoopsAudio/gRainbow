@@ -68,11 +68,15 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
 
   // These allow using the mouse to click a key
   void updateMouseState(const juce::MouseEvent& e, bool isDown, bool isClick);
+  void generatorOnClick(ParamGenerator* gen);
   Utils::MidiNote xyMouseToNote(juce::Point<float> pos, bool isClick);
   // Note being currently hovered by the mouse
   Utils::MidiNote mHoverNote;
   // Generator being currently hovered by the mouse
   juce::Rectangle<float> mHoverGenRect;
+  bool mHoverGenIncrease = false;
+  bool mHoverGenDecrease = false;
+
   // Keeps track of the note being played because of the mouse injected input
   Utils::MidiNote mMouseNote;
   bool mIsHoverBtnReturn = false;
@@ -81,6 +85,9 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
   juce::Rectangle<float> mNoteRectMap[Utils::PitchClass::COUNT];
   juce::Rectangle<float> mNoteAddGenRectMap[Utils::PitchClass::COUNT];
   juce::Rectangle<float> mNoteGenRectMap[Utils::PitchClass::COUNT][NUM_GENERATORS];
+  // The '<' and '>' arrows on side of the generator rect
+  juce::Rectangle<float> mNoteGenRectIncreaseMap[Utils::PitchClass::COUNT][NUM_GENERATORS];
+  juce::Rectangle<float> mNoteGenRectDecreaseMap[Utils::PitchClass::COUNT][NUM_GENERATORS];
   void fillNoteRectangleMap();
 
   void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);

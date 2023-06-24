@@ -121,26 +121,6 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mLabelPanSpray.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPanSpray);
 
-  mPositionChanger.onPositionChanged = [this](bool isRight) {
-    ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mParameters.selectedParams);
-    jassert(gen != nullptr);
-    int numCandidates = mParameters.note.notes[gen->noteIdx]->candidates.size();
-    int pos = gen->candidate->get();
-    if (numCandidates == 0) return;
-    int newPos = isRight ? pos + 1 : pos - 1;
-    newPos = (newPos + numCandidates) % numCandidates;
-    ParamHelper::setParam(gen->candidate, newPos);
-    mPositionChanger.setPositionNumber(newPos);
-  };
-  mPositionChanger.onSoloChanged = [this](bool isSolo) {
-    if (mCurSelectedParams->type == ParamType::GENERATOR) {
-      ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
-      ParamHelper::setParam(mParameters.note.notes[gen->noteIdx]->soloIdx, isSolo ? gen->genIdx : SOLO_NONE);
-    }
-  };
-  mPositionChanger.setColour(colour);
-  addAndMakeVisible(mPositionChanger);
-
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
 
@@ -170,13 +150,6 @@ void GrainControl::timerCallback() {
                               juce::dontSendNotification);
     mSliderPanSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PAN_SPRAY),
                              juce::dontSendNotification);
-    if (mCurSelectedParams->type == ParamType::GENERATOR) {
-      ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
-      mPositionChanger.setPositionNumber(gen->candidate->get());
-      mPositionChanger.setSolo(mParameters.note.notes[gen->noteIdx]->soloIdx->get() == gen->genIdx);
-    } else {
-      mPositionChanger.setSolo(false);
-    }
   }
 }
 
@@ -193,15 +166,6 @@ void GrainControl::updateSelectedParams() {
   mSliderPosSpray.updateSelectedParams();
   mSliderPanAdjust.updateSelectedParams();
   mSliderPanSpray.updateSelectedParams();
-
-  bool isGen = mCurSelectedParams->type == ParamType::GENERATOR;
-  mPositionChanger.setActive(isGen);
-  if (isGen) {
-    ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
-    mPositionChanger.setNumPositions(mParameters.note.notes[gen->noteIdx]->candidates.size());
-    mPositionChanger.setPositionNumber(gen->candidate->get());
-    mPositionChanger.setColour(mParamColour);
-  }
 
   mParamHasChanged.store(true);
   repaint();
@@ -229,7 +193,7 @@ void GrainControl::resized() {
 
   r.removeFromTop(Utils::PADDING);
 
-  int knobWidth = r.getWidth() / 3;
+  const int knobWidth = r.getWidth() / 3;
 
   r.removeFromLeft(Utils::PADDING);
 
@@ -255,9 +219,6 @@ void GrainControl::resized() {
   mLabelPosAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPosAdjust.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-
-  // Candidate changer
-  mPositionChanger.setBounds(knobPanel.removeFromBottom(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT));
 
   // Pan spray and adjust
   knobPanel = r;

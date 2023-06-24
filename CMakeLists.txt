@@ -98,8 +98,6 @@ set(SOURCE_COMPONENTS
     Source/Components/RainbowLookAndFeel.h
     Source/Components/RainbowLookAndFeel.cpp
     Source/Components/MeterLookAndFeel.h
-    Source/Components/PositionChanger.h
-    Source/Components/PositionChanger.cpp
     Source/Components/FilterControl.h
     Source/Components/FilterControl.cpp
     Source/Components/GrainControl.h
