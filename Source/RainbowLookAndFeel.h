@@ -154,14 +154,25 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
   void drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted, bool) override {
     juce::Colour fillColour = btn.findColour(juce::ToggleButton::ColourIds::tickColourId);
     g.setColour(fillColour);
-    g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), 4.0f, 2.0f);
+    g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT, 2.0f);
 
     juce::Colour btnColour = btn.getToggleState() ? fillColour : juce::Colours::black;
     if (shouldDrawButtonAsHighlighted && !btn.getToggleState()) {
       btnColour = fillColour.interpolatedWith(juce::Colours::black, 0.8);
     }
     g.setColour(btnColour);
-    g.fillRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), 4.0f);
+    g.fillRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT);
+  }
+  
+  void drawButtonBackground(juce::Graphics& g, juce::Button& btn, const juce::Colour&, bool shouldDrawButtonAsHighlighted, bool) override {
+    juce::Colour btnColour = btn.getToggleState() ? btn.findColour(juce::TextButton::ColourIds::buttonOnColourId) : btn.findColour(juce::TextButton::ColourIds::buttonColourId);
+    if (shouldDrawButtonAsHighlighted && !btn.getToggleState()) {
+      btnColour = btnColour.interpolatedWith(juce::Colours::black, 0.8);
+    }
+    g.setColour(btnColour);
+    g.fillRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT);
+    g.setColour(juce::Colours::black);
+    g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT, 2.0f);
   }
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowLookAndFeel)

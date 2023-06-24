@@ -27,7 +27,7 @@ void PointMarker::resized() {
   path.lineTo(apex);
   path.closeSubPath();
 
-  path.addLineSegment(juce::Line<float>(apex, juce::Point<float>(apex.getX(), 0)), 1);
+  path.addLineSegment(juce::Line<float>(apex, juce::Point<float>(apex.getX(), 0)), 2);
   mPath = path;
 }
 
@@ -88,15 +88,13 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
   addAndMakeVisible(mEndMarker);
   addAndMakeVisible(mThumbnailShadow);
 
-  mPlaybackMarker.setFill(juce::Colours::white.withAlpha(0.9f));
+  mPlaybackMarker.setFill(juce::Colours::black.withAlpha(0.9f));
   addAndMakeVisible(mPlaybackMarker);
 }
 
 TrimSelection::~TrimSelection() { cleanup(); }
 
 void TrimSelection::paint(juce::Graphics& g) {
-  g.fillAll(juce::Colours::black);
-
   int numChannels = mThumbnail.getNumChannels();
   if (numChannels == 0) {
     // If trying to trim a file and the editor is closed emulate pressing the cancel button
@@ -109,14 +107,14 @@ void TrimSelection::paint(juce::Graphics& g) {
   {
     const int channelHeight = thumbnailHeight / numChannels;
     // draw an outline around the thumbnail
-    g.setColour(juce::Colours::grey);
-    g.drawRect(mThumbnailRect, 1);
+    g.setColour(juce::Colours::black);
+    g.drawRect(mThumbnailRect, 2);
 
     for (int i = 0; i < numChannels; i++) {
       juce::Rectangle<int> channelBounds = mThumbnailRect.withTrimmedTop(channelHeight * i).withHeight(channelHeight);
 
-      g.setGradientFill(juce::ColourGradient(juce::Colours::lightblue, channelBounds.getTopLeft().toFloat(),
-                                             juce::Colours::darkgrey, channelBounds.getBottomLeft().toFloat(), false));
+      g.setGradientFill(juce::ColourGradient(juce::Colours::grey, channelBounds.getTopLeft().toFloat(),
+                                             juce::Colours::black, channelBounds.getBottomLeft().toFloat(), false));
       mThumbnail.drawChannel(g, channelBounds, 0.0f, mVisibleRange.getEnd(), i, 1.0f);
     }
   }
@@ -131,7 +129,7 @@ void TrimSelection::paint(juce::Graphics& g) {
 
   // Draw selectors
   {
-    g.setColour(juce::Colours::white);
+    g.setColour(juce::Colours::black);
     g.setFont(14.0f);
     g.drawFittedText(mStartTimeString, mSelectorRect, juce::Justification::bottomLeft, 1);
     g.drawFittedText(juce::String(mSelectedRange.getLength(), 1) + " seconds", mSelectorRect, juce::Justification::centredBottom,
@@ -142,7 +140,7 @@ void TrimSelection::paint(juce::Graphics& g) {
   // Draw line showing where audio is playing from
   {
     const float xPosition = sampleToXPosition(mParamUI.trimPlaybackSample);
-    mPlaybackMarker.setRectangle(juce::Rectangle<float>(xPosition, 0, 1.5f, thumbnailHeight));
+    mPlaybackMarker.setRectangle(juce::Rectangle<float>(xPosition, mThumbnailRect.getY(), 1.5f, thumbnailHeight));
   }
 }
 
@@ -181,25 +179,22 @@ void TrimSelection::resized() {
 
   juce::Rectangle<int> r = getLocalBounds();
   // just enough padding to not be on the side borders
-  r.reduce(r.getWidth() * 0.02, 0);
+  r = r.reduced(Utils::PADDING);
   mThumbnailRect = r.removeFromTop((2 * r.getHeight()) / 3);
-  // extra 20 comes from 14 point font for text and some padding
-  mSelectorRect = mThumbnailRect.removeFromBottom(PointMarker::height() + 20);
   mThumbnailShadow.setBounds(mThumbnailRect);
+  r.removeFromTop(Utils::PADDING);
+  // extra 20 comes from 14 point font for text and some padding
+  r.removeFromTop(PointMarker::height());
+  mSelectorRect = r.removeFromTop(Utils::LABEL_HEIGHT);
 
-  const int btnHeightPadding = r.getHeight() * 0.1;
-  const int btnWidth = r.getWidth() * 0.25;
-  const int btnWidthPadding = r.getWidth() * (.25 / 4.0);
-  juce::Rectangle<int> btnRect = r;
+  const int btnWidth = (r.getWidth() - Utils::PADDING * 2) / 3;
 
-  btnRect.removeFromTop(btnHeightPadding);
-  btnRect.removeFromLeft(btnWidthPadding);
-  mBtnCancel.setBounds(btnRect.removeFromLeft(btnWidth));
-  btnRect.removeFromLeft(btnWidthPadding);
-  mBtnPlayback.setBounds(btnRect.removeFromLeft(btnWidth));
-  btnRect.removeFromLeft(btnWidthPadding);
-  btnRect.removeFromRight(btnWidthPadding);
-  mBtnSetSelection.setBounds(btnRect.removeFromLeft(btnWidth));
+  r.removeFromTop(Utils::PADDING);
+  mBtnCancel.setBounds(r.removeFromLeft(btnWidth));
+  r.removeFromLeft(Utils::PADDING);
+  mBtnPlayback.setBounds(r.removeFromLeft(btnWidth));
+  r.removeFromLeft(Utils::PADDING);
+  mBtnSetSelection.setBounds(r.removeFromLeft(btnWidth));
 }
 
 void TrimSelection::updatePointMarker() {
