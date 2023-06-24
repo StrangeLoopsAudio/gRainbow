@@ -86,7 +86,7 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
   void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);
 
   // LUT for animation values to save from recomputing each frame
-  static constexpr int ANIMATION_BLOCK_DIVISOR = 12;
+  static constexpr int ANIMATION_BLOCK_DIVISOR = 24;
   struct AnimationLUT {
     float velocityLine;
     float inverseVelocityLine;

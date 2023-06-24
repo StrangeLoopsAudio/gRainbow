@@ -149,22 +149,6 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     return;
   }
 
-  // display animation to show the velocity level of the note
-  if (isDown && PowerUserSettings::get().getAnimated()) {
-    AnimationLUT& lut = mAnimationLUT[pitchClass];
-    juce::Rectangle<float> block = juce::Rectangle<float>(lut.noteWidthSplit, lut.noteWidthSplit);
-    g.setColour(juce::Colours::white);
-    g.drawLine(area.getX(), lut.velocityLine, area.getRight(), lut.velocityLine, 2.0f);
-    for (int i = 0; i < lut.blockCount; i++) {
-      // (i * 2) to spread out the blocks across if at a low velocity
-      // Tried using random() to get X pos, but looked a little too random IMO
-      const float x = area.getX() + (static_cast<float>((i * 2) % ANIMATION_BLOCK_DIVISOR) * lut.noteWidthSplit);
-      const float y = lut.yDelta + (lut.inverseVelocityLine * mRandom.nextFloat());
-      block.setPosition(x, y);
-      g.drawRect(block);
-    }
-  }
-
   // Draw the active generators on top of each key
   const int numEnabledGens = paramNote.getNumEnabledGens();
   int genHeight = getHeight() * (1.0f - NOTE_BODY_HEIGHT) / 4;
@@ -201,13 +185,21 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     g.drawText("+", addGenRect, juce::Justification::centred);
   }
 
-  /*if (isPitchSelected) {
-    g.setColour(keyColour);
-    g.drawLine(juce::Line<float>(area.getCentre(), area.getCentre().withY(0)), 2.0f);
-  } else if (selectedGen != -1) {
-    juce::Rectangle<float> selGenRect = mNoteGenRectMap[pitchClass][selectedGen];
-    g.drawLine(juce::Line<float>(selGenRect.getCentre(), selGenRect.getCentre().withY(0)), 2.0f);
-  } */
+  // display animation to show the velocity level of the note
+  if (isDown && PowerUserSettings::get().getAnimated()) {
+    AnimationLUT& lut = mAnimationLUT[pitchClass];
+    juce::Rectangle<float> block = juce::Rectangle<float>(lut.noteWidthSplit / 2.0f, lut.noteWidthSplit);
+    g.setColour(juce::Colours::white);
+    g.drawLine(area.getX(), lut.velocityLine, area.getRight(), lut.velocityLine, 2.0f);
+    for (int i = 0; i < lut.blockCount; i++) {
+      // (i * 2) to spread out the blocks across if at a low velocity
+      // Tried using random() to get X pos, but looked a little too random IMO
+      const float x = area.getX() + (static_cast<float>((i * 2) % ANIMATION_BLOCK_DIVISOR) * lut.noteWidthSplit);
+      const float y = lut.yDelta + (lut.velocityLine * mRandom.nextFloat());
+      block.setPosition(x, y);
+      g.drawRect(block);
+    }
+  }
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
@@ -223,11 +215,12 @@ void RainbowKeyboard::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes
       AnimationLUT& lut = mAnimationLUT[midiNote.pitch];
       lut.noteWidthSplit = area.getWidth() / static_cast<float>(ANIMATION_BLOCK_DIVISOR);
       lut.inverseVelocityLine = (area.getHeight() * midiNote.velocity);
-      lut.velocityLine = area.getHeight() - lut.inverseVelocityLine;
+      const float bottom = area.getHeight() + area.getY();
+      lut.velocityLine = bottom - lut.inverseVelocityLine;
       // velocity^2 to give non linear feel
       // if velocity is low, will be 1 row of blocks
       lut.blockCount = (ANIMATION_BLOCK_DIVISOR / 2) + static_cast<int>(20.0f * midiNote.velocity * midiNote.velocity);
-      // substract clip bottom of key
+      // substract have a box so it doesn't clip bottom of key
       lut.yDelta = lut.velocityLine - (lut.noteWidthSplit / 2.0f);
     }
   }
