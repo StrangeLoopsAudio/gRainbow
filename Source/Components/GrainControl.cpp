@@ -195,8 +195,6 @@ void GrainControl::resized() {
 
   const int knobWidth = r.getWidth() / 3;
 
-  r.removeFromLeft(Utils::PADDING);
-
   // Pitch spray and adjust
   juce::Rectangle<int> knobPanel = r.removeFromLeft(knobWidth);
   mLabelPitchSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
@@ -210,6 +208,9 @@ void GrainControl::resized() {
   mLabelGain.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderGain.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+  
+  // Meter
+  mMeter.setBounds(r.removeFromTop(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT).reduced(Utils::PADDING));
 
   // Position spray and adjust
   knobPanel = r.removeFromRight(knobWidth);
@@ -228,7 +229,4 @@ void GrainControl::resized() {
   mLabelPanAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPanAdjust.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-
-  // Meter
-  mMeter.setBounds(knobPanel.removeFromBottom(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT).reduced(Utils::PADDING));
 }
