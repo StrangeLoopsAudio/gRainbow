@@ -31,6 +31,12 @@ file(STRINGS VERSION CURRENT_VERSION)
 # For simplicity, the name of the project is also the name of the target
 project(gRainbow VERSION ${CURRENT_VERSION})
 
+set(BINARY_NAME "gRainbow")
+# Allows both a Release and Debug build to live in same .vst3 plugin folder
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(BINARY_NAME "gRainbow_debug")
+ENDIF()
+
 # Adds all the module sources so they appear correctly in the IDE
 # Must be set before JUCE is added as a sub-dir (or any targets are made)
 # https://github.com/juce-framework/JUCE/commit/6b1b4cf7f6b1008db44411f2c8887d71a3348889
@@ -63,7 +69,7 @@ juce_add_plugin(gRainbow
     PLUGIN_MANUFACTURER_CODE SLoo               # This has to be one uppercase, rest lower for AU formats
     PLUGIN_CODE SL01                            # A unique four-character plugin id with at least one upper-case character
     FORMATS "${FORMATS}"
-    PRODUCT_NAME "${CMAKE_PROJECT_NAME}")        # The name of the final executable, which can differ from the target name
+    PRODUCT_NAME "${BINARY_NAME}")        # The name of the final executable, which can differ from the target name
 
 # C++20, please
 target_compile_features(gRainbow PRIVATE cxx_std_20)
