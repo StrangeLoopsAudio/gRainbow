@@ -665,7 +665,7 @@ void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumb
   mLastPitchClass = Utils::getPitchClass(midiNoteNumber);
   mMidiNotes.add(Utils::MidiNote(mLastPitchClass, velocity));
   GrainNote* gNote = std::find_if(mActiveNotes.begin(), mActiveNotes.end(), [this](GrainNote& g) { return g.pitchClass == mLastPitchClass; });
-  if (gNote != mActiveNotes.end()) gNote->retrigger(mTotalSamps);
+  if (gNote != mActiveNotes.end()) gNote->retrigger(velocity, mTotalSamps);
   else mActiveNotes.add(GrainNote(mLastPitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
 }
 
