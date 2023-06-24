@@ -95,7 +95,5 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   juce::Rectangle<float> mTitleRect;
   juce::Rectangle<float> mVizRect;
 
-  float limitEnvX(float x);
-
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeGrain)
 };
