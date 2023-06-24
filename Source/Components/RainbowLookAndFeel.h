@@ -28,6 +28,8 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
   void drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area, bool, bool, bool isHighlighted, bool, bool,
                          const juce::String& text, const juce::String&, const juce::Drawable*, const juce::Colour*) override;
   void positionComboBoxText(juce::ComboBox& box, juce::Label& labelToPosition) override;
+  void drawProgressBar(juce::Graphics& g, juce::ProgressBar& progressBar, int width, int height, double progress,
+                       const juce::String& textToShow) override;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowLookAndFeel)
 };
