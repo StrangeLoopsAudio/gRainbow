@@ -54,6 +54,8 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
   static constexpr float ADD_GEN_SIZE = 18;
   static constexpr float BTN_RETURN_HEIGHT = 18;
   static constexpr const char* TEXT_RETURN = "return to global parameters";
+  static constexpr const char* TEXT_EDITING_PRE = "editing per-";
+  static constexpr const char* TEXT_EDITING_POST = " parameters";
 
   // Bookkeeping
   juce::Random mRandom;

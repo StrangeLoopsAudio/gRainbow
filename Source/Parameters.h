@@ -136,6 +136,7 @@ static float PAN_SPRAY_DEFAULT = 0.05f;
 }  // namespace ParamDefaults
 
 enum ParamType { GLOBAL, NOTE, GENERATOR };
+static juce::Array<juce::String> PARAM_TYPE_NAMES{"global", "note", "generator"};
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
 static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "lowpass", "highpass", "bandpass"};
 

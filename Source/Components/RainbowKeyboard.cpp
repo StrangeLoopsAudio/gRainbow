@@ -41,6 +41,29 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
   for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
     drawKey(g, key);
   }
+  
+  // Make return button if anything other than global is selected
+  if (mParameters.selectedParams->type != ParamType::GLOBAL) {
+    juce::Path btnReturnPath;
+    const int width = getWidth();
+    const float halfRound = Utils::ROUNDED_AMOUNT / 2.0f;
+    btnReturnPath.startNewSubPath(0, BTN_RETURN_HEIGHT);
+    btnReturnPath.lineTo(0, Utils::ROUNDED_AMOUNT);
+    btnReturnPath.cubicTo(0, halfRound, halfRound, 0, Utils::ROUNDED_AMOUNT, 0);
+    btnReturnPath.lineTo(width - Utils::ROUNDED_AMOUNT, 0);
+    btnReturnPath.cubicTo(width - halfRound, 0, width, halfRound, width, Utils::ROUNDED_AMOUNT);
+    btnReturnPath.lineTo(width, BTN_RETURN_HEIGHT);
+    btnReturnPath.closeSubPath();
+    g.setColour(mIsHoverBtnReturn ? Utils::GLOBAL_COLOUR.brighter() : Utils::GLOBAL_COLOUR);
+    g.fillPath(btnReturnPath);
+    // Draw return text over the top
+    g.setColour(juce::Colours::white);
+    auto returnBarRect = getLocalBounds().removeFromTop(BTN_RETURN_HEIGHT);
+    g.drawText(TEXT_RETURN, returnBarRect, juce::Justification::centred);
+    g.setColour(mParameters.getSelectedParamColour().interpolatedWith(juce::Colours::white, 0.6f));
+    g.drawText(TEXT_EDITING_PRE + PARAM_TYPE_NAMES[mParameters.selectedParams->type] + TEXT_EDITING_POST, returnBarRect.withTrimmedLeft(Utils::PADDING), juce::Justification::left);
+    g.drawText(TEXT_EDITING_PRE + PARAM_TYPE_NAMES[mParameters.selectedParams->type] + TEXT_EDITING_POST, returnBarRect.withTrimmedRight(Utils::PADDING), juce::Justification::right);
+  }
 }
 
 float RainbowKeyboard::getPitchXRatio(Utils::PitchClass pitchClass) {
@@ -89,25 +112,6 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   const float velocity = mNoteVelocity[pitchClass];
   const bool isDown = (velocity > 0.0f);
   const bool isPitchSelected = mParameters.selectedParams == mParameters.note.notes[pitchClass].get();
-
-  // Make return button if anything other than global is selected
-  if (mParameters.selectedParams->type != ParamType::GLOBAL) {
-    juce::Path btnReturnPath;
-    const int width = getWidth();
-    const float halfRound = Utils::ROUNDED_AMOUNT / 2.0f;
-    btnReturnPath.startNewSubPath(0, BTN_RETURN_HEIGHT);
-    btnReturnPath.lineTo(0, Utils::ROUNDED_AMOUNT);
-    btnReturnPath.cubicTo(0, halfRound, halfRound, 0, Utils::ROUNDED_AMOUNT, 0);
-    btnReturnPath.lineTo(width - Utils::ROUNDED_AMOUNT, 0);
-    btnReturnPath.cubicTo(width - halfRound, 0, width, halfRound, width, Utils::ROUNDED_AMOUNT);
-    btnReturnPath.lineTo(width, BTN_RETURN_HEIGHT);
-    btnReturnPath.closeSubPath();
-    g.setColour(mIsHoverBtnReturn ? Utils::GLOBAL_COLOUR.brighter() : Utils::GLOBAL_COLOUR);
-    g.fillPath(btnReturnPath);
-    // Draw return text over the top
-    g.setColour(juce::Colours::white);
-    g.drawText(TEXT_RETURN, getLocalBounds().removeFromTop(BTN_RETURN_HEIGHT), juce::Justification::centred);
-  }
 
   // if down, extra dark
   // if no note is down, lightly darken if mouse is hovering it
