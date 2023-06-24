@@ -30,6 +30,7 @@ class RainbowSlider : public juce::Slider {
     setRotaryParameters(rotaryParams);
     setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::GLOBAL_COLOUR);
     setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
+    setDoubleClickReturnValue(true, COMMON_DEFAULTS[type]);
     onValueChange = [this] {
       ParamHelper::setCommonParam(mParameters.selectedParams, mType, (float)getValue());
       if (mParameters.selectedParams->type == ParamType::NOTE) {
@@ -176,7 +177,7 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT, 2.0f);
   }
   
-  void drawComboBox(juce::Graphics& g, int, int, bool isButtonDown, int, int, int, int, juce::ComboBox& box) override {
+  void drawComboBox(juce::Graphics& g, int, int, bool, int, int, int, int, juce::ComboBox& box) override {
     // Draw background
     g.setColour(box.findColour(juce::ComboBox::ColourIds::backgroundColourId));
     g.fillRoundedRectangle(box.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT);
