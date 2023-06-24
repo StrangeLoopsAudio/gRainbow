@@ -111,15 +111,6 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     rainbowPath.addCentredArc(center.x, center.y, endRadius, endRadius, 0, startRadians,
                               2.5f * juce::MathConstants<float>::pi, true);
     g.strokePath(rainbowPath, juce::PathStrokeType(3));
-
-    // Draw text label inside arc
-    juce::Rectangle<int> textRect = juce::Rectangle<int>(0, height / 2, width, height / 2);
-    juce::String text =
-        slider.getTextFromValue(slider.getValue()).trimCharactersAtEnd(slider.getTextValueSuffix()).trimCharactersAtEnd("0") +
-        slider.getTextValueSuffix();
-    if (text.getLastCharacter() == '.') text += "0";
-    g.setColour(juce::Colours::black);
-    g.drawFittedText(text, textRect, juce::Justification::centredBottom, 1);
   }
 
   void drawLinearSlider(juce::Graphics& g, int, int, int width, int height, float sliderPos, float, float,

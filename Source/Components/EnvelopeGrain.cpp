@@ -24,6 +24,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   juce::Colour colour = Utils::GLOBAL_COLOUR;
   mSliderShape.setNumDecimalPlacesToDisplay(2);
   mSliderShape.setRange(0, 1, 0.01);
+  mSliderShape.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderShape);
 
   mLabelShape.setText("shape", juce::dontSendNotification);
@@ -34,6 +35,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   // Tilt
   mSliderTilt.setNumDecimalPlacesToDisplay(2);
   mSliderTilt.setRange(0, 1, 0.01);
+  mSliderTilt.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderTilt);
 
   mLabelTilt.setText("tilt", juce::dontSendNotification);
@@ -44,6 +46,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   // Rate
   mSliderRate.setNumDecimalPlacesToDisplay(2);
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
+  mSliderRate.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderRate);
 
   mLabelRate.setText("rate", juce::dontSendNotification);
@@ -55,6 +58,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mSliderDuration.setNumDecimalPlacesToDisplay(2);
   mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start, ParamRanges::GRAIN_DURATION.end, 0.01);
   mSliderDuration.setSuffix("s");
+  mSliderDuration.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderDuration);
 
   mLabelDuration.setText("duration", juce::dontSendNotification);

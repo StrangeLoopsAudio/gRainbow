@@ -25,6 +25,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderAttack.setNumDecimalPlacesToDisplay(2);
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end, 0.01);
   mSliderAttack.setTextValueSuffix("s");
+  mSliderAttack.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderAttack);
 
   mLabelAttack.setText("attack", juce::dontSendNotification);
@@ -36,6 +37,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderDecay.setNumDecimalPlacesToDisplay(2);
   mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
   mSliderDecay.setTextValueSuffix("s");
+  mSliderDecay.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderDecay);
 
   mLabelDecay.setText("decay", juce::dontSendNotification);
@@ -46,6 +48,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   // Sustain
   mSliderSustain.setNumDecimalPlacesToDisplay(2);
   mSliderSustain.setRange(0.0, 1.0, 0.01);
+  mSliderSustain.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderSustain);
 
   mLabelSustain.setText("sustain", juce::dontSendNotification);
@@ -57,6 +60,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderRelease.setNumDecimalPlacesToDisplay(2);
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
   mSliderRelease.setTextValueSuffix("s");
+  mSliderRelease.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderRelease);
 
   mLabelRelease.setText("release", juce::dontSendNotification);

@@ -24,6 +24,7 @@ FilterControl::FilterControl(Parameters& parameters)
   mSliderCutoff.setNumDecimalPlacesToDisplay(2);
   mSliderCutoff.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, 0.01);
   mSliderCutoff.setTextValueSuffix("Hz");
+  mSliderCutoff.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderCutoff);
 
   mLabelCutoff.setText("cutoff", juce::dontSendNotification);
@@ -34,6 +35,7 @@ FilterControl::FilterControl(Parameters& parameters)
   // Resonance
   mSliderResonance.setNumDecimalPlacesToDisplay(2);
   mSliderResonance.setRange(ParamRanges::RESONANCE.start, ParamRanges::RESONANCE.end, 0.01);
+  mSliderResonance.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderResonance);
 
   mLabelResonance.setText("resonance", juce::dontSendNotification);

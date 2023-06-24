@@ -32,6 +32,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
 
   mSliderGain.setNumDecimalPlacesToDisplay(2);
   mSliderGain.setRange(ParamRanges::GAIN.start, ParamRanges::GAIN.end, 0.01);
+  mSliderGain.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderGain);
 
   mLabelGain.setText("gain", juce::dontSendNotification);
@@ -42,6 +43,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   // Adjust pitch
   mSliderPitchAdjust.setNumDecimalPlacesToDisplay(2);
   mSliderPitchAdjust.setRange(ParamRanges::PITCH_ADJUST.start, ParamRanges::PITCH_ADJUST.end, 0.01);
+  mSliderPitchAdjust.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPitchAdjust);
 
   mLabelPitchAdjust.setText("pitch adjust", juce::dontSendNotification);
@@ -50,13 +52,14 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   addAndMakeVisible(mLabelPitchAdjust);
 
   // Pitch spray
-  mSliderPitchSpray.setTextValueSuffix("cents");
+  mSliderPitchSpray.setTextValueSuffix(" cents");
   mSliderPitchSpray.setSliderStyle(juce::Slider::SliderStyle::LinearBar);
   mSliderPitchSpray.setNumDecimalPlacesToDisplay(3);
   mSliderPitchSpray.setColour(juce::Slider::ColourIds::textBoxOutlineColourId, colour);
   mSliderPitchSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
   mSliderPitchSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
   mSliderPitchSpray.setRange(ParamRanges::PITCH_SPRAY.start, ParamRanges::PITCH_SPRAY.end, 0.005);
+  mSliderPitchSpray.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPitchSpray);
 
   mLabelPitchSpray.setText("pitch spray", juce::dontSendNotification);
@@ -67,6 +70,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   // Adjust position
   mSliderPosAdjust.setNumDecimalPlacesToDisplay(2);
   mSliderPosAdjust.setRange(ParamRanges::POSITION_ADJUST.start, ParamRanges::POSITION_ADJUST.end, 0.01);
+  mSliderPosAdjust.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPosAdjust);
 
   mLabelPosAdjust.setText("position adjust", juce::dontSendNotification);
@@ -82,6 +86,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderPosSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
   mSliderPosSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
   mSliderPosSpray.setRange(ParamRanges::POSITION_SPRAY.start, ParamRanges::POSITION_SPRAY.end, 0.005);
+  mSliderPosSpray.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPosSpray);
 
   mLabelPosSpray.setText("position spray", juce::dontSendNotification);
@@ -92,6 +97,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   // Adjust pan
   mSliderPanAdjust.setNumDecimalPlacesToDisplay(2);
   mSliderPanAdjust.setRange(ParamRanges::PAN_ADJUST.start, ParamRanges::PAN_ADJUST.end, 0.01);
+  mSliderPanAdjust.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPanAdjust);
 
   mLabelPanAdjust.setText("pan adjust", juce::dontSendNotification);
@@ -107,6 +113,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderPanSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
   mSliderPanSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
   mSliderPanSpray.setRange(ParamRanges::PAN_SPRAY.start, ParamRanges::PAN_SPRAY.end, 0.005);
+  mSliderPanSpray.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPanSpray);
 
   mLabelPanSpray.setText("pan spray", juce::dontSendNotification);

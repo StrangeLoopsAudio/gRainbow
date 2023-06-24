@@ -44,13 +44,16 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
    public:
     QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : RainbowSlider(parameters, type), mSync(false) {}
     QuantizedSlider(Parameters& parameters, ParamCommon::Type type, juce::NormalisableRange<float> range)
-        : RainbowSlider(parameters, type), mRange(range) {}
+        : RainbowSlider(parameters, type), mRange(range), mSync(false) {}
     void setSync(bool sync) {
       mSync = sync;
       setTextValueSuffix(sync ? "" : suffix);
     }
     
-    void setSuffix(juce::String _suffix) { suffix = _suffix; }
+    void setSuffix(juce::String _suffix) {
+      suffix = _suffix;
+      setTextValueSuffix(mSync ? "" : suffix);
+    }
 
     juce::String getTextFromValue(double) override {
       if (mSync) {
