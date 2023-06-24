@@ -134,6 +134,12 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
         genAmpEnvs[i].noteOn(ampEnv.noteOnTs);  // Set note on for each position as well
       }
     }
+    // Retriggers a note from a new starting timestamp
+    void retrigger(long timestamp) {
+      for (size_t i = 0; i < NUM_GENERATORS; ++i) {
+        genAmpEnvs[i].noteOn(timestamp);  // Set note on for each position with new timestamp
+      }
+    }
   } GrainNote;
 
   // DSP-preprocessing

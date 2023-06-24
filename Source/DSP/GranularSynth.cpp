@@ -209,24 +209,24 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     const int activeNoteSize = mActiveNotes.size();
     for (int noteIndex = 0; noteIndex < activeNoteSize; noteIndex++) {
       // TODO: fix bug where gNote is null here in Debug
-      GrainNote& gNote = mActiveNotes.getReference(noteIndex);
+      GrainNote* gNote = &mActiveNotes.getReference(noteIndex);
 
       // Add contributions from the grains in this generator
 
       for (size_t genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
-        ParamGenerator* paramGenerator = mParameters.note.notes[gNote.pitchClass]->generators[genIdx].get();
+        ParamGenerator* paramGenerator = mParameters.note.notes[gNote->pitchClass]->generators[genIdx].get();
         const float gain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GAIN);
         const float attack = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::ATTACK);
         const float decay = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::DECAY);
         const float sustain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::SUSTAIN);
         const float release = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::RELEASE);
         const float grainGain =
-            gNote.genAmpEnvs[genIdx].getAmplitude(mTotalSamps, attack * mSampleRate, decay * mSampleRate, sustain,
+            gNote->genAmpEnvs[genIdx].getAmplitude(mTotalSamps, attack * mSampleRate, decay * mSampleRate, sustain,
                                                   release * mSampleRate) *
             gain * 0.4f;  // Temporary hardcoded gain to scale down
         for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
           float genSample = 0.0f;
-          for (Grain& grain : gNote.genGrains[genIdx]) {
+          for (Grain& grain : gNote->genGrains[genIdx]) {
             genSample += grain.process(ch / (float)(buffer.getNumChannels() - 1), mAudioBuffer, grainGain, mTotalSamps);
           }
           // Process filter and optionally use for output
@@ -666,7 +666,9 @@ std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
 void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumber, float velocity) {
   mLastPitchClass = Utils::getPitchClass(midiNoteNumber);
   mMidiNotes.add(Utils::MidiNote(mLastPitchClass, velocity));
-  mActiveNotes.add(GrainNote(mLastPitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
+  GrainNote* gNote = std::find_if(mActiveNotes.begin(), mActiveNotes.end(), [this](GrainNote& g) { return g.pitchClass == mLastPitchClass; });
+  if (gNote != mActiveNotes.end()) gNote->retrigger(mTotalSamps);
+  else mActiveNotes.add(GrainNote(mLastPitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
 }
 
 void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNumber, float) {
