@@ -208,7 +208,6 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     // it might to use it and the undefined data will cause a crash eventually
     const int activeNoteSize = mActiveNotes.size();
     for (int noteIndex = 0; noteIndex < activeNoteSize; noteIndex++) {
-      // TODO: fix bug where gNote is null here in Debug
       GrainNote* gNote = &mActiveNotes.getReference(noteIndex);
 
       // Add contributions from the grains in this generator
@@ -222,8 +221,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         const float release = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::RELEASE);
         const float grainGain =
             gNote->genAmpEnvs[genIdx].getAmplitude(mTotalSamps, attack * mSampleRate, decay * mSampleRate, sustain,
-                                                  release * mSampleRate) *
-            gain * 0.4f;  // Temporary hardcoded gain to scale down
+                                                  release * mSampleRate) * gain;
         for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
           float genSample = 0.0f;
           for (Grain& grain : gNote->genGrains[genIdx]) {
@@ -677,7 +675,7 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNum
   for (Utils::MidiNote* it = mMidiNotes.begin(); it != mMidiNotes.end(); it++) {
     if (it->pitch == pitchClass) {
       mMidiNotes.remove(it);
-      break;  // will only be at most 1 note (TODO assuming mouse and midi aren't set at same tim)
+      break;  // will only be at most 1 note (TODO assuming mouse and midi aren't set at same time)
     }
   }
 
