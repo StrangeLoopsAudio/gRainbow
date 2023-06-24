@@ -372,14 +372,8 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
 
   // Clouds
   if (mParameters.ui.centerComponent == ParamUI::CenterComponent::ARC_SPEC) {
-    const int expansion = mCloudLeft.getWidth() / 4.0f;
-    const int translation = expansion * 2;
-    auto center = mArcSpec.getBounds().getBottomLeft().translated(translation, 0);
-    g.drawImage(mCloudLeft, mCloudLeft.getBounds().expanded(expansion).withCentre(center).toFloat(),
-                juce::RectanglePlacement::fillDestination);
-    center = mArcSpec.getBounds().getBottomRight().translated(-translation, 0);
-    g.drawImage(mCloudRight, mCloudRight.getBounds().expanded(expansion).withCentre(center).toFloat(),
-                juce::RectanglePlacement::fillDestination);
+    g.drawImage(mCloudLeft, mCloudLeftTargetArea, juce::RectanglePlacement::fillDestination);
+    g.drawImage(mCloudRight, mCloudRightTargetArea, juce::RectanglePlacement::fillDestination);
   }
 }
 
@@ -457,6 +451,16 @@ void GRainbowAudioProcessorEditor::resized() {
   mBorderPath.lineTo(point);
   mBorderPath.cubicTo(point.translated(0, -halfRound), point.translated(halfRound, -Utils::ROUNDED_AMOUNT),
                       point.translated(Utils::ROUNDED_AMOUNT, -Utils::ROUNDED_AMOUNT));
+
+  // Cloud centers
+  {
+    const int expansion = mCloudLeft.getWidth() / 4.0f;
+    const int translation = expansion * 2;
+    const auto leftCenter = mArcSpec.getBounds().getBottomLeft().translated(translation, 0);
+    const auto rightCenter = mArcSpec.getBounds().getBottomRight().translated(-translation, 0);
+    mCloudLeftTargetArea = mCloudLeft.getBounds().expanded(expansion).withCentre(leftCenter).toFloat();
+    mCloudRightTargetArea = mCloudRight.getBounds().expanded(expansion).withCentre(rightCenter).toFloat();
+  }
 }
 
 bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files) {

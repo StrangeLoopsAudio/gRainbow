@@ -26,7 +26,7 @@ ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
     // if not complete, we assume all images will be remade, no "half way"
     // support currently
     for (int i = 0; i < (int)ParamUI::SpecType::COUNT; i++) {
-      mImagesComplete[(ParamUI::SpecType)i] = false;
+      mImagesComplete[i] = false;
     }
   }
 
@@ -84,7 +84,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     g.drawImage(mParameters.ui.specImages[imageIndex], getLocalBounds().toFloat(),
                 juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
   }
-  
+
   // Draw position lines from active note
   ParamNote* note = nullptr;
   int genIdx = -1; // Currently selected generator. If >= 0, darken generator's line
@@ -254,7 +254,7 @@ void ArcSpectrogram::run() {
 void ArcSpectrogram::onImageComplete(ParamUI::SpecType specType) {
   mImagesComplete[specType] = true;
   for (int i = 0; i < (int)ParamUI::SpecType::COUNT; i++) {
-    if (mImagesComplete[(ParamUI::SpecType)i] == false) {
+    if (mImagesComplete[i] == false) {
       return;
     }
   }
@@ -269,7 +269,7 @@ void ArcSpectrogram::reset() {
     mParameters.ui.specImages[i].clear(mParameters.ui.specImages[i].getBounds());
   }
   for (int i = 0; i < (int)ParamUI::SpecType::COUNT; i++) {
-    mImagesComplete[(ParamUI::SpecType)i] = false;
+    mImagesComplete[i] = false;
   }
   mParameters.ui.specComplete = false;
   // might be lingering grains

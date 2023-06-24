@@ -107,7 +107,11 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   bool mIsFileHovering = false;
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::Path mBorderPath;
-  juce::Image mCloudLeft, mCloudRight;
+
+  juce::Image mCloudLeft;
+  juce::Image mCloudRight;
+  juce::Rectangle<float> mCloudLeftTargetArea;
+  juce::Rectangle<float> mCloudRightTargetArea;
 
   void openNewFile(const char* path = nullptr);
   void loadFile(juce::File file);
