@@ -59,6 +59,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   // UI variables
   static constexpr auto SPEC_TYPE_HEIGHT = 40;
   static constexpr auto SPEC_TYPE_WIDTH = 100;
+  static constexpr auto CANDIDATE_BUBBLE_SIZE = 14;
   static constexpr auto MAX_GRAIN_SIZE = 40;
   static constexpr auto MAX_NUM_GRAINS = 40;
   static constexpr auto NUM_COLS = 600;
