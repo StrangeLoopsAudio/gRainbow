@@ -13,7 +13,8 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "PositionChanger.h"
 #include "Parameters.h"
-#include "RainbowLookAndFeel.h"
+#include "RainbowSlider.h"
+#include "MeterLookAndFeel.h"
 #include "ff_meters/ff_meters.h"
 
 //==============================================================================

@@ -20,11 +20,11 @@
 #include "Components/FilterControl.h"
 #include "Components/TrimSelection.h"
 #include "Components/Settings.h"
+#include "Components/RainbowLookAndFeel.h"
 #include "DSP/AudioRecorder.h"
 #include "DSP/Fft.h"
 #include "DSP/TransientDetector.h"
 #include "DSP/GranularSynth.h"
-#include "RainbowLookAndFeel.h"
 #include "Utils/Utils.h"
 
 /**

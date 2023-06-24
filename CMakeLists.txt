@@ -93,6 +93,11 @@ set(SOURCE_COMPONENTS
     Source/Components/Settings.cpp
     Source/Components/RainbowKeyboard.h
     Source/Components/RainbowKeyboard.cpp
+    Source/Components/RainbowSlider.h
+    Source/Components/RainbowSlider.cpp
+    Source/Components/RainbowLookAndFeel.h
+    Source/Components/RainbowLookAndFeel.cpp
+    Source/Components/MeterLookAndFeel.h
     Source/Components/PositionChanger.h
     Source/Components/PositionChanger.cpp
     Source/Components/FilterControl.h
@@ -122,7 +127,6 @@ set(SOURCE_PLUGIN
     Source/Parameters.h
     Source/Parameters.cpp
     Source/Preset.h
-    Source/RainbowLookAndFeel.h
 )
 
 target_sources(gRainbow PRIVATE ${SOURCE_UTILS} ${SOURCE_COMPONENTS} ${SOURCE_DSP} ${SOURCE_PLUGIN})

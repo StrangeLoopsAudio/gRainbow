@@ -12,7 +12,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
-#include "RainbowLookAndFeel.h"
+#include "RainbowSlider.h"
 
 //==============================================================================
 /*
