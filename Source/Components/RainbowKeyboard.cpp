@@ -92,7 +92,7 @@ void RainbowKeyboard::fillNoteRectangleMap() {
     mNoteRectMap[key] = keyRect.removeFromBottom(keyHeight);
 
     // Generators on top of the note
-    for (int i = 0; i < Utils::NUM_GEN; ++i) {
+    for (int i = 0; i < NUM_GENERATORS; ++i) {
       mNoteGenRectMap[key][i] = keyRect.removeFromBottom(genHeight);
     }
 
@@ -173,7 +173,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 
   // Draw the add generator button if more can still be added
   // Also disable add button if note or gen is selected (for neatness)
-  if (numEnabledGens < Utils::NUM_GEN) {
+  if (numEnabledGens < NUM_GENERATORS) {
     const auto& addGenRect = mNoteAddGenRectMap[pitchClass];
     juce::Colour addColour =
         (mHoverGenRect == addGenRect) ? keyColour.withSaturation(0.4f).darker() : keyColour.withSaturation(0.4f);
@@ -351,7 +351,7 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
             return Utils::MidiNote();
           }
         }
-        if (mNoteAddGenRectMap[pitchClass].contains(pos) && note->getNumEnabledGens() < Utils::NUM_GEN) {
+        if (mNoteAddGenRectMap[pitchClass].contains(pos) && note->getNumEnabledGens() < NUM_GENERATORS) {
           if (isClick) {
             // Add another generator
             note->enableNextAvailableGen();

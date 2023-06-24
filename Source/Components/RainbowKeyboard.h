@@ -80,7 +80,7 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectMap[Utils::PitchClass::COUNT];
   juce::Rectangle<float> mNoteAddGenRectMap[Utils::PitchClass::COUNT];
-  juce::Rectangle<float> mNoteGenRectMap[Utils::PitchClass::COUNT][Utils::NUM_GEN];
+  juce::Rectangle<float> mNoteGenRectMap[Utils::PitchClass::COUNT][NUM_GENERATORS];
   void fillNoteRectangleMap();
 
   void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);

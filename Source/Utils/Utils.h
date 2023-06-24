@@ -36,8 +36,6 @@ typedef struct Result {
   juce::String message;
 } Result;
 
-// Number of generators available
-static constexpr int NUM_GEN = 4;
 // Constant used for pitch shifting by semitones
 static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
 

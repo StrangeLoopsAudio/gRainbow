@@ -48,7 +48,7 @@ ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
 
   mActivePitchClass.reset(false);
 
-  mParameters.note.onGrainCreated = [this](Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain) {
+  /*mParameters.note.onGrainCreated = [this](Utils::PitchClass pitchClass, int genIdx, float durationSec, float envGain) {
     // always get the callback, but ignore it if note was released or over grain max
     if (!mActivePitchClass[pitchClass] || mArcGrains.size() >= MAX_NUM_GRAINS) {
       return;
@@ -56,7 +56,7 @@ ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
     ParamGenerator* gen = mParameters.note.notes[pitchClass]->generators[genIdx].get();
     float envIncSamples = Utils::ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
     mArcGrains.add(ArcGrain(gen, envGain, envIncSamples, pitchClass));
-  };
+  }; */
 
   addChildComponent(mSpecType);
 }
@@ -71,7 +71,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   g.setFillType(Utils::getBgGradient(getBounds()));
   g.fillAll();
 
-  // if nothing has been loaded skip image, progress bar will fill in void space
+  // If nothing has been loaded skip image, progress bar will fill in void space
   if (mParameters.ui.specType != ParamUI::SpecType::INVALID) {
     int imageIndex = mSpecType.getSelectedItemIndex();
     // When loading up a plugin a second time, need to set the ComboBox state,
@@ -83,6 +83,33 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     }
     g.drawImage(mParameters.ui.specImages[imageIndex], getLocalBounds().toFloat(),
                 juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
+  }
+  
+  // Draw position lines from active note
+  ParamNote* note = nullptr;
+  int genIdx = -1; // Currently selected generator. If >= 0, darken generator's line
+  switch (mParameters.selectedParams->type) {
+    case ParamType::NOTE: note = dynamic_cast<ParamNote*>(mParameters.selectedParams); break;
+    case ParamType::GENERATOR: {
+      auto gen = dynamic_cast<ParamGenerator*>(mParameters.selectedParams);
+      note = mParameters.note.notes[gen->noteIdx].get();
+      genIdx = gen->genIdx;
+    }
+    case ParamType::GLOBAL: break; // Do nothing, leave note as nullptr
+    default: break; // do nothing
+  }
+  if (note != nullptr) {
+    float startRadians = (1.5f * juce::MathConstants<float>::pi);
+    juce::Colour noteColour = mParameters.getSelectedParamColour();
+      for (int i = 0; i < NUM_GENERATORS; ++i) {
+        if (note->shouldPlayGenerator(i)) {
+          // Draw position line where the gen's candidate is
+          ParamCandidate* candidate = note->getCandidate(i);
+          float endRadians = startRadians + candidate->posRatio * juce::MathConstants<float>::pi;
+          g.setColour(genIdx == i ? noteColour.darker() : noteColour);
+          g.drawLine(juce::Line<float>(mCenterPoint.getPointOnCircumference(mStartRadius, mStartRadius, endRadians), mCenterPoint.getPointOnCircumference(mEndRadius, mEndRadius, endRadians)), genIdx == i ? 3.0f : 2.0f);
+        }
+      }
   }
 
   // Draw active grains
@@ -116,7 +143,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
       grain.numFramesActive++;
     }
-  } else*/ {
+  } else {
     // still increment frames if not animating
     for (ArcGrain& grain : mArcGrains) {
       grain.numFramesActive++;
@@ -125,6 +152,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
   // Remove arc grains that are completed
   mArcGrains.removeIf([](ArcGrain& grain) { return (grain.numFramesActive * grain.envIncSamples) > Utils::ENV_LUT_SIZE; });
+   */
 }
 
 void ArcSpectrogram::resized() {
@@ -293,7 +321,7 @@ void ArcSpectrogram::loadPreset() {
 }
 
 void ArcSpectrogram::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes) {
-  mActivePitchClass.reset(false);
+  mActivePitchClass.reset();
   for (const Utils::MidiNote note : midiNotes) {
     mActivePitchClass.set(note.pitch, true);
   }

@@ -57,8 +57,8 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   static constexpr auto REFRESH_RATE_FPS = 30;
 
   // UI variables
-  static constexpr auto SPEC_TYPE_HEIGHT = 50;
-  static constexpr auto SPEC_TYPE_WIDTH = 130;
+  static constexpr auto SPEC_TYPE_HEIGHT = 40;
+  static constexpr auto SPEC_TYPE_WIDTH = 100;
   static constexpr auto MAX_GRAIN_SIZE = 40;
   static constexpr auto MAX_NUM_GRAINS = 40;
   static constexpr auto NUM_COLS = 600;
