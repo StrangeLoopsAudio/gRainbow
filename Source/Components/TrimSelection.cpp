@@ -302,7 +302,7 @@ void TrimSelection::ThumbnailMouseDrag(const juce::MouseEvent& e) {
   mParamUI.trimPlaybackSample = sample;
 }
 
-void TrimSelection::ThumbnailMouseUp(const juce::MouseEvent& e) {
+void TrimSelection::ThumbnailMouseUp(const juce::MouseEvent&) {
   mParamUI.trimPlaybackOn = true;
   mBtnPlayback.setToggleState(true, juce::dontSendNotification);
 }

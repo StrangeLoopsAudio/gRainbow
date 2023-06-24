@@ -70,12 +70,12 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   startTimer(100);
 }
 
-EnvelopeADSR::~EnvelopeADSR() { 
+EnvelopeADSR::~EnvelopeADSR() {
   mCurSelectedParams->removeListener(this);
   stopTimer();
 }
 
-void EnvelopeADSR::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
+void EnvelopeADSR::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
 
 void EnvelopeADSR::timerCallback() {
   if (mParamHasChanged.load()) {
@@ -87,7 +87,7 @@ void EnvelopeADSR::timerCallback() {
   }
 }
 
-void EnvelopeADSR::updateSelectedParams() { 
+void EnvelopeADSR::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);

@@ -118,7 +118,7 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
     jassert(gen != nullptr);
     int numCandidates = mParameters.note.notes[gen->noteIdx]->candidates.size();
     int pos = gen->candidate->get();
-    if (numCandidates == 0) return pos;
+    if (numCandidates == 0) return;
     int newPos = isRight ? pos + 1 : pos - 1;
     newPos = (newPos + numCandidates) % numCandidates;
     ParamHelper::setParam(gen->candidate, newPos);
@@ -139,12 +139,12 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   startTimer(100);
 }
 
-GrainControl::~GrainControl() { 
+GrainControl::~GrainControl() {
   mCurSelectedParams->removeListener(this);
   mMeter.setLookAndFeel(nullptr);
 }
 
-void GrainControl::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
+void GrainControl::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
 
 void GrainControl::timerCallback() {
   if (mParamHasChanged.load()) {
@@ -172,7 +172,7 @@ void GrainControl::timerCallback() {
   }
 }
 
-void GrainControl::updateSelectedParams() { 
+void GrainControl::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
@@ -194,7 +194,7 @@ void GrainControl::updateSelectedParams() {
     mPositionChanger.setPositionNumber(gen->candidate->get());
     mPositionChanger.setColour(mParamColour);
   }
-  
+
   mParamHasChanged.store(true);
   repaint();
 }
@@ -220,7 +220,7 @@ void GrainControl::resized() {
   mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT).toFloat();
 
   r.removeFromTop(Utils::PADDING);
-  
+
   int knobWidth = r.getWidth() / 3;
 
   r.removeFromLeft(Utils::PADDING);

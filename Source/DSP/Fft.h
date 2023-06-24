@@ -33,12 +33,6 @@ class Fft : public juce::Thread {
   std::function<void(double progress)> onProgressUpdated = nullptr;
 
  private:
-  // values passed in at creation time
-  int mWindowSize;
-  int mHopSize;
-  juce::dsp::FFT mForwardFFT;
-  juce::dsp::WindowingFunction<float> mWindowEnvelope;
-
   // pointer to buffer to read from
   const juce::AudioBuffer<float>* mInputBuffer = nullptr;
 
@@ -47,6 +41,12 @@ class Fft : public juce::Thread {
   double mStartProgress;
   double mEndProgress;
   double mDiffProgress;
+
+  // values passed in at creation time
+  int mWindowSize;
+  int mHopSize;
+  juce::dsp::FFT mForwardFFT;
+  juce::dsp::WindowingFunction<float> mWindowEnvelope;
 
   // processed data
   std::vector<float> mFftFrame;

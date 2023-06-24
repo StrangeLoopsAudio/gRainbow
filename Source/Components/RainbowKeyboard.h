@@ -30,7 +30,7 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
   void resized() override;
 
   void parameterValueChanged(int parameterIndex, float newValue) override;
-  void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}
+  void parameterGestureChanged(int, bool) override {}
 
   void mouseMove(const juce::MouseEvent&) override;
   void mouseDrag(const juce::MouseEvent&) override;

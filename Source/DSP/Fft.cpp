@@ -11,14 +11,14 @@
 #include "Fft.h"
 
 Fft::Fft(int windowSize, int hopSize, double startProgress, double endProgress)
-    : mWindowSize(windowSize),
-      mHopSize(hopSize),
+    : juce::Thread("fft thread"),
       mStartProgress(startProgress),
       mEndProgress(endProgress),
       mDiffProgress(mEndProgress - mStartProgress),
+      mWindowSize(windowSize),
+      mHopSize(hopSize),
       mForwardFFT(std::log2(windowSize)),
-      mWindowEnvelope(windowSize, juce::dsp::WindowingFunction<float>::WindowingMethod::blackmanHarris),
-      juce::Thread("fft thread") {}
+      mWindowEnvelope(windowSize, juce::dsp::WindowingFunction<float>::WindowingMethod::blackmanHarris) {}
 
 Fft::~Fft() {}
 

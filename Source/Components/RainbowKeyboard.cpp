@@ -31,7 +31,7 @@ RainbowKeyboard::~RainbowKeyboard() {
   }
 }
 
-void RainbowKeyboard::parameterValueChanged(int parameterIndex, float newValue) { resized(); }
+void RainbowKeyboard::parameterValueChanged(int, float) { resized(); }
 
 void RainbowKeyboard::paint(juce::Graphics& g) {
   //g.fillAll(juce::Colours::transparentBlack);
@@ -53,11 +53,11 @@ void RainbowKeyboard::fillNoteRectangleMap() {
   juce::Rectangle<float> r = getLocalBounds().toFloat();
 
   r.removeFromTop(BTN_RETURN_HEIGHT);
-  
-  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(r.getCentre());
+
+  r = r.reduced(Utils::PADDING_F, Utils::PADDING_F).withCentre(r.getCentre());
 
   // key width = leftover width after padding / num pitch classes * component width
-  const float keyWidth = (r.getWidth() - (Utils::PADDING * (Utils::PitchClass::COUNT - 1))) / Utils::PitchClass::COUNT;
+  const float keyWidth = (r.getWidth() - (Utils::PADDING_F * (Utils::PitchClass::COUNT - 1))) / Utils::PitchClass::COUNT;
   const float keyHeight = componentHeight * NOTE_BODY_HEIGHT;
   int genHeight = r.getHeight() * (1.0f - NOTE_BODY_HEIGHT) / 5;
 
@@ -74,9 +74,10 @@ void RainbowKeyboard::fillNoteRectangleMap() {
     // Make add generator button for each note
     mNoteAddGenRectMap[key] = mNoteRectMap[key]
                                   .withSizeKeepingCentre(ADD_GEN_SIZE, ADD_GEN_SIZE)
-            .withBottomY(mNoteRectMap[key].getY() - (genHeight * mParameters.note.notes[key]->getNumEnabledGens()) - Utils::PADDING);
-    
-    r.removeFromLeft(Utils::PADDING);
+                                  .withBottomY(mNoteRectMap[key].getY() -
+                                               (genHeight * mParameters.note.notes[key]->getNumEnabledGens()) - Utils::PADDING_F);
+
+    r.removeFromLeft(Utils::PADDING_F);
   }
 }
 
@@ -179,7 +180,7 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     g.setColour(juce::Colours::black);
     g.drawText("+", mNoteAddGenRectMap[pitchClass], juce::Justification::centred);
   }
-  
+
   /*if (isPitchSelected) {
     g.setColour(keyColour);
     g.drawLine(juce::Line<float>(area.getCentre(), area.getCentre().withY(0)), 2.0f);
@@ -219,10 +220,10 @@ void RainbowKeyboard::mouseDrag(const juce::MouseEvent& e) { updateMouseState(e,
 
 void RainbowKeyboard::mouseDown(const juce::MouseEvent& e) { updateMouseState(e, true, false); }
 
-void RainbowKeyboard::mouseUp(const juce::MouseEvent& e) { 
+void RainbowKeyboard::mouseUp(const juce::MouseEvent& e) {
   updateMouseState(e, false, true);
   if (mHoverGenRect != juce::Rectangle<float>() && e.mods.isRightButtonDown()) {
-    juce::PopupMenu menu;
+    juce::PopupMenu menu;  // TODO - Remove?
     menu.addItem(1, "Delete generator", true);
     menu.showMenuAsync(juce::PopupMenu::Options(), [this](int result) {
       if (result == 1) {
@@ -332,7 +333,6 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
                 mParameters.selectedParams = gen;
                 if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
               }
-              
             }
             mHoverGenRect = mNoteGenRectMap[pitchClass][i];
             repaint();
@@ -350,7 +350,6 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isCl
         }
       }
     }
-    
   }
 
   // note not found

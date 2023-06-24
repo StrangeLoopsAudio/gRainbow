@@ -22,9 +22,7 @@
 #include <Psapi.h>
 #endif
 
-GRainbowLogo::GRainbowLogo() { 
-  mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize);
-}
+GRainbowLogo::GRainbowLogo() { mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize); }
 
 void GRainbowLogo::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::transparentBlack);
@@ -38,13 +36,13 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mSynth(synth),
       mParameters(synth.getParams()),
       mArcSpec(synth.getParamsNote(), synth.getParamUI()),
+      mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
+      mProgressBar(synth.getLoadingProgress()),
       mKeyboard(synth.getKeyboardState(), synth.getParams()),
       mEnvAdsr(synth.getParams()),
       mEnvGrain(synth.getParams()),
       mGrainControl(synth.getParams(), synth.getMeterSource()),
-      mFilterControl(synth.getParams()),
-      mProgressBar(synth.getLoadingProgress()),
-      mTrimSelection(synth.getFormatManager(), synth.getParamUI()) {
+      mFilterControl(synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mErrorMessage.clear();
 
@@ -88,7 +86,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   over = juce::PNGImageFormat::loadFrom(BinaryData::infoOver_png, BinaryData::infoOver_pngSize);
   mBtnInfo.setImages(false, true, true, normal, 1.0f, juce::Colours::transparentBlack, over, 1.0f,
                            juce::Colours::transparentBlack, over, 1.0f, juce::Colours::transparentBlack);
-  mBtnInfo.onClick = [this] { juce::URL(MANUAL_URL).launchInDefaultBrowser(); };
+  mBtnInfo.onClick = [] { juce::URL(MANUAL_URL).launchInDefaultBrowser(); };
   mBtnInfo.setTooltip("Open gRainbow manual");
   addAndMakeVisible(mBtnInfo);
 
@@ -141,7 +139,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mParameters.ui.trimRange = range;
     }
   };
-  
+
   // Let other components know when the selected note or generator has been updated
   mParameters.onSelectedChange = [this]() {
     mEnvAdsr.updateSelectedParams();
@@ -156,7 +154,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addChildComponent(mArcSpec);
   addChildComponent(mProgressBar);
   addChildComponent(mTrimSelection);
-  
+
   addAndMakeVisible(mEnvAdsr);
   addAndMakeVisible(mEnvGrain);
   addAndMakeVisible(mFilterControl);
@@ -220,7 +218,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   // Check for buffers needing to be updated
   if (!mParameters.ui.specComplete) {
     std::vector<Utils::SpecBuffer*> specs = mSynth.getProcessedSpecs();
-    for (int i = 0; i < specs.size(); ++i) {
+    for (size_t i = 0; i < specs.size(); ++i) {
       if (specs[i] != nullptr && mArcSpec.shouldLoadImage((ParamUI::SpecType)i))
         mArcSpec.loadSpecBuffer(specs[i], (ParamUI::SpecType)i);
     }
@@ -233,7 +231,6 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
   // Each component has has a different use for the midi notes, so just give them the notes and have them do what logic they want
   // with it
-  const Utils::PitchClass pitchClass = midiNotes.getLast().pitch;
   mKeyboard.setMidiNotes(midiNotes);
   mArcSpec.setMidiNotes(midiNotes);
 
@@ -263,7 +260,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     mResourceUsage.setText(juce::String(cpuPerc, 1) + "% CPU | Virtual " + juce::String(virtual_memory >> 20) + " MB" +
                                " | Resident " +
                                juce::String(resident_memory >> 20) + " MB",
-                           juce::dontSendNotification); 
+                           juce::dontSendNotification);
   }*/
 
   repaint();
@@ -296,11 +293,11 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   @brief Draw note display (the small section between the keyboard and arc spectrogram)
 */
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
-
   // Right now just give last note played, not truely polyphony yet
-  const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
   // TODO: new note displaying
-  /*if (!midiNotes.isEmpty()) {
+  /*
+  const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
+  if (!midiNotes.isEmpty()) {
     // If there are not candidates, will just not draw any arrows/lines
     std::vector<ParamCandidate*> candidates = mSynth.getActiveCandidates();
     if (!candidates.empty()) {
@@ -337,7 +334,7 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
           g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
                         NOTE_BULB_SIZE, NOTE_BULB_SIZE);
         }
-      } 
+      }
     }
   }*/
 
@@ -362,7 +359,6 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
     g.drawImage(mCloudRight, mCloudRight.getBounds().expanded(expansion).withCentre(center).toFloat(),
                 juce::RectanglePlacement::fillDestination);
   }
-
 }
 
 void GRainbowAudioProcessorEditor::resized() {
@@ -389,7 +385,6 @@ void GRainbowAudioProcessorEditor::resized() {
 
   // Open and record buttons
   auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT).reduced(Utils::PADDING);
-  const auto filePanelPersistent = filePanel.toFloat(); // Used in border path calculation below
   const int btnWidth = filePanel.getHeight();
   mBtnOpenFile.setBounds(filePanel.removeFromLeft(btnWidth));
   filePanel.removeFromLeft(Utils::PADDING);
@@ -452,15 +447,15 @@ bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArra
   }
   return false;
 }
-void GRainbowAudioProcessorEditor::fileDragEnter(const juce::StringArray& files, int x, int y) {
+void GRainbowAudioProcessorEditor::fileDragEnter(const juce::StringArray&, int, int) {
   mIsFileHovering = true;
   repaint();
 }
-void GRainbowAudioProcessorEditor::fileDragExit(const juce::StringArray& files) {
+void GRainbowAudioProcessorEditor::fileDragExit(const juce::StringArray&) {
   mIsFileHovering = false;
   repaint();
 }
-void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files, int x, int y) {
+void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files, int, int) {
   jassert(files.size() == 1);
   mIsFileHovering = false;
   repaint();
@@ -569,8 +564,6 @@ void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
 }
 
 void GRainbowAudioProcessorEditor::savePreset() {
-  
-
   mFileChooser = std::make_unique<juce::FileChooser>("Save gRainbow presets to a file", juce::File::getCurrentWorkingDirectory(),
                                                      "*.gbow", true);
 

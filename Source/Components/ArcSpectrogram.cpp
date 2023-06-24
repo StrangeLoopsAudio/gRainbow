@@ -16,7 +16,7 @@
 
 //==============================================================================
 ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)
-    : mParamsNote(paramsNote), mParamUI(paramUI), juce::Thread("spectrogram thread") {
+    : juce::Thread("spectrogram thread"), mParamsNote(paramsNote), mParamUI(paramUI) {
   setFramesPerSecond(REFRESH_RATE_FPS);
   mBuffers.fill(nullptr);
 
@@ -123,7 +123,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   }
 
   // Remove arc grains that are completed
-  mArcGrains.removeIf([this](ArcGrain& grain) { return (grain.numFramesActive * grain.envIncSamples) > Utils::ENV_LUT_SIZE; });
+  mArcGrains.removeIf([](ArcGrain& grain) { return (grain.numFramesActive * grain.envIncSamples) > Utils::ENV_LUT_SIZE; });
 }
 
 void ArcSpectrogram::resized() {
@@ -150,8 +150,7 @@ void ArcSpectrogram::run() {
     float maxMagnitude = audioBuffer->getMagnitude(0, audioBuffer->getNumSamples());
 
     // Draw NUM_COLS worth of audio samples
-    juce::Point<float> prevPoint = startPoint.getPointOnCircumference(
-        mStartRadius + mBowWidth / 2.0f, mStartRadius + mBowWidth / 2.0f,
+    juce::Point<float> prevPoint = startPoint.getPointOnCircumference(mStartRadius + mBowWidth / 2, mStartRadius + mBowWidth / 2,
                                                                       -(juce::MathConstants<float>::pi / 2.0f));
     juce::Colour prevColour = juce::Colours::black;
     for (auto i = 0; i < NUM_COLS; ++i) {
@@ -179,16 +178,16 @@ void ArcSpectrogram::run() {
     Utils::SpecBuffer& spec = *(Utils::SpecBuffer*)mBuffers[mParamUI.specType];  // cast to SpecBuffer
     if (spec.size() == 0 || threadShouldExit()) return;
 
-    int maxRow = (mParamUI.specType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size();
+    size_t maxRow = (mParamUI.specType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size();
 
     // Draw each column of frequencies
-    for (auto i = 0; i < NUM_COLS; ++i) {
+    for (size_t i = 0; i < NUM_COLS; ++i) {
       if (threadShouldExit()) return;
-      auto specCol = ((float)i / NUM_COLS) * spec.size();
+      size_t specCol = (i / NUM_COLS) * spec.size();
       // Draw each row of frequencies
       for (auto curRadius = mStartRadius; curRadius < mEndRadius; curRadius += 1) {
         float radPerc = (curRadius - mStartRadius) / (float)mBowWidth;
-        auto specRow = radPerc * maxRow;
+        size_t specRow = static_cast<size_t>(radPerc) * maxRow;
 
         // Choose rainbow color depending on radius
         auto level = juce::jlimit(0.0f, 1.0f, spec[specCol][specRow] * spec[specCol][specRow] * COLOUR_MULTIPLIER);
@@ -234,7 +233,7 @@ void ArcSpectrogram::onImageComplete(ParamUI::SpecType specType) {
 
 void ArcSpectrogram::reset() {
   // Reset all images
-  for (int i = 0; i < mParamUI.specImages.size(); i++) {
+  for (size_t i = 0; i < mParamUI.specImages.size(); i++) {
     mParamUI.specImages[i].clear(mParamUI.specImages[i].getBounds());
   }
   for (int i = 0; i < (int)ParamUI::SpecType::COUNT; i++) {

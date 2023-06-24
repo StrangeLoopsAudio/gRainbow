@@ -36,6 +36,12 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
  private:
   static constexpr const char* SECTION_TITLE = "amplitude envelope";
 
+  // Bookkeeping
+  Parameters& mParameters;
+  ParamCommon* mCurSelectedParams;
+  std::atomic<bool> mParamHasChanged;
+  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
+
   // Components
   RainbowSlider mSliderAttack;
   RainbowSlider mSliderDecay;
@@ -45,12 +51,6 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
   juce::Label mLabelDecay;
   juce::Label mLabelSustain;
   juce::Label mLabelRelease;
-
-  // Bookkeeping
-  Parameters& mParameters;
-  ParamCommon* mCurSelectedParams;
-  std::atomic<bool> mParamHasChanged;
-  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
 
   // UI rects updated at resize()
   juce::Rectangle<float> mTitleRect;

@@ -39,7 +39,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mLabelTilt.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelTilt.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelTilt);
-  
+
   // Rate
   mSliderRate.setNumDecimalPlacesToDisplay(2);
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
@@ -78,12 +78,12 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   startTimer(100);
 }
 
-EnvelopeGrain::~EnvelopeGrain() { 
+EnvelopeGrain::~EnvelopeGrain() {
   mCurSelectedParams->removeListener(this);
   stopTimer();
 }
 
-void EnvelopeGrain::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
+void EnvelopeGrain::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
 
 void EnvelopeGrain::timerCallback() {
   if (mParamHasChanged.load()) {
@@ -99,7 +99,7 @@ void EnvelopeGrain::timerCallback() {
   }
 }
 
-void EnvelopeGrain::updateSelectedParams() { 
+void EnvelopeGrain::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);

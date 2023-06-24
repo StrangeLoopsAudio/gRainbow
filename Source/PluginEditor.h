@@ -34,9 +34,9 @@
 class GRainbowLogo : public juce::Component {
  public:
   GRainbowLogo();
-  ~GRainbowLogo(){};
+  ~GRainbowLogo() {}
   void paint(juce::Graphics& g) override;
-  void resized() override{};
+  void resized() override {}
 
  private:
   juce::Image mLogoImage;
@@ -78,6 +78,15 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   GranularSynth& mSynth;
   AudioRecorder mRecorder;
 
+  // Synth owns, but need to grab params on reloading of plugin
+  Parameters& mParameters;
+
+  // main center UI component
+  GRainbowLogo mLogo;
+  ArcSpectrogram mArcSpec;
+  TrimSelection mTrimSelection;
+  juce::ProgressBar mProgressBar;
+
   // UI Components
   juce::ImageButton mBtnOpenFile;
   juce::ImageButton mBtnRecord;
@@ -86,21 +95,12 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::Label mLabelFileName;
   RainbowKeyboard mKeyboard;
   EnvelopeADSR mEnvAdsr;
-  FilterControl mFilterControl;
   EnvelopeGrain mEnvGrain;
   GrainControl mGrainControl;
+  FilterControl mFilterControl;
   juce::Rectangle<float> mNoteDisplayRect;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;
-
-  // main center UI component
-  GRainbowLogo mLogo;
-  ArcSpectrogram mArcSpec;
-  TrimSelection mTrimSelection;
-  juce::ProgressBar mProgressBar;
-
-  // Synth owns, but need to grab params on reloading of plugin
-  Parameters& mParameters;
 
   // Bookkeeping
   juce::File mRecordedFile;

@@ -31,7 +31,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   ArcSpectrogram(ParamsNote &paramsNote, ParamUI &paramUI);
   ~ArcSpectrogram() override;
 
-  void update() override{};
+  void update() override {}
   void paint(juce::Graphics &) override;
   void resized() override;
 
@@ -70,8 +70,12 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
     float envIncSamples;  // How many envelope samples to increment each frame
     int numFramesActive;
     Utils::PitchClass pitchClass;
-    ArcGrain(ParamGenerator *paramGenerator, float gain, float envIncSamples, Utils::PitchClass pitchClass)
-        : paramGenerator(paramGenerator), gain(gain), envIncSamples(envIncSamples), numFramesActive(0), pitchClass(pitchClass) {}
+    ArcGrain(ParamGenerator *paramGenerator_, float gain_, float envIncSamples_, Utils::PitchClass pitchClass_)
+        : paramGenerator(paramGenerator_),
+          gain(gain_),
+          envIncSamples(envIncSamples_),
+          numFramesActive(0),
+          pitchClass(pitchClass_) {}
   } ArcGrain;
 
   // Parameters

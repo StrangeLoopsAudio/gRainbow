@@ -15,12 +15,12 @@
 #include <limits.h>
 
 TransientDetector::TransientDetector(double startProgress, double endProgress)
-    : mStartProgress(startProgress / 2.0),
+    : juce::Thread("transient thread"),
+      mStartProgress(startProgress / 2.0),
       mEndProgress(endProgress),
       mDiffProgress(mEndProgress - mStartProgress),
-      mFft(FFT_SIZE, HOP_SIZE, startProgress, endProgress / 2.0),
-      juce::Thread("transient thread") {
-  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
+      mFft(FFT_SIZE, HOP_SIZE, startProgress, endProgress / 2.0) {
+  mFft.onProcessingComplete = [this](Utils::SpecBuffer&) {
     stopThread(4000);
     startThread();
   };

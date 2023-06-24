@@ -63,9 +63,9 @@ void AudioRecorder::audioDeviceAboutToStart(juce::AudioIODevice* device) { mSamp
 
 void AudioRecorder::audioDeviceStopped() { mSampleRate = 0; }
 
-void AudioRecorder::audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels,
-                                          float* const* outputChannelData, int numOutputChannels, int numSamples,
-                                          const juce::AudioIODeviceCallbackContext& context) {
+void AudioRecorder::audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int, float* const* outputChannelData,
+                                                     int numOutputChannels, int numSamples,
+                                                     const juce::AudioIODeviceCallbackContext&) {
   const juce::ScopedLock sl(mWriterLock);
 
   if (mActiveWriter.load() != nullptr) {

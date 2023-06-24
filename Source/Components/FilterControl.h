@@ -35,18 +35,18 @@ class FilterControl : public juce::Component, juce::AudioProcessorParameter::Lis
  private:
   static constexpr const char* SECTION_TITLE = "filter";
 
+  // Bookkeeping
+  Parameters& mParameters;
+  ParamCommon* mCurSelectedParams;
+  std::atomic<bool> mParamHasChanged;
+  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
+
   // Components
   RainbowSlider mSliderCutoff;
   RainbowSlider mSliderResonance;
   juce::Label mLabelCutoff;
   juce::Label mLabelResonance;
   juce::ComboBox mFilterType;
-
-  // Bookkeeping
-  Parameters& mParameters;
-  ParamCommon* mCurSelectedParams;
-  std::atomic<bool> mParamHasChanged;
-  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
 
   // UI values saved on resize
   juce::Rectangle<float> mTitleRect;

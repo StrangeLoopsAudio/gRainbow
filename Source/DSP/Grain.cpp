@@ -10,13 +10,13 @@
 
 #include "Grain.h"
 
-float Grain::process(float chanPerc, const juce::AudioBuffer<float>& audioBuffer, float gain, int time) {
+float Grain::process(float chanPerc, const juce::AudioBuffer<float>& audioBuffer, float envelopeGain, long time) {
   const float timePerc = (time - trigTs) / (float)duration;
-  
+
   // Panning gain
   const float panGain = computeChannelPanningGain(chanPerc);
 
-  const float totalGain = gain * panGain * getAmplitude(timePerc);
+  const float totalGain = envelopeGain * panGain * getAmplitude(timePerc);
   const float* fileBuf = audioBuffer.getReadPointer(0);
 
   const float sampleIdx = duration * pbRate * timePerc;

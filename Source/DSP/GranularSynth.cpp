@@ -101,11 +101,11 @@ int GranularSynth::getNumPrograms() {
 
 int GranularSynth::getCurrentProgram() { return 0; }
 
-void GranularSynth::setCurrentProgram(int index) {}
+void GranularSynth::setCurrentProgram(int) {}
 
-const juce::String GranularSynth::getProgramName(int index) { return {}; }
+const juce::String GranularSynth::getProgramName(int) { return {}; }
 
-void GranularSynth::changeProgramName(int index, const juce::String& newName) {}
+void GranularSynth::changeProgramName(int, const juce::String&) {}
 
 //==============================================================================
 void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
@@ -125,7 +125,7 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
     mLoadingProgress = 1.0f;
     mNeedsResample = false;
   }
-    
+
   mSampleRate = sampleRate;
 
   const juce::dsp::ProcessSpec filtConfig = {sampleRate, (juce::uint32)samplesPerBlock, (unsigned int)getTotalNumOutputChannels()};
@@ -213,7 +213,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
       // Add contributions from the grains in this generator
 
-      for (int genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
+      for (size_t genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
         ParamGenerator* paramGenerator = mParameters.note.notes[gNote.pitchClass]->generators[genIdx].get();
         const float gain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GAIN);
         const float attack = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::ATTACK);
@@ -395,7 +395,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
   if (mLoadingProgress == 1.0) {
     // Add one grain per active note
     for (GrainNote& gNote : mActiveNotes) {
-      for (int i = 0; i < gNote.grainTriggers.size(); ++i) {
+      for (size_t i = 0; i < gNote.grainTriggers.size(); ++i) {
         if (gNote.grainTriggers[i] <= 0) {
           ParamGenerator* paramGenerator = mParameters.note.notes[gNote.pitchClass]->generators[i].get();
           ParamCandidate* paramCandidate = mParameters.note.notes[gNote.pitchClass]->getCandidate(i);
@@ -411,7 +411,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           const float panAdjust = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_ADJUST);
           const float panSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_SPRAY);
           const std::vector<float> grainEnv = mParameters.getGrainEnv(paramGenerator);
-          
+
           if (grainSync) {
             float div = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_DURATION.convertTo0to1(grainDuration)));
             double bpm = DEFAULT_BPM;
@@ -663,13 +663,13 @@ std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
   return candidates;
 }
 
-void GranularSynth::handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) {
+void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumber, float velocity) {
   mLastPitchClass = Utils::getPitchClass(midiNoteNumber);
   mMidiNotes.add(Utils::MidiNote(mLastPitchClass, velocity));
   mActiveNotes.add(GrainNote(mLastPitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
 }
 
-void GranularSynth::handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) {
+void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNumber, float) {
   const Utils::PitchClass pitchClass = Utils::getPitchClass(midiNoteNumber);
 
   for (Utils::MidiNote* it = mMidiNotes.begin(); it != mMidiNotes.end(); it++) {
@@ -683,7 +683,7 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState* state, int midiChanne
     if (gNote.pitchClass == pitchClass && gNote.removeTs == -1) {
       // Set timestamp to delete note based on release time and set note off for all generators
       float maxRelease = 0;
-      for (int i = 0; i < NUM_GENERATORS; ++i) {
+      for (size_t i = 0; i < NUM_GENERATORS; ++i) {
         gNote.genAmpEnvs[i].noteOff(mTotalSamps);
         // Update max release time
         float release =
@@ -716,7 +716,7 @@ void GranularSynth::createCandidates(juce::HashMap<Utils::PitchClass, std::vecto
       // Check low note
       std::vector<PitchDetector::Pitch>& pitchVec = detectedPitches.getReference((Utils::PitchClass)(noteMin % 12));
       float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
-      for (int i = 0; i < pitchVec.size(); ++i) {
+      for (size_t i = 0; i < pitchVec.size(); ++i) {
         if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
         note->candidates.push_back(ParamCandidate(pitchVec[i].posRatio, pbRate, pitchVec[i].duration, pitchVec[i].gain));
         numFound++;
@@ -727,11 +727,11 @@ void GranularSynth::createCandidates(juce::HashMap<Utils::PitchClass, std::vecto
       }
       // Check high note if we haven't filled up the list yet
       if (!foundAll && numSearches > 0) {
-        std::vector<PitchDetector::Pitch>& pitchVec = detectedPitches.getReference((Utils::PitchClass)(noteMax % 12));
-        float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
-        for (int i = 0; i < pitchVec.size(); ++i) {
-          if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
-          note->candidates.push_back(ParamCandidate(pitchVec[i].posRatio, pbRate, pitchVec[i].duration, pitchVec[i].gain));
+        std::vector<PitchDetector::Pitch>& pitchVec2 = detectedPitches.getReference((Utils::PitchClass)(noteMax % 12));
+        float pbRate2 = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
+        for (size_t i = 0; i < pitchVec2.size(); ++i) {
+          if (pitchVec2[i].gain < MIN_CANDIDATE_SALIENCE) continue;
+          note->candidates.push_back(ParamCandidate(pitchVec2[i].posRatio, pbRate2, pitchVec2[i].duration, pitchVec2[i].gain));
           numFound++;
           if (numFound >= MAX_CANDIDATES) {
             foundAll = true;

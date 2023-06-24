@@ -45,7 +45,6 @@ class AudioRecorder : public juce::AudioIODeviceCallback {
                                                                              // disk
   std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> mThreadedWriter;  // the FIFO used to buffer the incoming data
   double mSampleRate = 0.0;
-  juce::int64 mNextSampleNum = 0;
 
   juce::CriticalSection mWriterLock;
   std::atomic<juce::AudioFormatWriter::ThreadedWriter*> mActiveWriter{nullptr};

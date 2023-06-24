@@ -85,7 +85,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   // Audio buffer processing
   void resampleAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer, double inputSampleRate,
                            double outputSampleRate, bool clearInput = false);
-  
+
   void trimAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
                        juce::Range<juce::int64> range, bool clearInput = false);
 
@@ -100,7 +100,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   ParamGlobal& getParamGlobal() { return mParameters.global; }
   ParamUI& getParamUI() { return mParameters.ui; }
   void resetParameters(bool fullClear = true);
-  
+
   double& getLoadingProgress() { return mLoadingProgress; }
   const juce::Array<Utils::MidiNote>& getMidiNotes() { return mMidiNotes; }
   std::vector<ParamCandidate*> getActiveCandidates();
@@ -125,11 +125,11 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
     std::array<Utils::EnvelopeADSR, NUM_GENERATORS> genAmpEnvs;
     std::array<juce::Array<Grain>, NUM_GENERATORS> genGrains;  // Active grains for note per generator
     std::array<float, NUM_GENERATORS> grainTriggers;           // Keeps track of triggering grains from each generator
-    GrainNote(Utils::PitchClass pitchClass, float velocity, Utils::EnvelopeADSR ampEnv)
-        : pitchClass(pitchClass), velocity(velocity) {
+    GrainNote(Utils::PitchClass pitchClass_, float velocity_, Utils::EnvelopeADSR ampEnv)
+        : pitchClass(pitchClass_), velocity(velocity_) {
       // Initialize grain triggering timestamps
       grainTriggers.fill(-1.0f);  // Trigger first set of grains right away
-      for (int i = 0; i < NUM_GENERATORS; ++i) {
+      for (size_t i = 0; i < NUM_GENERATORS; ++i) {
         genGrains[i].ensureStorageAllocated(MAX_GRAINS);
         genAmpEnvs[i].noteOn(ampEnv.noteOnTs);  // Set note on for each position as well
       }

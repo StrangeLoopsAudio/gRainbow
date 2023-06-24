@@ -37,6 +37,13 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
  private:
   static constexpr const char* SECTION_TITLE = "controls";
 
+  // Bookkeeping
+  Parameters& mParameters;
+  std::atomic<bool> mParamHasChanged;
+  ParamCommon* mCurSelectedParams;
+  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
+  MeterLookAndFeel mMeterLookAndFeel;
+
   // Components
   // -- Generator Adjustments
   PositionChanger mPositionChanger;
@@ -55,13 +62,6 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
   RainbowSlider mSliderGain;
   juce::Label mLabelGain;
   foleys::LevelMeter mMeter{foleys::LevelMeter::Horizontal};
-
-  // Bookkeeping
-  Parameters& mParameters;
-  std::atomic<bool> mParamHasChanged;
-  ParamCommon* mCurSelectedParams;
-  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
-  MeterLookAndFeel mMeterLookAndFeel;
 
   // UI values saved on resize
   juce::Rectangle<float> mTitleRect;

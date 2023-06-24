@@ -18,7 +18,7 @@ FilterControl::FilterControl(Parameters& parameters)
       mSliderCutoff(parameters, ParamCommon::Type::FILT_CUTOFF),
       mSliderResonance(parameters, ParamCommon::Type::FILT_RESONANCE) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
-  
+
   mSliderCutoff.setNumDecimalPlacesToDisplay(2);
   mSliderCutoff.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, 0.01);
   mSliderCutoff.setTextValueSuffix("Hz");
@@ -42,7 +42,7 @@ FilterControl::FilterControl(Parameters& parameters)
   for (int i = 0; i < FILTER_TYPE_NAMES.size(); ++i) {
     mFilterType.addItem(FILTER_TYPE_NAMES[i], i + 1);
   }
-  mFilterType.onChange = [this]() { 
+  mFilterType.onChange = [this]() {
     int type = mFilterType.getSelectedId() - 1;
     ParamHelper::setCommonParam(mCurSelectedParams, ParamCommon::Type::FILT_TYPE, type);
   };
@@ -54,12 +54,12 @@ FilterControl::FilterControl(Parameters& parameters)
   startTimer(100);
 }
 
-FilterControl::~FilterControl() { 
+FilterControl::~FilterControl() {
   mCurSelectedParams->removeListener(this);
   stopTimer();
 }
 
-void FilterControl::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
+void FilterControl::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
 
 void FilterControl::timerCallback() {
   if (mParamHasChanged.load()) {
@@ -73,7 +73,7 @@ void FilterControl::timerCallback() {
   }
 }
 
-void FilterControl::updateSelectedParams() { 
+void FilterControl::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
@@ -82,7 +82,6 @@ void FilterControl::updateSelectedParams() {
   mSliderResonance.updateSelectedParams();
   mParamHasChanged.store(true);
 }
-
 
 void FilterControl::paint(juce::Graphics& g) {
   juce::Colour colour = mParamColour;
@@ -199,5 +198,8 @@ float FilterControl::filterTypeToCutoff(Utils::FilterType filterType) {
       return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::FILTER_HP_CUTOFF_DEFAULT_HZ);
     case (Utils::FilterType::BANDPASS):
       return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
+    case (Utils::FilterType::NO_FILTER):
+      jassertfalse;
+      return 0.0f;
   }
 }

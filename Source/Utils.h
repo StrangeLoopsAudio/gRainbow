@@ -23,6 +23,7 @@ static constexpr int EDITOR_HEIGHT = 550;
 static constexpr int PANEL_WIDTH = 270;
 static constexpr int KEYBOARD_HEIGHT = 200;
 static constexpr int PADDING = 6;
+static constexpr float PADDING_F = 6.0f;
 static constexpr int TITLE_HEIGHT = 17;
 static constexpr int LABEL_HEIGHT = TITLE_HEIGHT;
 static constexpr int KNOB_WIDTH = (PANEL_WIDTH - (PADDING * 2)) / 4;
@@ -35,10 +36,10 @@ static const juce::ColourGradient BG_GRADIENT = juce::ColourGradient(juce::Colou
 
 static constexpr auto ENV_LUT_SIZE = 64;  // grain env lookup table size
 
-static inline juce::ColourGradient getBgGradient(juce::Rectangle<int> boundsRelativeToEditor) { 
+static inline juce::ColourGradient getBgGradient(juce::Rectangle<int> boundsRelativeToEditor) {
   juce::ColourGradient grad = BG_GRADIENT;
-  grad.point1.y = grad.point1.y - boundsRelativeToEditor.getY();
-  grad.point2.y = grad.point2.y - boundsRelativeToEditor.getY();
+  grad.point1.y = grad.point1.y - static_cast<float>(boundsRelativeToEditor.getY());
+  grad.point2.y = grad.point2.y - static_cast<float>(boundsRelativeToEditor.getY());
   return grad;
 }
 
@@ -74,7 +75,7 @@ struct MidiNote {
   float velocity;
 
   MidiNote() : pitch(PitchClass::NONE), velocity(0.0f) {}
-  MidiNote(PitchClass pitch, float velocity) : pitch(pitch), velocity(velocity) {}
+  MidiNote(PitchClass pitch_, float velocity_) : pitch(pitch_), velocity(velocity_) {}
 
   bool operator==(const MidiNote& other) const { return pitch == other.pitch; }
   bool operator!=(const MidiNote& other) const { return pitch != other.pitch; }
@@ -103,12 +104,12 @@ typedef struct EnvelopeADSR {
     state = EnvelopeState::RELEASE;
   }
   /* ADSR params (except sustain) should be in samples */
-  float getAmplitude(int curTs, float attack, float decay, float sustain, float release) {
+  float getAmplitude(long curTs, float attack, float decay, float sustain, float release) {
     float newAmp = 0.0f;
     switch (state) {
       case Utils::EnvelopeState::ATTACK: {
         if (noteOnTs < 0) return 0.0f;
-        newAmp = (curTs - noteOnTs) / (float)attack;
+        newAmp = (curTs - noteOnTs) / attack;
         if ((curTs - noteOnTs) >= attack) {
           state = Utils::EnvelopeState::DECAY;
         }
@@ -160,7 +161,7 @@ class AttachedComponent {
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AttachedComponent)
 };
 
-static inline juce::Colour getRainbowColour(int value) {
+static inline juce::Colour getRainbow6Colour(int value) {
   jassert(value >= 0 && value <= 6);
   float r = 0.0f;
   float g = 0.0f;
@@ -204,7 +205,7 @@ static inline juce::Colour getRainbowColour(int value) {
     default:
       break;
   }
-  return juce::Colour(r * 255.0f, g * 255.0f, b * 255.0f);
+  return juce::Colour::fromFloatRGBA(r * 255.0f, g * 255.0f, b * 255.0f, 1.0f);
 }
 
 static inline juce::Colour getRainbow12Colour(int value) {
@@ -276,10 +277,10 @@ static inline juce::Colour getRainbow12Colour(int value) {
     default:
       break;
   }
-  return juce::Colour(r * 255.0f, g * 255.0f, b * 255.0f);
+  return juce::Colour::fromFloatRGBA(r * 255.0f, g * 255.0f, b * 255.0f, 1.0f);
 }
 
-static const std::vector<float> getGrainEnvelopeLUT(const float shape, const float tilt) {
+[[maybe_unused]] static const std::vector<float> getGrainEnvelopeLUT(const float shape, const float tilt) {
   std::vector<float> lut;
   /* LUT divided into 3 parts
 
@@ -294,7 +295,7 @@ static const std::vector<float> getGrainEnvelopeLUT(const float shape, const flo
   int rampDownStartSample = juce::jmin((float)ENV_LUT_SIZE, scaledTilt + scaledShape);
   for (int i = 0; i < ENV_LUT_SIZE; i++) {
     if (i < rampUpEndSample) {
-      lut.push_back((float)i / rampUpEndSample);
+      lut.push_back(static_cast<float>(i / rampUpEndSample));
     } else if (i > rampDownStartSample) {
       lut.push_back(1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample));
     } else {
@@ -343,13 +344,13 @@ class BPF {
 
     jassert(_xPoints.size() == _yPoints.size());
     jassert(_xPoints.size() >= 2);
-    for (int i = 1; i < int(_xPoints.size()); ++i) {
+    for (size_t i = 1; i < _xPoints.size(); ++i) {
       jassert(_xPoints[i - 1] < _xPoints[i]);
     }
 
     _slopes.resize(_xPoints.size() - 1);
 
-    for (int j = 1; j < int(_xPoints.size()); ++j) {
+    for (size_t j = 1; j < _xPoints.size(); ++j) {
       // this never gives a division by zero as we checked just before that
       // x[i-1] < x[i]
       _slopes[j - 1] = (_yPoints[j] - _yPoints[j - 1]) / (_xPoints[j] - _xPoints[j - 1]);
@@ -369,4 +370,4 @@ class BPF {
   }
 };
 
-};  // namespace Utils
+}  // namespace Utils

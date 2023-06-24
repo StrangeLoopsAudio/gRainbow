@@ -18,7 +18,7 @@
 // Enables more than one slider value to be displayed at once in a rainbow fashion
 class RainbowSlider : public juce::Slider {
  public:
-  RainbowSlider(Parameters& parameters, ParamCommon::Type type) : mParameters(parameters), mType(type), juce::Slider() {
+  RainbowSlider(Parameters& parameters, ParamCommon::Type type) : juce::Slider(), mType(type), mParameters(parameters) {
     // Knob params
     auto rotaryParams = juce::Slider::RotaryParameters();
     rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
@@ -60,8 +60,8 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
   RainbowLookAndFeel() {}
 
  private:
-  void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle,
-                        float rotaryEndAngle, juce::Slider& slider) override {
+  void drawRotarySlider(juce::Graphics& g, int, int, int width, int height, float sliderPosProportional, float, float,
+                        juce::Slider& slider) override {
     // Get RainbowSlider version of the slider
     RainbowSlider& rbSlider = dynamic_cast<RainbowSlider&>(slider);
 
@@ -70,7 +70,7 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     const float endRadians = startRadians + (pos * juce::MathConstants<float>::pi);
     const float startRadius = width / 4.0f;
     const float endRadius = width / 2.0f - 2;
-    const float noteStripeInterval = (endRadius - startRadius) / Utils::PitchClass::COUNT;
+    const float noteStripeInterval = (endRadius - startRadius) / static_cast<float>(Utils::PitchClass::COUNT);
 
     const juce::Point<float> center = juce::Point<float>(width / 2.0f, height);
 
@@ -120,8 +120,8 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     g.drawFittedText(text, textRect, juce::Justification::centredBottom, 1);
   }
 
-  void drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPos, float minPos, float maxPos,
-                        const juce::Slider::SliderStyle style, juce::Slider& slider) override {
+  void drawLinearSlider(juce::Graphics& g, int, int, int width, int height, float sliderPos, float, float,
+                        const juce::Slider::SliderStyle, juce::Slider& slider) override {
     // Get RainbowSlider version of the slider
     RainbowSlider& rbSlider = dynamic_cast<RainbowSlider&>(slider);
     juce::Colour rainbowCol = slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
@@ -131,8 +131,8 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
     g.fillRect(0, 0, (int)sliderPos, height);
 
     // Draw note-level lines
-    const float noteStripeInterval = (float)(height - 4) / Utils::PitchClass::COUNT;
-    float curStripeY = height - 2;
+    const float noteStripeInterval = (float)(height - 4) / (float)Utils::PitchClass::COUNT;
+    float curStripeY = static_cast<float>(height - 2);
     for (int i = 0; i < Utils::PitchClass::COUNT; ++i) {
       if (rbSlider.mArcs.contains((Utils::PitchClass)i)) {
         float stripeX = rbSlider.mArcs[(Utils::PitchClass)i] * width;
@@ -144,15 +144,14 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
 
     // Vertical line at position
     g.setColour(rainbowCol);
-    g.drawLine(sliderPos, 0, sliderPos, height, 2);
+    g.drawLine(sliderPos, 0, sliderPos, (float)height, 2);
 
     // Outline
     g.setColour(rainbowCol);
     g.drawRect(1, 1, width, height, 2);
   }
 
-  void drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted,
-                        bool shouldDrawButtonAsDown) override {
+  void drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted, bool) override {
     juce::Colour fillColour = btn.findColour(juce::ToggleButton::ColourIds::tickColourId);
     g.setColour(fillColour);
     g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), 4.0f, 2.0f);
@@ -174,25 +173,22 @@ class MeterLookAndFeel : public foleys::LevelMeterLookAndFeel {
 
  private:
   // Disables meter tick marks
-  juce::Rectangle<float> getMeterTickmarksBounds(juce::Rectangle<float> bounds,
-                                                 foleys::LevelMeter::MeterFlags meterType) const override {
+  juce::Rectangle<float> getMeterTickmarksBounds(juce::Rectangle<float>, foleys::LevelMeter::MeterFlags) const override {
     return juce::Rectangle<float>();
   }
 
   // Disables meter clip light
-  juce::Rectangle<float> getMeterClipIndicatorBounds(juce::Rectangle<float> bounds,
-                                                     foleys::LevelMeter::MeterFlags meterType) const override {
+  juce::Rectangle<float> getMeterClipIndicatorBounds(juce::Rectangle<float>, foleys::LevelMeter::MeterFlags) const override {
     return juce::Rectangle<float>();
   }
 
   // Disable meter max number
-  juce::Rectangle<float> getMeterMaxNumberBounds(juce::Rectangle<float> bounds,
-                                                 foleys::LevelMeter::MeterFlags meterType) const override {
+  juce::Rectangle<float> getMeterMaxNumberBounds(juce::Rectangle<float>, foleys::LevelMeter::MeterFlags) const override {
     return juce::Rectangle<float>();
   }
 
   // Just use the regular bounds, no margins
-  juce::Rectangle<float> getMeterBarBounds(juce::Rectangle<float> bounds, foleys::LevelMeter::MeterFlags meterType) const override {
+  juce::Rectangle<float> getMeterBarBounds(juce::Rectangle<float> bounds, foleys::LevelMeter::MeterFlags) const override {
     return bounds;
   }
 };

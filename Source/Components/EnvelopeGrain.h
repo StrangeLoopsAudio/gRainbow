@@ -42,12 +42,12 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
 
   class QuantizedSlider : public RainbowSlider {
    public:
-    QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : mSync(false), RainbowSlider(parameters, type) {}
+    QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : RainbowSlider(parameters, type), mSync(false) {}
     QuantizedSlider(Parameters& parameters, ParamCommon::Type type, juce::NormalisableRange<float> range)
-        : mRange(range), RainbowSlider(parameters, type) {}
+        : RainbowSlider(parameters, type), mRange(range) {}
     void setSync(bool sync) { mSync = sync; }
 
-    juce::String getTextFromValue(double value) override {
+    juce::String getTextFromValue(double) override {
       if (mSync) {
         float prog = mRange.convertTo0to1(getValue());
         return juce::String("1/") + juce::String(std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * prog)));
@@ -63,7 +63,11 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(QuantizedSlider)
   };
 
-  juce::PathStrokeType mPathStroke;
+  // Bookkeeping
+  Parameters& mParameters;
+  ParamCommon* mCurSelectedParams;
+  std::atomic<bool> mParamHasChanged;
+  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
 
   // Components
   RainbowSlider mSliderShape;
@@ -76,11 +80,7 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   juce::Label mLabelRate;
   juce::Label mLabelDuration;
 
-  // Bookkeeping
-  Parameters& mParameters;
-  ParamCommon* mCurSelectedParams;
-  std::atomic<bool> mParamHasChanged;
-  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
+  juce::PathStrokeType mPathStroke;
 
   // UI values saved on resize
   juce::Rectangle<float> mTitleRect;
