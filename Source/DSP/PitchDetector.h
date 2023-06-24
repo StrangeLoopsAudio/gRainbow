@@ -31,6 +31,7 @@
 
 #include "Fft.h"
 #include "Utils/Utils.h"
+#include "Utils/PitchClass.h"
 
 class PitchDetector : juce::Thread {
  public:

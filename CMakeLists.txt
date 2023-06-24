@@ -73,6 +73,8 @@ set(SOURCE_UTILS
     Source/Utils/BPF.h
     Source/Utils/Timer.h
     Source/Utils/Colour.h
+    Source/Utils/MidiNote.h
+    Source/Utils/PitchClass.h
 )
 
 # Manually list all .h and .cpp files for the plugin

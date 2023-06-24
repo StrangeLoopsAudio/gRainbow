@@ -15,6 +15,7 @@
 
 #include "Utils/Utils.h"
 #include "Utils/Colour.h"
+#include "Utils/PitchClass.h"
 
 // Dynamically casts to AudioParameterFloat*
 #define P_FLOAT(X) dynamic_cast<juce::AudioParameterFloat*>(X)
@@ -486,7 +487,7 @@ struct ParamNote : ParamCommon {
 
 struct ParamsNote {
   ParamsNote() {
-    for (int i = 0; i < Utils::PitchClass::COUNT; ++i) {
+    for (size_t i = 0; i < Utils::PitchClass::COUNT; ++i) {
       notes[i] = std::unique_ptr<ParamNote>(new ParamNote(i));
     }
   }

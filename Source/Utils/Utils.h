@@ -41,33 +41,10 @@ static constexpr int NUM_GEN = 4;
 // Constant used for pitch shifting by semitones
 static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
 
-// All util logic around the notes/pitchClasses
-enum PitchClass { NONE = -1, C = 0, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B, COUNT };
-// Use initializer_list to do "for (PitchClass key : ALL_PITCH_CLASS)" logic
-static constexpr std::initializer_list<PitchClass> ALL_PITCH_CLASS = {
-    PitchClass::C,  PitchClass::Cs, PitchClass::D,  PitchClass::Ds, PitchClass::E,  PitchClass::F,
-    PitchClass::Fs, PitchClass::G,  PitchClass::Gs, PitchClass::A,  PitchClass::As, PitchClass::B};
-
-// Slightly different from Parameters::PITCH_CLASS_NAMES for displaying to user, (e.g, replaces Cs with C#)
-static juce::Array<juce::String> PITCH_CLASS_DISP_NAMES{"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-
 static juce::Array<juce::String> SpecTypeNames{"Spectrogram", "Harmonic Profile", "Detected Pitches", "Audio Waveform"};
 
 enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
 enum FilterType { NO_FILTER, LOWPASS, HIGHPASS, BANDPASS };
-
-static inline PitchClass getPitchClass(int midiNoteNumber) { return (PitchClass)(midiNoteNumber % PitchClass::COUNT); }
-// A "Note" is a wrapper to hold all the information about notes from a MidiMessage we care about sharing around classes
-struct MidiNote {
-  PitchClass pitch;
-  float velocity;
-
-  MidiNote() : pitch(PitchClass::NONE), velocity(0.0f) {}
-  MidiNote(PitchClass pitch_, float velocity_) : pitch(pitch_), velocity(velocity_) {}
-
-  bool operator==(const MidiNote& other) const { return pitch == other.pitch; }
-  bool operator!=(const MidiNote& other) const { return pitch != other.pitch; }
-};
 
 typedef struct EnvelopeADSR {
   // All adsr params are in samples (except for sustain amp)

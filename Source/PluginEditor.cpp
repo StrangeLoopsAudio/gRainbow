@@ -12,6 +12,7 @@
 #include "Preset.h"
 #include "BinaryData.h"
 #include "Utils/Colour.h"
+#include "Utils/MidiNote.h"
 
 // Used for getting memory usage
 #ifdef __linux__

@@ -22,6 +22,7 @@
 #include "DSP/Fft.h"
 #include "Parameters.h"
 #include "Utils/Utils.h"
+#include "Utils/MidiNote.h"
 
 //==============================================================================
 /*

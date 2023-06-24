@@ -16,6 +16,7 @@
 #include "PitchDetector.h"
 #include "Parameters.h"
 #include "Utils/Utils.h"
+#include "Utils/MidiNote.h"
 #include <bitset>
 #include "ff_meters/ff_meters.h"
 
