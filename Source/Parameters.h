@@ -621,6 +621,7 @@ struct ParamUI {
   // Where ArcSpectrogram can let others know when it is "complete"
   // Makes no sense to save to preset file
   bool specComplete = false;
+  double loadingProgress = 1.0;
 
   // Tracks what component is being displayed
   enum class CenterComponent { LOGO, ARC_SPEC, TRIM_SELECTION };

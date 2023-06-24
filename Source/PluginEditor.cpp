@@ -230,8 +230,8 @@ void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponen
 void GRainbowAudioProcessorEditor::timerCallback() {
   // Update progress bar when loading audio clip
   // Will overlay on the other center components
-  double loadingProgress = mSynth.getLoadingProgress();
-  if (loadingProgress < 1.0 && loadingProgress > 0.0) {
+  mParameters.ui.loadingProgress = mSynth.getLoadingProgress();
+  if (mParameters.ui.loadingProgress < 1.0 && mParameters.ui.loadingProgress > 0.0) {
     mProgressBar.setVisible(true);
   } else {
     mProgressBar.setVisible(false);
@@ -291,7 +291,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
 //==============================================================================
 void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   // Set gradient
-  g.setFillType(Utils::BG_GRADIENT);
+  g.setFillType(Utils::getBgGradient(getBounds(), mParameters.ui.loadingProgress));
   g.fillRect(getLocalBounds());
   /*
   // Draw background for open file button
