@@ -113,6 +113,8 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   const float velocity = mNoteVelocity[pitchClass];
   const bool isDown = (velocity > 0.0f);
   const bool isPitchSelected = mParameters.selectedParams == mParameters.note.notes[pitchClass].get();
+  const ParamNote& paramNote = *mParameters.note.notes[pitchClass];
+  const bool noCandidates = paramNote.candidates.empty();
 
   // if down, extra dark
   // if no note is down, lightly darken if mouse is hovering it
@@ -122,12 +124,27 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     bodyColour = bodyColour.darker();
   }
 
-  g.setColour(isPitchSelected ? keyColour.darker() : bodyColour);
+  g.setColour((isPitchSelected || noCandidates) ? keyColour.darker() : bodyColour);
 
   juce::Rectangle<float> area = mNoteRectMap[pitchClass];
   g.fillRoundedRectangle(area, Utils::ROUNDED_AMOUNT);
   g.setColour(borderColour);
   g.drawRoundedRectangle(area, Utils::ROUNDED_AMOUNT, 2.0f);
+
+  // Pitch class label
+  juce::Rectangle<float> labelRect = area.withTrimmedTop(5).withTrimmedLeft(5).withSize(NOTE_LABEL_SIZE, NOTE_LABEL_SIZE);
+  g.setColour(keyColour.withSaturation(0.4f));
+  g.fillRoundedRectangle(labelRect, 5.0f);
+  g.setColour(borderColour);
+  g.drawRoundedRectangle(labelRect, 5.0f, 2.0f);
+  g.setColour(juce::Colours::black);
+  g.drawFittedText(Utils::PITCH_CLASS_DISP_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred,
+                   1);
+
+  // If there are no candidates, don't show anything else as it will be confusing that nothing is working
+  if (noCandidates) {
+    return;
+  }
 
   // display animation to show the velocity level of the note
   if (isDown && PowerUserSettings::get().getAnimated()) {
@@ -145,46 +162,40 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     }
   }
 
-  // Pitch class label
-  juce::Rectangle<float> labelRect = area.withTrimmedTop(5).withTrimmedLeft(5).withSize(NOTE_LABEL_SIZE, NOTE_LABEL_SIZE);
-  g.setColour(keyColour.withSaturation(0.4f));
-  g.fillRoundedRectangle(labelRect, 5.0f);
-  g.setColour(borderColour);
-  g.drawRoundedRectangle(labelRect, 5.0f, 2.0f);
-  g.setColour(juce::Colours::black);
-  g.drawFittedText(Utils::PITCH_CLASS_DISP_NAMES[pitchClass], labelRect.toNearestInt(), juce::Justification::horizontallyCentred,
-                   1);
-
   // Draw the active generators on top of each key
+  const int numEnabledGens = paramNote.getNumEnabledGens();
   int genHeight = getHeight() * (1.0f - NOTE_BODY_HEIGHT) / 4;
   juce::Rectangle<int> genRect = juce::Rectangle<int>(area.getWidth(), genHeight);
-  for (int i = 0; i < mParameters.note.notes[pitchClass]->getNumEnabledGens(); ++i) {
-    ParamGenerator* gen = mParameters.note.notes[pitchClass]->getEnabledGenByIdx(i);
+
+  for (int i = 0; i < numEnabledGens; ++i) {
+    ParamGenerator* gen = paramNote.getEnabledGenByIdx(i);
     jassert(gen != nullptr);
     bool isGenSelected = mParameters.selectedParams == gen;
+    const auto& noteGenRect = mNoteGenRectMap[pitchClass][i];
     juce::Colour genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).brighter((i+1) * Utils::GENERATOR_BRIGHTNESS_ADD);
-    if (mHoverGenRect == mNoteGenRectMap[pitchClass][i]) genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).darker();
+    if (mHoverGenRect == noteGenRect) genColour = keyColour.withSaturation(NOTE_BODY_SATURATION).darker();
     if (isGenSelected) genColour = keyColour.darker();
     g.setColour(genColour);
-    g.fillRoundedRectangle(mNoteGenRectMap[pitchClass][i], Utils::ROUNDED_AMOUNT);
+    g.fillRoundedRectangle(noteGenRect, Utils::ROUNDED_AMOUNT);
     g.setColour(borderColour);
-    g.drawRoundedRectangle(mNoteGenRectMap[pitchClass][i], Utils::ROUNDED_AMOUNT, 2.0f);
+    g.drawRoundedRectangle(noteGenRect, Utils::ROUNDED_AMOUNT, 2.0f);
     g.setColour(juce::Colours::black);
-    g.drawFittedText(juce::String::repeatedString("|", gen->genIdx + 1), mNoteGenRectMap[pitchClass][i].toNearestInt(),
-                     juce::Justification::centred, 1);
+    g.drawFittedText(juce::String::repeatedString("|", gen->genIdx + 1), noteGenRect.toNearestInt(), juce::Justification::centred,
+                     1);
   }
 
   // Draw the add generator button if more can still be added
   // Also disable add button if note or gen is selected (for neatness)
-  if (mParameters.note.notes[pitchClass]->getNumEnabledGens() < Utils::NUM_GEN) {
-    juce::Colour addColour = (mHoverGenRect == mNoteAddGenRectMap[pitchClass]) ? keyColour.withSaturation(0.4f).darker()
-                                                                               : keyColour.withSaturation(0.4f);
+  if (numEnabledGens < Utils::NUM_GEN) {
+    const auto& addGenRect = mNoteAddGenRectMap[pitchClass];
+    juce::Colour addColour =
+        (mHoverGenRect == addGenRect) ? keyColour.withSaturation(0.4f).darker() : keyColour.withSaturation(0.4f);
     g.setColour(addColour);
-    g.fillRoundedRectangle(mNoteAddGenRectMap[pitchClass], 5.0f);
+    g.fillRoundedRectangle(addGenRect, 5.0f);
     g.setColour(borderColour);
-    g.drawRoundedRectangle(mNoteAddGenRectMap[pitchClass], 5.0f, 2.0f);
+    g.drawRoundedRectangle(addGenRect, 5.0f, 2.0f);
     g.setColour(juce::Colours::black);
-    g.drawText("+", mNoteAddGenRectMap[pitchClass], juce::Justification::centred);
+    g.drawText("+", addGenRect, juce::Justification::centred);
   }
 
   /*if (isPitchSelected) {

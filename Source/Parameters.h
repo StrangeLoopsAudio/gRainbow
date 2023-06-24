@@ -402,7 +402,7 @@ struct ParamNote : ParamCommon {
   }
 
   // Returns the number of enabled generators
-  int getNumEnabledGens() {
+  int getNumEnabledGens() const {
     int numEnabled = 0;
     for (auto& gen : generators) {
       if (gen->enable->get()) numEnabled++;
@@ -411,7 +411,7 @@ struct ParamNote : ParamCommon {
   }
 
   // Gets list of enabled generators, then returns the one at idx, or nullptr if idx > num enabled gens
-  ParamGenerator* getEnabledGenByIdx(int idx) {
+  ParamGenerator* getEnabledGenByIdx(int idx) const {
     int numEnabled = 0;
     for (size_t i = 0; i < Utils::NUM_GEN; ++i) {
       if (generators[i]->enable->get()) {
