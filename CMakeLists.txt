@@ -70,6 +70,9 @@ target_compile_features(gRainbow PRIVATE cxx_std_20)
 
 set(SOURCE_UTILS
     Source/Utils/Utils.h
+    Source/Utils/BPF.h
+    Source/Utils/Timer.h
+    Source/Utils/Colour.h
 )
 
 # Manually list all .h and .cpp files for the plugin

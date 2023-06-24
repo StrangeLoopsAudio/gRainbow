@@ -11,6 +11,7 @@
 #include "RainbowKeyboard.h"
 #include "Settings.h"
 #include "BinaryData.h"
+#include "Utils/Colour.h"
 
 //==============================================================================
 RainbowKeyboard::RainbowKeyboard(juce::MidiKeyboardState& state, Parameters& parameters) : mState(state), mParameters(parameters) {

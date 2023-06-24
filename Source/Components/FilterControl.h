@@ -39,7 +39,7 @@ class FilterControl : public juce::Component, juce::AudioProcessorParameter::Lis
   Parameters& mParameters;
   ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
-  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
+  juce::Colour mParamColour;
 
   // Components
   RainbowSlider mSliderCutoff;

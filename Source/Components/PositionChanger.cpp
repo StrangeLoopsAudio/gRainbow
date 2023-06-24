@@ -10,6 +10,7 @@
 
 #include "PositionChanger.h"
 #include "Utils/Utils.h"
+#include "Utils/Colour.h"
 
 //==============================================================================
 PositionChanger::PositionChanger() {}

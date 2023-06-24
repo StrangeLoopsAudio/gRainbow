@@ -12,6 +12,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Utils/Utils.h"
+#include "Utils/Colour.h"
 #include "Parameters.h"
 #include "ff_meters/ff_meters.h"
 

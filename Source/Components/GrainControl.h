@@ -41,7 +41,7 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
   Parameters& mParameters;
   std::atomic<bool> mParamHasChanged;
   ParamCommon* mCurSelectedParams;
-  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
+  juce::Colour mParamColour;
   MeterLookAndFeel mMeterLookAndFeel;
 
   // Components

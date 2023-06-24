@@ -10,11 +10,13 @@
 
 #include "FilterControl.h"
 #include "Utils/Utils.h"
+#include "Utils/Colour.h"
 
 //==============================================================================
 FilterControl::FilterControl(Parameters& parameters)
     : mParameters(parameters),
       mCurSelectedParams(parameters.selectedParams),
+      mParamColour(Utils::GLOBAL_COLOUR),
       mSliderCutoff(parameters, ParamCommon::Type::FILT_CUTOFF),
       mSliderResonance(parameters, ParamCommon::Type::FILT_RESONANCE) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;

@@ -14,6 +14,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include "Utils/Utils.h"
+#include "Utils/Colour.h"
 
 // Dynamically casts to AudioParameterFloat*
 #define P_FLOAT(X) dynamic_cast<juce::AudioParameterFloat*>(X)

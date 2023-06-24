@@ -13,6 +13,7 @@
 #include <limits.h>
 
 #include "Settings.h"
+#include "Utils/Colour.h"
 
 //==============================================================================
 ArcSpectrogram::ArcSpectrogram(ParamsNote& paramsNote, ParamUI& paramUI)

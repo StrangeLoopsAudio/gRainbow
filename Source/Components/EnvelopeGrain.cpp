@@ -10,16 +10,17 @@
 
 #include "EnvelopeGrain.h"
 #include "Utils/Utils.h"
+#include "Utils/Colour.h"
 
 EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
     : mParameters(parameters),
       mCurSelectedParams(parameters.selectedParams),
+      mParamColour(Utils::GLOBAL_COLOUR),
       mSliderShape(parameters, ParamCommon::Type::GRAIN_SHAPE),
       mSliderTilt(parameters, ParamCommon::Type::GRAIN_TILT),
       mSliderRate(parameters, ParamCommon::Type::GRAIN_RATE),
       mSliderDuration(parameters, ParamCommon::Type::GRAIN_DURATION),
       mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
-
   juce::Colour colour = Utils::GLOBAL_COLOUR;
   mSliderShape.setNumDecimalPlacesToDisplay(2);
   mSliderShape.setRange(0, 1, 0.01);

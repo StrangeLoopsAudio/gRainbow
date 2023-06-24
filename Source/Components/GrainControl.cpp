@@ -10,10 +10,12 @@
 
 #include "GrainControl.h"
 #include "Utils/Utils.h"
+#include "Utils/Colour.h"
 
 GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& meterSource)
     : mParameters(parameters),
       mCurSelectedParams(parameters.selectedParams),
+      mParamColour(Utils::GLOBAL_COLOUR),
       mSliderPitchAdjust(parameters, ParamCommon::Type::PITCH_ADJUST),
       mSliderPitchSpray(parameters, ParamCommon::Type::PITCH_SPRAY),
       mSliderPosAdjust(parameters, ParamCommon::Type::POS_ADJUST),
@@ -21,7 +23,6 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
       mSliderPanAdjust(parameters, ParamCommon::Type::PAN_ADJUST),
       mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY),
       mSliderGain(parameters, ParamCommon::Type::GAIN) {
-
   juce::Colour colour = Utils::GLOBAL_COLOUR;
 
   // Gain and meter
