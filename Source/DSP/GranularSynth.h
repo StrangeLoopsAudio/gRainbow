@@ -135,14 +135,6 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
         genAmpEnvs[i].noteOn(ampEnv.noteOnTs);  // Set note on for each position as well
       }
     }
-    // Retriggers a note from a new starting timestamp
-    void retrigger(float _velocity, long timestamp) {
-      velocity = _velocity;
-      removeTs = -1;
-      for (size_t i = 0; i < NUM_GENERATORS; ++i) {
-        genAmpEnvs[i].noteOn(timestamp);  // Set note on for each position with new timestamp
-      }
-    }
   } GrainNote;
 
   // DSP-preprocessing
@@ -161,9 +153,10 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
 
   // Grain control
   long mTotalSamps;
-  juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
+  juce::OwnedArray<GrainNote, juce::CriticalSection> mActiveNotes;
+  
   Utils::PitchClass mLastPitchClass;
-  // Holes all the notes being played. The synth is the only class who will write to it so no need to worrying about multiple
+  // Holds all the notes being played. The synth is the only class who will write to it so no need to worrying about multiple
   // threads writing to it.
   // Currently the difference between "midiNotes" and "grainNotes" are midi is a subset mainly for the UI
   juce::Array<Utils::MidiNote> mMidiNotes;
