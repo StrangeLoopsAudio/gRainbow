@@ -47,7 +47,24 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mFilterControl(synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
-  juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName("Century Gothic");
+
+  // Search for better fonts
+  {
+    juce::Array<juce::Font> fonts;
+    juce::Font::findFonts(fonts);
+    for (size_t i = 0; i < fonts.size(); i++) {
+      // Ordred by fonts we want to use first if found
+      juce::String fontName = fonts[i].getTypefaceName();
+      if (fontName.equalsIgnoreCase("Century Gothic")) {
+        juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(fontName);
+        break;
+      } else if (fontName.equalsIgnoreCase("Ubuntu")) {
+        juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(fontName);
+        break;
+      }
+    }
+  }
+
   mErrorMessage.clear();
 
   // Open file button
