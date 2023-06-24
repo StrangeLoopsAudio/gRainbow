@@ -41,7 +41,7 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
   for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
     drawKey(g, key);
   }
-  
+
   // Make return button if anything other than global is selected
   if (mParameters.selectedParams->type != ParamType::GLOBAL) {
     juce::Path btnReturnPath;
@@ -81,7 +81,8 @@ void RainbowKeyboard::fillNoteRectangleMap() {
   r = r.reduced(Utils::PADDING_F, Utils::PADDING_F).withCentre(r.getCentre());
 
   // key width = leftover width after padding / num pitch classes * component width
-  const float keyWidth = (r.getWidth() - (Utils::PADDING_F * (Utils::PitchClass::COUNT - 1))) / Utils::PitchClass::COUNT;
+  const float keyWidth =
+      (r.getWidth() - (Utils::PADDING_F * (Utils::PitchClass::COUNT - 1))) / static_cast<float>(Utils::PitchClass::COUNT);
   const float keyHeight = componentHeight * NOTE_BODY_HEIGHT;
   int genHeight = r.getHeight() * (1.0f - NOTE_BODY_HEIGHT) / 5;
 
