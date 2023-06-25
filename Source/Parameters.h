@@ -565,6 +565,7 @@ struct ParamUI {
       centerComponent = (CenterComponent)xml->getIntAttribute("centerComponent");
       trimRange.setStart(xml->getDoubleAttribute("trimRangeStart"));
       trimRange.setEnd(xml->getDoubleAttribute("trimRangeEnd"));
+      specComplete = xml->getBoolAttribute("specComplete");
       if (auto images = xml->getChildByName("Images")) {
         for (int i = 0; i < ParamUI::SpecType::COUNT; ++i) {
           juce::String attrName = "image" + juce::String(i);
@@ -589,6 +590,7 @@ struct ParamUI {
     xml->setAttribute("centerComponent", static_cast<int>(centerComponent));
     xml->setAttribute("trimRangeStart", trimRange.getStart());
     xml->setAttribute("trimRangeEnd", trimRange.getEnd());
+    xml->setAttribute("specComplete", specComplete);
     juce::XmlElement* images = new juce::XmlElement("Images");
     for (size_t i = 0; i < ParamUI::SpecType::COUNT; ++i) {
       juce::MemoryOutputStream out;

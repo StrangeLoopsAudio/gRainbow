@@ -127,9 +127,10 @@ static inline juce::Colour getRainbow12Colour(int value) {
   return juce::Colour::fromFloatRGBA(r, g, b, 1.0f);
 }
 
-static inline juce::ColourGradient getBgGradient(juce::Rectangle<int> boundsRelativeToEditor, double opacity) {
+static inline juce::ColourGradient getBgGradient(juce::Rectangle<int> boundsRelativeToEditor, double light) {
   juce::ColourGradient grad = BG_GRADIENT;
-  grad.multiplyOpacity((float)opacity);
+  grad.setColour(0, BG_GRADIENT.getColour(0).withMultipliedLightness(juce::jmax(0.2, light)));
+  grad.setColour(1, BG_GRADIENT.getColour(1).withMultipliedLightness(juce::jmax(0.2, light)));
   grad.point1.y = grad.point1.y - static_cast<float>(boundsRelativeToEditor.getY());
   grad.point2.y = grad.point2.y - static_cast<float>(boundsRelativeToEditor.getY());
   return grad;
