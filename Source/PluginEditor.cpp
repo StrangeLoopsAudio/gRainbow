@@ -188,8 +188,12 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   };
   addAndMakeVisible(mGrainControl);
 
-  mCloudLeft = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeft_png, BinaryData::cloudLeft_pngSize);
-  mCloudRight = juce::PNGImageFormat::loadFrom(BinaryData::cloudRight_png, BinaryData::cloudRight_pngSize);
+  mCloudLeftImage = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeft_png, BinaryData::cloudLeft_pngSize);
+  mCloudRightImage = juce::PNGImageFormat::loadFrom(BinaryData::cloudRight_png, BinaryData::cloudRight_pngSize);
+  mRainImage = juce::PNGImageFormat::loadFrom(BinaryData::rain_png, BinaryData::rain_pngSize);
+  // Use different offsets to start to make look like different images
+  mLeftRainDeltY = mRainImage.getHeight() / 2;
+  mRightRainDeltY = mRainImage.getHeight() / 3;
 
   // Only want keyboard input focus for standalone as DAW will have own input
   // mappings
@@ -380,8 +384,30 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
 
   // Clouds
   if (mParameters.ui.centerComponent == ParamUI::CenterComponent::ARC_SPEC) {
-    g.drawImage(mCloudLeft, mCloudLeftTargetArea, juce::RectanglePlacement::fillDestination);
-    g.drawImage(mCloudRight, mCloudRightTargetArea, juce::RectanglePlacement::fillDestination);
+    g.drawImage(mCloudLeftImage, mCloudLeftTargetArea, juce::RectanglePlacement::fillDestination);
+    g.drawImage(mCloudRightImage, mCloudRightTargetArea, juce::RectanglePlacement::fillDestination);
+
+    // Make it rain girl (while loading)
+    if (mProgressBar.isVisible()) {
+      g.setColour(juce::Colours::blue);
+      // Exploit fact left and right are same dimension
+      const int rainHeight = mLeftRain.getHeight();
+      const int rainWidth = mLeftRain.getWidth();
+      g.drawImage(mRainImage, mLeftRain.getX(), mLeftRain.getY(), rainWidth, rainHeight, 0, mLeftRainDeltY, rainWidth, rainHeight);
+      g.drawImage(mRainImage, mRightRain.getX(), mRightRain.getY(), rainWidth, rainHeight, 0, mRightRainDeltY, rainWidth,
+                  rainHeight);
+
+      // make rain slow up as closer to full progress (which is the value 1.0)
+      const int speed = 20 - static_cast<float>(18.0 * mParameters.ui.loadingProgress);
+      mLeftRainDeltY -= speed;
+      mRightRainDeltY -= speed;
+      if (mLeftRainDeltY < rainHeight) {
+        mLeftRainDeltY = mRainImage.getHeight() - rainHeight;
+      }
+      if (mRightRainDeltY < rainHeight) {
+        mRightRainDeltY = mRainImage.getHeight() - rainHeight;
+      }
+    }
   }
 }
 
@@ -462,12 +488,24 @@ void GRainbowAudioProcessorEditor::resized() {
 
   // Cloud centers
   {
-    const int expansion = mCloudLeft.getWidth() / 4.0f;
+    const int expansion = mCloudLeftImage.getWidth() / 4.0f;
     const int translation = expansion * 2;
     const auto leftCenter = mArcSpec.getBounds().getBottomLeft().translated(translation, 0);
     const auto rightCenter = mArcSpec.getBounds().getBottomRight().translated(-translation, 0);
-    mCloudLeftTargetArea = mCloudLeft.getBounds().expanded(expansion).withCentre(leftCenter).toFloat();
-    mCloudRightTargetArea = mCloudRight.getBounds().expanded(expansion).withCentre(rightCenter).toFloat();
+    mCloudLeftTargetArea = mCloudLeftImage.getBounds().expanded(expansion).withCentre(leftCenter).toFloat();
+    mCloudRightTargetArea = mCloudRightImage.getBounds().expanded(expansion).withCentre(rightCenter).toFloat();
+
+    // This was sfigured out by using drawRect() until saw the area it should be
+    const float leftCloudWidth = mCloudLeftTargetArea.getWidth();
+    const float leftCloudHeight = mCloudLeftTargetArea.getHeight();
+    mLeftRain = mCloudLeftTargetArea.translated(leftCloudWidth / 3.8f, leftCloudHeight / 1.7f)
+                    .withWidth(leftCloudWidth / 2.0f)
+                    .withHeight(leftCloudHeight / 1.6f);
+    const float rightCloudWidth = mCloudRightTargetArea.getWidth();
+    const float rightCloudHeight = mCloudRightTargetArea.getHeight();
+    mRightRain = mCloudRightTargetArea.translated(rightCloudWidth / 4.2f, rightCloudHeight / 1.7f)
+                     .withWidth(rightCloudWidth / 2.0f)
+                     .withHeight(rightCloudHeight / 1.6f);
   }
 }
 

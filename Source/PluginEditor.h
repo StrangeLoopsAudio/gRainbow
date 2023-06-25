@@ -108,10 +108,15 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::Path mBorderPath;
 
-  juce::Image mCloudLeft;
-  juce::Image mCloudRight;
+  juce::Image mCloudLeftImage;
+  juce::Image mCloudRightImage;
+  juce::Image mRainImage;
   juce::Rectangle<float> mCloudLeftTargetArea;
   juce::Rectangle<float> mCloudRightTargetArea;
+  juce::Rectangle<float> mLeftRain;
+  juce::Rectangle<float> mRightRain;
+  int mLeftRainDeltY = 0;
+  int mRightRainDeltY = 0;
 
   void openNewFile(const char* path = nullptr);
   void loadFile(juce::File file);

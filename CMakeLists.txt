@@ -156,7 +156,9 @@ set(BINARY_RESOURCES
     Source/Resources/cloudLeft.png
     Source/Resources/cloudRight.png
     Source/Resources/infoNormal.png
-    Source/Resources/infoOver.png)
+    Source/Resources/infoOver.png
+    Source/Resources/rain.png
+)
 
 juce_add_binary_data(Assets SOURCES ${BINARY_RESOURCES})
 

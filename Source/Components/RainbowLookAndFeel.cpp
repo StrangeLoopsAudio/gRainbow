@@ -155,7 +155,7 @@ void RainbowLookAndFeel::drawProgressBar(juce::Graphics& g, juce::ProgressBar& p
   }
 
   if (textToShow.isNotEmpty()) {
-    g.setColour(juce::Colour::contrasting(background, foreground));
+    g.setColour(foreground.contrasting(0.5f));
     g.setFont((float)height * 0.4f);
 
     g.drawText(textToShow, 0, 0, width, height, juce::Justification::centred, false);
