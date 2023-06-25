@@ -25,7 +25,7 @@ Instead, gRainbow prefers longer, pitch-diverse audio clips (1), automatically p
 
 When an audio file is loaded into gRainbow, a pitch detection analysis is ran to segment the clip into discrete pitches over time. Next, gRainbow finds up to 6 pitch-matched position candidates for each note, guaranteeing harmonically agreeable grains. Finally, the user customizes each note and its generators (i.e. changing parameters and candidates) to their liking, and can save everything into a preset to avoid processing things again next time.
 
-![gRainbow gui](docs/gRainbow0_2_0.png)
+![gRainbow gui](docs/gRainbow0_4_0.png)
 
 Is anything important missing or needed? Open an [Issue](github.com/bboettcher3/gRainbow/issues) and let us know!
 
