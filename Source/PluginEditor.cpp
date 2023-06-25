@@ -180,6 +180,12 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mEnvAdsr);
   addAndMakeVisible(mEnvGrain);
   addAndMakeVisible(mFilterControl);
+  mGrainControl.onRefToneOn =[this](){
+    mSynth.startReferenceTone(mParameters.getSelectedPitchClass());
+  };
+  mGrainControl.onRefToneOff = [this](){
+    mSynth.stopReferenceTone();
+  };
   addAndMakeVisible(mGrainControl);
 
   mCloudLeft = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeft_png, BinaryData::cloudLeft_pngSize);
@@ -218,6 +224,8 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   recordFile.deleteFile();
   mAudioDeviceManager.removeAudioCallback(&mRecorder);
   setLookAndFeel(nullptr);
+  
+  mSynth.stopReferenceTone();
 }
 
 void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponent component) {

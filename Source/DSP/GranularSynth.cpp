@@ -56,6 +56,8 @@ GranularSynth::GranularSynth()
   };
 
   mPitchDetector.onProgressUpdated = [this](float progress) { mLoadingProgress = progress; };
+        
+  mReferenceTone.setAmplitude(0.0f);
 
   resetParameters();
 }
@@ -138,11 +140,11 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
     }
   }
   mMeterSource.resize(getTotalNumOutputChannels(), sampleRate * 0.1 / samplesPerBlock);
+  mReferenceTone.prepareToPlay(samplesPerBlock, sampleRate);
 }
 
 void GranularSynth::releaseResources() {
-  // When playback stops, you can use this as an opportunity to free up any
-  // spare memory, etc.
+  mReferenceTone.releaseResources();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -184,7 +186,11 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
     buffer.clear(i, 0, bufferNumSample);
   }
+  
+  // Reference tone
+  mReferenceTone.getNextAudioBlock(juce::AudioSourceChannelInfo(&buffer, 0, buffer.getNumSamples()));
 
+  // Playback from trim selection panel
   if (mParameters.ui.trimPlaybackOn) {
     int numSample = bufferNumSample;
     if (mParameters.ui.trimPlaybackSample + bufferNumSample >= mParameters.ui.trimPlaybackMaxSample) {

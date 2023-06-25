@@ -631,6 +631,9 @@ struct ParamUI {
   bool trimPlaybackOn = false;
   int trimPlaybackSample;  // sampling buffer index position
   int trimPlaybackMaxSample;
+  
+  // Reference tone
+  bool referenceToneActive = false;
 };
 
 struct Parameters {
@@ -642,7 +645,22 @@ struct Parameters {
   // Called when current selected note or generator changes
   // Should be used only by PluginEditor and passed on to subcomponents
   std::function<void()> onSelectedChange = nullptr;
-
+  // Returns the currently selected pitch class, or NONE if global selected
+  Utils::PitchClass getSelectedPitchClass() {
+    switch (selectedParams->type) {
+      case ParamType::GLOBAL:
+        return Utils::PitchClass::NONE;
+        break;
+      case ParamType::NOTE:
+        return (Utils::PitchClass)dynamic_cast<ParamNote*>(selectedParams)->noteIdx;
+        break;
+      case ParamType::GENERATOR:
+        ParamGenerator* gen = dynamic_cast<ParamGenerator*>(selectedParams);
+        return (Utils::PitchClass)gen->noteIdx;
+        break;
+    }
+    return Utils::PitchClass::NONE;
+  }
   // Keeps track of the current selected global/note/generator parameters for editing, global by default
   ParamCommon* selectedParams = &global;
   juce::Colour getSelectedParamColour() {

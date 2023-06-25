@@ -120,6 +120,21 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mLabelPanSpray.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPanSpray.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPanSpray);
+        
+  // Reference tone
+  mBtnRefTone.setButtonText("ref tone");
+  mBtnRefTone.setToggleable(true);
+  mBtnRefTone.setClickingTogglesState(true);
+  mBtnRefTone.setColour(juce::TextButton::ColourIds::textColourOffId, juce::Colours::white);
+  mBtnRefTone.setColour(juce::TextButton::ColourIds::textColourOnId, juce::Colours::black);
+  mBtnRefTone.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::white);
+  mBtnRefTone.onClick = [this]() {
+    if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) {
+      onRefToneOn();
+    }
+    else if (!mBtnRefTone.getToggleState() && onRefToneOff != nullptr) onRefToneOff();
+  };
+  addAndMakeVisible(mBtnRefTone);
 
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
@@ -157,7 +172,18 @@ void GrainControl::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
-
+  
+  Utils::PitchClass selectedPitch = mParameters.getSelectedPitchClass();
+  // Turn ref tone off if global parameters
+  if (selectedPitch == Utils::PitchClass::NONE && mBtnRefTone.getToggleState() && onRefToneOff != nullptr) {
+    mBtnRefTone.setToggleState(false, juce::dontSendNotification);
+    onRefToneOff();
+  }
+  // Change ref tone frequency if already active
+  if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) onRefToneOn();
+  // Disable ref tone button if global parameters
+  mBtnRefTone.setEnabled(selectedPitch != Utils::PitchClass::NONE);
+  
   mParamColour = mParameters.getSelectedParamColour();
   mSliderGain.updateSelectedParams();
   mSliderPitchAdjust.updateSelectedParams();
@@ -166,6 +192,7 @@ void GrainControl::updateSelectedParams() {
   mSliderPosSpray.updateSelectedParams();
   mSliderPanAdjust.updateSelectedParams();
   mSliderPanSpray.updateSelectedParams();
+  mBtnRefTone.setColour(juce::TextButton::ColourIds::buttonColourId, mParamColour);
 
   mParamHasChanged.store(true);
   repaint();
@@ -208,9 +235,6 @@ void GrainControl::resized() {
   mLabelGain.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderGain.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-  
-  // Meter
-  mMeter.setBounds(r.removeFromTop(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT).reduced(Utils::PADDING));
 
   // Position spray and adjust
   knobPanel = r.removeFromRight(knobWidth);
@@ -220,6 +244,9 @@ void GrainControl::resized() {
   mLabelPosAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPosAdjust.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+  
+  // Reference tone button
+  mBtnRefTone.setBounds(knobPanel.withSizeKeepingCentre(knobPanel.getWidth() / 2, Utils::LABEL_HEIGHT));
 
   // Pan spray and adjust
   knobPanel = r;
@@ -229,4 +256,7 @@ void GrainControl::resized() {
   mLabelPanAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPanAdjust.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+  
+  // Meter
+  mMeter.setBounds(knobPanel.removeFromTop(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT).reduced(Utils::PADDING));
 }

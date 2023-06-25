@@ -33,6 +33,9 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
   void timerCallback() override;
 
   void updateSelectedParams();
+  
+  std::function<void(void)> onRefToneOn = nullptr;
+  std::function<void(void)> onRefToneOff = nullptr;
 
  private:
   static constexpr const char* SECTION_TITLE = "controls";
@@ -61,6 +64,7 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
   RainbowSlider mSliderGain;
   juce::Label mLabelGain;
   foleys::LevelMeter mMeter{foleys::LevelMeter::Horizontal};
+  juce::TextButton mBtnRefTone;
 
   // UI values saved on resize
   juce::Rectangle<float> mTitleRect;

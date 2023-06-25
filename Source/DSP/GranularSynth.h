@@ -106,6 +106,13 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   const juce::Array<Utils::MidiNote>& getMidiNotes() { return mMidiNotes; }
   std::vector<ParamCandidate*> getActiveCandidates();
   Utils::PitchClass getLastPitchClass() { return mLastPitchClass; }
+  
+  // Reference tone control
+  void startReferenceTone(Utils::PitchClass pitchClass) {
+    mReferenceTone.setFrequency(juce::MidiMessage::getMidiNoteInHertz(60 + pitchClass));
+    mReferenceTone.setAmplitude(0.6f);
+  }
+  void stopReferenceTone() { mReferenceTone.setAmplitude(0.0f); }
 
  private:
   // DSP constants
@@ -150,6 +157,9 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   double mLoadingProgress = 0.0;
   juce::AudioFormatManager mFormatManager;
   bool mNeedsResample = false;
+  
+  // Reference sine tone
+  juce::ToneGeneratorAudioSource mReferenceTone;
 
   // Grain control
   long mTotalSamps;
