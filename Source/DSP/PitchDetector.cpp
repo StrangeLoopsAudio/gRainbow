@@ -14,13 +14,13 @@
 #include <limits.h>
 
 PitchDetector::PitchDetector(double startProgress, double endProgress)
-    : mStartProgress(endProgress / 2.0),
+    : juce::Thread("pitch detector thread"),
+      mStartProgress(endProgress / 2.0),
       mEndProgress(endProgress),
       mDiffProgress(mEndProgress - mStartProgress),
-      mFft(FFT_SIZE, HOP_SIZE, startProgress, endProgress / 2.0),
-      juce::Thread("pitch detector thread") {
+      mFft(FFT_SIZE, HOP_SIZE, startProgress, endProgress / 2.0) {
   initHarmonicWeights();
-  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
+  mFft.onProcessingComplete = [this](Utils::SpecBuffer&) {
     // Runs FFT twice but using custom size suited for the PitchDetector
     stopThread(4000);
     startThread();
@@ -64,18 +64,18 @@ void PitchDetector::updateProgress(double progress) {
 
 void PitchDetector::getSegmentedPitchBuffer() {
   mSegmentedPitches.clear();
-  for (int frame = 0; frame < mHPCP.size(); ++frame) {
+  for (size_t frame = 0; frame < mHPCP.size(); ++frame) {
     mSegmentedPitches.push_back(std::vector<float>(mHPCP[frame].size(), 0.0f));
   }
   for (Utils::PitchClass i : Utils::ALL_PITCH_CLASS) {
     std::vector<Pitch>& pitchVec = mPitchMap.getReference(i);
-    for (int j = 0; j < pitchVec.size(); ++j) {
+    for (size_t j = 0; j < pitchVec.size(); ++j) {
       auto pitch = pitchVec[j];
-      auto duration = pitch.duration * mHPCP.size();
-      int frame = pitch.posRatio * (mHPCP.size() - 1);
-      int bin = (int)(pitch.pitchClass * (NUM_HPCP_BINS / 12.0));
-      for (int j = 0; j < duration; ++j) {
-        mSegmentedPitches[frame + j][bin] = pitch.gain;
+      const float duration = pitch.duration * static_cast<float>(mHPCP.size());
+      const int frame = pitch.posRatio * (mHPCP.size() - 1);
+      const int bin = (pitch.pitchClass * (NUM_HPCP_BINS / 12));
+      for (float k = 0; k < duration; ++k) {
+        mSegmentedPitches[frame + k][bin] = pitch.gain;
       }
     }
   }
@@ -96,7 +96,7 @@ bool PitchDetector::computeHPCP() {
     std::vector<PitchDetector::Peak> peaks = getPeaks(MAX_SPEC_PEAKS, specFrame);
 
     float curMax = 0.0;
-    for (int i = 0; i < peaks.size(); ++i) {
+    for (size_t i = 0; i < peaks.size(); ++i) {
       if (threadShouldExit()) return false;
       float peakFreq = ((peaks[i].binNum / (specFrame.size() - 1)) * mSampleRate) / 2;
       if (peakFreq < MIN_FREQ || peakFreq > MAX_FREQ) continue;
@@ -107,7 +107,7 @@ bool PitchDetector::computeHPCP() {
         float centerFreq = REF_FREQ * std::pow(2.0f, pc / (float)NUM_HPCP_BINS);
 
         // Add contribution from each harmonic
-        for (int hIdx = 0; hIdx < mHarmonicWeights.size(); ++hIdx) {
+        for (size_t hIdx = 0; hIdx < mHarmonicWeights.size(); ++hIdx) {
           float freq = peakFreq * pow(2., -mHarmonicWeights[hIdx].semitone / 12.0);
           float harmonicWeight = mHarmonicWeights[hIdx].gain;
           float d = std::fmod(12.0f * std::log2(freq / centerFreq), 12.0f);
@@ -149,16 +149,16 @@ bool PitchDetector::segmentPitches() {
   float maxConfidence = 0;
 
   // Calculate note trajectories through the clip
-  for (int frame = 0; frame < mHPCP.size(); ++frame) {
+  for (size_t frame = 0; frame < mHPCP.size(); ++frame) {
     if (threadShouldExit()) return false;
     // Get the new pitch candidates
     std::vector<PitchDetector::Peak> peaks = getPeaks(NUM_ACTIVE_SEGMENTS, mHPCP[frame]);
 
     // Look for continuation candidates in peaks
-    for (int i = 0; i < mSegments.size(); ++i) {
+    for (size_t i = 0; i < mSegments.size(); ++i) {
       if (!mSegments[i].isAvailable) {
         int closestIdx = -1;
-        for (int j = 0; j < peaks.size(); ++j) {
+        for (size_t j = 0; j < peaks.size(); ++j) {
           float devBins = std::abs(mSegments[i].binNum - peaks[j].binNum);
           if (devBins <= MAX_DEVIATION_BINS) {
             // Replace candidate if:
@@ -202,7 +202,7 @@ bool PitchDetector::segmentPitches() {
         }
       } else {
         // Replace segment with new peak
-        for (int j = 0; j < peaks.size(); ++j) {
+        for (size_t j = 0; j < peaks.size(); ++j) {
           if (peaks[j].binNum != INVALID_BIN) {
             mSegments[i].startFrame = frame;
             mSegments[i].idleFrame = -1;
@@ -219,8 +219,8 @@ bool PitchDetector::segmentPitches() {
   // Normalize pitch saliences
   for (Utils::PitchClass i : Utils::ALL_PITCH_CLASS) {
     std::vector<Pitch>& pitchVec = mPitchMap.getReference(i);
-    for (int j = 0; j < pitchVec.size(); ++j) {
-      pitchVec[j].gain /= maxConfidence;
+    for (size_t k = 0; k < pitchVec.size(); ++k) {
+      pitchVec[k].gain /= maxConfidence;
     }
     // Sort pitches from high to low salience
     std::sort(pitchVec.begin(), pitchVec.end(), [](Pitch self, Pitch other) { return self.gain > other.gain; });
@@ -291,7 +291,7 @@ void PitchDetector::initHarmonicWeights() {
 
     if (it == mHarmonicWeights.end()) {
       // no harmonic peak found for this frequency; add it
-      mHarmonicWeights.push_back(HarmonicWeight(semitone, (1.0 / octweight)));
+      mHarmonicWeights.push_back(HarmonicWeight(semitone, (1.0f / octweight)));
     } else {
       // else, add the weight
       (*it).gain += (1.0 / octweight);
@@ -377,106 +377,6 @@ std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int numPeaks, const std
   int nWantedPeaks = juce::jmin(numPeaks, (int)peaks.size());
   std::sort(peaks.begin(), peaks.end(), [](Peak self, Peak other) { return self.gain > other.gain; });
   return std::vector<Peak>(peaks.begin(), peaks.begin() + nWantedPeaks);
-}
-
-std::vector<PitchDetector::Peak> PitchDetector::getWhitenedPeaks(int numPeaks, const std::vector<float>& frame) {
-  std::vector<Peak> peaks = getWhitenedPeaks(numPeaks, frame);
-  const int nPeaks = peaks.size();
-
-  // If there are no magnitudes to whiten, do nothing
-  if (nPeaks == 0) {
-    return peaks;
-  }
-
-  // Convert input linear magnitudes to dB scale
-  for (int i = 0; i < nPeaks; ++i) {
-    peaks[i].gain = float(2.0) * Utils::lin2db(peaks[i].gain);
-  }
-
-  // get max peak
-  float maxAmp = peaks.front().gain;
-  float spectralRange = mSampleRate / 2.0f;
-
-  // compute envelope
-  std::vector<float> xPointsNoiseBPF;
-  std::vector<float> yPointsNoiseBPF;
-
-  float incr = BPF_RESOLUTION;
-  int specSize = frame.size();
-  // reserve some meaningful space, i.e. size of sepctrum
-  xPointsNoiseBPF.reserve(specSize);
-  yPointsNoiseBPF.reserve(specSize);
-  for (float freq = 0.0; freq <= MAX_FREQ && freq <= spectralRange; freq += incr) {  //# magic numbers in the body of this for loop
-    float bf = freq - std::max(50.0, freq * 0.34);                                   // 0.66
-    float ef = freq + std::max(50.0, freq * 0.58);                                   // 1.58
-    int b = int(bf / spectralRange * (specSize - 1.0) + 0.5);
-    int e = int(ef / spectralRange * (specSize - 1.0) + 0.5);
-    b = std::max(b, 0);
-    b = std::min(specSize - 1, b);
-    e = std::max(e, b + 1);
-    e = std::min(specSize, e);
-    float c = b / 2.0 + e / 2.0;
-    float halfwindowlength = e - c;
-
-    float n = 0.0;
-    float wavg = 0.0;
-
-    for (int i = b; i < e; ++i) {
-      float weight = 1.0 - abs(float(i) - c) / halfwindowlength;
-      weight *= weight;
-      weight *= weight;
-      float spectrumEnergyVal = frame[i] * frame[i];
-      weight *= spectrumEnergyVal;
-      wavg += spectrumEnergyVal * weight;
-      n += weight;
-    }
-    if (n != 0.0) wavg /= n;
-
-    // Add points to the BPFs
-    xPointsNoiseBPF.push_back(freq);
-    yPointsNoiseBPF.push_back(wavg);
-  }
-
-  yPointsNoiseBPF[yPointsNoiseBPF.size() - 1] = yPointsNoiseBPF[yPointsNoiseBPF.size() - 2];
-
-  for (int i = 0; i < int(yPointsNoiseBPF.size()); ++i) {
-    // don't optimise the sqrt as 0.5 outside lin2db as it fails for the case
-    // 0, due to previously converted magnitudes to db
-    yPointsNoiseBPF[i] = float(2.0) * Utils::lin2db(sqrt(yPointsNoiseBPF[i]));
-  }
-
-  Utils::BPF noiseBPF = Utils::BPF(xPointsNoiseBPF, yPointsNoiseBPF);
-
-  // compute envelope and peak difference to it
-  std::vector<Peak> whitePeaks = peaks;
-  for (int i = 0; i < nPeaks; ++i) {  //# lots of magic values below
-    float freq = ((peaks[i].binNum / (frame.size() - 1)) * mSampleRate) / 2;
-    float amp = peaks[i].gain;
-
-    if (freq > MAX_FREQ - incr) {
-      // Keep current gain
-      continue;  // This used to be a break-statement, but a break-statement
-                 // would only work if the "frequencies" and "magnitudesdB"
-                 // vectors were ordered by frequency
-    }
-
-    float ampEnv = noiseBPF(freq);
-    if (amp < maxAmp - 40.0) whitePeaks[i].gain = (maxAmp - 40.0 - amp) / 2.0;
-    if (amp > ampEnv)
-      whitePeaks[i].gain = 0.0;
-    else if (amp > ampEnv - 30.0)
-      whitePeaks[i].gain = amp - ampEnv;
-    else
-      whitePeaks[i].gain = -200.0;
-    whitePeaks[i].gain -= 20.0 * freq / 4000.0;
-  }
-
-  // Convert the whitened magnitudes back to linear scale
-  for (int i = 0; i < nPeaks; ++i) {
-    // dividing by 2 due to converting to db => sqrt(lin2db(A)) lin2db(A/2)
-    whitePeaks[i].gain = Utils::db2lin(whitePeaks[i].gain / 2.0);
-  }
-  return whitePeaks;
 }
 
 /**

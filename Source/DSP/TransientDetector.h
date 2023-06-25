@@ -26,7 +26,7 @@ class TransientDetector : juce::Thread {
   typedef struct Transient {
     float posRatio;
     float confidence;
-    Transient(float posRatio, float confidence) : posRatio(posRatio), confidence(confidence) {}
+    Transient(float posRatio_, float confidence_) : posRatio(posRatio_), confidence(confidence_) {}
   } Transient;
 
   std::function<void(std::vector<Transient>&)> onTransientsUpdated = nullptr;

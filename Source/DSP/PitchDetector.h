@@ -30,7 +30,8 @@
 #include <juce_core/juce_core.h>
 
 #include "Fft.h"
-#include "../Utils.h"
+#include "Utils/Utils.h"
+#include "Utils/PitchClass.h"
 
 class PitchDetector : juce::Thread {
  public:
@@ -46,8 +47,8 @@ class PitchDetector : juce::Thread {
     float duration;  // note duration from 0-1
     float gain;      // pitch salience
     Pitch() : pitchClass(Utils::PitchClass::NONE), posRatio(0.0), duration(0.0), gain(0.0) {}
-    Pitch(Utils::PitchClass pitchClass, float posRatio, float duration, float gain)
-        : pitchClass(pitchClass), posRatio(posRatio), duration(duration), gain(gain) {}
+    Pitch(Utils::PitchClass pitchClass_, float posRatio_, float duration_, float gain_)
+        : pitchClass(pitchClass_), posRatio(posRatio_), duration(duration_), gain(gain_) {}
   } Pitch;
 
   typedef juce::HashMap<Utils::PitchClass, std::vector<Pitch>> PitchMap;
@@ -65,31 +66,31 @@ class PitchDetector : juce::Thread {
 
  private:
   // FFT
-  static constexpr auto FFT_SIZE = 4096;
-  static constexpr auto HOP_SIZE = 512;
+  static constexpr int FFT_SIZE = 4096;
+  static constexpr int HOP_SIZE = 512;
   // Spectral Whitening
-  static constexpr auto BPF_RESOLUTION = 100.0;
-  static constexpr auto MIN_AVG_FRAME_ENERGY = 0.0001;
+  static constexpr double BPF_RESOLUTION = 100.0;
+  static constexpr double MIN_AVG_FRAME_ENERGY = 0.0001;
   // HPCP
-  static constexpr auto REF_FREQ = 440;
-  static constexpr auto MAX_SPEC_PEAKS = 60;
-  static constexpr auto NUM_HPCP_BINS = 120;
-  static constexpr auto HPCP_WINDOW_LEN = 1.0f;
-  static constexpr auto NUM_HARMONIC_WEIGHTS = 3;
-  static constexpr auto MIN_FREQ = 40;
-  static constexpr auto MAX_FREQ = 5000;
-  static constexpr auto HARMONIC_PRECISION = 0.00001;
-  static constexpr auto MAGNITUDE_THRESHOLD = 0.00001;
-  static constexpr auto PITCH_CLASS_OFFSET = 9;  // Offset from reference freq A to lowest class C
-  static constexpr auto PITCH_CLASS_OFFSET_BINS = (NUM_HPCP_BINS / Utils::PitchClass::COUNT) * PITCH_CLASS_OFFSET;
+  static constexpr int REF_FREQ = 440;
+  static constexpr int MAX_SPEC_PEAKS = 60;
+  static constexpr int NUM_HPCP_BINS = 120;
+  static constexpr float HPCP_WINDOW_LEN = 1.0f;
+  static constexpr int NUM_HARMONIC_WEIGHTS = 3;
+  static constexpr int MIN_FREQ = 40;
+  static constexpr int MAX_FREQ = 5000;
+  static constexpr double HARMONIC_PRECISION = 0.00001;
+  static constexpr double MAGNITUDE_THRESHOLD = 0.00001;
+  static constexpr int PITCH_CLASS_OFFSET = 9;  // Offset from reference freq A to lowest class C
+  static constexpr int PITCH_CLASS_OFFSET_BINS = (NUM_HPCP_BINS / Utils::PitchClass::COUNT) * PITCH_CLASS_OFFSET;
   // Pitch segmenting
-  static constexpr auto NUM_ACTIVE_SEGMENTS = 1;
-  static constexpr auto MAX_DEVIATION_CENTS = 15;
-  static constexpr auto INVALID_BIN = -1;
+  static constexpr int NUM_ACTIVE_SEGMENTS = 1;
+  static constexpr int MAX_DEVIATION_CENTS = 15;
+  static constexpr int INVALID_BIN = -1;
   static constexpr int MAX_DEVIATION_BINS = (NUM_HPCP_BINS / Utils::PitchClass::COUNT) * (MAX_DEVIATION_CENTS / 100.0);
-  static constexpr auto MAX_IDLE_TIME_MS = 62.5;
-  static constexpr auto MIN_NOTE_TIME_MS = 125;
-  static constexpr auto LOOKAHEAD_TIME_MS = 25;
+  static constexpr double MAX_IDLE_TIME_MS = 62.5;
+  static constexpr int MIN_NOTE_TIME_MS = 125;
+  static constexpr int LOOKAHEAD_TIME_MS = 25;
 
   // Used to show far along the run thread is
   void updateProgress(double progress);
@@ -110,13 +111,13 @@ class PitchDetector : juce::Thread {
     float binNum;  // Bin number in frame
     float gain;
     Peak() : binNum(-1), gain(0) {}
-    Peak(float binNum, float gain) : binNum(binNum), gain(gain) {}
+    Peak(float binNum_, float gain_) : binNum(binNum_), gain(gain_) {}
   } Peak;
 
   typedef struct HarmonicWeight {
     float semitone;
     float gain;
-    HarmonicWeight(int semitone, float harmonicStrength) : semitone(semitone), gain(harmonicStrength) {}
+    HarmonicWeight(float semitone_, float gain_) : semitone(semitone_), gain(gain_) {}
   } HarmonicWeight;
 
   Fft mFft;
@@ -142,6 +143,5 @@ class PitchDetector : juce::Thread {
   void interpolatePeak(const float leftVal, const float middleVal, const float rightVal, int currentBin, float& resultVal,
                        float& resultBin) const;
   std::vector<Peak> getPeaks(int numPeaks, const std::vector<float>& frame);
-  std::vector<Peak> getWhitenedPeaks(int numPeaks, const std::vector<float>& frame);
   void initHarmonicWeights();
 };

@@ -12,8 +12,10 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_basics/juce_audio_basics.h>
-#include "../Parameters.h"
-#include "../Utils.h"
+#include "Parameters.h"
+#include "Utils/Utils.h"
+#include "Utils/MidiNote.h"
+#include "Utils/PitchClass.h"
 
 /**
   @brief The RainbowKeyboard is for displaying the keys being pressed, but all the actual listening of midi inputs will come from
@@ -30,7 +32,7 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
   void resized() override;
 
   void parameterValueChanged(int parameterIndex, float newValue) override;
-  void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}
+  void parameterGestureChanged(int, bool) override {}
 
   void mouseMove(const juce::MouseEvent&) override;
   void mouseDrag(const juce::MouseEvent&) override;
@@ -54,6 +56,8 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
   static constexpr float ADD_GEN_SIZE = 18;
   static constexpr float BTN_RETURN_HEIGHT = 18;
   static constexpr const char* TEXT_RETURN = "return to global parameters";
+  static constexpr const char* TEXT_EDITING_PRE = "editing per-";
+  static constexpr const char* TEXT_EDITING_POST = " parameters";
 
   // Bookkeeping
   juce::Random mRandom;
@@ -64,27 +68,32 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
 
   // These allow using the mouse to click a key
   void updateMouseState(const juce::MouseEvent& e, bool isDown, bool isClick);
+  void generatorOnClick(ParamGenerator* gen);
   Utils::MidiNote xyMouseToNote(juce::Point<float> pos, bool isClick);
   // Note being currently hovered by the mouse
   Utils::MidiNote mHoverNote;
   // Generator being currently hovered by the mouse
   juce::Rectangle<float> mHoverGenRect;
+  bool mHoverGenIncrease = false;
+  bool mHoverGenDecrease = false;
+
   // Keeps track of the note being played because of the mouse injected input
   Utils::MidiNote mMouseNote;
   bool mIsHoverBtnReturn = false;
-  // Popup menu for right clicks
-  juce::PopupMenu menu;
 
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectMap[Utils::PitchClass::COUNT];
   juce::Rectangle<float> mNoteAddGenRectMap[Utils::PitchClass::COUNT];
-  juce::Rectangle<float> mNoteGenRectMap[Utils::PitchClass::COUNT][Utils::NUM_GEN];
+  juce::Rectangle<float> mNoteGenRectMap[Utils::PitchClass::COUNT][NUM_GENERATORS];
+  // The '<' and '>' arrows on side of the generator rect
+  juce::Rectangle<float> mNoteGenRectIncreaseMap[Utils::PitchClass::COUNT][NUM_GENERATORS];
+  juce::Rectangle<float> mNoteGenRectDecreaseMap[Utils::PitchClass::COUNT][NUM_GENERATORS];
   void fillNoteRectangleMap();
 
   void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);
 
   // LUT for animation values to save from recomputing each frame
-  static constexpr int ANIMATION_BLOCK_DIVISOR = 12;
+  static constexpr int ANIMATION_BLOCK_DIVISOR = 24;
   struct AnimationLUT {
     float velocityLine;
     float inverseVelocityLine;

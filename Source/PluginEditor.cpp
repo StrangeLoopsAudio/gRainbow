@@ -11,6 +11,8 @@
 #include "PluginEditor.h"
 #include "Preset.h"
 #include "BinaryData.h"
+#include "Utils/Colour.h"
+#include "Utils/MidiNote.h"
 
 // Used for getting memory usage
 #ifdef __linux__
@@ -22,9 +24,7 @@
 #include <Psapi.h>
 #endif
 
-GRainbowLogo::GRainbowLogo() { 
-  mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize);
-}
+GRainbowLogo::GRainbowLogo() { mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize); }
 
 void GRainbowLogo::paint(juce::Graphics& g) {
   g.fillAll(juce::Colours::transparentBlack);
@@ -37,15 +37,34 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
       mParameters(synth.getParams()),
-      mArcSpec(synth.getParamsNote(), synth.getParamUI()),
+      mArcSpec(synth.getParams()),
+      mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
+      mProgressBar(mParameters.ui.loadingProgress),
       mKeyboard(synth.getKeyboardState(), synth.getParams()),
       mEnvAdsr(synth.getParams()),
       mEnvGrain(synth.getParams()),
       mGrainControl(synth.getParams(), synth.getMeterSource()),
-      mFilterControl(synth.getParams()),
-      mProgressBar(synth.getLoadingProgress()),
-      mTrimSelection(synth.getFormatManager(), synth.getParamUI()) {
+      mFilterControl(synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
+  mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
+
+  // Search for better fonts
+  {
+    juce::Array<juce::Font> fonts;
+    juce::Font::findFonts(fonts);
+    for (size_t i = 0; i < fonts.size(); i++) {
+      // Ordred by fonts we want to use first if found
+      juce::String fontName = fonts[i].getTypefaceName();
+      if (fontName.equalsIgnoreCase("Century Gothic")) {
+        juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(fontName);
+        break;
+      } else if (fontName.equalsIgnoreCase("Ubuntu")) {
+        juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(fontName);
+        break;
+      }
+    }
+  }
+
   mErrorMessage.clear();
 
   // Open file button
@@ -88,7 +107,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   over = juce::PNGImageFormat::loadFrom(BinaryData::infoOver_png, BinaryData::infoOver_pngSize);
   mBtnInfo.setImages(false, true, true, normal, 1.0f, juce::Colours::transparentBlack, over, 1.0f,
                            juce::Colours::transparentBlack, over, 1.0f, juce::Colours::transparentBlack);
-  mBtnInfo.onClick = [this] { juce::URL(MANUAL_URL).launchInDefaultBrowser(); };
+  mBtnInfo.onClick = [] { juce::URL(MANUAL_URL).launchInDefaultBrowser(); };
   mBtnInfo.setTooltip("Open gRainbow manual");
   addAndMakeVisible(mBtnInfo);
 
@@ -141,13 +160,14 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mParameters.ui.trimRange = range;
     }
   };
-  
+
   // Let other components know when the selected note or generator has been updated
   mParameters.onSelectedChange = [this]() {
     mEnvAdsr.updateSelectedParams();
     mEnvGrain.updateSelectedParams();
     mFilterControl.updateSelectedParams();
     mGrainControl.updateSelectedParams();
+    mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, mParameters.getSelectedParamColour());
   };
   addAndMakeVisible(mKeyboard);
 
@@ -156,14 +176,24 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addChildComponent(mArcSpec);
   addChildComponent(mProgressBar);
   addChildComponent(mTrimSelection);
-  
+
   addAndMakeVisible(mEnvAdsr);
   addAndMakeVisible(mEnvGrain);
   addAndMakeVisible(mFilterControl);
+  mGrainControl.onRefToneOn =[this](){
+    mSynth.startReferenceTone(mParameters.getSelectedPitchClass());
+  };
+  mGrainControl.onRefToneOff = [this](){
+    mSynth.stopReferenceTone();
+  };
   addAndMakeVisible(mGrainControl);
 
-  mCloudLeft = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeft_png, BinaryData::cloudLeft_pngSize);
-  mCloudRight = juce::PNGImageFormat::loadFrom(BinaryData::cloudRight_png, BinaryData::cloudRight_pngSize);
+  mCloudLeftImage = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeft_png, BinaryData::cloudLeft_pngSize);
+  mCloudRightImage = juce::PNGImageFormat::loadFrom(BinaryData::cloudRight_png, BinaryData::cloudRight_pngSize);
+  mRainImage = juce::PNGImageFormat::loadFrom(BinaryData::rain_png, BinaryData::rain_pngSize);
+  // Use different offsets to start to make look like different images
+  mLeftRainDeltY = mRainImage.getHeight() / 2;
+  mRightRainDeltY = mRainImage.getHeight() / 3;
 
   // Only want keyboard input focus for standalone as DAW will have own input
   // mappings
@@ -198,6 +228,8 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   recordFile.deleteFile();
   mAudioDeviceManager.removeAudioCallback(&mRecorder);
   setLookAndFeel(nullptr);
+
+  mSynth.stopReferenceTone();
 }
 
 void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponent component) {
@@ -210,8 +242,7 @@ void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponen
 void GRainbowAudioProcessorEditor::timerCallback() {
   // Update progress bar when loading audio clip
   // Will overlay on the other center components
-  double loadingProgress = mSynth.getLoadingProgress();
-  if (loadingProgress < 1.0 && loadingProgress > 0.0) {
+  if (mParameters.ui.loadingProgress < 1.0 && mParameters.ui.loadingProgress > 0.0) {
     mProgressBar.setVisible(true);
   } else {
     mProgressBar.setVisible(false);
@@ -220,7 +251,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   // Check for buffers needing to be updated
   if (!mParameters.ui.specComplete) {
     std::vector<Utils::SpecBuffer*> specs = mSynth.getProcessedSpecs();
-    for (int i = 0; i < specs.size(); ++i) {
+    for (size_t i = 0; i < specs.size(); ++i) {
       if (specs[i] != nullptr && mArcSpec.shouldLoadImage((ParamUI::SpecType)i))
         mArcSpec.loadSpecBuffer(specs[i], (ParamUI::SpecType)i);
     }
@@ -233,7 +264,6 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
   // Each component has has a different use for the midi notes, so just give them the notes and have them do what logic they want
   // with it
-  const Utils::PitchClass pitchClass = midiNotes.getLast().pitch;
   mKeyboard.setMidiNotes(midiNotes);
   mArcSpec.setMidiNotes(midiNotes);
 
@@ -263,7 +293,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     mResourceUsage.setText(juce::String(cpuPerc, 1) + "% CPU | Virtual " + juce::String(virtual_memory >> 20) + " MB" +
                                " | Resident " +
                                juce::String(resident_memory >> 20) + " MB",
-                           juce::dontSendNotification); 
+                           juce::dontSendNotification);
   }*/
 
   repaint();
@@ -272,7 +302,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
 //==============================================================================
 void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   // Set gradient
-  g.setFillType(Utils::BG_GRADIENT);
+  g.setFillType(Utils::getBgGradient(getBounds(), mParameters.ui.loadingProgress));
   g.fillRect(getLocalBounds());
   /*
   // Draw background for open file button
@@ -296,11 +326,11 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   @brief Draw note display (the small section between the keyboard and arc spectrogram)
 */
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
-
   // Right now just give last note played, not truely polyphony yet
-  const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
   // TODO: new note displaying
-  /*if (!midiNotes.isEmpty()) {
+  /*
+  const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
+  if (!midiNotes.isEmpty()) {
     // If there are not candidates, will just not draw any arrows/lines
     std::vector<ParamCandidate*> candidates = mSynth.getActiveCandidates();
     if (!candidates.empty()) {
@@ -337,7 +367,7 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
           g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
                         NOTE_BULB_SIZE, NOTE_BULB_SIZE);
         }
-      } 
+      }
     }
   }*/
 
@@ -353,16 +383,31 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
 
   // Clouds
   if (mParameters.ui.centerComponent == ParamUI::CenterComponent::ARC_SPEC) {
-    const int expansion = mCloudLeft.getWidth() / 4.0f;
-    const int translation = expansion * 2;
-    auto center = mArcSpec.getBounds().getBottomLeft().translated(translation, 0);
-    g.drawImage(mCloudLeft, mCloudLeft.getBounds().expanded(expansion).withCentre(center).toFloat(),
-                juce::RectanglePlacement::fillDestination);
-    center = mArcSpec.getBounds().getBottomRight().translated(-translation, 0);
-    g.drawImage(mCloudRight, mCloudRight.getBounds().expanded(expansion).withCentre(center).toFloat(),
-                juce::RectanglePlacement::fillDestination);
-  }
+    g.drawImage(mCloudLeftImage, mCloudLeftTargetArea, juce::RectanglePlacement::fillDestination);
+    g.drawImage(mCloudRightImage, mCloudRightTargetArea, juce::RectanglePlacement::fillDestination);
 
+    // Make it rain girl (while loading)
+    if (mProgressBar.isVisible()) {
+      g.setColour(juce::Colours::blue);
+      // Exploit fact left and right are same dimension
+      const int rainHeight = mLeftRain.getHeight();
+      const int rainWidth = mLeftRain.getWidth();
+      g.drawImage(mRainImage, mLeftRain.getX(), mLeftRain.getY(), rainWidth, rainHeight, 0, mLeftRainDeltY, rainWidth, rainHeight);
+      g.drawImage(mRainImage, mRightRain.getX(), mRightRain.getY(), rainWidth, rainHeight, 0, mRightRainDeltY, rainWidth,
+                  rainHeight);
+
+      // make rain slow up as closer to full progress (which is the value 1.0)
+      const int speed = 20 - static_cast<int>(18.0 * mParameters.ui.loadingProgress);
+      mLeftRainDeltY -= speed;
+      mRightRainDeltY -= speed;
+      if (mLeftRainDeltY < rainHeight) {
+        mLeftRainDeltY = mRainImage.getHeight() - rainHeight;
+      }
+      if (mRightRainDeltY < rainHeight) {
+        mRightRainDeltY = mRainImage.getHeight() - rainHeight;
+      }
+    }
+  }
 }
 
 void GRainbowAudioProcessorEditor::resized() {
@@ -389,7 +434,6 @@ void GRainbowAudioProcessorEditor::resized() {
 
   // Open and record buttons
   auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT).reduced(Utils::PADDING);
-  const auto filePanelPersistent = filePanel.toFloat(); // Used in border path calculation below
   const int btnWidth = filePanel.getHeight();
   mBtnOpenFile.setBounds(filePanel.removeFromLeft(btnWidth));
   filePanel.removeFromLeft(Utils::PADDING);
@@ -440,6 +484,28 @@ void GRainbowAudioProcessorEditor::resized() {
   mBorderPath.lineTo(point);
   mBorderPath.cubicTo(point.translated(0, -halfRound), point.translated(halfRound, -Utils::ROUNDED_AMOUNT),
                       point.translated(Utils::ROUNDED_AMOUNT, -Utils::ROUNDED_AMOUNT));
+
+  // Cloud centers
+  {
+    const int expansion = mCloudLeftImage.getWidth() / 4.0f;
+    const int translation = expansion * 2;
+    const auto leftCenter = mArcSpec.getBounds().getBottomLeft().translated(translation, 0);
+    const auto rightCenter = mArcSpec.getBounds().getBottomRight().translated(-translation, 0);
+    mCloudLeftTargetArea = mCloudLeftImage.getBounds().expanded(expansion).withCentre(leftCenter).toFloat();
+    mCloudRightTargetArea = mCloudRightImage.getBounds().expanded(expansion).withCentre(rightCenter).toFloat();
+
+    // This was sfigured out by using drawRect() until saw the area it should be
+    const float leftCloudWidth = mCloudLeftTargetArea.getWidth();
+    const float leftCloudHeight = mCloudLeftTargetArea.getHeight();
+    mLeftRain = mCloudLeftTargetArea.translated(leftCloudWidth / 3.8f, leftCloudHeight / 1.7f)
+                    .withWidth(leftCloudWidth / 2.0f)
+                    .withHeight(leftCloudHeight / 1.6f);
+    const float rightCloudWidth = mCloudRightTargetArea.getWidth();
+    const float rightCloudHeight = mCloudRightTargetArea.getHeight();
+    mRightRain = mCloudRightTargetArea.translated(rightCloudWidth / 4.2f, rightCloudHeight / 1.7f)
+                     .withWidth(rightCloudWidth / 2.0f)
+                     .withHeight(rightCloudHeight / 1.6f);
+  }
 }
 
 bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files) {
@@ -452,15 +518,15 @@ bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArra
   }
   return false;
 }
-void GRainbowAudioProcessorEditor::fileDragEnter(const juce::StringArray& files, int x, int y) {
+void GRainbowAudioProcessorEditor::fileDragEnter(const juce::StringArray&, int, int) {
   mIsFileHovering = true;
   repaint();
 }
-void GRainbowAudioProcessorEditor::fileDragExit(const juce::StringArray& files) {
+void GRainbowAudioProcessorEditor::fileDragExit(const juce::StringArray&) {
   mIsFileHovering = false;
   repaint();
 }
-void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files, int x, int y) {
+void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files, int, int) {
   jassert(files.size() == 1);
   mIsFileHovering = false;
   repaint();
@@ -569,8 +635,6 @@ void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
 }
 
 void GRainbowAudioProcessorEditor::savePreset() {
-  
-
   mFileChooser = std::make_unique<juce::FileChooser>("Save gRainbow presets to a file", juce::File::getCurrentWorkingDirectory(),
                                                      "*.gbow", true);
 

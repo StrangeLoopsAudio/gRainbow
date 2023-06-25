@@ -9,22 +9,25 @@
 */
 
 #include "FilterControl.h"
-#include "../Utils.h"
+#include "Utils/Utils.h"
+#include "Utils/Colour.h"
 
 //==============================================================================
 FilterControl::FilterControl(Parameters& parameters)
     : mParameters(parameters),
       mCurSelectedParams(parameters.selectedParams),
+      mParamColour(Utils::GLOBAL_COLOUR),
       mSliderCutoff(parameters, ParamCommon::Type::FILT_CUTOFF),
       mSliderResonance(parameters, ParamCommon::Type::FILT_RESONANCE) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
-  
+
   mSliderCutoff.setNumDecimalPlacesToDisplay(2);
   mSliderCutoff.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, 0.01);
   mSliderCutoff.setTextValueSuffix("Hz");
+  mSliderCutoff.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderCutoff);
 
-  mLabelCutoff.setText("Cutoff", juce::dontSendNotification);
+  mLabelCutoff.setText("cutoff", juce::dontSendNotification);
   mLabelCutoff.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelCutoff.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelCutoff);
@@ -32,17 +35,20 @@ FilterControl::FilterControl(Parameters& parameters)
   // Resonance
   mSliderResonance.setNumDecimalPlacesToDisplay(2);
   mSliderResonance.setRange(ParamRanges::RESONANCE.start, ParamRanges::RESONANCE.end, 0.01);
+  mSliderResonance.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderResonance);
 
-  mLabelResonance.setText("Resonance", juce::dontSendNotification);
+  mLabelResonance.setText("resonance", juce::dontSendNotification);
   mLabelResonance.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelResonance.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelResonance);
 
+  mFilterType.setJustificationType(juce::Justification::centred);
+  mFilterType.setColour(juce::ComboBox::ColourIds::backgroundColourId, colour);
   for (int i = 0; i < FILTER_TYPE_NAMES.size(); ++i) {
     mFilterType.addItem(FILTER_TYPE_NAMES[i], i + 1);
   }
-  mFilterType.onChange = [this]() { 
+  mFilterType.onChange = [this]() {
     int type = mFilterType.getSelectedId() - 1;
     ParamHelper::setCommonParam(mCurSelectedParams, ParamCommon::Type::FILT_TYPE, type);
   };
@@ -54,12 +60,12 @@ FilterControl::FilterControl(Parameters& parameters)
   startTimer(100);
 }
 
-FilterControl::~FilterControl() { 
+FilterControl::~FilterControl() {
   mCurSelectedParams->removeListener(this);
   stopTimer();
 }
 
-void FilterControl::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
+void FilterControl::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
 
 void FilterControl::timerCallback() {
   if (mParamHasChanged.load()) {
@@ -73,16 +79,16 @@ void FilterControl::timerCallback() {
   }
 }
 
-void FilterControl::updateSelectedParams() { 
+void FilterControl::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
   mSliderCutoff.updateSelectedParams();
   mSliderResonance.updateSelectedParams();
+  mFilterType.setColour(juce::ComboBox::ColourIds::backgroundColourId, mParamColour);
   mParamHasChanged.store(true);
 }
-
 
 void FilterControl::paint(juce::Graphics& g) {
   juce::Colour colour = mParamColour;
@@ -131,10 +137,10 @@ void FilterControl::paint(juce::Graphics& g) {
                                   mVizRect.getBottom());
       break;
     case (Utils::FilterType::NO_FILTER):
-      midPt1 = juce::Point<float>(mVizRect.getTopLeft());
-      midPt2 = juce::Point<float>(mVizRect.getTopLeft());
-      midPt3 = juce::Point<float>(mVizRect.getTopRight());
-      midPt4 = juce::Point<float>(mVizRect.getTopRight());
+      midPt1 = juce::Point<float>(mVizRect.getTopLeft().translated(0, resPadding));
+      midPt2 = juce::Point<float>(mVizRect.getTopLeft().translated(0, resPadding));
+      midPt3 = juce::Point<float>(mVizRect.getTopRight().translated(0, resPadding));
+      midPt4 = juce::Point<float>(mVizRect.getTopRight().translated(0, resPadding));
       break;
   }
 
@@ -199,5 +205,8 @@ float FilterControl::filterTypeToCutoff(Utils::FilterType filterType) {
       return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::FILTER_HP_CUTOFF_DEFAULT_HZ);
     case (Utils::FilterType::BANDPASS):
       return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
+    case (Utils::FilterType::NO_FILTER):
+      jassertfalse;
+      return 0.0f;
   }
 }

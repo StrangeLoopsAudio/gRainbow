@@ -19,19 +19,20 @@
 #include <random>
 #include <bitset>
 
-#include "../DSP/Fft.h"
-#include "../Parameters.h"
-#include "../Utils.h"
+#include "DSP/Fft.h"
+#include "Parameters.h"
+#include "Utils/Utils.h"
+#include "Utils/MidiNote.h"
 
 //==============================================================================
 /*
  */
 class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
  public:
-  ArcSpectrogram(ParamsNote &paramsNote, ParamUI &paramUI);
+  ArcSpectrogram(Parameters& parameters);
   ~ArcSpectrogram() override;
 
-  void update() override{};
+  void update() override {}
   void paint(juce::Graphics &) override;
   void resized() override;
 
@@ -56,8 +57,9 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   static constexpr auto REFRESH_RATE_FPS = 30;
 
   // UI variables
-  static constexpr auto SPEC_TYPE_HEIGHT = 50;
-  static constexpr auto SPEC_TYPE_WIDTH = 130;
+  static constexpr auto SPEC_TYPE_HEIGHT = 40;
+  static constexpr auto SPEC_TYPE_WIDTH = 100;
+  static constexpr auto CANDIDATE_BUBBLE_SIZE = 14;
   static constexpr auto MAX_GRAIN_SIZE = 40;
   static constexpr auto MAX_NUM_GRAINS = 40;
   static constexpr auto NUM_COLS = 600;
@@ -70,15 +72,18 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
     float envIncSamples;  // How many envelope samples to increment each frame
     int numFramesActive;
     Utils::PitchClass pitchClass;
-    ArcGrain(ParamGenerator *paramGenerator, float gain, float envIncSamples, Utils::PitchClass pitchClass)
-        : paramGenerator(paramGenerator), gain(gain), envIncSamples(envIncSamples), numFramesActive(0), pitchClass(pitchClass) {}
+    ArcGrain(ParamGenerator *paramGenerator_, float gain_, float envIncSamples_, Utils::PitchClass pitchClass_)
+        : paramGenerator(paramGenerator_),
+          gain(gain_),
+          envIncSamples(envIncSamples_),
+          numFramesActive(0),
+          pitchClass(pitchClass_) {}
   } ArcGrain;
 
   // Parameters
   // Use to save state since if the plugin is closed and open, will need these
   // to restore the state
-  ParamsNote &mParamsNote;
-  ParamUI &mParamUI;
+  Parameters& mParameters;
 
   // Buffers used to generate the images
   std::array<void *, ParamUI::SpecType::COUNT> mBuffers;

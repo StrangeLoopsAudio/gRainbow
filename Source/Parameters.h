@@ -13,7 +13,9 @@
 #include <juce_core/juce_core.h>
 #include <juce_dsp/juce_dsp.h>
 
-#include "Utils.h"
+#include "Utils/Utils.h"
+#include "Utils/Colour.h"
+#include "Utils/PitchClass.h"
 
 // Dynamically casts to AudioParameterFloat*
 #define P_FLOAT(X) dynamic_cast<juce::AudioParameterFloat*>(X)
@@ -135,20 +137,22 @@ static float PAN_SPRAY_DEFAULT = 0.05f;
 }  // namespace ParamDefaults
 
 enum ParamType { GLOBAL, NOTE, GENERATOR };
+static juce::Array<juce::String> PARAM_TYPE_NAMES{"global", "note", "generator"};
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
 static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "lowpass", "highpass", "bandpass"};
 
-static constexpr auto MAX_CANDIDATES = 6;
-static constexpr auto NUM_GENERATORS = 4;
-static constexpr auto SOLO_NONE = -1;
-static constexpr auto NUM_FILTER_TYPES = 3;
+static constexpr int MAX_CANDIDATES = 6;
+static constexpr int NUM_GENERATORS = 4;
+static constexpr int SOLO_NONE = -1;
+static constexpr int NUM_FILTER_TYPES = 3;
+static constexpr double RESET_LOADING_PROGRESS = 1.0;
 
 namespace ParamHelper {
-  static juce::String getParamID(juce::AudioProcessorParameter* param) {
-    if (auto paramWithID = dynamic_cast<juce::AudioProcessorParameterWithID*>(param)) return paramWithID->paramID;
+[[maybe_unused]] static juce::String getParamID(juce::AudioProcessorParameter* param) {
+  if (auto paramWithID = dynamic_cast<juce::AudioProcessorParameterWithID*>(param)) return paramWithID->paramID;
 
-    return param->getName(50);
-  }
+  return param->getName(50);
+}
   // Utility function to avoid ugly dereferencing code before sending norm value
   // to host
   static void setParam(juce::AudioParameterFloat* param, float newValue) { *param = newValue; }
@@ -297,6 +301,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamCommon)
 };
 
+// TODO - Still needed?
 static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GAIN_DEFAULT,
                                                                ParamDefaults::ATTACK_DEFAULT_SEC,
                                                                ParamDefaults::DECAY_DEFAULT_SEC,
@@ -318,18 +323,18 @@ static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GA
                                                                ParamDefaults::PAN_SPRAY_DEFAULT};
 
 namespace ParamHelper {
-  static void setCommonParam(ParamCommon* common, ParamCommon::Type type, float newValue) {
-    ParamHelper::setParam(P_FLOAT(common->common[type]), newValue);
-    common->isUsed[type] = true;
-  }
-  static void setCommonParam(ParamCommon* common, ParamCommon::Type type, int newValue) {
-    ParamHelper::setParam(P_CHOICE(common->common[type]), newValue);
-    common->isUsed[type] = true;
-  }
-  static void setCommonParam(ParamCommon* common, ParamCommon::Type type, bool newValue) {
-    ParamHelper::setParam(P_BOOL(common->common[type]), newValue);
-    common->isUsed[type] = true;
-  }
+[[maybe_unused]] static void setCommonParam(ParamCommon* common, ParamCommon::Type type, float newValue) {
+  ParamHelper::setParam(P_FLOAT(common->common[type]), newValue);
+  common->isUsed[type] = true;
+}
+[[maybe_unused]] static void setCommonParam(ParamCommon* common, ParamCommon::Type type, int newValue) {
+  ParamHelper::setParam(P_CHOICE(common->common[type]), newValue);
+  common->isUsed[type] = true;
+}
+[[maybe_unused]] static void setCommonParam(ParamCommon* common, ParamCommon::Type type, bool newValue) {
+  ParamHelper::setParam(P_BOOL(common->common[type]), newValue);
+  common->isUsed[type] = true;
+}
 }
 
 struct ParamCandidate {
@@ -375,7 +380,7 @@ struct ParamGenerator : ParamCommon {
     candidate->removeListener(listener);
   }
 
-  void resetParams(bool fullClear) { 
+  void resetParams(bool) {
     ParamCommon::resetParams();
     ParamHelper::setParam(enable, genIdx == 0);
     ParamHelper::setParam(candidate, genIdx);
@@ -391,14 +396,14 @@ struct ParamGenerator : ParamCommon {
 };
 
 struct ParamNote : ParamCommon {
-  ParamNote(int noteIdx) : ParamCommon(ParamType::NOTE), noteIdx(noteIdx) {
+  ParamNote(int noteIdx_) : ParamCommon(ParamType::NOTE), noteIdx(noteIdx_) {
     for (int i = 0; i < NUM_GENERATORS; ++i) {
       generators.emplace_back(new ParamGenerator(noteIdx, i));
     }
   }
 
   // Returns the number of enabled generators
-  int getNumEnabledGens() { 
+  int getNumEnabledGens() const {
     int numEnabled = 0;
     for (auto& gen : generators) {
       if (gen->enable->get()) numEnabled++;
@@ -407,9 +412,9 @@ struct ParamNote : ParamCommon {
   }
 
   // Gets list of enabled generators, then returns the one at idx, or nullptr if idx > num enabled gens
-  ParamGenerator* getEnabledGenByIdx(int idx) {
+  ParamGenerator* getEnabledGenByIdx(int idx) const {
     int numEnabled = 0;
-    for (int i = 0; i < Utils::NUM_GEN; ++i) {
+    for (size_t i = 0; i < NUM_GENERATORS; ++i) {
       if (generators[i]->enable->get()) {
         if (numEnabled == idx) return generators[i].get();
         numEnabled++;
@@ -419,7 +424,7 @@ struct ParamNote : ParamCommon {
   }
 
   void enableNextAvailableGen() {
-    for (int i = 0; i < Utils::NUM_GEN; ++i) {
+    for (size_t i = 0; i < NUM_GENERATORS; ++i) {
       if (!generators[i]->enable->get()) {
         ParamHelper::setParam(generators[i]->enable, true);
         break;
@@ -483,7 +488,7 @@ struct ParamNote : ParamCommon {
 
 struct ParamsNote {
   ParamsNote() {
-    for (int i = 0; i < Utils::PitchClass::COUNT; ++i) {
+    for (size_t i = 0; i < Utils::PitchClass::COUNT; ++i) {
       notes[i] = std::unique_ptr<ParamNote>(new ParamNote(i));
     }
   }
@@ -560,6 +565,7 @@ struct ParamUI {
       centerComponent = (CenterComponent)xml->getIntAttribute("centerComponent");
       trimRange.setStart(xml->getDoubleAttribute("trimRangeStart"));
       trimRange.setEnd(xml->getDoubleAttribute("trimRangeEnd"));
+      specComplete = xml->getBoolAttribute("specComplete");
       if (auto images = xml->getChildByName("Images")) {
         for (int i = 0; i < ParamUI::SpecType::COUNT; ++i) {
           juce::String attrName = "image" + juce::String(i);
@@ -584,8 +590,9 @@ struct ParamUI {
     xml->setAttribute("centerComponent", static_cast<int>(centerComponent));
     xml->setAttribute("trimRangeStart", trimRange.getStart());
     xml->setAttribute("trimRangeEnd", trimRange.getEnd());
+    xml->setAttribute("specComplete", specComplete);
     juce::XmlElement* images = new juce::XmlElement("Images");
-    for (int i = 0; i < ParamUI::SpecType::COUNT; ++i) {
+    for (size_t i = 0; i < ParamUI::SpecType::COUNT; ++i) {
       juce::MemoryOutputStream out;
       saveSpecImage(out, i);
       juce::MemoryBlock imageData(out.getData(), out.getDataSize());
@@ -617,6 +624,7 @@ struct ParamUI {
   // Where ArcSpectrogram can let others know when it is "complete"
   // Makes no sense to save to preset file
   bool specComplete = false;
+  double loadingProgress = RESET_LOADING_PROGRESS;
 
   // Tracks what component is being displayed
   enum class CenterComponent { LOGO, ARC_SPEC, TRIM_SELECTION };
@@ -626,6 +634,9 @@ struct ParamUI {
   bool trimPlaybackOn = false;
   int trimPlaybackSample;  // sampling buffer index position
   int trimPlaybackMaxSample;
+
+  // Reference tone
+  bool referenceToneActive = false;
 };
 
 struct Parameters {
@@ -637,7 +648,22 @@ struct Parameters {
   // Called when current selected note or generator changes
   // Should be used only by PluginEditor and passed on to subcomponents
   std::function<void()> onSelectedChange = nullptr;
-  
+  // Returns the currently selected pitch class, or NONE if global selected
+  Utils::PitchClass getSelectedPitchClass() {
+    switch (selectedParams->type) {
+      case ParamType::GLOBAL:
+        return Utils::PitchClass::NONE;
+        break;
+      case ParamType::NOTE:
+        return (Utils::PitchClass)dynamic_cast<ParamNote*>(selectedParams)->noteIdx;
+        break;
+      case ParamType::GENERATOR:
+        ParamGenerator* gen = dynamic_cast<ParamGenerator*>(selectedParams);
+        return (Utils::PitchClass)gen->noteIdx;
+        break;
+    }
+    return Utils::PitchClass::NONE;
+  }
   // Keeps track of the current selected global/note/generator parameters for editing, global by default
   ParamCommon* selectedParams = &global;
   juce::Colour getSelectedParamColour() {
@@ -659,7 +685,6 @@ struct Parameters {
   // Finds the lowest level parameter that's different from its parent
   // Hierarchy (high to low): global, note, generator
   float getFloatParam(ParamCommon* common, ParamCommon::Type type) {
-    const float defaultVal = COMMON_DEFAULTS[type];
     const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
     ParamNote* pNote = dynamic_cast<ParamNote*>(common);
     if (pGen != nullptr) {
@@ -679,7 +704,6 @@ struct Parameters {
     return P_FLOAT(global.common[type])->get();
   }
   int getChoiceParam(ParamCommon* common, ParamCommon::Type type) {
-    const int defaultVal = COMMON_DEFAULTS[type];
     const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
     ParamNote* pNote = dynamic_cast<ParamNote*>(common);
     if (pGen != nullptr) {

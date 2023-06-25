@@ -9,11 +9,13 @@
 */
 
 #include "GrainControl.h"
-#include "../Utils.h"
+#include "Utils/Utils.h"
+#include "Utils/Colour.h"
 
 GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& meterSource)
     : mParameters(parameters),
       mCurSelectedParams(parameters.selectedParams),
+      mParamColour(Utils::GLOBAL_COLOUR),
       mSliderPitchAdjust(parameters, ParamCommon::Type::PITCH_ADJUST),
       mSliderPitchSpray(parameters, ParamCommon::Type::PITCH_SPRAY),
       mSliderPosAdjust(parameters, ParamCommon::Type::POS_ADJUST),
@@ -21,7 +23,6 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
       mSliderPanAdjust(parameters, ParamCommon::Type::PAN_ADJUST),
       mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY),
       mSliderGain(parameters, ParamCommon::Type::GAIN) {
-
   juce::Colour colour = Utils::GLOBAL_COLOUR;
 
   // Gain and meter
@@ -31,9 +32,10 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
 
   mSliderGain.setNumDecimalPlacesToDisplay(2);
   mSliderGain.setRange(ParamRanges::GAIN.start, ParamRanges::GAIN.end, 0.01);
+  mSliderGain.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderGain);
 
-  mLabelGain.setText("Gain", juce::dontSendNotification);
+  mLabelGain.setText("gain", juce::dontSendNotification);
   mLabelGain.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelGain.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelGain);
@@ -41,24 +43,26 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   // Adjust pitch
   mSliderPitchAdjust.setNumDecimalPlacesToDisplay(2);
   mSliderPitchAdjust.setRange(ParamRanges::PITCH_ADJUST.start, ParamRanges::PITCH_ADJUST.end, 0.01);
+  mSliderPitchAdjust.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPitchAdjust);
 
-  mLabelPitchAdjust.setText("Pitch Adjust", juce::dontSendNotification);
+  mLabelPitchAdjust.setText("pitch adjust", juce::dontSendNotification);
   mLabelPitchAdjust.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPitchAdjust.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPitchAdjust);
 
   // Pitch spray
-  mSliderPitchSpray.setTextValueSuffix("cents");
+  mSliderPitchSpray.setTextValueSuffix(" cents");
   mSliderPitchSpray.setSliderStyle(juce::Slider::SliderStyle::LinearBar);
   mSliderPitchSpray.setNumDecimalPlacesToDisplay(3);
   mSliderPitchSpray.setColour(juce::Slider::ColourIds::textBoxOutlineColourId, colour);
   mSliderPitchSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
   mSliderPitchSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
   mSliderPitchSpray.setRange(ParamRanges::PITCH_SPRAY.start, ParamRanges::PITCH_SPRAY.end, 0.005);
+  mSliderPitchSpray.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPitchSpray);
 
-  mLabelPitchSpray.setText("Pitch Spray", juce::dontSendNotification);
+  mLabelPitchSpray.setText("pitch spray", juce::dontSendNotification);
   mLabelPitchSpray.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPitchSpray.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPitchSpray);
@@ -66,9 +70,10 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   // Adjust position
   mSliderPosAdjust.setNumDecimalPlacesToDisplay(2);
   mSliderPosAdjust.setRange(ParamRanges::POSITION_ADJUST.start, ParamRanges::POSITION_ADJUST.end, 0.01);
+  mSliderPosAdjust.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPosAdjust);
 
-  mLabelPosAdjust.setText("Position Adjust", juce::dontSendNotification);
+  mLabelPosAdjust.setText("position adjust", juce::dontSendNotification);
   mLabelPosAdjust.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPosAdjust.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPosAdjust);
@@ -81,9 +86,10 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderPosSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
   mSliderPosSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
   mSliderPosSpray.setRange(ParamRanges::POSITION_SPRAY.start, ParamRanges::POSITION_SPRAY.end, 0.005);
+  mSliderPosSpray.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPosSpray);
 
-  mLabelPosSpray.setText("Position Spray", juce::dontSendNotification);
+  mLabelPosSpray.setText("position spray", juce::dontSendNotification);
   mLabelPosSpray.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPosSpray.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPosSpray);
@@ -91,9 +97,10 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   // Adjust pan
   mSliderPanAdjust.setNumDecimalPlacesToDisplay(2);
   mSliderPanAdjust.setRange(ParamRanges::PAN_ADJUST.start, ParamRanges::PAN_ADJUST.end, 0.01);
+  mSliderPanAdjust.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPanAdjust);
 
-  mLabelPanAdjust.setText("Pan Adjust", juce::dontSendNotification);
+  mLabelPanAdjust.setText("pan adjust", juce::dontSendNotification);
   mLabelPanAdjust.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPanAdjust.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPanAdjust);
@@ -106,32 +113,28 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   mSliderPanSpray.setColour(juce::Slider::ColourIds::textBoxTextColourId, colour);
   mSliderPanSpray.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::white);
   mSliderPanSpray.setRange(ParamRanges::PAN_SPRAY.start, ParamRanges::PAN_SPRAY.end, 0.005);
+  mSliderPanSpray.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderPanSpray);
 
-  mLabelPanSpray.setText("Pan Spray", juce::dontSendNotification);
+  mLabelPanSpray.setText("pan spray", juce::dontSendNotification);
   mLabelPanSpray.setColour(juce::Label::ColourIds::textColourId, colour);
   mLabelPanSpray.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelPanSpray);
-
-  mPositionChanger.onPositionChanged = [this](bool isRight) {
-    ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mParameters.selectedParams);
-    jassert(gen != nullptr);
-    int numCandidates = mParameters.note.notes[gen->noteIdx]->candidates.size();
-    int pos = gen->candidate->get();
-    if (numCandidates == 0) return pos;
-    int newPos = isRight ? pos + 1 : pos - 1;
-    newPos = (newPos + numCandidates) % numCandidates;
-    ParamHelper::setParam(gen->candidate, newPos);
-    mPositionChanger.setPositionNumber(newPos);
-  };
-  mPositionChanger.onSoloChanged = [this](bool isSolo) {
-    if (mCurSelectedParams->type == ParamType::GENERATOR) {
-      ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
-      ParamHelper::setParam(mParameters.note.notes[gen->noteIdx]->soloIdx, isSolo ? gen->genIdx : SOLO_NONE);
+        
+  // Reference tone
+  mBtnRefTone.setButtonText("ref tone");
+  mBtnRefTone.setToggleable(true);
+  mBtnRefTone.setClickingTogglesState(true);
+  mBtnRefTone.setColour(juce::TextButton::ColourIds::textColourOffId, juce::Colours::white);
+  mBtnRefTone.setColour(juce::TextButton::ColourIds::textColourOnId, juce::Colours::black);
+  mBtnRefTone.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::white);
+  mBtnRefTone.onClick = [this]() {
+    if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) {
+      onRefToneOn();
     }
+    else if (!mBtnRefTone.getToggleState() && onRefToneOff != nullptr) onRefToneOff();
   };
-  mPositionChanger.setColour(colour);
-  addAndMakeVisible(mPositionChanger);
+  addAndMakeVisible(mBtnRefTone);
 
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
@@ -139,12 +142,12 @@ GrainControl::GrainControl(Parameters& parameters, foleys::LevelMeterSource& met
   startTimer(100);
 }
 
-GrainControl::~GrainControl() { 
+GrainControl::~GrainControl() {
   mCurSelectedParams->removeListener(this);
   mMeter.setLookAndFeel(nullptr);
 }
 
-void GrainControl::parameterValueChanged(int idx, float value) { mParamHasChanged.store(true); }
+void GrainControl::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
 
 void GrainControl::timerCallback() {
   if (mParamHasChanged.load()) {
@@ -162,21 +165,25 @@ void GrainControl::timerCallback() {
                               juce::dontSendNotification);
     mSliderPanSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PAN_SPRAY),
                              juce::dontSendNotification);
-    if (mCurSelectedParams->type == ParamType::GENERATOR) {
-      ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
-      mPositionChanger.setPositionNumber(gen->candidate->get());
-      mPositionChanger.setSolo(mParameters.note.notes[gen->noteIdx]->soloIdx->get() == gen->genIdx);
-    } else {
-      mPositionChanger.setSolo(false);
-    }
   }
 }
 
-void GrainControl::updateSelectedParams() { 
+void GrainControl::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
-
+  
+  Utils::PitchClass selectedPitch = mParameters.getSelectedPitchClass();
+  // Turn ref tone off if global parameters
+  if (selectedPitch == Utils::PitchClass::NONE && mBtnRefTone.getToggleState() && onRefToneOff != nullptr) {
+    mBtnRefTone.setToggleState(false, juce::dontSendNotification);
+    onRefToneOff();
+  }
+  // Change ref tone frequency if already active
+  if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) onRefToneOn();
+  // Disable ref tone button if global parameters
+  mBtnRefTone.setEnabled(selectedPitch != Utils::PitchClass::NONE);
+  
   mParamColour = mParameters.getSelectedParamColour();
   mSliderGain.updateSelectedParams();
   mSliderPitchAdjust.updateSelectedParams();
@@ -185,16 +192,8 @@ void GrainControl::updateSelectedParams() {
   mSliderPosSpray.updateSelectedParams();
   mSliderPanAdjust.updateSelectedParams();
   mSliderPanSpray.updateSelectedParams();
+  mBtnRefTone.setColour(juce::TextButton::ColourIds::buttonColourId, mParamColour);
 
-  bool isGen = mCurSelectedParams->type == ParamType::GENERATOR;
-  mPositionChanger.setActive(isGen);
-  if (isGen) {
-    ParamGenerator* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
-    mPositionChanger.setNumPositions(mParameters.note.notes[gen->noteIdx]->candidates.size());
-    mPositionChanger.setPositionNumber(gen->candidate->get());
-    mPositionChanger.setColour(mParamColour);
-  }
-  
   mParamHasChanged.store(true);
   repaint();
 }
@@ -220,10 +219,8 @@ void GrainControl::resized() {
   mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT).toFloat();
 
   r.removeFromTop(Utils::PADDING);
-  
-  int knobWidth = r.getWidth() / 3;
 
-  r.removeFromLeft(Utils::PADDING);
+  const int knobWidth = r.getWidth() / 3;
 
   // Pitch spray and adjust
   juce::Rectangle<int> knobPanel = r.removeFromLeft(knobWidth);
@@ -247,9 +244,9 @@ void GrainControl::resized() {
   mLabelPosAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPosAdjust.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-
-  // Candidate changer
-  mPositionChanger.setBounds(knobPanel.removeFromBottom(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT));
+  
+  // Reference tone button
+  mBtnRefTone.setBounds(knobPanel.withSizeKeepingCentre(knobPanel.getWidth() / 2, Utils::LABEL_HEIGHT));
 
   // Pan spray and adjust
   knobPanel = r;
@@ -259,7 +256,7 @@ void GrainControl::resized() {
   mLabelPanAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPanAdjust.setBounds(
       knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-
+  
   // Meter
-  mMeter.setBounds(knobPanel.removeFromBottom(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT).reduced(Utils::PADDING));
+  mMeter.setBounds(knobPanel.removeFromTop(Utils::KNOB_HEIGHT + Utils::LABEL_HEIGHT).reduced(Utils::PADDING));
 }

@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
 
-set(PROJECT_NAME "gRainbow")
-
 # Set the plugin formats you'll be building here.
 # Valid formats: AAX Unity VST AU AUv3 Standalone
 set(FORMATS VST3 Standalone)
@@ -31,7 +29,9 @@ endif()
 file(STRINGS VERSION CURRENT_VERSION)
 
 # For simplicity, the name of the project is also the name of the target
-project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
+project(gRainbow VERSION ${CURRENT_VERSION})
+
+SET(GRAINBOW_BINARY_NAME "${CMAKE_PROJECT_NAME}" CACHE STRING "Override plugin name")
 
 # Adds all the module sources so they appear correctly in the IDE
 # Must be set before JUCE is added as a sub-dir (or any targets are made)
@@ -45,12 +45,12 @@ option(JUCE_ENABLE_MODULE_SOURCE_GROUPS "Show all module sources in IDE projects
 # Locally, you'll need to run `git submodule update --init --recursive` once
 # and `git submodule update --remote --merge` to keep it up to date
 # On Github Actions, it's managed by actions/checkout
-add_subdirectory(JUCE)
+add_subdirectory(external/JUCE)
 
-juce_add_module(${CMAKE_CURRENT_SOURCE_DIR}/libs/ff_meters)
+juce_add_module(${CMAKE_CURRENT_SOURCE_DIR}/external/ff_meters)
 
 # Check the readme at `docs/CMake API.md` in the JUCE repo for full config
-juce_add_plugin("${PROJECT_NAME}"
+juce_add_plugin(gRainbow
     # VERSION ...                               # Set this if the plugin version is different to the project version
     ICON_BIG Source/Resources/logo.png                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
     ICON_SMALL Source/Resources/logo.png
@@ -65,13 +65,22 @@ juce_add_plugin("${PROJECT_NAME}"
     PLUGIN_MANUFACTURER_CODE SLoo               # This has to be one uppercase, rest lower for AU formats
     PLUGIN_CODE SL01                            # A unique four-character plugin id with at least one upper-case character
     FORMATS "${FORMATS}"
-    PRODUCT_NAME "${PROJECT_NAME}")        # The name of the final executable, which can differ from the target name
+    PRODUCT_NAME "${GRAINBOW_BINARY_NAME}")     # The name of the final executable, which can differ from the target name
 
 # C++20, please
-target_compile_features("${PROJECT_NAME}" PRIVATE cxx_std_20)
+target_compile_features(gRainbow PRIVATE cxx_std_20)
+
+set(SOURCE_UTILS
+    Source/Utils/Utils.h
+    Source/Utils/BPF.h
+    Source/Utils/Timer.h
+    Source/Utils/Colour.h
+    Source/Utils/MidiNote.h
+    Source/Utils/PitchClass.h
+)
 
 # Manually list all .h and .cpp files for the plugin
-set(SourceFiles
+set(SOURCE_COMPONENTS
     Source/Components/ArcSpectrogram.h
     Source/Components/ArcSpectrogram.cpp
     Source/Components/EnvelopeADSR.h
@@ -84,12 +93,18 @@ set(SourceFiles
     Source/Components/Settings.cpp
     Source/Components/RainbowKeyboard.h
     Source/Components/RainbowKeyboard.cpp
-    Source/Components/PositionChanger.h
-    Source/Components/PositionChanger.cpp
+    Source/Components/RainbowSlider.h
+    Source/Components/RainbowSlider.cpp
+    Source/Components/RainbowLookAndFeel.h
+    Source/Components/RainbowLookAndFeel.cpp
+    Source/Components/MeterLookAndFeel.h
     Source/Components/FilterControl.h
     Source/Components/FilterControl.cpp
     Source/Components/GrainControl.h
     Source/Components/GrainControl.cpp
+)
+
+set(SOURCE_DSP
     Source/DSP/AudioRecorder.h
     Source/DSP/AudioRecorder.cpp
     Source/DSP/TransientDetector.h
@@ -102,23 +117,34 @@ set(SourceFiles
     Source/DSP/Grain.cpp
     Source/DSP/GranularSynth.h
     Source/DSP/GranularSynth.cpp
+)
+
+set(SOURCE_PLUGIN
     Source/PluginEditor.h
     Source/PluginEditor.cpp
     Source/Parameters.h
     Source/Parameters.cpp
     Source/Preset.h
-    Source/RainbowLookAndFeel.h
-    Source/Utils.h)
-target_sources("${PROJECT_NAME}" PRIVATE ${SourceFiles})
+)
+
+target_sources(gRainbow PRIVATE ${SOURCE_UTILS} ${SOURCE_COMPONENTS} ${SOURCE_DSP} ${SOURCE_PLUGIN})
 
 # No, we don't want our source buried in extra nested folders
-set_target_properties("${PROJECT_NAME}" PROPERTIES FOLDER "")
+set_target_properties(gRainbow PROPERTIES FOLDER "")
+
+target_include_directories(gRainbow PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Source
+    ${CMAKE_CURRENT_SOURCE_DIR}/external)
 
 # The Xcode source tree should uhhh, still look like the source tree, yo
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/Source PREFIX "" FILES ${SourceFiles})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/Source PREFIX "" FILES
+    ${SOURCE_UTILS}
+    ${SOURCE_COMPONENTS}
+    ${SOURCE_DSP}
+    ${SOURCE_PLUGIN})
 
 # Setup our binary data as a target
-set(BinaryResources
+set(BINARY_RESOURCES
     Source/Resources/appicon.png
     Source/Resources/logo.png
     Source/Resources/microphone.png
@@ -130,9 +156,11 @@ set(BinaryResources
     Source/Resources/cloudLeft.png
     Source/Resources/cloudRight.png
     Source/Resources/infoNormal.png
-    Source/Resources/infoOver.png)
+    Source/Resources/infoOver.png
+    Source/Resources/rain.png
+)
 
-juce_add_binary_data(Assets SOURCES ${BinaryResources})
+juce_add_binary_data(Assets SOURCES ${BINARY_RESOURCES})
 
 # Required for Linux happiness:
 # See https://forum.juce.com/t/loading-pytorch-model-using-binarydata/39997/2
@@ -145,8 +173,8 @@ set_target_properties(Assets PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 # However that doesn't seem to be working in Xcode
 # Not all plugin types (au, vst) available on each build type (win, macos, linux)
 foreach(target ${FORMATS} "All")
-    if(TARGET ${PROJECT_NAME}_${target})
-        set_target_properties(${PROJECT_NAME}_${target} PROPERTIES
+    if(TARGET ${CMAKE_PROJECT_NAME}_${target})
+        set_target_properties(${CMAKE_PROJECT_NAME}_${target} PROPERTIES
             # Tuck the actual plugin targets into a folder where they won't bother us
             FOLDER "Targets"
 
@@ -166,14 +194,16 @@ set(JUCE_DEPENDENCIES
     juce::juce_dsp
     ff_meters)
 
-target_compile_definitions("${PROJECT_NAME}"
+target_compile_definitions(gRainbow
     PUBLIC
     # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
     JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
     JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
-    JUCE_VST3_CAN_REPLACE_VST2=0)
+    JUCE_VST3_CAN_REPLACE_VST2=0
+    JUCE_USE_MP3AUDIOFORMAT=1
+)
 
-target_link_libraries("${PROJECT_NAME}"
+target_link_libraries(gRainbow
     PRIVATE
     Assets
     ${JUCE_DEPENDENCIES}
@@ -186,24 +216,13 @@ target_link_libraries("${PROJECT_NAME}"
 if(MSVC)
     find_package(IPP)
     if(IPP_FOUND)
-        target_link_libraries("${PROJECT_NAME}" PUBLIC IPP::ipps IPP::ippcore IPP::ippi IPP::ippcv)
+        target_link_libraries(gRainbow PUBLIC IPP::ipps IPP::ippcore IPP::ippi IPP::ippcv)
         message("IPP LIBRARIES FOUND")
-        target_compile_definitions("${PROJECT_NAME}" PUBLIC PAMPLEJUCE_IPP=1)
+        target_compile_definitions(gRainbow PUBLIC PAMPLEJUCE_IPP=1)
     else()
         message("IPP LIBRARIES *NOT* FOUND")
     endif()
 endif()
-
-# Required for ctest (which is just easier for cross-platform CI)
-# include(CTest) does this too, but adds tons of targets we don't want
-# See: https://github.com/catchorg/Catch2/issues/2026
-# You also could forgo ctest and call ./Tests directly from the build dir
-enable_testing()
-
-# "GLOBS ARE BAD" is brittle and silly dev UX, sorry CMake!
-# CONFIGURE_DEPENDS / Clion's CMake integration makes globbing absolutely fine
-file(GLOB_RECURSE TestFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/Tests/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/Tests/*.h")
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/Tests PREFIX "" FILES ${TestFiles})
 
 # Use Catch2 v3 on the devel branch
 Include(FetchContent)
@@ -214,26 +233,6 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
     GIT_TAG v3.3.2)
 FetchContent_MakeAvailable(Catch2) # find_package equivalent
-
-# Setup the test executable, again C++ 20 please
-add_executable(Tests ${TestFiles})
-target_compile_features(Tests PRIVATE cxx_std_20)
-
-# Our test executable also wants to know about our plugin code...
-target_include_directories(Tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source ${CMAKE_CURRENT_SOURCE_DIR}/libs/ff_meters)
-target_link_libraries(Tests PRIVATE Catch2::Catch2WithMain "${PROJECT_NAME}" ${JUCE_DEPENDENCIES})
-
-# Make an Xcode Scheme for the test executable so we can run tests in the IDE
-set_target_properties(Tests PROPERTIES XCODE_GENERATE_SCHEME ON)
-
-# Organize the test source in the Tests/ folder in the IDE
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/Tests PREFIX "" FILES ${TestFiles})
-
-# Load and use the .cmake file provided by Catch2
-# https://github.com/catchorg/Catch2/blob/devel/docs/cmake-integration.md
-# We have to manually provide the source directory here for now
-include(${Catch2_SOURCE_DIR}/extras/Catch.cmake)
-catch_discover_tests(Tests)
 
 # Color our warnings and errors
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")

@@ -11,8 +11,8 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "../Parameters.h"
-#include "../RainbowLookAndFeel.h"
+#include "Parameters.h"
+#include "RainbowSlider.h"
 
 //==============================================================================
 /*
@@ -38,16 +38,23 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   static constexpr float MAX_RATE_RATIO = 1.0f;
   static constexpr float GAIN_HEIGHT = 0.8f;
   static constexpr int MAX_NUM_ENVS = 6;
-  static constexpr juce::int64 GRAIN_SYNC_COLOURS_HEX[2] = {0xFF20FFD4, 0xFFFFD420};
 
   class QuantizedSlider : public RainbowSlider {
    public:
-    QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : mSync(false), RainbowSlider(parameters, type) {}
+    QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : RainbowSlider(parameters, type), mSync(false) {}
     QuantizedSlider(Parameters& parameters, ParamCommon::Type type, juce::NormalisableRange<float> range)
-        : mRange(range), RainbowSlider(parameters, type) {}
-    void setSync(bool sync) { mSync = sync; }
+        : RainbowSlider(parameters, type), mSync(false), mRange(range) {}
+    void setSync(bool sync) {
+      mSync = sync;
+      setTextValueSuffix(sync ? "" : suffix);
+    }
 
-    juce::String getTextFromValue(double value) override {
+    void setSuffix(juce::String _suffix) {
+      suffix = _suffix;
+      setTextValueSuffix(mSync ? "" : suffix);
+    }
+
+    juce::String getTextFromValue(double) override {
       if (mSync) {
         float prog = mRange.convertTo0to1(getValue());
         return juce::String("1/") + juce::String(std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * prog)));
@@ -58,12 +65,17 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
 
    private:
     bool mSync;
+    juce::String suffix;
     juce::NormalisableRange<float> mRange;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(QuantizedSlider)
   };
 
-  juce::PathStrokeType mPathStroke;
+  // Bookkeeping
+  Parameters& mParameters;
+  ParamCommon* mCurSelectedParams;
+  std::atomic<bool> mParamHasChanged;
+  juce::Colour mParamColour;
 
   // Components
   RainbowSlider mSliderShape;
@@ -76,17 +88,11 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   juce::Label mLabelRate;
   juce::Label mLabelDuration;
 
-  // Bookkeeping
-  Parameters& mParameters;
-  ParamCommon* mCurSelectedParams;
-  std::atomic<bool> mParamHasChanged;
-  juce::Colour mParamColour = Utils::GLOBAL_COLOUR;
+  juce::PathStrokeType mPathStroke;
 
   // UI values saved on resize
   juce::Rectangle<float> mTitleRect;
   juce::Rectangle<float> mVizRect;
-
-  float limitEnvX(float x);
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeGrain)
 };

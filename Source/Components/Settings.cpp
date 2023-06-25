@@ -28,7 +28,7 @@ SettingsComponent::SettingsComponent() {
   mBtnResetParameters.setButtonText("Reset Parameters");
   mBtnResetParameters.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
   mBtnResetParameters.setColour(juce::TextButton::buttonOnColourId, juce::Colours::red);
-  mBtnResetParameters.onClick = [this] { PowerUserSettings::get().resetParameters(); };
+  mBtnResetParameters.onClick = [] { PowerUserSettings::get().resetParameters(); };
   addAndMakeVisible(mBtnResetParameters);
 
   mBtnResourceUsage.setButtonText("Resource Usage");

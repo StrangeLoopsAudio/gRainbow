@@ -14,8 +14,9 @@
 
 #include "Grain.h"
 #include "PitchDetector.h"
-#include "../Parameters.h"
-#include "../Utils.h"
+#include "Parameters.h"
+#include "Utils/Utils.h"
+#include "Utils/MidiNote.h"
 #include <bitset>
 #include "ff_meters/ff_meters.h"
 
@@ -85,7 +86,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   // Audio buffer processing
   void resampleAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer, double inputSampleRate,
                            double outputSampleRate, bool clearInput = false);
-  
+
   void trimAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
                        juce::Range<juce::int64> range, bool clearInput = false);
 
@@ -100,11 +101,17 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   ParamGlobal& getParamGlobal() { return mParameters.global; }
   ParamUI& getParamUI() { return mParameters.ui; }
   void resetParameters(bool fullClear = true);
-  
-  double& getLoadingProgress() { return mLoadingProgress; }
+
   const juce::Array<Utils::MidiNote>& getMidiNotes() { return mMidiNotes; }
   std::vector<ParamCandidate*> getActiveCandidates();
   Utils::PitchClass getLastPitchClass() { return mLastPitchClass; }
+
+  // Reference tone control
+  void startReferenceTone(Utils::PitchClass pitchClass) {
+    mReferenceTone.setFrequency(juce::MidiMessage::getMidiNoteInHertz(60 + pitchClass));
+    mReferenceTone.setAmplitude(0.6f);
+  }
+  void stopReferenceTone() { mReferenceTone.setAmplitude(0.0f); }
 
  private:
   // DSP constants
@@ -125,11 +132,11 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
     std::array<Utils::EnvelopeADSR, NUM_GENERATORS> genAmpEnvs;
     std::array<juce::Array<Grain>, NUM_GENERATORS> genGrains;  // Active grains for note per generator
     std::array<float, NUM_GENERATORS> grainTriggers;           // Keeps track of triggering grains from each generator
-    GrainNote(Utils::PitchClass pitchClass, float velocity, Utils::EnvelopeADSR ampEnv)
-        : pitchClass(pitchClass), velocity(velocity) {
+    GrainNote(Utils::PitchClass pitchClass_, float velocity_, Utils::EnvelopeADSR ampEnv)
+        : pitchClass(pitchClass_), velocity(velocity_) {
       // Initialize grain triggering timestamps
       grainTriggers.fill(-1.0f);  // Trigger first set of grains right away
-      for (int i = 0; i < NUM_GENERATORS; ++i) {
+      for (size_t i = 0; i < NUM_GENERATORS; ++i) {
         genGrains[i].ensureStorageAllocated(MAX_GRAINS);
         genAmpEnvs[i].noteOn(ampEnv.noteOnTs);  // Set note on for each position as well
       }
@@ -146,15 +153,18 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   std::array<Utils::SpecBuffer*, ParamUI::SpecType::COUNT> mProcessedSpecs;
   double mSampleRate = INVALID_SAMPLE_RATE;
   juce::MidiKeyboardState mKeyboardState;
-  double mLoadingProgress = 0.0;
   juce::AudioFormatManager mFormatManager;
   bool mNeedsResample = false;
 
+  // Reference sine tone
+  juce::ToneGeneratorAudioSource mReferenceTone;
+
   // Grain control
   long mTotalSamps;
-  juce::Array<GrainNote, juce::CriticalSection> mActiveNotes;
+  juce::OwnedArray<GrainNote, juce::CriticalSection> mActiveNotes;
+
   Utils::PitchClass mLastPitchClass;
-  // Holes all the notes being played. The synth is the only class who will write to it so no need to worrying about multiple
+  // Holds all the notes being played. The synth is the only class who will write to it so no need to worrying about multiple
   // threads writing to it.
   // Currently the difference between "midiNotes" and "grainNotes" are midi is a subset mainly for the UI
   juce::Array<Utils::MidiNote> mMidiNotes;

@@ -12,7 +12,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_utils/juce_audio_utils.h>
-#include "../Parameters.h"
+#include "Parameters.h"
 
 /**
  * @brief Small triangles used to select trim range
@@ -47,9 +47,9 @@ class AudioThumbnailShadow : public juce::Component {
  public:
   using MouseCallback = std::function<void(const juce::MouseEvent&)>;
   AudioThumbnailShadow(MouseCallback onMouseDown, MouseCallback onMouseDrag, MouseCallback onMouseUp)
-      : mOnMouseDown(std::move(onMouseDown)), mOnMouseDrag(std::move(onMouseDrag)), mOnMouseUp(std::move(onMouseUp)){};
-  void paint(juce::Graphics& g) override{};
-  void resized() override{};
+      : mOnMouseDown(std::move(onMouseDown)), mOnMouseDrag(std::move(onMouseDrag)), mOnMouseUp(std::move(onMouseUp)) {}
+  void paint(juce::Graphics&) override {}
+  void resized() override {}
 
  private:
   void mouseDown(const juce::MouseEvent& e) override { mOnMouseDown(e); }
