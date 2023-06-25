@@ -101,11 +101,13 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   if (note != nullptr) {
     float startRadians = (1.5f * juce::MathConstants<float>::pi);
     juce::Colour noteColour = mParameters.getSelectedParamColour();
+    std::vector<ParamCandidate*> usedCandidates;
     // Draw generator position lines
     for (int i = 0; i < NUM_GENERATORS; ++i) {
       if (note->shouldPlayGenerator(i)) {
         // Draw position line where the gen's candidate is
         ParamCandidate* candidate = note->getCandidate(i);
+        usedCandidates.push_back(candidate);
         float endRadians = startRadians + candidate->posRatio * juce::MathConstants<float>::pi;
         g.setColour(genIdx == i ? noteColour.darker() : noteColour);
         g.drawLine(juce::Line<float>(mCenterPoint.getPointOnCircumference(mStartRadius, mStartRadius, endRadians), mCenterPoint.getPointOnCircumference(mEndRadius, mEndRadius, endRadians)), genIdx == i ? 3.0f : 2.0f);
@@ -115,11 +117,18 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     for (int i = 0; i < note->candidates.size(); ++i) {
       ParamCandidate& candidate = note->candidates[i];
       float endRadians = startRadians + candidate.posRatio * juce::MathConstants<float>::pi;
-      g.setColour(noteColour);
       juce::Rectangle<int> bubbleRect = juce::Rectangle<int>(CANDIDATE_BUBBLE_SIZE, CANDIDATE_BUBBLE_SIZE).withCentre(mCenterPoint.getPointOnCircumference(mEndRadius + CANDIDATE_BUBBLE_SIZE / 2, mEndRadius + CANDIDATE_BUBBLE_SIZE / 2, endRadians).toInt());
+      if (std::find(usedCandidates.begin(), usedCandidates.end(), &candidate) != usedCandidates.end()) {
+        g.setColour(noteColour);
+        g.fillEllipse(bubbleRect.toFloat());
+        g.setColour(juce::Colours::white);
+        g.drawFittedText(juce::String(i + 1), bubbleRect, juce::Justification::centred, 1);
+      } else {
+        g.setColour(noteColour);
+        g.drawFittedText(juce::String(i + 1), bubbleRect, juce::Justification::centred, 1);
+      }
+      g.setColour(noteColour);
       g.drawEllipse(bubbleRect.toFloat(), 2.0f);
-      g.drawFittedText(juce::String(i + 1), bubbleRect, juce::Justification::centred, 1);
-      //(juce::Line<float>(mCenterPoint.getPointOnCircumference(mStartRadius, mStartRadius, endRadians), mCenterPoint.getPointOnCircumference(mEndRadius, mEndRadius, endRadians)), 2.0f);
     }
   }
 
