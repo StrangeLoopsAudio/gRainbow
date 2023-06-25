@@ -85,6 +85,9 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
                 juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
   }
 
+  // Note and Candidate can be null while loading new values
+  if (!mParameters.ui.specComplete) return;
+
   // Draw position lines from active note
   ParamNote* note = nullptr;
   int genIdx = -1; // Currently selected generator. If >= 0, darken generator's line

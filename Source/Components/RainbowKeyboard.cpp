@@ -42,6 +42,9 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
     drawKey(g, key);
   }
 
+  // Nothing else is needed while loading
+  if (!mParameters.ui.specComplete) return;
+
   // Make return button if anything other than global is selected
   if (mParameters.selectedParams->type != ParamType::GLOBAL) {
     juce::Path btnReturnPath;
