@@ -102,11 +102,10 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   ParamUI& getParamUI() { return mParameters.ui; }
   void resetParameters(bool fullClear = true);
 
-  double& getLoadingProgress() { return mLoadingProgress; }
   const juce::Array<Utils::MidiNote>& getMidiNotes() { return mMidiNotes; }
   std::vector<ParamCandidate*> getActiveCandidates();
   Utils::PitchClass getLastPitchClass() { return mLastPitchClass; }
-  
+
   // Reference tone control
   void startReferenceTone(Utils::PitchClass pitchClass) {
     mReferenceTone.setFrequency(juce::MidiMessage::getMidiNoteInHertz(60 + pitchClass));
@@ -154,17 +153,16 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   std::array<Utils::SpecBuffer*, ParamUI::SpecType::COUNT> mProcessedSpecs;
   double mSampleRate = INVALID_SAMPLE_RATE;
   juce::MidiKeyboardState mKeyboardState;
-  double mLoadingProgress = 0.0;
   juce::AudioFormatManager mFormatManager;
   bool mNeedsResample = false;
-  
+
   // Reference sine tone
   juce::ToneGeneratorAudioSource mReferenceTone;
 
   // Grain control
   long mTotalSamps;
   juce::OwnedArray<GrainNote, juce::CriticalSection> mActiveNotes;
-  
+
   Utils::PitchClass mLastPitchClass;
   // Holds all the notes being played. The synth is the only class who will write to it so no need to worrying about multiple
   // threads writing to it.

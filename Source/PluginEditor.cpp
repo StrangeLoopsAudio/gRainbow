@@ -39,7 +39,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mParameters(synth.getParams()),
       mArcSpec(synth.getParams()),
       mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
-      mProgressBar(synth.getLoadingProgress()),
+      mProgressBar(mParameters.ui.loadingProgress),
       mKeyboard(synth.getKeyboardState(), synth.getParams()),
       mEnvAdsr(synth.getParams()),
       mEnvGrain(synth.getParams()),
@@ -228,7 +228,7 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   recordFile.deleteFile();
   mAudioDeviceManager.removeAudioCallback(&mRecorder);
   setLookAndFeel(nullptr);
-  
+
   mSynth.stopReferenceTone();
 }
 
@@ -242,7 +242,6 @@ void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponen
 void GRainbowAudioProcessorEditor::timerCallback() {
   // Update progress bar when loading audio clip
   // Will overlay on the other center components
-  mParameters.ui.loadingProgress = mSynth.getLoadingProgress();
   if (mParameters.ui.loadingProgress < 1.0 && mParameters.ui.loadingProgress > 0.0) {
     mProgressBar.setVisible(true);
   } else {
@@ -398,7 +397,7 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
                   rainHeight);
 
       // make rain slow up as closer to full progress (which is the value 1.0)
-      const int speed = 20 - static_cast<float>(18.0 * mParameters.ui.loadingProgress);
+      const int speed = 20 - static_cast<int>(18.0 * mParameters.ui.loadingProgress);
       mLeftRainDeltY -= speed;
       mRightRainDeltY -= speed;
       if (mLeftRainDeltY < rainHeight) {

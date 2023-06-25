@@ -141,10 +141,11 @@ static juce::Array<juce::String> PARAM_TYPE_NAMES{"global", "note", "generator"}
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
 static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "lowpass", "highpass", "bandpass"};
 
-static constexpr auto MAX_CANDIDATES = 6;
-static constexpr auto NUM_GENERATORS = 4;
-static constexpr auto SOLO_NONE = -1;
-static constexpr auto NUM_FILTER_TYPES = 3;
+static constexpr int MAX_CANDIDATES = 6;
+static constexpr int NUM_GENERATORS = 4;
+static constexpr int SOLO_NONE = -1;
+static constexpr int NUM_FILTER_TYPES = 3;
+static constexpr double RESET_LOADING_PROGRESS = 1.0;
 
 namespace ParamHelper {
 [[maybe_unused]] static juce::String getParamID(juce::AudioProcessorParameter* param) {
@@ -621,7 +622,7 @@ struct ParamUI {
   // Where ArcSpectrogram can let others know when it is "complete"
   // Makes no sense to save to preset file
   bool specComplete = false;
-  double loadingProgress = 1.0;
+  double loadingProgress = RESET_LOADING_PROGRESS;
 
   // Tracks what component is being displayed
   enum class CenterComponent { LOGO, ARC_SPEC, TRIM_SELECTION };
@@ -631,7 +632,7 @@ struct ParamUI {
   bool trimPlaybackOn = false;
   int trimPlaybackSample;  // sampling buffer index position
   int trimPlaybackMaxSample;
-  
+
   // Reference tone
   bool referenceToneActive = false;
 };

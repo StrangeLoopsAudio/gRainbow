@@ -55,8 +55,8 @@ GranularSynth::GranularSynth()
     mPitchDetector.clear();
   };
 
-  mPitchDetector.onProgressUpdated = [this](float progress) { mLoadingProgress = progress; };
-        
+  mPitchDetector.onProgressUpdated = [this](double progress) { mParameters.ui.loadingProgress = progress; };
+
   mReferenceTone.setAmplitude(0.0f);
 
   resetParameters();
@@ -124,7 +124,7 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
     juce::int64 end = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getEnd() / secondLength));
     trimAudioBuffer(mInputBuffer, mAudioBuffer, juce::Range<juce::int64>(start, end));
     mInputBuffer.clear();
-    mLoadingProgress = 1.0f;
+    mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
     mNeedsResample = false;
   }
 
@@ -186,7 +186,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
     buffer.clear(i, 0, bufferNumSample);
   }
-  
+
   // Reference tone
   mReferenceTone.getNextAudioBlock(juce::AudioSourceChannelInfo(&buffer, 0, buffer.getNumSamples()));
 
@@ -396,7 +396,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
 }
 
 void GranularSynth::handleGrainAddRemove(int blockSize) {
-  if (mLoadingProgress == 1.0) {
+  if (mParameters.ui.specComplete) {
     // Add one grain per active note
     for (GrainNote* gNote : mActiveNotes) {
       for (size_t i = 0; i < gNote->grainTriggers.size(); ++i) {
@@ -531,7 +531,7 @@ Utils::Result GranularSynth::loadAudioFile(juce::File file, bool process) {
   else {
     if (mSampleRate != INVALID_SAMPLE_RATE) {
       resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, formatReader->sampleRate, mSampleRate);
-      mLoadingProgress = 1.0f;
+      mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
     }
     else {
       mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
@@ -607,7 +607,7 @@ Utils::Result GranularSynth::loadPreset(juce::File file) {
     juce::String error = "The file failed to open with message: " + input.getStatus().getErrorMessage();
     return {false, error};
   }
-  mLoadingProgress = 1.0f;
+  mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
   return {true, ""};
 }
 
@@ -652,7 +652,7 @@ void GranularSynth::trimAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce:
 void GranularSynth::extractPitches() {
   // Cancel processing if in progress
   mPitchDetector.cancelProcessing();
-  mLoadingProgress = 0.0;
+  mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
   mPitchDetector.process(&mAudioBuffer, mSampleRate);
 }
 
