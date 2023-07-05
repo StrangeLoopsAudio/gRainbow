@@ -106,24 +106,6 @@ typedef struct EnvelopeADSR {
   }
 } EnvelopeADSR;
 
-template <typename CompType, typename CompAttachment>
-class AttachedComponent {
- public:
-  AttachedComponent<CompType, CompAttachment>(juce::RangedAudioParameter& param, juce::Component& parent,
-                                              std::function<void(CompType&)> init = nullptr) {
-    attachment.reset(new CompAttachment(param, component));
-    parent.addAndMakeVisible(component);
-    if (init != nullptr) init(component);
-    attachment->sendInitialUpdate();
-  }
-  CompType component;
-
- private:
-  std::unique_ptr<CompAttachment> attachment;
-
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AttachedComponent)
-};
-
 [[maybe_unused]] static const std::vector<float> getGrainEnvelopeLUT(const float shape, const float tilt) {
   std::vector<float> lut;
   /* LUT divided into 3 parts
