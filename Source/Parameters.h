@@ -487,7 +487,7 @@ struct ParamNote : ParamCommon {
 
 struct ParamsNote {
   ParamsNote() {
-    for (size_t i = 0; i < Utils::PitchClass::COUNT; ++i) {
+    for (int i = 0; i < (int)Utils::PitchClass::COUNT; ++i) {
       notes[i] = std::unique_ptr<ParamNote>(new ParamNote(i));
     }
   }

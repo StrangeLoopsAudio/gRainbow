@@ -706,7 +706,7 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNum
             mParameters.getFloatParam(mParameters.note.notes[gNote->pitchClass]->generators[i].get(), ParamCommon::Type::RELEASE);
         if (release >= maxRelease) maxRelease = release;
       }
-      gNote->removeTs = mTotalSamps + (maxRelease * mSampleRate);
+      gNote->removeTs = mTotalSamps + static_cast<int>(maxRelease * mSampleRate);
 
       break;
     }
