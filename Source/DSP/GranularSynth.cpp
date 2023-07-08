@@ -303,6 +303,10 @@ void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
 }
 
 void GranularSynth::setStateInformation(const void* data, int sizeInBytes) {
+  if (this->wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
+    return;  // reloadPluginState() can try loading old/bad/stale info and crash at launch
+  }
+
   auto xml = getXmlFromBinary(data, sizeInBytes);
 
   if (xml != nullptr) {
