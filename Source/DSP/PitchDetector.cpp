@@ -8,10 +8,7 @@
   ==============================================================================
 */
 
-#define _USE_MATH_DEFINES
-
 #include "PitchDetector.h"
-#include <limits.h>
 
 PitchDetector::PitchDetector(double startProgress, double endProgress)
     : juce::Thread("pitch detector thread"),

@@ -8,11 +8,7 @@
   ==============================================================================
 */
 
-#define _USE_MATH_DEFINES
-
 #include "TransientDetector.h"
-
-#include <limits.h>
 
 TransientDetector::TransientDetector(double startProgress, double endProgress)
     : juce::Thread("transient thread"),

@@ -144,7 +144,6 @@ static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "lowpass", "highpass"
 static constexpr int MAX_CANDIDATES = 6;
 static constexpr int NUM_GENERATORS = 4;
 static constexpr int SOLO_NONE = -1;
-static constexpr int NUM_FILTER_TYPES = 3;
 static constexpr double RESET_LOADING_PROGRESS = 1.0;
 
 namespace ParamHelper {
@@ -634,9 +633,6 @@ struct ParamUI {
   bool trimPlaybackOn = false;
   int trimPlaybackSample;  // sampling buffer index position
   int trimPlaybackMaxSample;
-
-  // Reference tone
-  bool referenceToneActive = false;
 };
 
 struct Parameters {

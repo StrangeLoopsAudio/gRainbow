@@ -51,8 +51,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   std::function<void(void)> onImagesComplete = nullptr;
 
  private:
-  static constexpr auto MIN_FREQ = 100;
-  static constexpr auto MAX_FREQ = 5000;
   static constexpr auto BUFFER_PROCESS_TIMEOUT = 10000;
   static constexpr auto REFRESH_RATE_FPS = 30;
 
@@ -60,8 +58,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   static constexpr auto SPEC_TYPE_HEIGHT = 40;
   static constexpr auto SPEC_TYPE_WIDTH = 100;
   static constexpr auto CANDIDATE_BUBBLE_SIZE = 14;
-  static constexpr auto MAX_GRAIN_SIZE = 40;
-  static constexpr auto MAX_NUM_GRAINS = 40;
   static constexpr auto NUM_COLS = 600;
   // Colours
   static constexpr auto COLOUR_MULTIPLIER = 20.0f;
@@ -69,15 +65,9 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   typedef struct ArcGrain {
     ParamGenerator *paramGenerator;
     float gain;
-    float envIncSamples;  // How many envelope samples to increment each frame
-    int numFramesActive;
     Utils::PitchClass pitchClass;
-    ArcGrain(ParamGenerator *paramGenerator_, float gain_, float envIncSamples_, Utils::PitchClass pitchClass_)
-        : paramGenerator(paramGenerator_),
-          gain(gain_),
-          envIncSamples(envIncSamples_),
-          numFramesActive(0),
-          pitchClass(pitchClass_) {}
+    ArcGrain(ParamGenerator *paramGenerator_, float gain_, Utils::PitchClass pitchClass_)
+        : paramGenerator(paramGenerator_), gain(gain_), pitchClass(pitchClass_) {}
   } ArcGrain;
 
   // Parameters
@@ -101,7 +91,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   int mBowWidth;
 
   std::random_device mRandomDevice{};
-  std::mt19937 mGenRandom{mRandomDevice()};
   std::normal_distribution<> mNormalRand{0.0f, 0.4f};
 
   juce::ComboBox mSpecType;

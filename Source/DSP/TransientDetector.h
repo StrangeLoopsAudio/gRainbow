@@ -54,7 +54,6 @@ class TransientDetector : juce::Thread {
   std::vector<Transient> mTransients;
   int mAttackFrames = PARAM_ATTACK_LOCK;
 
-  void updateFft();
   void retrieveTransients();
   // Using current energy buffer and attack frame counter, determines if current
   // frame is a transient frame

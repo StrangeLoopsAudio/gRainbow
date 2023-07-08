@@ -196,17 +196,3 @@ void FilterControl::resized() {
 
   mVizRect = r.toFloat();
 }
-
-float FilterControl::filterTypeToCutoff(Utils::FilterType filterType) {
-  switch (filterType) {
-    case (Utils::FilterType::LOWPASS):
-      return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
-    case (Utils::FilterType::HIGHPASS):
-      return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::FILTER_HP_CUTOFF_DEFAULT_HZ);
-    case (Utils::FilterType::BANDPASS):
-      return ParamRanges::CUTOFF.convertTo0to1(ParamDefaults::FILTER_BP_CUTOFF_DEFAULT_HZ);
-    case (Utils::FilterType::NO_FILTER):
-      jassertfalse;
-      return 0.0f;
-  }
-}

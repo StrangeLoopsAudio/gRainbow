@@ -43,14 +43,9 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
 
   void setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes);
 
-  // Returns a value between 0.0-1.0 representing the note's x position on the
-  // keyboard
-  float getPitchXRatio(Utils::PitchClass pitchClass);
-
  private:
   static constexpr int MIDI_CHANNEL = 1;
   static constexpr float NOTE_BODY_HEIGHT = 0.45f;
-  static constexpr float GEN_NODE_HEIGHT = 0.08f;
   static constexpr float NOTE_BODY_SATURATION = 0.5f;
   static constexpr float NOTE_LABEL_SIZE = 22;
   static constexpr float ADD_GEN_SIZE = 18;
