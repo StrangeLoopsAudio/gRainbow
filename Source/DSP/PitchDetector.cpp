@@ -65,7 +65,7 @@ void PitchDetector::updateProgress(double progress) {
 void PitchDetector::getSegmentedPitchBuffer() {
   mSegmentedPitches.clear();
   for (size_t frame = 0; frame < mHPCP.size(); ++frame) {
-    mSegmentedPitches.push_back(std::vector<float>(mHPCP[frame].size(), 0.0f));
+    mSegmentedPitches.emplace_back(std::vector<float>(mHPCP[frame].size(), 0.0f));
   }
   for (Utils::PitchClass i : Utils::ALL_PITCH_CLASS) {
     std::vector<Pitch>& pitchVec = mPitchMap.getReference(i);
@@ -88,7 +88,7 @@ bool PitchDetector::computeHPCP() {
   for (size_t frame = 0; frame < spec.size(); ++frame) {
     if (threadShouldExit()) return false;
     updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(frame) / static_cast<double>(spec.size()))));
-    mHPCP.push_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
+    mHPCP.emplace_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
 
     const std::vector<float>& specFrame = spec[frame];
 
@@ -194,8 +194,8 @@ bool PitchDetector::segmentPitches() {
             // Push to completed segments
             float confidence = mSegments[i].salience / (frame - mSegments[i].startFrame);
             if (confidence > maxConfidence) maxConfidence = confidence;
-            mPitchMap.getReference(pc).push_back(Pitch(pc, (float)mSegments[i].startFrame / mHPCP.size(),
-                                                      (float)(frame - mSegments[i].startFrame) / mHPCP.size(), confidence));
+            mPitchMap.getReference(pc).emplace_back(Pitch(pc, (float)mSegments[i].startFrame / mHPCP.size(),
+                                                          (float)(frame - mSegments[i].startFrame) / mHPCP.size(), confidence));
           }
           // Replace segment with new peak
           mSegments[i].isAvailable = true;
@@ -291,7 +291,7 @@ void PitchDetector::initHarmonicWeights() {
 
     if (it == mHarmonicWeights.end()) {
       // no harmonic peak found for this frequency; add it
-      mHarmonicWeights.push_back(HarmonicWeight(semitone, (1.0f / octweight)));
+      mHarmonicWeights.emplace_back(HarmonicWeight(semitone, (1.0f / octweight)));
     } else {
       // else, add the weight
       (*it).gain += (1.0 / octweight);
@@ -313,7 +313,7 @@ std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int numPeaks, const std
   // first check the boundaries:
   if (i + 1 < size && frame[i] > frame[i + 1]) {
     if (frame[i] > MAGNITUDE_THRESHOLD) {
-      peaks.push_back(Peak(i, frame[i]));
+      peaks.emplace_back(Peak(i, frame[i]));
     }
   }
 
@@ -348,7 +348,7 @@ std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int numPeaks, const std
 
       if (resultBin > size - 1) break;
 
-      peaks.push_back(Peak(resultBin, resultVal));
+      peaks.emplace_back(Peak(resultBin, resultVal));
     }
 
     // nothing found, start loop again
@@ -359,7 +359,7 @@ std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int numPeaks, const std
         float resultBin = 0.0;
         float resultVal = 0.0;
         interpolatePeak(frame[i - 1], frame[i], frame[i + 1], j, resultVal, resultBin);
-        peaks.push_back(Peak(resultBin, resultVal));
+        peaks.emplace_back(Peak(resultBin, resultVal));
       }
       break;
     }
@@ -369,7 +369,7 @@ std::vector<PitchDetector::Peak> PitchDetector::getPeaks(int numPeaks, const std
   float pos = 1.0 / scale;
   if (size - 2 < pos && pos <= size - 1 && frame[size - 1] > frame[size - 2]) {
     if (frame[size - 1] > MAGNITUDE_THRESHOLD) {
-      peaks.push_back(Peak((size - 1), frame[size - 1]));
+      peaks.emplace_back(Peak((size - 1), frame[size - 1]));
     }
   }
 

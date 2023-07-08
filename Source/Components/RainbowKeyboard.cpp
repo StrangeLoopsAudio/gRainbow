@@ -158,8 +158,6 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
 
   // Draw the active generators on top of each key
   const int numEnabledGens = paramNote.getNumEnabledGens();
-  int genHeight = getHeight() * (1.0f - NOTE_BODY_HEIGHT) / 4;
-  juce::Rectangle<int> genRect = juce::Rectangle<int>(area.getWidth(), genHeight);
 
   for (int i = 0; i < numEnabledGens; ++i) {
     ParamGenerator* gen = paramNote.getEnabledGenByIdx(i);

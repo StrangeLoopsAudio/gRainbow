@@ -228,7 +228,7 @@ void ArcSpectrogram::run() {
   } else {
     // All other types of spectrograms
     Utils::SpecBuffer& spec = *(Utils::SpecBuffer*)mBuffers[mParameters.ui.specType];  // cast to SpecBuffer
-    if (spec.size() == 0 || threadShouldExit()) return;
+    if (!spec.empty() || threadShouldExit()) return;
 
     const float maxRow =
         static_cast<float>((mParameters.ui.specType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size());
@@ -277,7 +277,7 @@ void ArcSpectrogram::run() {
 void ArcSpectrogram::onImageComplete(ParamUI::SpecType specType) {
   mImagesComplete[specType] = true;
   for (int i = 0; i < (int)ParamUI::SpecType::COUNT; i++) {
-    if (mImagesComplete[i] == false) {
+    if (!mImagesComplete[i]) {
       return;
     }
   }

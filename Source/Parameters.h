@@ -403,7 +403,7 @@ struct ParamNote : ParamCommon {
   }
 
   // Returns the number of enabled generators
-  int getNumEnabledGens() const {
+  [[nodiscard]] int getNumEnabledGens() const {
     int numEnabled = 0;
     for (auto& gen : generators) {
       if (gen->enable->get()) numEnabled++;
@@ -412,7 +412,7 @@ struct ParamNote : ParamCommon {
   }
 
   // Gets list of enabled generators, then returns the one at idx, or nullptr if idx > num enabled gens
-  ParamGenerator* getEnabledGenByIdx(int idx) const {
+  [[nodiscard]] ParamGenerator* getEnabledGenByIdx(int idx) const {
     int numEnabled = 0;
     for (size_t i = 0; i < NUM_GENERATORS; ++i) {
       if (generators[i]->enable->get()) {
@@ -653,14 +653,11 @@ struct Parameters {
     switch (selectedParams->type) {
       case ParamType::GLOBAL:
         return Utils::PitchClass::NONE;
-        break;
       case ParamType::NOTE:
-        return (Utils::PitchClass)dynamic_cast<ParamNote*>(selectedParams)->noteIdx;
-        break;
+        return (Utils::PitchClass) dynamic_cast<ParamNote*>(selectedParams)->noteIdx;
       case ParamType::GENERATOR:
         ParamGenerator* gen = dynamic_cast<ParamGenerator*>(selectedParams);
         return (Utils::PitchClass)gen->noteIdx;
-        break;
     }
     return Utils::PitchClass::NONE;
   }
@@ -670,14 +667,11 @@ struct Parameters {
     switch (selectedParams->type) {
       case ParamType::GLOBAL:
         return Utils::GLOBAL_COLOUR;
-        break;
       case ParamType::NOTE:
         return Utils::getRainbow12Colour(dynamic_cast<ParamNote*>(selectedParams)->noteIdx).darker();
-        break;
       case ParamType::GENERATOR:
         ParamGenerator* gen = dynamic_cast<ParamGenerator*>(selectedParams);
         return Utils::getRainbow12Colour(gen->noteIdx).brighter(gen->genIdx * Utils::GENERATOR_BRIGHTNESS_ADD).darker();
-        break;
     }
     return juce::Colours::black;
   }
