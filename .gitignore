@@ -6,6 +6,8 @@
 .vscode/*
 out/*
 
+*.DS_Store
+
 # Prerequisites
 *.d
 

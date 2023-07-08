@@ -34,7 +34,6 @@ jobs:
             ccache: ccache
           - name: macOS
             os: macos-12
-            pluginval-binary: pluginval.app/Contents/MacOS/pluginval
             ccache: ccache
           - name: Windows
             os: windows-latest
@@ -133,6 +132,7 @@ jobs:
     - name: Pluginval
       working-directory: ${{ env.BUILD_DIR }}
       shell: bash
+      if: ${{ matrix.name != 'macOS' }}
       run: |
         curl -LO "https://github.com/Tracktion/pluginval/releases/download/v1.0.3/pluginval_${{ matrix.name }}.zip"
         7z x pluginval_${{ matrix.name }}.zip
