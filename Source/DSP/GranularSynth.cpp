@@ -730,7 +730,7 @@ void GranularSynth::createCandidates(juce::HashMap<Utils::PitchClass, std::vecto
       float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
       for (size_t i = 0; i < pitchVec.size(); ++i) {
         if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
-        note->candidates.push_back(ParamCandidate(pitchVec[i].posRatio, pbRate, pitchVec[i].duration, pitchVec[i].gain));
+        note->candidates.emplace_back(ParamCandidate(pitchVec[i].posRatio, pbRate, pitchVec[i].duration, pitchVec[i].gain));
         numFound++;
         if (numFound >= MAX_CANDIDATES) {
           foundAll = true;
@@ -743,7 +743,7 @@ void GranularSynth::createCandidates(juce::HashMap<Utils::PitchClass, std::vecto
         float pbRate2 = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
         for (size_t i = 0; i < pitchVec2.size(); ++i) {
           if (pitchVec2[i].gain < MIN_CANDIDATE_SALIENCE) continue;
-          note->candidates.push_back(ParamCandidate(pitchVec2[i].posRatio, pbRate2, pitchVec2[i].duration, pitchVec2[i].gain));
+          note->candidates.emplace_back(ParamCandidate(pitchVec2[i].posRatio, pbRate2, pitchVec2[i].duration, pitchVec2[i].gain));
           numFound++;
           if (numFound >= MAX_CANDIDATES) {
             foundAll = true;

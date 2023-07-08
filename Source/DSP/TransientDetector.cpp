@@ -67,7 +67,7 @@ void TransientDetector::retrieveTransients() {
 
     // Check energy threshold
     if (isTransient()) {
-      mTransients.push_back(Transient((float)frame / spec.size(), 1.0f));
+      mTransients.emplace_back(Transient((float)frame / spec.size(), 1.0f));
       mAttackFrames = PARAM_ATTACK_LOCK;
     } else if (mAttackFrames != 0) {
       mAttackFrames--;
