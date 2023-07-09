@@ -109,7 +109,7 @@ bool PitchDetector::computeHPCP() {
           float harmonicWeight = mHarmonicWeights[hIdx].gain;
           float d = std::fmod(12.0f * std::log2(freq / centerFreq), 12.0f);
           if (std::abs(d) <= (0.5f * HPCP_WINDOW_LEN)) {
-            float w = std::pow(std::cos((M_PI * d) / HPCP_WINDOW_LEN), 2.0f);
+            float w = std::pow(std::cos((juce::MathConstants<float>::pi * d) / HPCP_WINDOW_LEN), 2.0f);
             mHPCP[frame][pcIdx] += (w * std::pow(peaks[i].gain, 2) * harmonicWeight * harmonicWeight);
             if (mHPCP[frame][pcIdx] > curMax) curMax = mHPCP[frame][pcIdx];
           }
