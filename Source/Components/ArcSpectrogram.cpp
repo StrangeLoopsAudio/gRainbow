@@ -10,8 +10,6 @@
 
 #include "ArcSpectrogram.h"
 
-#include <limits.h>
-
 #include "Settings.h"
 #include "Utils/Colour.h"
 

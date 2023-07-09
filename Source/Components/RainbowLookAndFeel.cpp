@@ -4,7 +4,6 @@
 #include "Utils/Utils.h"
 #include "Utils/Colour.h"
 #include "Utils/PitchClass.h"
-#include "Parameters.h"
 
 void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int width, int height, float sliderPosProportional, float,
                                           float, juce::Slider& slider) {

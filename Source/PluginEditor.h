@@ -69,7 +69,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   // UI Layout
   static constexpr int BTN_PANEL_HEIGHT = 65;
   static constexpr int PROGRESS_SIZE = 80;
-  static constexpr int NOTE_BULB_SIZE = 10;
   static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
   static constexpr const char* MANUAL_URL = "https://github.com/bboettcher3/gRainbow/blob/development/README.md";
 
@@ -97,7 +96,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   EnvelopeGrain mEnvGrain;
   GrainControl mGrainControl;
   FilterControl mFilterControl;
-  juce::Rectangle<float> mNoteDisplayRect;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;
 

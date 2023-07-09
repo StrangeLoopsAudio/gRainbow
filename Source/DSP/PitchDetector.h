@@ -35,9 +35,6 @@
 
 class PitchDetector : juce::Thread {
  public:
-  static constexpr auto MIN_MIDINOTE = 43;
-  static constexpr auto MAX_MIDINOTE = 91;
-
   PitchDetector(double startProgress, double endProgress);
   ~PitchDetector();
 
@@ -69,7 +66,6 @@ class PitchDetector : juce::Thread {
   static constexpr int FFT_SIZE = 4096;
   static constexpr int HOP_SIZE = 512;
   // Spectral Whitening
-  static constexpr double BPF_RESOLUTION = 100.0;
   static constexpr double MIN_AVG_FRAME_ENERGY = 0.0001;
   // HPCP
   static constexpr int REF_FREQ = 440;

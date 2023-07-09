@@ -36,14 +36,11 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   static constexpr const char* SECTION_TITLE = "grain envelope";
   static constexpr float MIN_RATE_RATIO = .25f;
   static constexpr float MAX_RATE_RATIO = 1.0f;
-  static constexpr float GAIN_HEIGHT = 0.8f;
   static constexpr int MAX_NUM_ENVS = 6;
 
   class QuantizedSlider : public RainbowSlider {
    public:
     QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : RainbowSlider(parameters, type), mSync(false) {}
-    QuantizedSlider(Parameters& parameters, ParamCommon::Type type, juce::NormalisableRange<float> range)
-        : RainbowSlider(parameters, type), mSync(false), mRange(range) {}
     void setSync(bool sync) {
       mSync = sync;
       setTextValueSuffix(sync ? "" : suffix);

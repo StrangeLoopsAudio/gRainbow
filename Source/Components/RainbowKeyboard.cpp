@@ -69,10 +69,6 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
   }
 }
 
-float RainbowKeyboard::getPitchXRatio(Utils::PitchClass pitchClass) {
-  return mNoteRectMap[pitchClass].getCentreX() / static_cast<float>(getWidth());
-}
-
 void RainbowKeyboard::fillNoteRectangleMap() {
   // Keep everything in float to match Rectangle type
   const float componentHeight = static_cast<float>(getHeight());
