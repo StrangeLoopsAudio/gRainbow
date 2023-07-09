@@ -67,21 +67,22 @@ typedef struct EnvelopeADSR {
     state = EnvelopeState::RELEASE;
   }
   /* ADSR params (except sustain) should be in samples */
-  float getAmplitude(long curTs, float attack, float decay, float sustain, float release) {
+  float getAmplitude(int curTs, float attack, float decay, float sustain, float release) {
     float newAmp = 0.0f;
+    float tsDiff = static_cast<float>(curTs - noteOnTs);
     switch (state) {
       case Utils::EnvelopeState::ATTACK: {
         if (noteOnTs < 0) return 0.0f;
-        newAmp = (curTs - noteOnTs) / attack;
-        if ((curTs - noteOnTs) >= attack) {
+        newAmp = tsDiff / attack;
+        if (tsDiff >= attack) {
           state = Utils::EnvelopeState::DECAY;
         }
         break;
       }
       case Utils::EnvelopeState::DECAY: {
         if (noteOnTs < 0) return 0.0f;
-        newAmp = 1.0f - ((curTs - noteOnTs - attack) / (float)decay) * (1.0f - sustain);
-        if (curTs - noteOnTs - attack >= decay) {
+        newAmp = 1.0f - ((tsDiff - attack) / (float)decay) * (1.0f - sustain);
+        if (tsDiff - attack >= decay) {
           state = Utils::EnvelopeState::SUSTAIN;
         }
         break;
@@ -94,8 +95,8 @@ typedef struct EnvelopeADSR {
       }
       case Utils::EnvelopeState::RELEASE: {
         if (noteOffTs < 0) return 0.0f;
-        newAmp = noteOffAmplitude - (((curTs - noteOffTs) / (float)release) * noteOffAmplitude);
-        if ((curTs - noteOffTs) > release) {
+        newAmp = noteOffAmplitude - ((tsDiff / release) * noteOffAmplitude);
+        if (tsDiff > release) {
           noteOffTs = -1;
         }
         break;

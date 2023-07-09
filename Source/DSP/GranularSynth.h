@@ -160,7 +160,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   juce::ToneGeneratorAudioSource mReferenceTone;
 
   // Grain control
-  long mTotalSamps;
+  int mTotalSamps;
   juce::OwnedArray<GrainNote, juce::CriticalSection> mActiveNotes;
 
   Utils::PitchClass mLastPitchClass;
