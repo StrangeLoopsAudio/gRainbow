@@ -226,7 +226,7 @@ void ArcSpectrogram::run() {
   } else {
     // All other types of spectrograms
     Utils::SpecBuffer& spec = *(Utils::SpecBuffer*)mBuffers[mParameters.ui.specType];  // cast to SpecBuffer
-    if (!spec.empty() || threadShouldExit()) return;
+    if (spec.empty() || threadShouldExit()) return;
 
     const float maxRow =
         static_cast<float>((mParameters.ui.specType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size());
