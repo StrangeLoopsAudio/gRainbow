@@ -96,7 +96,7 @@ static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> SUSTAIN(0.0f, 1.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
-static juce::NormalisableRange<float> CUTOFF(100.0f, 2000.0f);
+static juce::NormalisableRange<float> CUTOFF(100.0f, 2000.0f, 0.0f, 0.25f);
 static juce::NormalisableRange<float> RESONANCE(0.5f, 1.0f);
 static juce::NormalisableRange<float> GRAIN_SHAPE(0.0f, 1.0f);
 static juce::NormalisableRange<float> GRAIN_TILT(0.0f, 1.0f);

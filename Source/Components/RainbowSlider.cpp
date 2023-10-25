@@ -14,14 +14,15 @@ RainbowSlider::RainbowSlider(Parameters& parameters, ParamCommon::Type type)
   setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag);
   setRotaryParameters(rotaryParams);
+  setSkewFactor(mParameters.global.common[mType]->getNormalisableRange().skew);
   setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::GLOBAL_COLOUR);
   setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
-  setDoubleClickReturnValue(true, COMMON_DEFAULTS[type]);
+  setDoubleClickReturnValue(true, COMMON_DEFAULTS[mType]);
   onValueChange = [this] {
     ParamHelper::setCommonParam(mParameters.selectedParams, mType, (float)getValue());
     if (mParameters.selectedParams->type == ParamType::NOTE) {
       Utils::PitchClass pitchClass = (Utils::PitchClass) dynamic_cast<ParamNote*>(mParameters.selectedParams)->noteIdx;
-      float posNorm = juce::jmap(getValue(), getMinimum(), getMaximum(), 0.0, 1.0);
+      float posNorm = mParameters.selectedParams->common[mType]->getNormalisableRange().convertTo0to1((float)getValue());
       mArcs.set(pitchClass, posNorm);
     }
   };
