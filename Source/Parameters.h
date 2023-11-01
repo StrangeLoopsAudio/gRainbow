@@ -300,7 +300,6 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamCommon)
 };
 
-// TODO - Still needed?
 static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GAIN_DEFAULT,
                                                                ParamDefaults::ATTACK_DEFAULT_SEC,
                                                                ParamDefaults::DECAY_DEFAULT_SEC,
@@ -731,11 +730,6 @@ struct Parameters {
 
     // Just use the global value
     return P_BOOL(global.common[type])->get();
-  }
-  std::vector<float> getGrainEnv(ParamCommon* common) {
-    const float shape = getFloatParam(common, ParamCommon::Type::GRAIN_SHAPE);
-    const float tilt = getFloatParam(common, ParamCommon::Type::GRAIN_TILT);
-    return Utils::getGrainEnvelopeLUT(shape, tilt);
   }
   float getFilterOutput(ParamCommon* common, int ch, float sample) {
     ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);

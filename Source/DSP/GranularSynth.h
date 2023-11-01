@@ -37,6 +37,31 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
     SUSTAIN,   // Position env sustain
     RELEASE    // Position env release
   };
+  
+  class GrainPool {
+  public:
+    GrainPool() {}
+    ~GrainPool() {}
+    
+    Grain* getNextAvailableGrain() {
+      auto nextGrain = std::find_if(mGrains.begin(), mGrains.end(), [](Grain& g) { return !g.isActive; });
+      if (nextGrain != mGrains.end()) {
+        nextGrain->isActive = true;
+        return nextGrain;
+      }
+      return nullptr;
+    }
+    void reclaimExpiredGrains(int totalSamples) {
+      for (Grain& g : mGrains) {
+        if (totalSamples > (g.trigTs + g.duration)) {
+          g.isActive = false;
+        }
+      }
+    }
+    
+  private:
+    std::array<Grain, Utils::MAX_GRAINS> mGrains;
+  };
 
   GranularSynth();
   ~GranularSynth();
@@ -130,7 +155,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
     float velocity;
     int removeTs = -1; // Timestamp when note is released
     std::array<Utils::EnvelopeADSR, NUM_GENERATORS> genAmpEnvs;
-    std::array<juce::Array<Grain>, NUM_GENERATORS> genGrains;  // Active grains for note per generator
+    std::array<juce::Array<Grain*>, NUM_GENERATORS> genGrains;  // Active grains for note per generator
     std::array<float, NUM_GENERATORS> grainTriggers;           // Keeps track of triggering grains from each generator
     GrainNote(Utils::PitchClass pitchClass_, float velocity_, Utils::EnvelopeADSR ampEnv)
         : pitchClass(pitchClass_), velocity(velocity_) {
@@ -162,6 +187,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   // Grain control
   int mTotalSamps;
   juce::OwnedArray<GrainNote, juce::CriticalSection> mActiveNotes;
+  GrainPool mGrainPool;
 
   Utils::PitchClass mLastPitchClass;
   // Holds all the notes being played. The synth is the only class who will write to it so no need to worrying about multiple

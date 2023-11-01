@@ -29,7 +29,10 @@ static constexpr int KNOB_WIDTH = (PANEL_WIDTH - (PADDING * 2)) / 4;
 static constexpr int KNOB_HEIGHT = KNOB_WIDTH / 2;
 static constexpr float ROUNDED_AMOUNT = 6.0f;
 
+// Grain envelopes and limits
+static constexpr int MAX_GRAINS = 20;  // Max grains active at once
 static constexpr auto ENV_LUT_SIZE = 64;  // grain env lookup table size
+typedef std::array<float, ENV_LUT_SIZE> GrainEnv;
 
 typedef struct Result {
   bool success;
@@ -107,8 +110,7 @@ typedef struct EnvelopeADSR {
   }
 } EnvelopeADSR;
 
-[[maybe_unused]] static const std::vector<float> getGrainEnvelopeLUT(const float shape, const float tilt) {
-  std::vector<float> lut;
+[[maybe_unused]] static void fillGrainEnvelopeLUT(GrainEnv& lut, const float shape, const float tilt) {
   /* LUT divided into 3 parts
 
                1.0
@@ -122,15 +124,14 @@ typedef struct EnvelopeADSR {
   int rampDownStartSample = juce::jmin((float)ENV_LUT_SIZE, scaledTilt + scaledShape);
   for (int i = 0; i < ENV_LUT_SIZE; i++) {
     if (i < rampUpEndSample) {
-      lut.push_back(static_cast<float>(i / rampUpEndSample));
+      lut[i] = static_cast<float>(i / rampUpEndSample);
     } else if (i > rampDownStartSample) {
-      lut.push_back(1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample));
+      lut[i] = 1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample);
     } else {
-      lut.push_back(1.0f);
+      lut[i] = 1.0f;
     }
   }
   juce::FloatVectorOperations::clip(lut.data(), lut.data(), 0.0f, 1.0f, lut.size());
-  return lut;
 }
 
 static inline float db2lin(float value) { return std::pow(10.0f, value / 10.0f); }
