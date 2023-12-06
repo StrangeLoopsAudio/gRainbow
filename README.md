@@ -28,7 +28,3 @@ When an audio file is loaded into gRainbow, a pitch detection analysis is ran to
 ![gRainbow gui](docs/gRainbow0_4_0.png)
 
 Is anything important missing or needed? Open an [Issue](github.com/bboettcher3/gRainbow/issues) and let us know!
-
-If you'd like to donate to support the developers with the occasional coffee, you can set that up here: 
-
-<noscript><a href="https://liberapay.com/bboettcher3/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a></noscript>
