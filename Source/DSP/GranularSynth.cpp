@@ -501,6 +501,11 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
   std::vector<GrainNote*> notesToRemove;
   for (auto* gNote : mActiveNotes) {
     if (gNote->removeTs != -1 && mTotalSamps >= gNote->removeTs) {
+      for (int genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
+        for (auto* grain : gNote->genGrains[genIdx]) {
+          if (grain) grain->isActive = false;
+        }
+      }
       notesToRemove.push_back(gNote);
     }
   }

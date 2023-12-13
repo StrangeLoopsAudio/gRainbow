@@ -46,7 +46,6 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
     Grain* getNextAvailableGrain() {
       auto nextGrain = std::find_if(mGrains.begin(), mGrains.end(), [](Grain& g) { return !g.isActive; });
       if (nextGrain != mGrains.end()) {
-        nextGrain->isActive = true;
         return nextGrain;
       }
       return nullptr;
