@@ -6,7 +6,7 @@ namespace Utils {
 static const juce::Colour GLOBAL_COLOUR = juce::Colours::white;
 static constexpr float GENERATOR_BRIGHTNESS_ADD = 0.2f;  // Amount to make brighter per generator
 static const juce::Colour BG_COLOUR = juce::Colour(0xff212121);
-static const juce::Colour PANEL_COLOUR = juce::Colour(0xff2c2c2c);
+static const juce::Colour PANEL_COLOUR = juce::Colour(0xff353535);
 
 static inline juce::Colour getRainbow6Colour(int value) {
   jassert(value >= 0 && value <= 6);

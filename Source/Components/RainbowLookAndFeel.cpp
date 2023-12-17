@@ -28,11 +28,17 @@ void RainbowLookAndFeel::drawTabButton(juce::TabBarButton& btn, juce::Graphics& 
   g.setColour(tabColour);
   g.fillRoundedRectangle(r.withHeight(50).toFloat(), 10);
   
+  g.setColour(Utils::GLOBAL_COLOUR);
   drawTabButtonText(btn, g, mouseOver, mouseDown);
 }
 
-void RainbowLookAndFeel::drawTabAreaBehindFrontButton(juce::TabbedButtonBar& bar, juce::Graphics& g, int w, int h) {
-  
+void RainbowLookAndFeel::drawTabAreaBehindFrontButton(juce::TabbedButtonBar& bar, juce::Graphics& g, int w, int h) {} // Do nothing
+
+void RainbowLookAndFeel::drawTabButtonText(juce::TabBarButton& btn, juce::Graphics& g, bool mouseOver, bool mouseDown) {
+  auto textColour = (btn.isFrontTab() || mouseOver) ? Utils::GLOBAL_COLOUR : Utils::GLOBAL_COLOUR.darker();
+  g.setColour(textColour);
+  int trim = btn.getExtraComponent() ? btn.getExtraComponent()->getRight() : 0;
+  g.drawText(btn.getButtonText(), btn.getLocalBounds().withTrimmedLeft(trim), juce::Justification::centred);
 }
 
 // Sliders

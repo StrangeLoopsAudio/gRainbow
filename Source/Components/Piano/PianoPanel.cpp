@@ -47,6 +47,8 @@ void PianoPanel::updateSelectedParams() {
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
+  
+  waveform.updateSelectedParams();
 
   mParamHasChanged.store(true);
   repaint();

@@ -66,6 +66,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   auto* tabImageComp = new juce::ImageComponent();
   tabImageComp->setInterceptsMouseClicks(false, false);
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
+  mTabsEnvelopes.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::tabTextColourId, Utils::GLOBAL_COLOUR);
+  mTabsEnvelopes.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::frontTextColourId, Utils::GLOBAL_COLOUR);
   mTabsEnvelopes.setTabBarDepth(Utils::TAB_HEIGHT);
   mTabsEnvelopes.addTab("amp env", Utils::BG_COLOUR, &mEnvAdsr, false);
   mTabsEnvelopes.getTabbedButtonBar().getTabButton(0)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
@@ -140,6 +142,13 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mParameters.onSelectedChange = [this]() {
     mEnvAdsr.updateSelectedParams();
     mEnvGrain.updateSelectedParams();
+    mFx1.updateSelectedParams();
+    mFx2.updateSelectedParams();
+    mFx3.updateSelectedParams();
+    mPianoPanel.updateSelectedParams();
+    mModKeyboard.updateSelectedParams();
+    mModEnvelopes.updateSelectedParams();
+    mModLFOs.updateSelectedParams();
     mFilterControl.updateSelectedParams();
     mGrainControl.updateSelectedParams();
     mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, mParameters.getSelectedParamColour());
@@ -469,7 +478,7 @@ void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
       mTitlePresetPanel.btnSavePreset.setEnabled(true);
       mArcSpec.loadPreset();
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
-      mPianoPanel.waveform.load(&mSynth.getAudioBuffer());
+      mPianoPanel.waveform.load(mSynth.getAudioBuffer());
       mParameters.ui.loadedFileName = file.getFullPathName();
       mParameters.ui.fileName = mParameters.ui.loadedFileName;
       mTitlePresetPanel.labelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);

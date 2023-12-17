@@ -31,6 +31,7 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
   juce::Rectangle<int> getTabButtonExtraComponentBounds(const juce::TabBarButton& btn, juce::Rectangle<int>& textArea, juce::Component& extraComp) override;
   void drawTabButton(juce::TabBarButton& btn, juce::Graphics& path, bool mouseOver, bool mouseDown) override;
   void drawTabAreaBehindFrontButton(juce::TabbedButtonBar& bar, juce::Graphics& g, int w, int h) override;
+  void drawTabButtonText(juce::TabBarButton& btn, juce::Graphics&, bool mouseOver, bool mouseDown) override;
   
   // Sliders
   void drawRotarySlider(juce::Graphics& g, int, int, int width, int height, float sliderPosProportional, float, float,

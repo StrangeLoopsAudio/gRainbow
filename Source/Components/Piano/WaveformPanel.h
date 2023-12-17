@@ -32,7 +32,7 @@ class WaveformPanel : public juce::Component, juce::AudioProcessorParameter::Lis
 
   void updateSelectedParams();
   
-  void load(juce::AudioBuffer<float> *buffer);
+  void load(juce::AudioBuffer<float> &buffer);
 
  private:
   static constexpr int NUM_WAVE_BARS = 30;
@@ -40,13 +40,15 @@ class WaveformPanel : public juce::Component, juce::AudioProcessorParameter::Lis
   typedef struct WaveBar {
     WaveBar() {}
     WaveBar(float _magnitude, Utils::PitchClass _pitchClass = Utils::PitchClass::NONE) :
-    magnitude(_magnitude), pitchClass(_pitchClass) { }
+    magnitude(_magnitude), pitchClass(_pitchClass), isEnabled(true) { }
     
     float magnitude = 0.0f;
     Utils::PitchClass pitchClass = Utils::PitchClass::NONE;
+    bool isEnabled = true;
   } WaveBar;
   
   void updateWaveBars();
+  void addBarsForNote(ParamNote* note, bool showCandidates);
   
   // Bookkeeping
   Parameters& mParameters;
@@ -54,9 +56,10 @@ class WaveformPanel : public juce::Component, juce::AudioProcessorParameter::Lis
   std::atomic<bool> mParamHasChanged;
   juce::Colour mParamColour;
   
-  juce::AudioBuffer<float>* mBuffer = nullptr;
+  juce::AudioBuffer<float> mBuffer;
   std::array<WaveBar, NUM_WAVE_BARS> mWaveBars;
   juce::Range<int> mZoomRange; // Zoom range in samples
+  int mSamplesPerBar;
 
   // Components
 

@@ -16,7 +16,6 @@ WaveformPanel::WaveformPanel(Parameters& parameters)
     : mParameters(parameters),
       mCurSelectedParams(parameters.selectedParams),
       mParamColour(Utils::GLOBAL_COLOUR) {
-  
 
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
@@ -43,6 +42,8 @@ void WaveformPanel::updateSelectedParams() {
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
+  
+  updateWaveBars();
 
   mParamHasChanged.store(true);
   repaint();
@@ -58,7 +59,7 @@ void WaveformPanel::paint(juce::Graphics& g) {
   g.drawRoundedRectangle(r, 10.0f, 2.0f);
   
   // Wave bars
-  if (mBuffer == nullptr) return; // Skip if we don't even have a buffer
+  if (mBuffer.getNumSamples() == 0) return; // Skip if we don't even have a buffer
   int barWidth = getWidth() / NUM_WAVE_BARS;
   r.reduce(barWidth / 2, Utils::PADDING); // Reduce the area so wave bars fit nicely
   float barMaxHeight = r.getHeight();
@@ -68,7 +69,11 @@ void WaveformPanel::paint(juce::Graphics& g) {
   for (WaveBar& bar : mWaveBars) {
     auto barRect = juce::Rectangle<float>(barWidth, bar.magnitude * barMaxHeight);
     g.setColour(bar.pitchClass == Utils::PitchClass::NONE ? Utils::GLOBAL_COLOUR : Utils::getRainbow12Colour(bar.pitchClass));
-    g.fillRoundedRectangle(barRect.withCentre({curX + barWidth / 2, centreY}), 5);
+    if (bar.isEnabled) {
+      g.fillRoundedRectangle(barRect.withCentre({curX + barWidth / 2, centreY}), 5);
+    } else {
+      g.drawRoundedRectangle(barRect.withCentre({curX + barWidth / 2, centreY}).reduced(1, 1), 5, 2);
+    }
     curX += barWidth;
   }
 }
@@ -78,35 +83,52 @@ void WaveformPanel::resized() {
   
 }
 
-void WaveformPanel::load(juce::AudioBuffer<float> *buffer) {
-  mBuffer = buffer;
-  mZoomRange = juce::Range<int>(0, buffer->getNumSamples());
+void WaveformPanel::load(juce::AudioBuffer<float> &buffer) {
+  mBuffer.setSize(1, buffer.getNumSamples());
+  float gain = 1.0f / buffer.getMagnitude(0, 0, buffer.getNumSamples());
+  mBuffer.copyFrom(0, 0, buffer.getReadPointer(0), buffer.getNumSamples(), gain);
+  mZoomRange = juce::Range<int>(0, mBuffer.getNumSamples());
+  mSamplesPerBar = mZoomRange.getLength() / NUM_WAVE_BARS;
   updateWaveBars();
 }
 
 void WaveformPanel::updateWaveBars() {
-  if (mBuffer == nullptr) return;
+  if (mBuffer.getNumSamples() == 0) return;
   
   // Populate wave bar magnitudes
-  int samplesPerBar = mZoomRange.getLength() / NUM_WAVE_BARS;
   int curSample = mZoomRange.getStart();
   for (auto& bar : mWaveBars) {
-    bar = WaveBar(mBuffer->getMagnitude(0, curSample, samplesPerBar), Utils::PitchClass::NONE);
-    curSample += samplesPerBar;
+    bar = WaveBar(mBuffer.getMagnitude(0, curSample, mSamplesPerBar));
+    curSample += mSamplesPerBar;
   }
   
-  // Color the bars with note generators (should be candidates too in the future)
-  for (auto& note : mParameters.note.notes) {
-    if (note->candidates.empty()) continue;
-    for (auto& gen : note->generators) {
-      if (!gen->enable->get()) continue; // Skip if generator is off (though should still show probably later)
-      int sample = note->candidates[gen->candidate->get()].posRatio * mBuffer->getNumSamples();
-      if (!mZoomRange.contains(sample)) continue; // Skip if we're outside of the visible range
-      // Find the wave bar closest to this generator
-      int closestBarIdx = (sample - mZoomRange.getStart()) / samplesPerBar;
-      mWaveBars[closestBarIdx].pitchClass = (Utils::PitchClass)note->noteIdx;
+  
+  if (mCurSelectedParams->type == ParamType::GLOBAL) {
+    // Color the bars with all note generators
+    for (auto& note : mParameters.note.notes) {
+      addBarsForNote(note.get(), false);
     }
+  } else if (mCurSelectedParams->type == ParamType::NOTE) {
+    // Note view (just show generators and candidates for particular note)
+    addBarsForNote(dynamic_cast<ParamNote*>(mCurSelectedParams), true);
+  } else {
+    // Generator view
+    
   }
   
   repaint();
+}
+
+void WaveformPanel::addBarsForNote(ParamNote* note, bool showCandidates) {
+  if (note->candidates.empty()) return;
+  for (auto& gen : note->generators) {
+    if (!gen->enable->get() && !showCandidates) continue; // Skip if generator is off (unless we want to show its candidate)
+    int sample = note->candidates[gen->candidate->get()].posRatio * mBuffer.getNumSamples();
+    if (!mZoomRange.contains(sample)) continue; // Skip if we're outside of the visible range
+    // Find the wave bar closest to this generator
+    int closestBarIdx = (sample - mZoomRange.getStart()) / mSamplesPerBar;
+    mWaveBars[closestBarIdx].pitchClass = (Utils::PitchClass)note->noteIdx;
+    mWaveBars[closestBarIdx].isEnabled = gen->enable->get();
+  }
+  
 }
