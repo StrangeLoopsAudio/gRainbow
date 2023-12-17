@@ -45,58 +45,43 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
 
  private:
   static constexpr int MIDI_CHANNEL = 1;
-  static constexpr float NOTE_BODY_HEIGHT = 0.45f;
-  static constexpr float NOTE_BODY_SATURATION = 0.5f;
-  static constexpr float NOTE_LABEL_SIZE = 22;
-  static constexpr float ADD_GEN_SIZE = 18;
-  static constexpr float BTN_RETURN_HEIGHT = 18;
+  static constexpr float BLACK_NOTE_SIZE_RATIO = 0.7f;
   static constexpr const char* TEXT_RETURN = "return to global parameters";
   static constexpr const char* TEXT_EDITING_PRE = "editing per-";
   static constexpr const char* TEXT_EDITING_POST = " parameters";
+  
+  // If a key is black or white, have to know this to paint the UI
+  Utils::PitchClass WHITE_KEYS_PITCH_CLASS[7] = {Utils::PitchClass::C, Utils::PitchClass::D, Utils::PitchClass::E,
+    Utils::PitchClass::F, Utils::PitchClass::G, Utils::PitchClass::A,
+    Utils::PitchClass::B};
+  
+  Utils::PitchClass BLACK_KEYS_PITCH_CLASS[5] = {Utils::PitchClass::Cs, Utils::PitchClass::Ds, Utils::PitchClass::Fs,
+    Utils::PitchClass::Gs, Utils::PitchClass::As};
+
+  static inline bool isBlackKey(Utils::PitchClass pitchClass) { return ((1 << (pitchClass)) & 0x054a) != 0; }
+  // Returns a value between 0.0-1.0 representing the note's x position on the keyboard
+  float getPitchXRatio(Utils::PitchClass pitchClass);
+  
+  // These allow using the mouse to click a key
+  void updateMouseState(const juce::MouseEvent& e, bool isDown, bool isClick);
+  void generatorOnClick(ParamGenerator* gen);
+  Utils::MidiNote xyMouseToNote(juce::Point<float> pos, bool isClick);
+  
+  // Preparing and drawing piano note areas
+  void fillNoteRectangleMap();
+  void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);
 
   // Bookkeeping
-  juce::Random mRandom;
   juce::MidiKeyboardState& mState;
   Parameters& mParameters;
   // holds the velocity of each pitch class, if zero, then note is not played
   std::array<float, Utils::PitchClass::COUNT> mNoteVelocity;
 
-  // These allow using the mouse to click a key
-  void updateMouseState(const juce::MouseEvent& e, bool isDown, bool isClick);
-  void generatorOnClick(ParamGenerator* gen);
-  Utils::MidiNote xyMouseToNote(juce::Point<float> pos, bool isClick);
-  // Note being currently hovered by the mouse
-  Utils::MidiNote mHoverNote;
-  // Generator being currently hovered by the mouse
-  juce::Rectangle<float> mHoverGenRect;
-  bool mHoverGenIncrease = false;
-  bool mHoverGenDecrease = false;
-
-  // Keeps track of the note being played because of the mouse injected input
-  Utils::MidiNote mMouseNote;
-  bool mIsHoverBtnReturn = false;
+  Utils::MidiNote mHoverNote; // Note being currently hovered by the mouse
+  Utils::MidiNote mMouseNote; // The note being played because of the mouse injected input
 
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectMap[Utils::PitchClass::COUNT];
-  juce::Rectangle<float> mNoteAddGenRectMap[Utils::PitchClass::COUNT];
-  juce::Rectangle<float> mNoteGenRectMap[Utils::PitchClass::COUNT][NUM_GENERATORS];
-  // The '<' and '>' arrows on side of the generator rect
-  juce::Rectangle<float> mNoteGenRectIncreaseMap[Utils::PitchClass::COUNT][NUM_GENERATORS];
-  juce::Rectangle<float> mNoteGenRectDecreaseMap[Utils::PitchClass::COUNT][NUM_GENERATORS];
-  void fillNoteRectangleMap();
-
-  void drawKey(juce::Graphics& g, Utils::PitchClass pitchClass);
-
-  // LUT for animation values to save from recomputing each frame
-  static constexpr int ANIMATION_BLOCK_DIVISOR = 24;
-  struct AnimationLUT {
-    float velocityLine;
-    float inverseVelocityLine;
-    float noteWidthSplit;
-    float blockCount;
-    float yDelta;
-  };
-  std::array<AnimationLUT, Utils::PitchClass::COUNT> mAnimationLUT;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowKeyboard)
 };

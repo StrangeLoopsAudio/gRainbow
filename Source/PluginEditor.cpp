@@ -45,7 +45,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mArcSpec(synth.getParams()),
       mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
       mProgressBar(mParameters.ui.loadingProgress),
-      mKeyboard(synth.getKeyboardState(), synth.getParams()) {
+      mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
   juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(RainbowLookAndFeel::getCustomTypeface());
@@ -66,6 +66,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   auto* tabImageComp = new juce::ImageComponent();
   tabImageComp->setInterceptsMouseClicks(false, false);
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
+  mTabsEnvelopes.setTabBarDepth(Utils::TAB_HEIGHT);
   mTabsEnvelopes.addTab("amp env", Utils::BG_COLOUR, &mEnvAdsr, false);
   mTabsEnvelopes.getTabbedButtonBar().getTabButton(0)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
 
@@ -80,6 +81,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mTabsEnvelopes);
         
   // FX tabs
+  mTabsFx.setTabBarDepth(Utils::TAB_HEIGHT);
   mTabsFx.addTab("FX 1", Utils::BG_COLOUR, &mFx1, false);
   mTabsFx.addTab("FX 2", Utils::BG_COLOUR, &mFx2, false);
   mTabsFx.addTab("FX 3", Utils::BG_COLOUR, &mFx3, false);
@@ -87,6 +89,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addAndMakeVisible(mTabsFx);
         
   // Modulator tabs
+  mTabsModulators.setTabBarDepth(Utils::TAB_HEIGHT);
   mTabsModulators.addTab("midi", Utils::BG_COLOUR, &mModKeyboard, false);
   mTabsModulators.addTab("envelope", Utils::BG_COLOUR, &mModEnvelopes, false);
   mTabsModulators.addTab("lfo", Utils::BG_COLOUR, &mModLFOs, false);
@@ -123,7 +126,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mSynth.trimAudioBuffer(mSynth.getInputBuffer(), mSynth.getAudioBuffer(), juce::Range<juce::int64>(start, end));
       mSynth.extractSpectrograms();
       mSynth.extractPitches();
-      mSynth.getInputBuffer();
       // Reset any UI elements that will need to wait until processing
       mArcSpec.reset();
       mTitlePresetPanel.btnSavePreset.setEnabled(false);
@@ -142,7 +144,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     mGrainControl.updateSelectedParams();
     mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, mParameters.getSelectedParamColour());
   };
-  addAndMakeVisible(mKeyboard);
+  addAndMakeVisible(mPianoPanel);
 
   // These share the same space, but only 1 is seen at a time
   addChildComponent(mArcSpec);
@@ -221,8 +223,9 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   if (!mParameters.ui.specComplete) {
     std::vector<Utils::SpecBuffer*> specs = mSynth.getProcessedSpecs();
     for (size_t i = 0; i < specs.size(); ++i) {
-      if (specs[i] != nullptr && mArcSpec.shouldLoadImage((ParamUI::SpecType)i))
+      if (specs[i] != nullptr && mArcSpec.shouldLoadImage((ParamUI::SpecType)i)) {
         mArcSpec.loadSpecBuffer(specs[i], (ParamUI::SpecType)i);
+      }
     }
   }
 
@@ -233,7 +236,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
   // Each component has has a different use for the midi notes, so just give them the notes and have them do what logic they want
   // with it
-  mKeyboard.setMidiNotes(midiNotes);
+  mPianoPanel.keyboard.setMidiNotes(midiNotes);
   mArcSpec.setMidiNotes(midiNotes);
 
   /* if (PowerUserSettings::get().getResourceUsage()) {
@@ -290,8 +293,9 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
 
   // Clouds
   if (mParameters.ui.centerComponent == ParamUI::CenterComponent::ARC_SPEC) {
-    g.drawImage(mCloudLeftImage, mCloudLeftTargetArea, juce::RectanglePlacement::fillDestination);
-    g.drawImage(mCloudRightImage, mCloudRightTargetArea, juce::RectanglePlacement::fillDestination);
+    // TODO: fix the clouds
+    //g.drawImage(mCloudLeftImage, mCloudLeftTargetArea, juce::RectanglePlacement::fillDestination);
+    //g.drawImage(mCloudRightImage, mCloudRightTargetArea, juce::RectanglePlacement::fillDestination);
 
     // Make it rain girl (while loading)
     if (mProgressBar.isVisible()) {
@@ -323,11 +327,6 @@ void GRainbowAudioProcessorEditor::resized() {
 #ifndef GRAINBOW_PRODUCTION
   mSettings.setBounds(r.removeFromBottom(mSettings.getHeight()));
 #endif
-
-  // Rainbow keyboard
-  // TODO: re-enable this but in the right spot and with the new design
-//  juce::Rectangle<int> keyboardRect = r.removeFromBottom(Utils::KEYBOARD_HEIGHT);
-//  mKeyboard.setBounds(keyboardRect);
   
   mTitlePresetPanel.setBounds(r.removeFromTop(Utils::PRESET_PANEL_HEIGHT));
       
@@ -343,10 +342,11 @@ void GRainbowAudioProcessorEditor::resized() {
   //mFilterControl.setBounds(rightPanel);
 
   // Center middle space
-  const juce::Rectangle<int> centerRect = r.removeFromTop(Utils::PANEL_HEIGHT);
-  mArcSpec.setBounds(centerRect);
-  mTrimSelection.setBounds(centerRect);
-  mProgressBar.setBounds(centerRect.withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
+  auto centerPanel = r.reduced(0, Utils::PADDING);
+  mPianoPanel.setBounds(centerPanel.removeFromBottom(Utils::PANEL_HEIGHT));
+  mArcSpec.setBounds(centerPanel.removeFromTop(Utils::PANEL_HEIGHT));
+  mTrimSelection.setBounds(mArcSpec.getBounds());
+  mProgressBar.setBounds(mArcSpec.getBounds().withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
 
   // Cloud centers
   {
@@ -469,6 +469,7 @@ void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
       mTitlePresetPanel.btnSavePreset.setEnabled(true);
       mArcSpec.loadPreset();
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
+      mPianoPanel.waveform.load(&mSynth.getAudioBuffer());
       mParameters.ui.loadedFileName = file.getFullPathName();
       mParameters.ui.fileName = mParameters.ui.loadedFileName;
       mTitlePresetPanel.labelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);

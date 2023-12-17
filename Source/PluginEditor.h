@@ -23,7 +23,7 @@
 #include "Components/FilterControl.h"
 #include "Components/TrimSelection.h"
 #include "Components/ArcSpectrogram.h"
-#include "Components/RainbowKeyboard.h"
+#include "Components/Piano/PianoPanel.h"
 #include "Components/Settings.h"
 #include "Components/RainbowLookAndFeel.h"
 #include "DSP/AudioRecorder.h"
@@ -86,7 +86,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   LFOs mModLFOs;
   GrainControl mGrainControl;
   FilterControl mFilterControl;
-  RainbowKeyboard mKeyboard;
+  PianoPanel mPianoPanel;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;
 

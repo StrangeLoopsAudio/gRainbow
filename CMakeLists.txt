@@ -101,8 +101,12 @@ set(SOURCE_COMPONENTS
     Source/Components/TrimSelection.cpp
     Source/Components/Settings.h
     Source/Components/Settings.cpp
-    Source/Components/RainbowKeyboard.h
-    Source/Components/RainbowKeyboard.cpp
+    Source/Components/Piano/PianoPanel.h
+    Source/Components/Piano/PianoPanel.cpp
+    Source/Components/Piano/RainbowKeyboard.h
+    Source/Components/Piano/RainbowKeyboard.cpp
+    Source/Components/Piano/WaveformPanel.h
+    Source/Components/Piano/WaveformPanel.cpp
     Source/Components/RainbowSlider.h
     Source/Components/RainbowSlider.cpp
     Source/Components/RainbowLookAndFeel.h
