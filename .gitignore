@@ -5,6 +5,7 @@
 .vs/*
 .vscode/*
 out/*
+Source/Version.h
 
 *.DS_Store
 

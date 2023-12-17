@@ -107,13 +107,13 @@ void EnvelopeADSR::updateSelectedParams() {
 void EnvelopeADSR::paint(juce::Graphics& g) {
   juce::Colour colour = mParamColour;
 
-  // Section title
-  g.setColour(Utils::GLOBAL_COLOUR);
-  g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
-  g.setColour(colour);
-  g.drawRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT, 2.0f);
-  g.setColour(juce::Colours::white);
-  g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
+  // Panel rectangle
+  g.setColour(Utils::PANEL_COLOUR);
+  g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
+  
+  // Visualization rect
+  g.setColour(Utils::BG_COLOUR);
+  g.fillRect(mVizRect);
 
   // TODO: include other non-global values as well
   float attack = ParamRanges::ATTACK.convertTo0to1(mSliderAttack.getValue());
@@ -122,14 +122,16 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
 
   // Draw ADSR path
-  g.setFillType(juce::ColourGradient(colour, mVizRect.getTopLeft(), colour.withAlpha(0.4f), mVizRect.getBottomLeft(), false));
+  g.setFillType(juce::ColourGradient(colour.withAlpha(0.35f), mVizRect.getTopLeft(), colour.withAlpha(0.05f), mVizRect.getBottomLeft(), false));
+  
+  auto adsrRect = mVizRect.reduced(Utils::PADDING * 2, Utils::PADDING * 2);
 
   juce::Path adsrPath;
-  juce::Point<float> startPt = mVizRect.getBottomLeft();
-  juce::Point<float> attackPt = startPt.translated(attack * mVizRect.getWidth() * 0.375f, -mVizRect.getHeight());
-  juce::Point<float> decayPt = attackPt.translated(decay * mVizRect.getWidth() * 0.375f, (1.0f - sustain) * (mVizRect.getHeight()));
-  juce::Point<float> sustainPt = mVizRect.getBottomLeft().translated(mVizRect.getWidth() * 0.75f, -sustain * (mVizRect.getHeight()));
-  juce::Point<float> endPt = sustainPt.translated(release * mVizRect.getWidth() * 0.25f, 0.0f).withY(mVizRect.getBottom());
+  juce::Point<float> startPt = adsrRect.getBottomLeft();
+  juce::Point<float> attackPt = startPt.translated(attack * adsrRect.getWidth() * 0.375f, -adsrRect.getHeight());
+  juce::Point<float> decayPt = attackPt.translated(decay * adsrRect.getWidth() * 0.375f, (1.0f - sustain) * (adsrRect.getHeight()));
+  juce::Point<float> sustainPt = adsrRect.getBottomLeft().translated(adsrRect.getWidth() * 0.75f, -sustain * (adsrRect.getHeight()));
+  juce::Point<float> endPt = sustainPt.translated(release * adsrRect.getWidth() * 0.25f, 0.0f).withY(adsrRect.getBottom());
 
   adsrPath.startNewSubPath(startPt);
   adsrPath.lineTo(attackPt);
@@ -137,27 +139,15 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   adsrPath.lineTo(sustainPt);
   adsrPath.lineTo(endPt);
   adsrPath.closeSubPath();
-  g.fillPath(adsrPath);
-
-  // Draw highlight lines on top of each segment
-  float highlightWidth = 3.0f;
+  g.fillPath(adsrPath.createPathWithRoundedCorners(5));
   g.setColour(colour);
-  g.drawLine(juce::Line<float>(startPt, attackPt), highlightWidth);
-  g.drawLine(juce::Line<float>(attackPt, decayPt), highlightWidth);
-  g.drawLine(juce::Line<float>(decayPt, sustainPt), highlightWidth);
-  g.drawLine(juce::Line<float>(sustainPt.translated(0, -1), endPt), highlightWidth);
-
-  g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f);
+  g.strokePath(adsrPath.createPathWithRoundedCorners(5), juce::PathStrokeType(3));
 }
 
 void EnvelopeADSR::resized() {
   juce::Rectangle<int> r = getLocalBounds();
   // Remove padding
-  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().getCentre());
-  // Make title rect
-  mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT).toFloat();
-
-  r.removeFromTop(Utils::PADDING);
+  r.reduce(Utils::PADDING, Utils::PADDING);
 
   // Place labels
   juce::Rectangle<int> labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT);
@@ -177,5 +167,5 @@ void EnvelopeADSR::resized() {
 
   r.removeFromBottom(Utils::PADDING);
 
-  mVizRect = r.toFloat();
+  mVizRect = r.reduced(2, 2).toFloat();
 }

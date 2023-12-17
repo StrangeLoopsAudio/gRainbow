@@ -1,8 +1,8 @@
 /*
   ==============================================================================
 
-    EnvelopeADSR.h
-    Created: 12 Jul 2021 12:02:12am
+    LFOs.h
+    Created: 15 Dec 2023 8:34:54pm
     Author:  brady
 
   ==============================================================================
@@ -11,17 +11,16 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include <juce_audio_processors/juce_audio_processors.h>
 #include "Parameters.h"
-#include "RainbowSlider.h"
+#include "../RainbowSlider.h"
 
 //==============================================================================
 /*
  */
-class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
+class LFOs : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
-  EnvelopeADSR(Parameters& parameters);
-  ~EnvelopeADSR();
+  LFOs(Parameters& parameters);
+  ~LFOs();
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -41,17 +40,6 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
   juce::Colour mParamColour;
 
   // Components
-  RainbowSlider mSliderAttack;
-  RainbowSlider mSliderDecay;
-  RainbowSlider mSliderSustain;
-  RainbowSlider mSliderRelease;
-  juce::Label mLabelAttack;
-  juce::Label mLabelDecay;
-  juce::Label mLabelSustain;
-  juce::Label mLabelRelease;
 
-  // UI rects updated at resize()
-  juce::Rectangle<float> mVizRect;
-
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeADSR)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LFOs)
 };

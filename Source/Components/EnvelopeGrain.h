@@ -33,7 +33,6 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   void updateSelectedParams();
 
  private:
-  static constexpr const char* SECTION_TITLE = "grain envelope";
   static constexpr float MIN_RATE_RATIO = .25f;
   static constexpr float MAX_RATE_RATIO = 1.0f;
   static constexpr int MAX_NUM_ENVS = 6;
@@ -88,7 +87,6 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   juce::PathStrokeType mPathStroke;
 
   // UI values saved on resize
-  juce::Rectangle<float> mTitleRect;
   juce::Rectangle<float> mVizRect;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeGrain)

@@ -123,14 +123,14 @@ void EnvelopeGrain::updateSelectedParams() {
 
 void EnvelopeGrain::paint(juce::Graphics& g) {
   juce::Colour colour = mParamColour;
-
-  // Section title
-  g.setColour(Utils::GLOBAL_COLOUR);
-  g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
-  g.setColour(colour);
-  g.drawRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT, 2.0f);
-  g.setColour(juce::Colours::white);
-  g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
+  
+  // Panel rectangle
+  g.setColour(Utils::PANEL_COLOUR);
+  g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
+  
+  // Visualization rect
+  g.setColour(Utils::BG_COLOUR);
+  g.fillRect(mVizRect);
 
   float duration = mSliderDuration.getValue();
   float rate = mSliderRate.getValue();
@@ -152,59 +152,52 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   float shapeWidth = envWidth * mSliderShape.getValue() / 2.0f;
   
   juce::Path clipPath;
-  clipPath.addRectangle(mVizRect.expanded(2).withCentre(mVizRect.getCentre()));
+  clipPath.addRectangle(mVizRect);
+  auto envBounds = mVizRect.reduced(2, 2);
 
   // Draw darker odd numbered envelopes
   float tilt = mSliderTilt.getValue();
-  float curXStart = mVizRect.getX() + envOffset;
+  float curXStart = envBounds.getX() + envOffset;
   juce::Colour envColour = colour.darker(0.5f);
-  while (curXStart < mVizRect.getWidth()) {
+  while (curXStart < envBounds.getWidth()) {
     juce::Path envPath;
-    juce::Point<float> lastPt = juce::Point<float>(curXStart, mVizRect.getBottom());
-    juce::Point<float> pt = juce::Point<float>(juce::jmax(curXStart, curXStart + (tilt * envWidth) - shapeWidth), mVizRect.getY());
+    juce::Point<float> lastPt = juce::Point<float>(curXStart, envBounds.getBottom());
+    juce::Point<float> pt = juce::Point<float>(juce::jmax(curXStart, curXStart + (tilt * envWidth) - shapeWidth), envBounds.getY());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     lastPt = pt;
-    pt = juce::Point<float>(juce::jmin(curXStart + envWidth, curXStart + (tilt * envWidth) + shapeWidth), mVizRect.getY());
+    pt = juce::Point<float>(juce::jmin(curXStart + envWidth, curXStart + (tilt * envWidth) + shapeWidth), envBounds.getY());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     lastPt = pt;
-    pt = juce::Point<float>(curXStart + envWidth, mVizRect.getBottom());
+    pt = juce::Point<float>(curXStart + envWidth, envBounds.getBottom());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     g.setColour(envColour);
-    g.strokePath(envPath, mPathStroke);
+    g.strokePath(envPath.createPathWithRoundedCorners(5), mPathStroke);
     curXStart += (envOffset * 2.0f);
   }
-  curXStart = mVizRect.getX();
+  curXStart = envBounds.getX();
   // Draw brighter even numbered envelopes
   envColour = colour.brighter(0.5f);
-  while (curXStart < mVizRect.getWidth()) {
+  while (curXStart < envBounds.getWidth()) {
     juce::Path envPath;
-    juce::Point<float> lastPt = juce::Point<float>(curXStart, mVizRect.getBottom());
-    juce::Point<float> pt = juce::Point<float>(juce::jmax(curXStart, curXStart + (tilt * envWidth) - shapeWidth), mVizRect.getY());
+    juce::Point<float> lastPt = juce::Point<float>(curXStart, envBounds.getBottom());
+    juce::Point<float> pt = juce::Point<float>(juce::jmax(curXStart, curXStart + (tilt * envWidth) - shapeWidth), envBounds.getY());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     lastPt = pt;
-    pt = juce::Point<float>(juce::jmin(curXStart + envWidth, curXStart + (tilt * envWidth) + shapeWidth), mVizRect.getY());
+    pt = juce::Point<float>(juce::jmin(curXStart + envWidth, curXStart + (tilt * envWidth) + shapeWidth), envBounds.getY());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     lastPt = pt;
-    pt = juce::Point<float>(curXStart + envWidth, mVizRect.getBottom());
+    pt = juce::Point<float>(curXStart + envWidth, envBounds.getBottom());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     g.setColour(envColour);
-    g.strokePath(envPath, mPathStroke);
+    g.strokePath(envPath.createPathWithRoundedCorners(5), mPathStroke);
     curXStart += (envOffset * 2.0f);
   }
-
-  g.setColour(envColour);
-  g.strokePath(clipPath, juce::PathStrokeType(2.0f));
 }
 
 void EnvelopeGrain::resized() {
   juce::Rectangle<float> r = getLocalBounds().toFloat();
   // Remove padding
-  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().toFloat().getCentre());
-
-  // Make title rect
-  mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT);
-
-  r.removeFromTop(Utils::PADDING);
+  r.reduce(Utils::PADDING, Utils::PADDING);
 
   // Place labels
   juce::Rectangle<int> labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT).toNearestInt();
@@ -229,5 +222,5 @@ void EnvelopeGrain::resized() {
   mBtnSync.changeWidthToFitText(Utils::LABEL_HEIGHT);
   mBtnSync.setCentrePosition(syncPanel.getCentre());
 
-  mVizRect = r;
+  mVizRect = r.reduced(2, 2);
 }

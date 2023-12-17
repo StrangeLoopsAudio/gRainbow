@@ -17,16 +17,18 @@ namespace Utils {
 typedef std::vector<std::vector<float>> SpecBuffer;
 
 // UI spacing and colours
-static constexpr int EDITOR_WIDTH = 1000;
-static constexpr int EDITOR_HEIGHT = 550;
-static constexpr int PANEL_WIDTH = 270;
+static constexpr int PADDING = 3;
+static constexpr int EDITOR_WIDTH = 762;
+static constexpr int EDITOR_HEIGHT = 400;
+static constexpr int PRESET_PANEL_HEIGHT = 47;
+static constexpr int PANEL_WIDTH = EDITOR_WIDTH / 3;
+static constexpr int PANEL_HEIGHT = (EDITOR_HEIGHT - PRESET_PANEL_HEIGHT - (PADDING * 3)) / 2;
 static constexpr int KEYBOARD_HEIGHT = 200;
-static constexpr int PADDING = 6;
 static constexpr float PADDING_F = 6.0f;
 static constexpr int TITLE_HEIGHT = 17;
 static constexpr int LABEL_HEIGHT = TITLE_HEIGHT;
-static constexpr int KNOB_WIDTH = (PANEL_WIDTH - (PADDING * 2)) / 4;
-static constexpr int KNOB_HEIGHT = KNOB_WIDTH / 2;
+static constexpr int KNOB_WIDTH = 25;
+static constexpr int KNOB_HEIGHT = 25;
 static constexpr float ROUNDED_AMOUNT = 6.0f;
 
 // Grain envelopes and limits

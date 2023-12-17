@@ -610,7 +610,7 @@ struct ParamUI {
     return pngWriter.writeImageToStream(specImages[index], outputStream);
   }
 
-  juce::String fileName = "";        // currently being viewed
+  juce::String fileName = "-- init --";        // currently being viewed
   juce::String loadedFileName = "";  // name of what was loaded last
   juce::Range<double> trimRange;
   // default when new instance is loaded

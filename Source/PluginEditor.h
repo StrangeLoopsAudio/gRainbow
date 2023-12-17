@@ -12,13 +12,18 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 
-#include "Components/ArcSpectrogram.h"
-#include "Components/RainbowKeyboard.h"
+#include "Components/TitlePresetPanel.h"
 #include "Components/EnvelopeADSR.h"
 #include "Components/EnvelopeGrain.h"
+#include "Components/FxPanel.h"
+#include "Components/Modulators/Envelopes.h"
+#include "Components/Modulators/KeyboardMod.h"
+#include "Components/Modulators/LFOs.h"
 #include "Components/GrainControl.h"
 #include "Components/FilterControl.h"
 #include "Components/TrimSelection.h"
+#include "Components/ArcSpectrogram.h"
+#include "Components/RainbowKeyboard.h"
 #include "Components/Settings.h"
 #include "Components/RainbowLookAndFeel.h"
 #include "DSP/AudioRecorder.h"
@@ -26,20 +31,6 @@
 #include "DSP/TransientDetector.h"
 #include "DSP/GranularSynth.h"
 #include "Utils/Utils.h"
-
-/**
- * @brief Used on startup to fill unused area with the logo
- */
-class GRainbowLogo : public juce::Component {
- public:
-  GRainbowLogo();
-  ~GRainbowLogo() {}
-  void paint(juce::Graphics& g) override;
-  void resized() override {}
-
- private:
-  juce::Image mLogoImage;
-};
 
 //==============================================================================
 /**
@@ -70,7 +61,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   static constexpr int BTN_PANEL_HEIGHT = 65;
   static constexpr int PROGRESS_SIZE = 80;
   static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
-  static constexpr const char* MANUAL_URL = "https://github.com/bboettcher3/gRainbow/blob/development/README.md";
+  static constexpr const char* MANUAL_URL = "https://github.com/StrangeLoopsAudio/gRainbow/blob/main/README.md";
 
   // DSP Modules
   GranularSynth& mSynth;
@@ -80,22 +71,22 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   Parameters& mParameters;
 
   // main center UI component
-  GRainbowLogo mLogo;
   ArcSpectrogram mArcSpec;
   TrimSelection mTrimSelection;
   juce::ProgressBar mProgressBar;
 
   // UI Components
-  juce::ImageButton mBtnOpenFile;
-  juce::ImageButton mBtnRecord;
-  juce::ImageButton mBtnInfo;
-  juce::ImageButton mBtnSavePreset;
-  juce::Label mLabelFileName;
-  RainbowKeyboard mKeyboard;
+  TitlePresetPanel mTitlePresetPanel;
+  juce::TabbedComponent mTabsEnvelopes, mTabsFx, mTabsModulators;
   EnvelopeADSR mEnvAdsr;
   EnvelopeGrain mEnvGrain;
+  FxPanel mFx1, mFx2, mFx3;
+  Envelopes mModEnvelopes;
+  KeyboardMod mModKeyboard;
+  LFOs mModLFOs;
   GrainControl mGrainControl;
   FilterControl mFilterControl;
+  RainbowKeyboard mKeyboard;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;
 

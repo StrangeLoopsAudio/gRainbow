@@ -70,6 +70,12 @@ juce_add_plugin(gRainbow
 # C++20, please
 target_compile_features(gRainbow PRIVATE cxx_std_20)
 
+# Create a header file with the version information
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Source/Version.h.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/Source/Version.h
+)
+
 set(SOURCE_UTILS
     Source/Utils/Utils.h
     Source/Utils/BPF.h
@@ -81,12 +87,16 @@ set(SOURCE_UTILS
 
 # Manually list all .h and .cpp files for the plugin
 set(SOURCE_COMPONENTS
-    Source/Components/ArcSpectrogram.h
-    Source/Components/ArcSpectrogram.cpp
+    Source/Components/TitlePresetPanel.h
+    Source/Components/TitlePresetPanel.cpp
     Source/Components/EnvelopeADSR.h
     Source/Components/EnvelopeADSR.cpp
     Source/Components/EnvelopeGrain.h
     Source/Components/EnvelopeGrain.cpp
+    Source/Components/FxPanel.h
+    Source/Components/FxPanel.cpp
+    Source/Components/ArcSpectrogram.h
+    Source/Components/ArcSpectrogram.cpp
     Source/Components/TrimSelection.h
     Source/Components/TrimSelection.cpp
     Source/Components/Settings.h
@@ -102,6 +112,12 @@ set(SOURCE_COMPONENTS
     Source/Components/FilterControl.cpp
     Source/Components/GrainControl.h
     Source/Components/GrainControl.cpp
+    Source/Components/Modulators/LFOs.h
+    Source/Components/Modulators/LFOs.cpp
+    Source/Components/Modulators/Envelopes.h
+    Source/Components/Modulators/Envelopes.cpp
+    Source/Components/Modulators/KeyboardMod.h
+    Source/Components/Modulators/KeyboardMod.cpp
 )
 
 set(SOURCE_DSP
@@ -120,6 +136,7 @@ set(SOURCE_DSP
 )
 
 set(SOURCE_PLUGIN
+    Source/Version.h
     Source/PluginEditor.h
     Source/PluginEditor.cpp
     Source/Parameters.h
@@ -145,19 +162,22 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/Source PREFIX "" FILES
 
 # Setup our binary data as a target
 set(BINARY_RESOURCES
-    Source/Resources/appicon.png
     Source/Resources/logo.png
+    Source/Resources/company.png
+    Source/Resources/ampEnv.png
+    Source/Resources/grainEnv.png
     Source/Resources/microphone.png
     Source/Resources/microphoneOver.png
     Source/Resources/openFileNormal.png
     Source/Resources/openFileOver.png
-    Source/Resources/presetNormal.png
-    Source/Resources/presetOver.png
+    Source/Resources/saveNormal.png
+    Source/Resources/saveOver.png
     Source/Resources/cloudLeft.png
     Source/Resources/cloudRight.png
     Source/Resources/infoNormal.png
     Source/Resources/infoOver.png
     Source/Resources/rain.png
+    Source/Resources/LeagueSpartan-SemiBold.ttf
 )
 
 juce_add_binary_data(Assets SOURCES ${BINARY_RESOURCES})
@@ -180,7 +200,8 @@ foreach(target ${FORMATS} "All")
 
             # MacOS only: Sets the default executable that Xcode will open on build
             # For this exact path to to work, manually build the AudioPluginHost.xcodeproj in the JUCE subdir
-            XCODE_SCHEME_EXECUTABLE "${CMAKE_CURRENT_SOURCE_DIR}/JUCE/extras/AudioPluginHost/Builds/MacOSX/build/Debug/AudioPluginHost.app"
+            # XCODE_SCHEME_EXECUTABLE "${CMAKE_CURRENT_SOURCE_DIR}/JUCE/extras/AudioPluginHost/Builds/MacOSX/build/Debug/AudioPluginHost.app"
+            XCODE_SCHEME_EXECUTABLE "${CMAKE_CURRENT_SOURCE_DIR}/build/gRainbow_artefacts/Debug/Standalone/gRainbow.app"
 
             # Let us build the target in Xcode
             XCODE_GENERATE_SCHEME ON)

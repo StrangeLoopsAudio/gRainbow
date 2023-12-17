@@ -5,53 +5,62 @@
 #include "Utils/Colour.h"
 #include "Utils/PitchClass.h"
 
+juce::Typeface::Ptr RainbowLookAndFeel::getTypefaceForFont(const juce::Font&) {
+  return getCustomTypeface();
+}
+
+// Tabs
+int RainbowLookAndFeel::getTabButtonBestWidth(juce::TabBarButton& btn, int tabDepth) {
+  int numTabs = btn.getTabbedButtonBar().getNumTabs();
+  // Strange hack to perfectly align tabs with content if only 2 tabs
+  bool shouldIncrement = (btn.getIndex() == numTabs - 1) && numTabs == 2;
+  return (btn.getTabbedButtonBar().getWidth() / numTabs) + (int)shouldIncrement;
+}
+
+juce::Rectangle<int> RainbowLookAndFeel::getTabButtonExtraComponentBounds(const juce::TabBarButton& btn, juce::Rectangle<int>& textArea, juce::Component& extraComp) {
+  return textArea.withSize(btn.getHeight(), btn.getHeight()).translated(Utils::PADDING, 0);
+}
+
+void RainbowLookAndFeel::drawTabButton(juce::TabBarButton& btn, juce::Graphics& g, bool mouseOver, bool mouseDown) {
+  auto r = btn.getLocalBounds();
+  auto tabColour = btn.isFrontTab() ? Utils::PANEL_COLOUR : Utils::PANEL_COLOUR.darker(0.15);
+  if (mouseOver && !btn.isFrontTab()) tabColour = tabColour.brighter(0.1);
+  g.setColour(tabColour);
+  g.fillRoundedRectangle(r.withHeight(50).toFloat(), 10);
+  
+  drawTabButtonText(btn, g, mouseOver, mouseDown);
+}
+
+void RainbowLookAndFeel::drawTabAreaBehindFrontButton(juce::TabbedButtonBar& bar, juce::Graphics& g, int w, int h) {
+  
+}
+
+// Sliders
 void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int width, int height, float sliderPosProportional, float,
                                           float, juce::Slider& slider) {
   // Get RainbowSlider version of the slider
   RainbowSlider& rbSlider = dynamic_cast<RainbowSlider&>(slider);
 
+  auto r = slider.getLocalBounds().reduced(2, 2);
+  
   const float pos = juce::jmax(0.02f, sliderPosProportional);
-  const float startRadians = 1.5f * juce::MathConstants<float>::pi;
-  const float endRadians = startRadians + (pos * juce::MathConstants<float>::pi);
-  const float startRadius = width / 4.0f;
-  const float endRadius = width / 2.0f - 2;
-  const float noteStripeInterval = (endRadius - startRadius) / static_cast<float>(Utils::PitchClass::COUNT);
-
-  const juce::Point<float> center = juce::Point<float>(width / 2.0f, height);
-
+  const float startRadians = juce::MathConstants<float>::pi + 0.6f;
+  const float endRadians = juce::MathConstants<float>::pi + (2.0f * juce::MathConstants<float>::pi) - 0.6f;
+  
+  const float posRadians = startRadians + pos * (endRadians - startRadians);
   juce::Colour rainbowCol = slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
 
-  // Draw main arc
-  g.setFillType(juce::ColourGradient(rainbowCol, slider.getLocalBounds().getBottomLeft().toFloat(), rainbowCol.withAlpha(0.4f),
-                                     slider.getLocalBounds().getTopLeft().toFloat(), false));
-  juce::Path rainbowPath = juce::Path();
-  rainbowPath.addCentredArc(center.x, center.y, width / 2.7f, width / 2.7f, 0, startRadians, endRadians, true);
-  g.strokePath(rainbowPath, juce::PathStrokeType(width / 4.0f));
 
-  // Draw note-level arcs
-  float curStripeRadius = startRadius;
-  for (int i = 0; i < Utils::PitchClass::COUNT; ++i) {
-    if (auto arc = rbSlider.getArcValue((Utils::PitchClass)i)) {
-      float stripeEndRadians = startRadians + ((*arc) * juce::MathConstants<float>::pi);
-      g.setColour(Utils::getRainbow12Colour(i));
-      rainbowPath.clear();
-      rainbowPath.addCentredArc(center.x, center.y, curStripeRadius, curStripeRadius, 0, startRadians, stripeEndRadians, true);
-      g.strokePath(rainbowPath, juce::PathStrokeType(noteStripeInterval));
-    }
-    curStripeRadius += noteStripeInterval;
-  }
-
-  // Draw current value line on end of arc
+  const int size = juce::jmin(r.getWidth(), r.getHeight());
+  auto center = r.getCentre().toFloat();
+  
+  juce::Path path;
+  
+  // position arc
   g.setColour(rainbowCol);
-  g.drawLine(juce::Line<float>(center.getPointOnCircumference(startRadius, startRadius, endRadians),
-                               center.getPointOnCircumference(endRadius, endRadius, endRadians)),
-             3.0f);
-
-  // Draw outline arcs
-  g.setColour(rainbowCol);
-  rainbowPath.clear();
-  rainbowPath.addCentredArc(center.x, center.y, endRadius, endRadius, 0, startRadians, 2.5f * juce::MathConstants<float>::pi, true);
-  g.strokePath(rainbowPath, juce::PathStrokeType(3));
+  path.addArc(r.getX() + ((r.getWidth() - size) / 2), r.getY() + ((r.getHeight() - size) / 2), size, size, startRadians, posRadians, true);
+  path.lineTo(center);
+  g.strokePath(path.createPathWithRoundedCorners(3), juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
 }
 
 void RainbowLookAndFeel::drawLinearSlider(juce::Graphics& g, int, int, int width, int height, float sliderPos, float, float,
@@ -90,9 +99,9 @@ void RainbowLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton&
   g.setColour(fillColour);
   g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT, 2.0f);
 
-  juce::Colour btnColour = btn.getToggleState() ? fillColour : juce::Colours::black;
+  juce::Colour btnColour = btn.getToggleState() ? fillColour : Utils::BG_COLOUR;
   if (shouldDrawButtonAsHighlighted && !btn.getToggleState()) {
-    btnColour = fillColour.interpolatedWith(juce::Colours::black, 0.8);
+    btnColour = btnColour.brighter(0.15f);
   }
   g.setColour(btnColour);
   g.fillRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT);
@@ -101,14 +110,16 @@ void RainbowLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton&
 void RainbowLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& btn, const juce::Colour&,
                                               bool shouldDrawButtonAsHighlighted, bool) {
   juce::Colour btnColour = btn.getToggleState() ? btn.findColour(juce::TextButton::ColourIds::buttonOnColourId)
-                                                : btn.findColour(juce::TextButton::ColourIds::buttonColourId);
-  if (shouldDrawButtonAsHighlighted && !btn.getToggleState()) {
-    btnColour = btnColour.darker();
-  }
+  : btn.findColour(juce::TextButton::ColourIds::buttonColourId);
+  //  if (shouldDrawButtonAsHighlighted && !btn.getToggleState()) {
+  //    btnColour = btnColour.darker();
+  //  }
   g.setColour(btnColour);
-  g.fillRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT);
-  g.setColour(juce::Colours::black);
-  g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT, 2.0f);
+  if (btn.getToggleState()) {
+    g.fillRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT);
+  } else {
+    g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT, 2.0f);
+  }
 }
 
 void RainbowLookAndFeel::drawComboBox(juce::Graphics& g, int, int, bool, int, int, int, int, juce::ComboBox& box) {

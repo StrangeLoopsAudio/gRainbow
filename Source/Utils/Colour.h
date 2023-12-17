@@ -3,10 +3,10 @@
 
 namespace Utils {
 
-static const juce::Colour GLOBAL_COLOUR = juce::Colours::black;
+static const juce::Colour GLOBAL_COLOUR = juce::Colours::white;
 static constexpr float GENERATOR_BRIGHTNESS_ADD = 0.2f;  // Amount to make brighter per generator
-
-static const juce::ColourGradient BG_GRADIENT = juce::ColourGradient(juce::Colours::lightcyan, EDITOR_WIDTH / 2, 0, juce::Colours::skyblue, EDITOR_WIDTH / 2, EDITOR_HEIGHT, false);
+static const juce::Colour BG_COLOUR = juce::Colour(0xff212121);
+static const juce::Colour PANEL_COLOUR = juce::Colour(0xff313131);
 
 static inline juce::Colour getRainbow6Colour(int value) {
   jassert(value >= 0 && value <= 6);
@@ -125,15 +125,6 @@ static inline juce::Colour getRainbow12Colour(int value) {
       break;
   }
   return juce::Colour::fromFloatRGBA(r, g, b, 1.0f);
-}
-
-static inline juce::ColourGradient getBgGradient(juce::Rectangle<int> boundsRelativeToEditor, double light) {
-  juce::ColourGradient grad = BG_GRADIENT;
-  grad.setColour(0, BG_GRADIENT.getColour(0).withMultipliedLightness(juce::jmax(0.2, light)));
-  grad.setColour(1, BG_GRADIENT.getColour(1).withMultipliedLightness(juce::jmax(0.2, light)));
-  grad.point1.y = grad.point1.y - static_cast<float>(boundsRelativeToEditor.getY());
-  grad.point2.y = grad.point2.y - static_cast<float>(boundsRelativeToEditor.getY());
-  return grad;
 }
 
 }  // namespace Utils
