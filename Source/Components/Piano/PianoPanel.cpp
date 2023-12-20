@@ -63,6 +63,7 @@ void PianoPanel::paint(juce::Graphics& g) {
 void PianoPanel::resized() {
   auto r = getLocalBounds().reduced(Utils::PADDING, Utils::PADDING);
 
-  keyboard.setBounds(r.removeFromBottom(r.getHeight() * 0.4));
-  waveform.setBounds(r.removeFromTop(50));
+  keyboard.setBounds(r.removeFromBottom(r.getHeight() * 0.6));
+  r.removeFromBottom(Utils::PADDING);
+  waveform.setBounds(r);
 }

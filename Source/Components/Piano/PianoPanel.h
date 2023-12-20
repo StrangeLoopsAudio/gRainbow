@@ -14,7 +14,7 @@
 #include "Parameters.h"
 #include "RainbowKeyboard.h"
 #include "WaveformPanel.h"
-#include "../RainbowSlider.h"
+#include "../Sliders.h"
 
 //==============================================================================
 /*

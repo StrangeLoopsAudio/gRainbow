@@ -12,7 +12,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
-#include "RainbowSlider.h"
+#include "Sliders.h"
 
 //==============================================================================
 /*
@@ -37,9 +37,9 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   static constexpr float MAX_RATE_RATIO = 1.0f;
   static constexpr int MAX_NUM_ENVS = 6;
 
-  class QuantizedSlider : public RainbowSlider {
+  class QuantizedSlider : public CommonSlider {
    public:
-    QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : RainbowSlider(parameters, type), mSync(false) {}
+    QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : CommonSlider(parameters, type), mSync(false) {}
     void setSync(bool sync) {
       mSync = sync;
       setTextValueSuffix(sync ? "" : suffix);
@@ -74,8 +74,8 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   juce::Colour mParamColour;
 
   // Components
-  RainbowSlider mSliderShape;
-  RainbowSlider mSliderTilt;
+  CommonSlider mSliderShape;
+  CommonSlider mSliderTilt;
   QuantizedSlider mSliderRate;
   QuantizedSlider mSliderDuration;
   juce::TextButton mBtnSync;

@@ -12,7 +12,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
-#include "../RainbowSlider.h"
+#include "../Sliders.h"
 
 //==============================================================================
 /*
@@ -32,6 +32,7 @@ class WaveformPanel : public juce::Component, juce::AudioProcessorParameter::Lis
 
   void updateSelectedParams();
   
+  bool isLoaded() { return mBuffer.getNumSamples() > 0; }
   void load(juce::AudioBuffer<float> &buffer);
 
  private:

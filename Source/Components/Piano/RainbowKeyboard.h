@@ -46,9 +46,7 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
  private:
   static constexpr int MIDI_CHANNEL = 1;
   static constexpr float BLACK_NOTE_SIZE_RATIO = 0.7f;
-  static constexpr const char* TEXT_RETURN = "return to global parameters";
-  static constexpr const char* TEXT_EDITING_PRE = "editing per-";
-  static constexpr const char* TEXT_EDITING_POST = " parameters";
+  static constexpr int GLOBAL_RECT_HEIGHT = 18;
   
   // If a key is black or white, have to know this to paint the UI
   Utils::PitchClass WHITE_KEYS_PITCH_CLASS[7] = {Utils::PitchClass::C, Utils::PitchClass::D, Utils::PitchClass::E,
@@ -65,7 +63,7 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
   // These allow using the mouse to click a key
   void updateMouseState(const juce::MouseEvent& e, bool isDown, bool isClick);
   void generatorOnClick(ParamGenerator* gen);
-  Utils::MidiNote xyMouseToNote(juce::Point<float> pos, bool isClick);
+  Utils::MidiNote xyMouseToNote(juce::Point<float> pos);
   
   // Preparing and drawing piano note areas
   void fillNoteRectangleMap();
@@ -82,6 +80,8 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
 
   // Notes rectangle are recreated on resize and then just become a LUT
   juce::Rectangle<float> mNoteRectMap[Utils::PitchClass::COUNT];
+  juce::Rectangle<float> mGlobalRect;
+  bool mHoverGlobal = false;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowKeyboard)
 };

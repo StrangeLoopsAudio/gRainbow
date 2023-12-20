@@ -12,7 +12,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
-#include "RainbowSlider.h"
+#include "Sliders.h"
 
 //==============================================================================
 /*
@@ -42,8 +42,8 @@ class FilterControl : public juce::Component, juce::AudioProcessorParameter::Lis
   juce::Colour mParamColour;
 
   // Components
-  RainbowSlider mSliderCutoff;
-  RainbowSlider mSliderResonance;
+  CommonSlider mSliderCutoff;
+  CommonSlider mSliderResonance;
   juce::Label mLabelCutoff;
   juce::Label mLabelResonance;
   juce::ComboBox mFilterType;

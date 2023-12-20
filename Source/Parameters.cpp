@@ -11,6 +11,20 @@
 #include "Parameters.h"
 
 void ParamGlobal::addParams(juce::AudioProcessor& p) {
+  // Global
+  p.addParameter(maxGrains = new juce::AudioParameterInt({ParamIDs::maxGrains, 1}, "Max Grains", ParamRanges::MAX_GRAINS.start,
+                                                           ParamRanges::MAX_GRAINS.end,
+                                                           ParamDefaults::MAX_GRAINS_DEFAULT));
+  p.addParameter(macro1 = new juce::AudioParameterFloat({ParamIDs::macro1, 1}, "Macro 1", ParamRanges::MACRO,
+                                                           ParamDefaults::MACRO_DEFAULT));
+  p.addParameter(macro2 = new juce::AudioParameterFloat({ParamIDs::macro2, 1}, "Macro 2", ParamRanges::MACRO,
+                                                           ParamDefaults::MACRO_DEFAULT));
+  p.addParameter(macro3 = new juce::AudioParameterFloat({ParamIDs::macro3, 1}, "Macro 3", ParamRanges::MACRO,
+                                                           ParamDefaults::MACRO_DEFAULT));
+  p.addParameter(macro4 = new juce::AudioParameterFloat({ParamIDs::macro4, 1}, "Macro 4", ParamRanges::MACRO,
+                                                           ParamDefaults::MACRO_DEFAULT));
+  
+  // Common
   p.addParameter(common[GAIN] = new juce::AudioParameterFloat({ParamIDs::globalGain, 1}, "Master Gain", ParamRanges::GAIN,
                                                               ParamDefaults::GAIN_DEFAULT));
   p.addParameter(common[ATTACK] = new juce::AudioParameterFloat({ParamIDs::globalAttack, 1}, "Master Attack", ParamRanges::ATTACK,

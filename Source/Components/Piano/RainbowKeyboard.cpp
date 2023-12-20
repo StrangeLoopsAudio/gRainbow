@@ -42,6 +42,17 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
   for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
     drawKey(g, pitchClass);
   }
+  
+  const bool isGlobal = mParameters.selectedParams->type == ParamType::GLOBAL;
+  auto globalFillColour = isGlobal ? Utils::GLOBAL_COLOUR : juce::Colours::transparentBlack;
+  if (mHoverGlobal && !isGlobal) globalFillColour = Utils::GLOBAL_COLOUR.withAlpha(0.2f);
+  g.setColour(globalFillColour);
+  g.fillRoundedRectangle(mGlobalRect, 10);
+  g.setColour(Utils::GLOBAL_COLOUR);
+  g.drawRoundedRectangle(mGlobalRect, 10, 2);
+  auto globalTextColour = isGlobal ? Utils::BG_COLOUR : Utils::GLOBAL_COLOUR;
+  g.setColour(globalTextColour);
+  g.drawText("global", mGlobalRect, juce::Justification::centred);
 }
 
 float RainbowKeyboard::getPitchXRatio(Utils::PitchClass pitchClass) {
@@ -61,7 +72,7 @@ float RainbowKeyboard::getPitchXRatio(Utils::PitchClass pitchClass) {
 void RainbowKeyboard::fillNoteRectangleMap() {
   // Keep everything in float to match Rectangle type
   const float width = static_cast<float>(getWidth());
-  const float height = static_cast<float>(getHeight());
+  const float height = static_cast<float>(getHeight() - GLOBAL_RECT_HEIGHT - Utils::PADDING);
   
   const float keyWidth = width / 7.0f;
   const float blackKeyOffset = BLACK_NOTE_SIZE_RATIO * keyWidth / 2.0f;
@@ -90,6 +101,8 @@ void RainbowKeyboard::fillNoteRectangleMap() {
                                                 (blackKey) ? blackNoteHeight : whiteNoteHeight);
     mNoteRectMap[key] = keyRect.reduced(1, 1);
   }
+  
+  mGlobalRect = getLocalBounds().toFloat().removeFromBottom(GLOBAL_RECT_HEIGHT);
 }
 
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
@@ -157,7 +170,7 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
 void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, bool isClick) {
   const juce::Point<float> pos = e.getEventRelativeTo(this).position;
 
-  mHoverNote = xyMouseToNote(pos, isClick);
+  mHoverNote = xyMouseToNote(pos);
 
   // Will be invalid if mouse is dragged outside of keyboard
   bool isValidNote = mHoverNote.pitch != Utils::PitchClass::NONE;
@@ -191,6 +204,19 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
       mMouseNote = mHoverNote;
     }
   }
+  
+  // Check if global is hovered or clicked
+  mHoverGlobal = false;
+  if (mHoverNote.pitch == Utils::PitchClass::NONE) {
+    if (mGlobalRect.contains(pos)) {
+      mHoverGlobal = true;
+      if (isDown && mParameters.selectedParams != &mParameters.global) {
+        // Select global for parameter edits and send update
+        mParameters.selectedParams = &mParameters.global;
+        if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
+      }
+    }
+  }
   repaint();
 }
 
@@ -204,7 +230,7 @@ void RainbowKeyboard::generatorOnClick(ParamGenerator* gen) {
   }
 }
 
-Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos, bool isClick) {
+Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
   if (!reallyContains(pos.toInt(), false)) return Utils::MidiNote();
   
   // Check black keys then white keys

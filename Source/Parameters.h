@@ -19,12 +19,40 @@
 
 // Dynamically casts to AudioParameterFloat*
 #define P_FLOAT(X) dynamic_cast<juce::AudioParameterFloat*>(X)
+// Dynamically casts to AudioParameterFloat*
+#define P_INT(X) dynamic_cast<juce::AudioParameterInt*>(X)
 // Dynamically casts to AudioParameterChoice*
 #define P_CHOICE(X) dynamic_cast<juce::AudioParameterChoice*>(X)
 // Dynamically casts to AudioParameterBool*
 #define P_BOOL(X) dynamic_cast<juce::AudioParameterBool*>(X)
 
 namespace ParamIDs {
+// Global params
+static juce::String maxGrains{"max_grains"};
+static juce::String macro1{"macro1"};
+static juce::String macro2{"macro2"};
+static juce::String macro3{"macro3"};
+static juce::String macro4{"macro4"};
+// Global common
+static juce::String globalGain{"global_gain"};
+static juce::String globalAttack{"global_attack"};
+static juce::String globalDecay{"global_decay"};
+static juce::String globalSustain{"global_sustain"};
+static juce::String globalRelease{"global_release"};
+static juce::String globalFilterCutoff{"global_filt_cutoff"};
+static juce::String globalFilterResonance{"global_filt_resonance"};
+static juce::String globalFilterType{"global_filt_type"};
+static juce::String globalGrainShape{"global_grain_shape"};
+static juce::String globalGrainTilt{"global_grain_tilt"};
+static juce::String globalGrainRate{"global_grain_rate"};
+static juce::String globalGrainDuration{"global_grain_duration"};
+static juce::String globalGrainSync{"global_grain_sync"};
+static juce::String globalPitchAdjust{"global_pitch_adjust"};
+static juce::String globalPitchSpray{"global_pitch_spray"};
+static juce::String globalPositionAdjust{"global_position_adjust"};
+static juce::String globalPositionSpray{"global_position_spray"};
+static juce::String globalPanAdjust{"global_pan_adjust"};
+static juce::String globalPanSpray{"global_pan_spray"};
 // Note params
 static juce::String genSolo{"_solo_gen"};
 static juce::String noteGain{"_note_gain"};
@@ -68,29 +96,11 @@ static juce::String genPositionAdjust{"_position_adjust_gen_"};
 static juce::String genPositionSpray{"_position_spray_gen_"};
 static juce::String genPanAdjust{"_pan_adjust_gen_"};
 static juce::String genPanSpray{"_pan_spray_gen_"};
-// Global params
-static juce::String globalGain{"global_gain"};
-static juce::String globalAttack{"global_attack"};
-static juce::String globalDecay{"global_decay"};
-static juce::String globalSustain{"global_sustain"};
-static juce::String globalRelease{"global_release"};
-static juce::String globalFilterCutoff{"global_filt_cutoff"};
-static juce::String globalFilterResonance{"global_filt_resonance"};
-static juce::String globalFilterType{"global_filt_type"};
-static juce::String globalGrainShape{"global_grain_shape"};
-static juce::String globalGrainTilt{"global_grain_tilt"};
-static juce::String globalGrainRate{"global_grain_rate"};
-static juce::String globalGrainDuration{"global_grain_duration"};
-static juce::String globalGrainSync{"global_grain_sync"};
-static juce::String globalPitchAdjust{"global_pitch_adjust"};
-static juce::String globalPitchSpray{"global_pitch_spray"};
-static juce::String globalPositionAdjust{"global_position_adjust"};
-static juce::String globalPositionSpray{"global_position_spray"};
-static juce::String globalPanAdjust{"global_pan_adjust"};
-static juce::String globalPanSpray{"global_pan_spray"};
 } // namespace ParamIDs
 
 namespace ParamRanges {
+static juce::NormalisableRange<int>   MAX_GRAINS(1, 40);
+static juce::NormalisableRange<float> MACRO(0.0f, 1.0f);
 static juce::NormalisableRange<float> GAIN(0.0f, 1.0f);
 static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
@@ -113,6 +123,8 @@ static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
 namespace ParamDefaults {
+static int MAX_GRAINS_DEFAULT = 20;
+static float MACRO_DEFAULT = 0.5f;
 static float GAIN_DEFAULT = 0.8f;
 static float ATTACK_DEFAULT_SEC = 0.2f;
 static float DECAY_DEFAULT_SEC = 0.2f;
@@ -538,6 +550,19 @@ struct ParamGlobal : ParamCommon {
   ~ParamGlobal() {}
 
   void addParams(juce::AudioProcessor& p);
+  
+  void resetParams() {
+    ParamCommon::resetParams();
+    ParamHelper::setParam(P_INT(maxGrains), ParamDefaults::MAX_GRAINS_DEFAULT);
+    ParamHelper::setParam(P_FLOAT(macro1), ParamDefaults::MACRO_DEFAULT);
+    ParamHelper::setParam(P_FLOAT(macro2), ParamDefaults::MACRO_DEFAULT);
+    ParamHelper::setParam(P_FLOAT(macro3), ParamDefaults::MACRO_DEFAULT);
+    ParamHelper::setParam(P_FLOAT(macro4), ParamDefaults::MACRO_DEFAULT);
+  }
+  
+  // Truly global parameters
+  juce::AudioParameterInt* maxGrains;
+  juce::AudioParameterFloat* macro1, *macro2, *macro3, *macro4;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
 };

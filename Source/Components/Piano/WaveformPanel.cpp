@@ -68,7 +68,7 @@ void WaveformPanel::paint(juce::Graphics& g) {
   float curX = r.getX();
   for (WaveBar& bar : mWaveBars) {
     auto barRect = juce::Rectangle<float>(barWidth, bar.magnitude * barMaxHeight);
-    g.setColour(bar.pitchClass == Utils::PitchClass::NONE ? Utils::GLOBAL_COLOUR : Utils::getRainbow12Colour(bar.pitchClass));
+    g.setColour(bar.pitchClass == Utils::PitchClass::NONE ? Utils::GLOBAL_COLOUR.darker() : Utils::getRainbow12Colour(bar.pitchClass));
     if (bar.isEnabled) {
       g.fillRoundedRectangle(barRect.withCentre({curX + barWidth / 2, centreY}), 5);
     } else {

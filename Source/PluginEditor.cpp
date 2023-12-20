@@ -34,13 +34,14 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mTabsModulators(juce::TabbedButtonBar::Orientation::TabsAtTop),
       mEnvAdsr(synth.getParams()),
       mEnvGrain(synth.getParams()),
+      mAdjustPanel(synth.getParams()),
       mFx1(synth.getParams()),
       mFx2(synth.getParams()),
       mFx3(synth.getParams()),
       mModEnvelopes(synth.getParams()),
       mModKeyboard(synth.getParams()),
       mModLFOs(synth.getParams()),
-      mGrainControl(synth.getParams(), synth.getMeterSource()),
+      mMasterPanel(synth.getParams(), synth.getMeterSource()),
       mFilterControl(synth.getParams()),
       mArcSpec(synth.getParams()),
       mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
@@ -61,7 +62,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     mTitlePresetPanel.labelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
   }
         
-  // Envelope tabs
+  // Envelope/adjust tabs
   juce::Image tabImage = juce::PNGImageFormat::loadFrom(BinaryData::ampEnv_png, BinaryData::ampEnv_pngSize);
   auto* tabImageComp = new juce::ImageComponent();
   tabImageComp->setInterceptsMouseClicks(false, false);
@@ -78,6 +79,13 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
   mTabsEnvelopes.addTab("grain env", Utils::BG_COLOUR, &mEnvGrain, false);
   mTabsEnvelopes.getTabbedButtonBar().getTabButton(1)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
+        
+  tabImage = juce::PNGImageFormat::loadFrom(BinaryData::adjust_png, BinaryData::adjust_pngSize);
+  tabImageComp = new juce::ImageComponent();
+  tabImageComp->setInterceptsMouseClicks(false, false);
+  tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
+  mTabsEnvelopes.addTab("adjust", Utils::BG_COLOUR, &mAdjustPanel, false);
+  mTabsEnvelopes.getTabbedButtonBar().getTabButton(2)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
           
   mTabsEnvelopes.setOutline(0);
   addAndMakeVisible(mTabsEnvelopes);
@@ -142,6 +150,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mParameters.onSelectedChange = [this]() {
     mEnvAdsr.updateSelectedParams();
     mEnvGrain.updateSelectedParams();
+    mAdjustPanel.updateSelectedParams();
     mFx1.updateSelectedParams();
     mFx2.updateSelectedParams();
     mFx3.updateSelectedParams();
@@ -150,7 +159,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     mModEnvelopes.updateSelectedParams();
     mModLFOs.updateSelectedParams();
     mFilterControl.updateSelectedParams();
-    mGrainControl.updateSelectedParams();
+    mMasterPanel.updateSelectedParams();
     mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, mParameters.getSelectedParamColour());
   };
   addAndMakeVisible(mPianoPanel);
@@ -161,13 +170,13 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addChildComponent(mTrimSelection);
 
   addAndMakeVisible(mFilterControl);
-  mGrainControl.onRefToneOn =[this](){
+  mAdjustPanel.onRefToneOn =[this](){
     mSynth.startReferenceTone(mParameters.getSelectedPitchClass());
   };
-  mGrainControl.onRefToneOff = [this](){
+  mAdjustPanel.onRefToneOff = [this](){
     mSynth.stopReferenceTone();
   };
-  addAndMakeVisible(mGrainControl);
+  addAndMakeVisible(mMasterPanel);
 
   mCloudLeftImage = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeft_png, BinaryData::cloudLeft_pngSize);
   mCloudRightImage = juce::PNGImageFormat::loadFrom(BinaryData::cloudRight_png, BinaryData::cloudRight_pngSize);
@@ -224,7 +233,8 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   // Will overlay on the other center components
   if (mParameters.ui.loadingProgress < 1.0 && mParameters.ui.loadingProgress > 0.0) {
     mProgressBar.setVisible(true);
-  } else {
+  } else if (mProgressBar.isVisible()) {
+    if (!mPianoPanel.waveform.isLoaded()) mPianoPanel.waveform.load(mSynth.getAudioBuffer());
     mProgressBar.setVisible(false);
   }
 
@@ -346,7 +356,7 @@ void GRainbowAudioProcessorEditor::resized() {
 
   auto rightPanel = r.removeFromRight(Utils::PANEL_WIDTH).reduced(Utils::PADDING, Utils::PADDING);
   // TODO: add back in resource usage
-  mGrainControl.setBounds(rightPanel.removeFromTop(Utils::PANEL_HEIGHT));
+  mMasterPanel.setBounds(rightPanel.removeFromTop(Utils::PANEL_HEIGHT));
   mTabsModulators.setBounds(rightPanel.removeFromBottom(Utils::PANEL_HEIGHT));
   //mFilterControl.setBounds(rightPanel);
 

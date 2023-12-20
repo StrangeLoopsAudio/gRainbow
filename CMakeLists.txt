@@ -93,6 +93,10 @@ set(SOURCE_COMPONENTS
     Source/Components/EnvelopeADSR.cpp
     Source/Components/EnvelopeGrain.h
     Source/Components/EnvelopeGrain.cpp
+    Source/Components/AdjustPanel.h
+    Source/Components/AdjustPanel.cpp
+    Source/Components/MasterPanel.h
+    Source/Components/MasterPanel.cpp
     Source/Components/FxPanel.h
     Source/Components/FxPanel.cpp
     Source/Components/ArcSpectrogram.h
@@ -107,15 +111,13 @@ set(SOURCE_COMPONENTS
     Source/Components/Piano/RainbowKeyboard.cpp
     Source/Components/Piano/WaveformPanel.h
     Source/Components/Piano/WaveformPanel.cpp
-    Source/Components/RainbowSlider.h
-    Source/Components/RainbowSlider.cpp
+    Source/Components/Sliders.h
+    Source/Components/Sliders.cpp
     Source/Components/RainbowLookAndFeel.h
     Source/Components/RainbowLookAndFeel.cpp
     Source/Components/MeterLookAndFeel.h
     Source/Components/FilterControl.h
     Source/Components/FilterControl.cpp
-    Source/Components/GrainControl.h
-    Source/Components/GrainControl.cpp
     Source/Components/Modulators/LFOs.h
     Source/Components/Modulators/LFOs.cpp
     Source/Components/Modulators/Envelopes.h
@@ -170,6 +172,7 @@ set(BINARY_RESOURCES
     Source/Resources/company.png
     Source/Resources/ampEnv.png
     Source/Resources/grainEnv.png
+    Source/Resources/adjust.png
     Source/Resources/microphone.png
     Source/Resources/microphoneOver.png
     Source/Resources/openFileNormal.png

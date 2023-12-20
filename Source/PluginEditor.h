@@ -15,11 +15,12 @@
 #include "Components/TitlePresetPanel.h"
 #include "Components/EnvelopeADSR.h"
 #include "Components/EnvelopeGrain.h"
+#include "Components/AdjustPanel.h"
 #include "Components/FxPanel.h"
 #include "Components/Modulators/Envelopes.h"
 #include "Components/Modulators/KeyboardMod.h"
 #include "Components/Modulators/LFOs.h"
-#include "Components/GrainControl.h"
+#include "Components/MasterPanel.h"
 #include "Components/FilterControl.h"
 #include "Components/TrimSelection.h"
 #include "Components/ArcSpectrogram.h"
@@ -80,11 +81,12 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::TabbedComponent mTabsEnvelopes, mTabsFx, mTabsModulators;
   EnvelopeADSR mEnvAdsr;
   EnvelopeGrain mEnvGrain;
+  AdjustPanel mAdjustPanel;
   FxPanel mFx1, mFx2, mFx3;
   Envelopes mModEnvelopes;
   KeyboardMod mModKeyboard;
   LFOs mModLFOs;
-  GrainControl mGrainControl;
+  MasterPanel mMasterPanel;
   FilterControl mFilterControl;
   PianoPanel mPianoPanel;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;

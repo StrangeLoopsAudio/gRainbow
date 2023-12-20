@@ -13,7 +13,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "Parameters.h"
-#include "RainbowSlider.h"
+#include "Sliders.h"
 
 //==============================================================================
 /*
@@ -41,10 +41,10 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
   juce::Colour mParamColour;
 
   // Components
-  RainbowSlider mSliderAttack;
-  RainbowSlider mSliderDecay;
-  RainbowSlider mSliderSustain;
-  RainbowSlider mSliderRelease;
+  CommonSlider mSliderAttack;
+  CommonSlider mSliderDecay;
+  CommonSlider mSliderSustain;
+  CommonSlider mSliderRelease;
   juce::Label mLabelAttack;
   juce::Label mLabelDecay;
   juce::Label mLabelSustain;

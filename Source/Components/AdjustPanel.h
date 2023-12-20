@@ -1,8 +1,8 @@
 /*
   ==============================================================================
 
-    GrainControl.h
-    Created: 23 Jun 2021 8:34:54pm
+    AdjustPanel.h
+    Created: 15 Dec 2023 8:34:54pm
     Author:  brady
 
   ==============================================================================
@@ -12,17 +12,15 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
-#include "RainbowSlider.h"
-#include "MeterLookAndFeel.h"
-#include "ff_meters/ff_meters.h"
+#include "Sliders.h"
 
 //==============================================================================
 /*
  */
-class GrainControl : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
+class AdjustPanel : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
-  GrainControl(Parameters& parameters, foleys::LevelMeterSource& meterSource);
-  ~GrainControl();
+  AdjustPanel(Parameters& parameters);
+  ~AdjustPanel();
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -38,36 +36,31 @@ class GrainControl : public juce::Component, juce::AudioProcessorParameter::List
   std::function<void(void)> onRefToneOff = nullptr;
 
  private:
-  static constexpr const char* SECTION_TITLE = "controls";
-
   // Bookkeeping
   Parameters& mParameters;
-  std::atomic<bool> mParamHasChanged;
   ParamCommon* mCurSelectedParams;
+  std::atomic<bool> mParamHasChanged;
   juce::Colour mParamColour;
-  MeterLookAndFeel mMeterLookAndFeel;
 
   // Components
-  // -- Generator Adjustments
-  RainbowSlider mSliderPitchAdjust;
+  CommonSlider mSliderPitchAdjust;
   juce::Label mLabelPitchAdjust;
-  RainbowSlider mSliderPitchSpray;
+  CommonSlider mSliderPitchSpray;
   juce::Label mLabelPitchSpray;
-  RainbowSlider mSliderPosAdjust;
+  CommonSlider mSliderPosAdjust;
   juce::Label mLabelPosAdjust;
-  RainbowSlider mSliderPosSpray;
+  CommonSlider mSliderPosSpray;
   juce::Label mLabelPosSpray;
-  RainbowSlider mSliderPanAdjust;
+  CommonSlider mSliderPanAdjust;
   juce::Label mLabelPanAdjust;
-  RainbowSlider mSliderPanSpray;
+  CommonSlider mSliderPanSpray;
   juce::Label mLabelPanSpray;
-  RainbowSlider mSliderGain;
-  juce::Label mLabelGain;
-  foleys::LevelMeter mMeter{foleys::LevelMeter::Horizontal};
-  juce::TextButton mBtnRefTone;
+  juce::ToggleButton mBtnRefTone;
+  juce::Label mLabelRefTone;
+  juce::ToggleButton mBtnReverse;
+  juce::Label mLabelReverse;
+  juce::ToggleButton mBtnTriggerMode;
+  juce::Label mLabelTriggerMode;
 
-  // UI values saved on resize
-  juce::Rectangle<float> mTitleRect;
-
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GrainControl)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AdjustPanel)
 };

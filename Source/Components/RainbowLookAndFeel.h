@@ -26,6 +26,7 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
 
  private:
   juce::Typeface::Ptr getTypefaceForFont(const juce::Font& font) override;
+
   // Tabs
   int getTabButtonBestWidth(juce::TabBarButton& btn, int tabDepth) override;
   juce::Rectangle<int> getTabButtonExtraComponentBounds(const juce::TabBarButton& btn, juce::Rectangle<int>& textArea, juce::Component& extraComp) override;
@@ -36,11 +37,9 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
   // Sliders
   void drawRotarySlider(juce::Graphics& g, int, int, int width, int height, float sliderPosProportional, float, float,
                         juce::Slider& slider) override;
-  void drawLinearSlider(juce::Graphics& g, int, int, int width, int height, float sliderPos, float, float,
-                        const juce::Slider::SliderStyle, juce::Slider& slider) override;
   
   // Buttons
-  void drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted, bool) override;
+  void drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
   void drawButtonBackground(juce::Graphics& g, juce::Button& btn, const juce::Colour&, bool shouldDrawButtonAsHighlighted,
                             bool) override;
   
