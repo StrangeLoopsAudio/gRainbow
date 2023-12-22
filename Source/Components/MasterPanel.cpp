@@ -17,7 +17,6 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
       mCurSelectedParams(parameters.selectedParams),
       mParamColour(Utils::GLOBAL_COLOUR),
       mSliderGain(parameters, ParamCommon::Type::GAIN),
-      mSliderMaxGrains(mParameters.global.maxGrains),
       mSliderMacro1(mParameters.global.macro1),
       mSliderMacro2(mParameters.global.macro2),
       mSliderMacro3(mParameters.global.macro3),
@@ -40,7 +39,7 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
   addAndMakeVisible(mMeter);
   
   // Default slider settings
-  std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderGain, mSliderMaxGrains, mSliderMacro1, mSliderMacro2, mSliderMacro3, mSliderMacro4 };
+  std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderGain, mSliderMacro1, mSliderMacro2, mSliderMacro3, mSliderMacro4 };
   for (auto& slider : sliders) {
     slider.get().setNumDecimalPlacesToDisplay(2);
     slider.get().setPopupDisplayEnabled(true, true, this);
@@ -48,23 +47,33 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
   }
 
   mSliderGain.setRange(ParamRanges::GAIN.start, ParamRanges::GAIN.end, 0.01);
-  mSliderMaxGrains.setRange(ParamRanges::MAX_GRAINS.start, ParamRanges::MAX_GRAINS.end, 1);
   mSliderMacro1.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
   mSliderMacro2.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
   mSliderMacro3.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
   mSliderMacro4.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
   
   // Default label settings
-  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelGain, mLabelMaxGrains, mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelGain, mLabelRefTone, mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };
   for (auto& label : labels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
     label.get().setJustificationType(juce::Justification::centredTop);
     label.get().setFont(juce::Font(14));
     addAndMakeVisible(label.get());
   }
+        
+  // Default button settings
+  mBtnRefTone.setColour(juce::ToggleButton::ColourIds::tickColourId, Utils::GLOBAL_COLOUR);
+  addAndMakeVisible(mBtnRefTone);
+  // Reference tone
+  mBtnRefTone.onClick = [this]() {
+    if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) {
+      onRefToneOn();
+    }
+    else if (!mBtnRefTone.getToggleState() && onRefToneOff != nullptr) onRefToneOff();
+  };
+  mLabelRefTone.setText("ref tone", juce::dontSendNotification);
 
   mLabelGain.setText("gain", juce::dontSendNotification);
-  mLabelMaxGrains.setText("max grains", juce::dontSendNotification);
   mLabelMacro1.setText("macro 1", juce::dontSendNotification);
   mLabelMacro2.setText("macro 2", juce::dontSendNotification);
   mLabelMacro3.setText("macro 3", juce::dontSendNotification);
@@ -87,7 +96,6 @@ void MasterPanel::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
     mSliderGain.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GAIN), juce::dontSendNotification);
-    mSliderMaxGrains.setValue(mParameters.global.maxGrains->get(), juce::dontSendNotification);
     mSliderMacro1.setValue(mParameters.global.macro1->get(), juce::dontSendNotification);
     mSliderMacro2.setValue(mParameters.global.macro2->get(), juce::dontSendNotification);
     mSliderMacro3.setValue(mParameters.global.macro3->get(), juce::dontSendNotification);
@@ -99,8 +107,21 @@ void MasterPanel::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
+  mParamColour = mParameters.getSelectedParamColour();
+  
+  Utils::PitchClass selectedPitch = mParameters.getSelectedPitchClass();
+  // Turn ref tone off if global parameters
+  if (selectedPitch == Utils::PitchClass::NONE && mBtnRefTone.getToggleState() && onRefToneOff != nullptr) {
+    mBtnRefTone.setToggleState(false, juce::dontSendNotification);
+    onRefToneOff();
+  }
+  // Change ref tone frequency if already active
+  if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) onRefToneOn();
+  // Disable ref tone button if global parameters
+  mBtnRefTone.setEnabled(selectedPitch != Utils::PitchClass::NONE);
     
   mSliderGain.updateSelectedParams();
+  mBtnRefTone.setColour(juce::ToggleButton::ColourIds::tickColourId, mParamColour);
 
   mParamHasChanged.store(true);
   repaint();
@@ -132,8 +153,9 @@ void MasterPanel::resized() {
   mLabelGain.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderGain.setBounds(topKnob.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   masterPanel.removeFromTop(Utils::PADDING);
-  mSliderMaxGrains.setBounds(masterPanel.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-  mLabelMaxGrains.setBounds(masterPanel.removeFromTop(Utils::LABEL_HEIGHT));
+  // Reference tone button
+  mBtnRefTone.setBounds(masterPanel.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::BUTTON_WIDTH, Utils::LABEL_HEIGHT));
+  mLabelRefTone.setBounds(masterPanel.removeFromTop(Utils::LABEL_HEIGHT));
   
   auto macroPanel = r;
   mLabelMacros.setBounds(macroPanel.removeFromTop(Utils::TAB_HEIGHT));

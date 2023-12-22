@@ -31,9 +31,6 @@ class AdjustPanel : public juce::Component, juce::AudioProcessorParameter::Liste
   void timerCallback() override;
 
   void updateSelectedParams();
-  
-  std::function<void(void)> onRefToneOn = nullptr;
-  std::function<void(void)> onRefToneOff = nullptr;
 
  private:
   // Bookkeeping
@@ -55,8 +52,6 @@ class AdjustPanel : public juce::Component, juce::AudioProcessorParameter::Liste
   juce::Label mLabelPanAdjust;
   CommonSlider mSliderPanSpray;
   juce::Label mLabelPanSpray;
-  juce::ToggleButton mBtnRefTone;
-  juce::Label mLabelRefTone;
   juce::ToggleButton mBtnReverse;
   juce::Label mLabelReverse;
   juce::ToggleButton mBtnTriggerMode;

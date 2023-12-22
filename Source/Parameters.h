@@ -28,7 +28,6 @@
 
 namespace ParamIDs {
 // Global params
-static juce::String maxGrains{"max_grains"};
 static juce::String macro1{"macro1"};
 static juce::String macro2{"macro2"};
 static juce::String macro3{"macro3"};
@@ -99,7 +98,6 @@ static juce::String genPanSpray{"_pan_spray_gen_"};
 } // namespace ParamIDs
 
 namespace ParamRanges {
-static juce::NormalisableRange<int>   MAX_GRAINS(1, 40);
 static juce::NormalisableRange<float> MACRO(0.0f, 1.0f);
 static juce::NormalisableRange<float> GAIN(0.0f, 1.0f);
 static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
@@ -123,7 +121,6 @@ static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
 namespace ParamDefaults {
-static int MAX_GRAINS_DEFAULT = 20;
 static float MACRO_DEFAULT = 0.5f;
 static float GAIN_DEFAULT = 0.8f;
 static float ATTACK_DEFAULT_SEC = 0.2f;
@@ -392,7 +389,7 @@ struct ParamGenerator : ParamCommon {
 
   void resetParams(bool) {
     ParamCommon::resetParams();
-    ParamHelper::setParam(enable, genIdx == 0);
+    ParamHelper::setParam(enable, true);
     ParamHelper::setParam(candidate, genIdx);
   }
 
@@ -553,7 +550,6 @@ struct ParamGlobal : ParamCommon {
   
   void resetParams() {
     ParamCommon::resetParams();
-    ParamHelper::setParam(P_INT(maxGrains), ParamDefaults::MAX_GRAINS_DEFAULT);
     ParamHelper::setParam(P_FLOAT(macro1), ParamDefaults::MACRO_DEFAULT);
     ParamHelper::setParam(P_FLOAT(macro2), ParamDefaults::MACRO_DEFAULT);
     ParamHelper::setParam(P_FLOAT(macro3), ParamDefaults::MACRO_DEFAULT);
@@ -561,7 +557,6 @@ struct ParamGlobal : ParamCommon {
   }
   
   // Truly global parameters
-  juce::AudioParameterInt* maxGrains;
   juce::AudioParameterFloat* macro1, *macro2, *macro3, *macro4;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
@@ -667,7 +662,15 @@ struct Parameters {
 
   // Called when current selected note or generator changes
   // Should be used only by PluginEditor and passed on to subcomponents
+  // TODO: should be refactored into a listener/broadcaster relationship
   std::function<void()> onSelectedChange = nullptr;
+  
+  // Returns the candidate used in a given generator
+  ParamCandidate* getGeneratorCandidate(ParamGenerator* gen) {
+    if (gen == nullptr) return nullptr;
+    return &note.notes[gen->noteIdx]->candidates[gen->candidate->get()];
+  }
+  
   // Returns the currently selected pitch class, or NONE if global selected
   Utils::PitchClass getSelectedPitchClass() {
     switch (selectedParams->type) {

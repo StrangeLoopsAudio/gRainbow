@@ -47,6 +47,7 @@ class RainbowKeyboard : public juce::Component, juce::AudioProcessorParameter::L
   static constexpr int MIDI_CHANNEL = 1;
   static constexpr float BLACK_NOTE_SIZE_RATIO = 0.7f;
   static constexpr int GLOBAL_RECT_HEIGHT = 18;
+  static constexpr int KEY_COLOUR_RECT_HEIGHT = 5;
   
   // If a key is black or white, have to know this to paint the UI
   Utils::PitchClass WHITE_KEYS_PITCH_CLASS[7] = {Utils::PitchClass::C, Utils::PitchClass::D, Utils::PitchClass::E,

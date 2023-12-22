@@ -33,6 +33,9 @@ class MasterPanel : public juce::Component, juce::AudioProcessorParameter::Liste
   void timerCallback() override;
 
   void updateSelectedParams();
+  
+  std::function<void(void)> onRefToneOn = nullptr;
+  std::function<void(void)> onRefToneOff = nullptr;
 
  private:
   // Bookkeeping
@@ -47,8 +50,8 @@ class MasterPanel : public juce::Component, juce::AudioProcessorParameter::Liste
   juce::Label mLabelMacros;
   CommonSlider mSliderGain;
   juce::Label mLabelGain;
-  GlobalSlider mSliderMaxGrains;
-  juce::Label mLabelMaxGrains;
+  juce::ToggleButton mBtnRefTone;
+  juce::Label mLabelRefTone;
   GlobalSlider mSliderMacro1;
   juce::Label mLabelMacro1;
   GlobalSlider mSliderMacro2;

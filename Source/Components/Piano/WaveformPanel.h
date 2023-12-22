@@ -29,6 +29,12 @@ class WaveformPanel : public juce::Component, juce::AudioProcessorParameter::Lis
   void parameterGestureChanged(int, bool) override {}
 
   void timerCallback() override;
+  
+  void mouseMove(const juce::MouseEvent& evt) override;
+  void mouseDown(const juce::MouseEvent& evt) override;
+  void mouseDrag(const juce::MouseEvent& evt) override;
+  void mouseUp(const juce::MouseEvent& evt) override;
+  void mouseExit(const juce::MouseEvent&) override;
 
   void updateSelectedParams();
   
@@ -36,15 +42,17 @@ class WaveformPanel : public juce::Component, juce::AudioProcessorParameter::Lis
   void load(juce::AudioBuffer<float> &buffer);
 
  private:
-  static constexpr int NUM_WAVE_BARS = 30;
+  static constexpr int NUM_WAVE_BARS = 40;
   
   typedef struct WaveBar {
     WaveBar() {}
     WaveBar(float _magnitude, Utils::PitchClass _pitchClass = Utils::PitchClass::NONE) :
-    magnitude(_magnitude), pitchClass(_pitchClass), isEnabled(true) { }
+    magnitude(_magnitude), pitchClass(_pitchClass), isEnabled(true), rect(juce::Rectangle<float>()), generator(nullptr) { }
     
     float magnitude = 0.0f;
     Utils::PitchClass pitchClass = Utils::PitchClass::NONE;
+    ParamGenerator* generator = nullptr;
+    juce::Rectangle<float> rect;
     bool isEnabled = true;
   } WaveBar;
   
@@ -61,8 +69,8 @@ class WaveformPanel : public juce::Component, juce::AudioProcessorParameter::Lis
   std::array<WaveBar, NUM_WAVE_BARS> mWaveBars;
   juce::Range<int> mZoomRange; // Zoom range in samples
   int mSamplesPerBar;
-
-  // Components
+  WaveBar* mHoverBar = nullptr;
+  int mLastDragX;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WaveformPanel)
 };

@@ -35,14 +35,14 @@ mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY) {
   }
   
   // Default button settings
-  std::vector<std::reference_wrapper<juce::ToggleButton>> buttons = { mBtnReverse, mBtnRefTone, mBtnTriggerMode };
+  std::vector<std::reference_wrapper<juce::ToggleButton>> buttons = { mBtnReverse, mBtnTriggerMode };
   for (auto& btn : buttons) {
     btn.get().setColour(juce::ToggleButton::ColourIds::tickColourId, Utils::GLOBAL_COLOUR);
     addAndMakeVisible(btn.get());
   }
   
   // Default label settings
-  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelReverse, mLabelRefTone, mLabelPanSpray, mLabelPanAdjust, mLabelPosSpray, mLabelPosAdjust, mLabelPitchSpray, mLabelPitchAdjust, mLabelTriggerMode };
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelReverse, mLabelPanSpray, mLabelPanAdjust, mLabelPosSpray, mLabelPosAdjust, mLabelPitchSpray, mLabelPitchAdjust, mLabelTriggerMode };
   for (auto& label : labels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
     label.get().setJustificationType(juce::Justification::centredTop);
@@ -79,15 +79,6 @@ mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY) {
   mSliderPanSpray.setNumDecimalPlacesToDisplay(3);
   mSliderPanSpray.setRange(ParamRanges::PAN_SPRAY.start, ParamRanges::PAN_SPRAY.end, 0.005);
   mLabelPanSpray.setText("pan spray", juce::dontSendNotification);
-  
-  // Reference tone
-  mBtnRefTone.onClick = [this]() {
-    if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) {
-      onRefToneOn();
-    }
-    else if (!mBtnRefTone.getToggleState() && onRefToneOff != nullptr) onRefToneOff();
-  };
-  mLabelRefTone.setText("ref tone", juce::dontSendNotification);
         
   // Reverse playback
   mBtnReverse.onClick = [this]() {
@@ -134,17 +125,6 @@ void AdjustPanel::updateSelectedParams() {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
-
-  Utils::PitchClass selectedPitch = mParameters.getSelectedPitchClass();
-  // Turn ref tone off if global parameters
-  if (selectedPitch == Utils::PitchClass::NONE && mBtnRefTone.getToggleState() && onRefToneOff != nullptr) {
-    mBtnRefTone.setToggleState(false, juce::dontSendNotification);
-    onRefToneOff();
-  }
-  // Change ref tone frequency if already active
-  if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) onRefToneOn();
-  // Disable ref tone button if global parameters
-  mBtnRefTone.setEnabled(selectedPitch != Utils::PitchClass::NONE);
   
   mParamColour = mParameters.getSelectedParamColour();
   mSliderPitchAdjust.updateSelectedParams();
@@ -153,7 +133,6 @@ void AdjustPanel::updateSelectedParams() {
   mSliderPosSpray.updateSelectedParams();
   mSliderPanAdjust.updateSelectedParams();
   mSliderPanSpray.updateSelectedParams();
-  mBtnRefTone.setColour(juce::ToggleButton::ColourIds::tickColourId, mParamColour);
   mBtnReverse.setColour(juce::ToggleButton::ColourIds::tickColourId, mParamColour);
   mBtnTriggerMode.setColour(juce::ToggleButton::ColourIds::tickColourId, mParamColour);
 
@@ -182,7 +161,7 @@ void AdjustPanel::resized() {
   // Trigger mode button
   knobPanel.removeFromBottom(Utils::PADDING);
   mLabelTriggerMode.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mBtnTriggerMode.setBounds(knobPanel.withSizeKeepingCentre(knobPanel.getWidth() / 2, Utils::LABEL_HEIGHT));
+  mBtnTriggerMode.setBounds(knobPanel.withSizeKeepingCentre(Utils::BUTTON_WIDTH, Utils::LABEL_HEIGHT));
   
   // Right: Position spray/adjust and ref tone
   knobPanel = r.removeFromRight(knobWidth);
@@ -192,11 +171,7 @@ void AdjustPanel::resized() {
   mLabelPosAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPosAdjust.setBounds(
                              knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-  // Reference tone button
-  knobPanel.removeFromBottom(Utils::PADDING);
-  mLabelRefTone.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mBtnRefTone.setBounds(knobPanel.withSizeKeepingCentre(knobPanel.getWidth() / 2, Utils::LABEL_HEIGHT));
-  
+   
   // Middle: Pan spray/adjust and reverse
   knobPanel = r;
   mLabelPanSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
@@ -208,5 +183,5 @@ void AdjustPanel::resized() {
   // Reverse button
   knobPanel.removeFromBottom(Utils::PADDING);
   mLabelReverse.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mBtnReverse.setBounds(knobPanel.withSizeKeepingCentre(knobPanel.getWidth() / 2, Utils::LABEL_HEIGHT));
+  mBtnReverse.setBounds(knobPanel.withSizeKeepingCentre(Utils::BUTTON_WIDTH, Utils::LABEL_HEIGHT));
 }

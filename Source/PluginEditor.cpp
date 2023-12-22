@@ -170,10 +170,10 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   addChildComponent(mTrimSelection);
 
   addAndMakeVisible(mFilterControl);
-  mAdjustPanel.onRefToneOn =[this](){
+  mMasterPanel.onRefToneOn = [this](){
     mSynth.startReferenceTone(mParameters.getSelectedPitchClass());
   };
-  mAdjustPanel.onRefToneOff = [this](){
+  mMasterPanel.onRefToneOff = [this](){
     mSynth.stopReferenceTone();
   };
   addAndMakeVisible(mMasterPanel);
@@ -234,7 +234,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   if (mParameters.ui.loadingProgress < 1.0 && mParameters.ui.loadingProgress > 0.0) {
     mProgressBar.setVisible(true);
   } else if (mProgressBar.isVisible()) {
-    if (!mPianoPanel.waveform.isLoaded()) mPianoPanel.waveform.load(mSynth.getAudioBuffer());
+    mPianoPanel.waveform.load(mSynth.getAudioBuffer());
     mProgressBar.setVisible(false);
   }
 

@@ -12,9 +12,6 @@
 
 void ParamGlobal::addParams(juce::AudioProcessor& p) {
   // Global
-  p.addParameter(maxGrains = new juce::AudioParameterInt({ParamIDs::maxGrains, 1}, "Max Grains", ParamRanges::MAX_GRAINS.start,
-                                                           ParamRanges::MAX_GRAINS.end,
-                                                           ParamDefaults::MAX_GRAINS_DEFAULT));
   p.addParameter(macro1 = new juce::AudioParameterFloat({ParamIDs::macro1, 1}, "Macro 1", ParamRanges::MACRO,
                                                            ParamDefaults::MACRO_DEFAULT));
   p.addParameter(macro2 = new juce::AudioParameterFloat({ParamIDs::macro2, 1}, "Macro 2", ParamRanges::MACRO,
@@ -79,7 +76,7 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
 
 void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String enableId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genEnable + juce::String(genIdx);
-  p.addParameter(enable = new juce::AudioParameterBool({enableId, 1}, enableId, genIdx == 0));
+  p.addParameter(enable = new juce::AudioParameterBool({enableId, 1}, enableId, true));
   juce::String candidateId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genCandidate + juce::String(genIdx);
   p.addParameter(candidate = new juce::AudioParameterInt({candidateId, 1}, candidateId, 0, MAX_CANDIDATES - 1, 0));
 

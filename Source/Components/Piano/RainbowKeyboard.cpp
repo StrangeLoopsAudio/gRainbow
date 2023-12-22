@@ -43,6 +43,7 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
     drawKey(g, pitchClass);
   }
   
+  // Global select rect
   const bool isGlobal = mParameters.selectedParams->type == ParamType::GLOBAL;
   auto globalFillColour = isGlobal ? Utils::GLOBAL_COLOUR : juce::Colours::transparentBlack;
   if (mHoverGlobal && !isGlobal) globalFillColour = Utils::GLOBAL_COLOUR.withAlpha(0.2f);
@@ -108,12 +109,15 @@ void RainbowKeyboard::fillNoteRectangleMap() {
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   const float velocity = mNoteVelocity[pitchClass];
   const bool isDown = (velocity > 0.0f);
-  const bool isPitchSelected = mParameters.selectedParams == mParameters.note.notes[pitchClass].get();
+  const auto* note = mParameters.note.notes[pitchClass].get();
+  const bool isPitchSelected = mParameters.selectedParams == note;
+  const bool isGenSelected = std::find_if(note->generators.begin(), note->generators.end(), [this](const std::unique_ptr<ParamGenerator>& gen) { return gen.get() == mParameters.selectedParams; }) != std::end(note->generators);
   const ParamNote& paramNote = *mParameters.note.notes[pitchClass];
 
   const bool isBlack = isBlackKey(pitchClass);
   const juce::Colour defaultKeyColour = isBlack ? juce::Colours::black : juce::Colours::white;
-  juce::Colour keyColour = isPitchSelected ? Utils::getRainbow12Colour(pitchClass) : defaultKeyColour;
+  const juce::Colour keyRbColour = Utils::getRainbow12Colour(pitchClass);
+  juce::Colour keyColour = isPitchSelected ? keyRbColour : defaultKeyColour;
 
   // if down, extra dark
   // if no note is down, lightly darken if mouse is hovering it
@@ -124,11 +128,17 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   g.setColour(keyColour);
 
   juce::Rectangle<float> area = mNoteRectMap[pitchClass];
+  // Main key outline
+  g.setColour(keyColour);
   g.fillRoundedRectangle(area, 5);
-  //g.fillRect(area);
-
-  // Draw the active generators on top of each key
-  const int numEnabledGens = paramNote.getNumEnabledGens();
+  // Generator selected indicator
+  g.setColour(keyRbColour);
+  if (isGenSelected) g.drawRoundedRectangle(area.reduced(1, 1), 4, 2);
+  
+  // Key hint color
+  g.setColour(Utils::getRainbow12Colour(pitchClass));
+  g.fillRect(area.withHeight(5));
+  
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
