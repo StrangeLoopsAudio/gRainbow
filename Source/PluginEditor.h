@@ -63,7 +63,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   static constexpr int PROGRESS_SIZE = 80;
   static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
   static constexpr const char* MANUAL_URL = "https://github.com/StrangeLoopsAudio/gRainbow/blob/main/README.md";
-
+                                       
   // DSP Modules
   GranularSynth& mSynth;
   AudioRecorder mRecorder;
@@ -99,11 +99,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::Path mBorderPath;
 
-  juce::Image mCloudLeftImage;
-  juce::Image mCloudRightImage;
   juce::Image mRainImage;
-  juce::Rectangle<float> mCloudLeftTargetArea;
-  juce::Rectangle<float> mCloudRightTargetArea;
   juce::Rectangle<float> mLeftRain;
   juce::Rectangle<float> mRightRain;
   int mLeftRainDeltY = 0;

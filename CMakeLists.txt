@@ -83,6 +83,7 @@ set(SOURCE_UTILS
     Source/Utils/Colour.h
     Source/Utils/MidiNote.h
     Source/Utils/PitchClass.h
+    Source/Utils/Presets.h
 )
 
 # Manually list all .h and .cpp files for the plugin
@@ -173,19 +174,32 @@ set(BINARY_RESOURCES
     Source/Resources/ampEnv.png
     Source/Resources/grainEnv.png
     Source/Resources/adjust.png
+    Source/Resources/btnPowerOff.png
+    Source/Resources/btnPowerOn.png
+    Source/Resources/lock.png
+    Source/Resources/unlock.png
     Source/Resources/microphone.png
     Source/Resources/microphoneOver.png
     Source/Resources/openFileNormal.png
     Source/Resources/openFileOver.png
     Source/Resources/saveNormal.png
     Source/Resources/saveOver.png
-    Source/Resources/cloudLeft.png
-    Source/Resources/cloudRight.png
+    Source/Resources/cloudLeftWait.png
+    Source/Resources/cloudLeftSing.png
+    Source/Resources/cloudLeftTouch.png
+    Source/Resources/cloudRightWait.png
+    Source/Resources/cloudRightSing.png
+    Source/Resources/cloudRightTouch.png
     Source/Resources/infoNormal.png
     Source/Resources/infoOver.png
     Source/Resources/rain.png
     Source/Resources/LeagueSpartan-SemiBold.ttf
 )
+
+# Set preset paths (also binary resources)
+file(GLOB PRESETS "presets/*")
+
+list(APPEND BINARY_RESOURCES ${PRESETS})
 
 juce_add_binary_data(Assets SOURCES ${BINARY_RESOURCES})
 

@@ -44,18 +44,15 @@ void RainbowLookAndFeel::drawTabButtonText(juce::TabBarButton& btn, juce::Graphi
 // Sliders
 void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int width, int height, float sliderPosProportional, float,
                                           float, juce::Slider& slider) {
-  // Get CommonSlider version of the slider
-  //CommonSlider* commonSlider = dynamic_cast<CommonSlider*>(&slider);
+  
+  juce::Colour rainbowCol = slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
   
   auto r = slider.getLocalBounds().reduced(2, 2);
   
-  const float pos = juce::jmax(0.02f, sliderPosProportional);
   const float startRadians = juce::MathConstants<float>::pi + 0.6f;
   const float endRadians = juce::MathConstants<float>::pi + (2.0f * juce::MathConstants<float>::pi) - 0.6f;
   
-  const float posRadians = startRadians + pos * (endRadians - startRadians);
-  juce::Colour rainbowCol = slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
-
+  const float posRadians = startRadians + sliderPosProportional * (endRadians - startRadians);
 
   const int size = juce::jmin(r.getWidth(), r.getHeight());
   auto center = r.getCentre().toFloat();
@@ -67,6 +64,23 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int width
   path.addArc(r.getX() + ((r.getWidth() - size) / 2), r.getY() + ((r.getHeight() - size) / 2), size, size, startRadians, posRadians, true);
   path.lineTo(center);
   g.strokePath(path.createPathWithRoundedCorners(3), juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
+  
+  // Get CommonSlider version of the slider
+  CommonSlider* commonSlider = dynamic_cast<CommonSlider*>(&slider);
+  if (commonSlider) {
+    // Draw global tick
+    if (commonSlider->getGlobalValue() != sliderPosProportional) {
+      const float globRadians = startRadians + commonSlider->getGlobalValue() * (endRadians - startRadians);
+      g.setColour(Utils::GLOBAL_COLOUR);
+      g.drawLine(juce::Line<float>(center, center.getPointOnCircumference(size / 2.0f - 3, globRadians)), 3);
+    }
+    if (commonSlider->getParamLevel() == ParamType::GENERATOR && commonSlider->getNoteValue() != sliderPosProportional) {
+      // Draw note tick
+      const float globRadians = startRadians + commonSlider->getNoteValue() * (endRadians - startRadians);
+      g.setColour(rainbowCol);
+      g.drawLine(juce::Line<float>(center, center.getPointOnCircumference(size / 2.0f, globRadians)), 2);
+    }
+  }
 }
 
 void RainbowLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) {

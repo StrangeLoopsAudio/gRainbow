@@ -94,7 +94,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
   //=====================end-inherited-functions==================================
-
+  
   foleys::LevelMeterSource& getMeterSource() { return mMeterSource; }
 
   void getPresetParamsXml(juce::MemoryBlock& destData);
@@ -107,6 +107,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   juce::AudioBuffer<float>& getInputBuffer() { return mInputBuffer; }
   Utils::Result loadAudioFile(juce::File file, bool process);
   Utils::Result loadPreset(juce::File file);
+  Utils::Result loadPreset(juce::String name, juce::MemoryBlock& block);
   // Audio buffer processing
   void resampleAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer, double inputSampleRate,
                            double outputSampleRate, bool clearInput = false);

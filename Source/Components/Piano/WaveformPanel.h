@@ -59,6 +59,10 @@ class WaveformPanel : public juce::Component, juce::AudioProcessorParameter::Lis
   void updateWaveBars();
   void addBarsForNote(ParamNote* note, bool showCandidates);
   
+  // Components
+  juce::ImageButton mBtnGenEnable;
+  juce::ImageButton mBtnLock;
+  
   // Bookkeeping
   Parameters& mParameters;
   ParamCommon* mCurSelectedParams;

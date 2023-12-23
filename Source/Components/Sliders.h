@@ -13,14 +13,19 @@ class CommonSlider : public juce::Slider {
 
   // Update slider colours for new selected group
   void updateSelectedParams();
-
-  std::optional<float> getArcValue(Utils::PitchClass pitchClass);
+  float getGlobalValue() { return mGlobalValue; }
+  float getNoteValue() { return mNoteValue; }
+  ParamType getParamLevel() { return mParameters.selectedParams->type; }
+  void mouseDoubleClick(const juce::MouseEvent& evt) override;
 
  private:
+  // Get the colour of the parameter at the level that's used (global, note)
+  juce::Colour getUsedColour();
+  
   ParamCommon::Type mType;
   Parameters& mParameters;
 
-  juce::HashMap<Utils::PitchClass, float> mArcs;
+  float mGlobalValue, mNoteValue;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CommonSlider)
 };

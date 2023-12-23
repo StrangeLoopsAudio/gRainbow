@@ -195,10 +195,8 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
       mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch, mHoverNote.velocity);
       mMouseNote = mHoverNote;
       // Select current note for parameter edits and send update
-      if (mParameters.selectedParams != mParameters.note.notes[mHoverNote.pitch].get()) {
-        mParameters.selectedParams = mParameters.note.notes[mHoverNote.pitch].get();
-        if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
-      }
+      mParameters.selectedParams = mParameters.note.notes[mHoverNote.pitch].get();
+      if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
     }
   } else {
     if (isDown && (mMouseNote.pitch == Utils::PitchClass::NONE) && isValidNote) {

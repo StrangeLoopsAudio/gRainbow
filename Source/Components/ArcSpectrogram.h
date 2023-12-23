@@ -35,6 +35,9 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void update() override {}
   void paint(juce::Graphics &) override;
   void resized() override;
+  
+  void mouseMove(const juce::MouseEvent& evt) override;
+  void mouseExit(const juce::MouseEvent&) override;
 
   void reset();
   bool shouldLoadImage(ParamUI::SpecType type) { return !mIsProcessing && !mImagesComplete[type]; }
@@ -69,22 +72,32 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
     ArcGrain(ParamGenerator *paramGenerator_, float gain_, Utils::PitchClass pitchClass_)
         : paramGenerator(paramGenerator_), gain(gain_), pitchClass(pitchClass_) {}
   } ArcGrain;
+  
+  enum CloudType { WAIT, SINGING, TOUCH, COUNT };
+  
+  typedef struct Cloud {
+    std::array<juce::Image, CloudType::COUNT> images;
+    CloudType type = CloudType::WAIT;
+    juce::Rectangle<float> rect;
+    juce::Image& getImage() { return images[type]; }
+  } Cloud;
 
   // Parameters
   // Use to save state since if the plugin is closed and open, will need these
   // to restore the state
   Parameters& mParameters;
 
+  // Bookkeeping
   // Buffers used to generate the images
   std::array<void *, ParamUI::SpecType::COUNT> mBuffers;
-
-  // Bookkeeping
   std::bitset<Utils::PitchClass::COUNT> mActivePitchClass;
   juce::Array<ArcGrain> mArcGrains;
   bool mIsProcessing = false;
   bool mImagesComplete[ParamUI::SpecType::COUNT];
+  Cloud mCloudLeft, mCloudRight;
 
   // UI values saved on resize
+  juce::Rectangle<int> mRainbowRect;
   juce::Point<float> mCenterPoint;
   int mStartRadius = 0;
   int mEndRadius = 0;

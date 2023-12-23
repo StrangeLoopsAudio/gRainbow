@@ -12,6 +12,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include "GranularSynth.h"
 #include "Preset.h"
+#include "Utils/Presets.h"
 #include "PluginEditor.h"
 #include "Components/Settings.h"
 
@@ -60,6 +61,10 @@ GranularSynth::GranularSynth()
   mReferenceTone.setAmplitude(0.0f);
 
   resetParameters();
+  
+  juce::MemoryBlock block;
+  Utils::getBlockForPreset(Utils::PRESETS[0], block);
+  loadPreset(Utils::PRESETS[0].name, block);
 }
 
 GranularSynth::~GranularSynth() {}
@@ -559,68 +564,87 @@ Utils::Result GranularSynth::loadAudioFile(juce::File file, bool process) {
 }
 
 Utils::Result GranularSynth::loadPreset(juce::File file) {
-  Preset::Header header;
   juce::FileInputStream input(file);
   if (input.openedOk()) {
-    input.read(&header, sizeof(header));
-
-    if (header.magic != Preset::MAGIC) {
-      return {false, "The file is not recognized as a valid .gbow preset file."};
-    }
-
-    juce::AudioBuffer<float> fileAudioBuffer;
-    double sampleRate;
-
-    // Currently there is only a VERSION_MAJOR of 0
-    if (header.versionMajor == 0) {
-      // Get Audio Buffer blob
-      fileAudioBuffer.setSize(header.audioBufferChannel, header.audioBufferNumberOfSamples);
-      input.read(fileAudioBuffer.getWritePointer(0), header.audioBufferSize);
-      sampleRate = header.audioBufferSamplerRate;
-
-      // Get offsets and load all png for spec images
-      uint32_t maxSpecImageSize =
-          juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize, header.specImageDetectedSize);
-      void* specImageData = malloc(maxSpecImageSize);
-      jassert(specImageData != nullptr);
-      input.read(specImageData, header.specImageSpectrogramSize);
-      mParameters.ui.specImages[ParamUI::SpecType::SPECTROGRAM] =
-          juce::PNGImageFormat::loadFrom(specImageData, header.specImageSpectrogramSize);
-      input.read(specImageData, header.specImageHpcpSize);
-      mParameters.ui.specImages[ParamUI::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(specImageData, header.specImageHpcpSize);
-      input.read(specImageData, header.specImageDetectedSize);
-      mParameters.ui.specImages[ParamUI::SpecType::DETECTED] =
-          juce::PNGImageFormat::loadFrom(specImageData, header.specImageDetectedSize);
-      mParameters.ui.specComplete = true;
-      free(specImageData);
-
-      // juce::FileInputStream uses 'int' to read
-      int xmlSize = static_cast<int>(input.getTotalLength() - input.getPosition());
-      void* xmlData = malloc(xmlSize);
-      jassert(xmlData != nullptr);
-      input.read(xmlData, xmlSize);
-      setPresetParamsXml(xmlData, xmlSize);
-      free(xmlData);
-    } else {
-      juce::String error = "The file is .gbow version " + juce::String(header.versionMajor) + "." +
-                           juce::String(header.versionMinor) +
-                           " and is not supported. This copy of gRainbow can open files up to version " +
-                           juce::String(Preset::VERSION_MAJOR) + "." + juce::String(Preset::VERSION_MINOR);
-      return {false, error};
-    }
-
-    if (mSampleRate != INVALID_SAMPLE_RATE) {
-      resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
-    } else {
-      mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
-      mSampleRate = sampleRate;        // A bit hacky, but we need to store the file's sample rate for resampling
-      mNeedsResample = true;
-    }
+    juce::MemoryBlock block;
+    input.readIntoMemoryBlock(block);
+    Utils::Result r = loadPreset(file.getFileName(), block);
+    if (r.success) mParameters.ui.fileName = file.getFullPathName();
+    return r;
   } else {
     juce::String error = "The file failed to open with message: " + input.getStatus().getErrorMessage();
     return {false, error};
   }
+}
+
+Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& block) {
+  
+  int curBlockPos = 0;
+  Preset::Header header;
+  block.copyTo(&header, curBlockPos, sizeof(header));
+  curBlockPos += sizeof(header);
+
+  if (header.magic != Preset::MAGIC) {
+    return {false, "The file is not recognized as a valid .gbow preset file."};
+  }
+
+  juce::AudioBuffer<float> fileAudioBuffer;
+  double sampleRate;
+
+  // Currently there is only a VERSION_MAJOR of 0
+  if (header.versionMajor == 0) {
+    // Get Audio Buffer blob
+    fileAudioBuffer.setSize(header.audioBufferChannel, header.audioBufferNumberOfSamples);
+    block.copyTo(fileAudioBuffer.getWritePointer(0), curBlockPos, header.audioBufferSize);
+    curBlockPos += header.audioBufferSize;
+    sampleRate = header.audioBufferSamplerRate;
+
+    // Get offsets and load all png for spec images
+    uint32_t maxSpecImageSize =
+        juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize, header.specImageDetectedSize);
+    void* specImageData = malloc(maxSpecImageSize);
+    jassert(specImageData != nullptr);
+    block.copyTo(specImageData, curBlockPos, header.specImageSpectrogramSize);
+    curBlockPos += header.specImageSpectrogramSize;
+    mParameters.ui.specImages[ParamUI::SpecType::SPECTROGRAM] =
+        juce::PNGImageFormat::loadFrom(specImageData, header.specImageSpectrogramSize);
+    block.copyTo(specImageData, curBlockPos, header.specImageHpcpSize);
+    curBlockPos += header.specImageHpcpSize;
+    mParameters.ui.specImages[ParamUI::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(specImageData, header.specImageHpcpSize);
+    block.copyTo(specImageData, curBlockPos, header.specImageDetectedSize);
+    curBlockPos += header.specImageDetectedSize;
+    mParameters.ui.specImages[ParamUI::SpecType::DETECTED] =
+        juce::PNGImageFormat::loadFrom(specImageData, header.specImageDetectedSize);
+    mParameters.ui.specComplete = true;
+    free(specImageData);
+
+    // juce::FileInputStream uses 'int' to read
+    int xmlSize = static_cast<int>(block.getSize() - curBlockPos);
+    void* xmlData = malloc(xmlSize);
+    jassert(xmlData != nullptr);
+    block.copyTo(xmlData, curBlockPos, xmlSize);
+    curBlockPos += xmlSize;
+    setPresetParamsXml(xmlData, xmlSize);
+    free(xmlData);
+  } else {
+    juce::String error = "The file is .gbow version " + juce::String(header.versionMajor) + "." +
+                          juce::String(header.versionMinor) +
+                          " and is not supported. This copy of gRainbow can open files up to version " +
+                          juce::String(Preset::VERSION_MAJOR) + "." + juce::String(Preset::VERSION_MINOR);
+    return {false, error};
+  }
+
+  if (mSampleRate != INVALID_SAMPLE_RATE) {
+    resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
+  } else {
+    mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
+    mSampleRate = sampleRate;        // A bit hacky, but we need to store the file's sample rate for resampling
+    mNeedsResample = true;
+  }
   mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
+  mParameters.ui.loadedFileName = name;
+  mParameters.ui.fileName = name;
+  mParameters.ui.specComplete = true;
   return {true, ""};
 }
 

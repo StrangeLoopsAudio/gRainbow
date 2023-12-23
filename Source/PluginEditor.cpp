@@ -52,7 +52,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(RainbowLookAndFeel::getCustomTypeface());
 
   mErrorMessage.clear();
-        
+
   // Title and preset panel
   mTitlePresetPanel.btnOpenFile.onClick = [this] { openNewFile(); };
   mTitlePresetPanel.btnSavePreset.onClick = [this] { savePreset(); };
@@ -116,7 +116,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   mTrimSelection.onCancel = [this]() {
     // if nothing was ever loaded, got back to the logo
-    updateCenterComponent((mParameters.ui.specComplete) ? ParamUI::CenterComponent::ARC_SPEC : ParamUI::CenterComponent::LOGO);
+    updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
     mParameters.ui.fileName = mParameters.ui.loadedFileName;
     mTitlePresetPanel.labelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
   };
@@ -178,8 +178,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   };
   addAndMakeVisible(mMasterPanel);
 
-  mCloudLeftImage = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeft_png, BinaryData::cloudLeft_pngSize);
-  mCloudRightImage = juce::PNGImageFormat::loadFrom(BinaryData::cloudRight_png, BinaryData::cloudRight_pngSize);
   mRainImage = juce::PNGImageFormat::loadFrom(BinaryData::rain_png, BinaryData::rain_pngSize);
   // Use different offsets to start to make look like different images
   mLeftRainDeltY = mRainImage.getHeight() / 2;
@@ -190,6 +188,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
     setWantsKeyboardFocus(true);
   }
+        
+  mPianoPanel.waveform.load(mSynth.getAudioBuffer());
 
   mTooltipWindow->setMillisecondsBeforeTipAppears(500);  // default is 700ms
 
@@ -310,12 +310,8 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
     g.fillRect(getLocalBounds());
   }
 
-  // Clouds
+  // Rain
   if (mParameters.ui.centerComponent == ParamUI::CenterComponent::ARC_SPEC) {
-    // TODO: fix the clouds
-    //g.drawImage(mCloudLeftImage, mCloudLeftTargetArea, juce::RectanglePlacement::fillDestination);
-    //g.drawImage(mCloudRightImage, mCloudRightTargetArea, juce::RectanglePlacement::fillDestination);
-
     // Make it rain girl (while loading)
     if (mProgressBar.isVisible()) {
       g.setColour(juce::Colours::blue);
@@ -366,28 +362,6 @@ void GRainbowAudioProcessorEditor::resized() {
   mArcSpec.setBounds(centerPanel.removeFromTop(Utils::PANEL_HEIGHT));
   mTrimSelection.setBounds(mArcSpec.getBounds());
   mProgressBar.setBounds(mArcSpec.getBounds().withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
-
-  // Cloud centers
-  {
-    const int expansion = mCloudLeftImage.getWidth() / 4.0f;
-    const int translation = expansion * 2;
-    const auto leftCenter = mArcSpec.getBounds().getBottomLeft().translated(translation, 0);
-    const auto rightCenter = mArcSpec.getBounds().getBottomRight().translated(-translation, 0);
-    mCloudLeftTargetArea = mCloudLeftImage.getBounds().expanded(expansion).withCentre(leftCenter).toFloat();
-    mCloudRightTargetArea = mCloudRightImage.getBounds().expanded(expansion).withCentre(rightCenter).toFloat();
-
-    // This was sfigured out by using drawRect() until saw the area it should be
-    const float leftCloudWidth = mCloudLeftTargetArea.getWidth();
-    const float leftCloudHeight = mCloudLeftTargetArea.getHeight();
-    mLeftRain = mCloudLeftTargetArea.translated(leftCloudWidth / 3.8f, leftCloudHeight / 1.7f)
-                    .withWidth(leftCloudWidth / 2.0f)
-                    .withHeight(leftCloudHeight / 1.6f);
-    const float rightCloudWidth = mCloudRightTargetArea.getWidth();
-    const float rightCloudHeight = mCloudRightTargetArea.getHeight();
-    mRightRain = mCloudRightTargetArea.translated(rightCloudWidth / 4.2f, rightCloudHeight / 1.7f)
-                     .withWidth(rightCloudWidth / 2.0f)
-                     .withHeight(rightCloudHeight / 1.6f);
-  }
 }
 
 bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files) {
@@ -483,18 +457,16 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
 void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
 
   if (file.getFileExtension() == ".gbow") {
-    Utils::Result r = mSynth.loadPreset(file);
-    if (r.success) {
+    Utils::Result res = mSynth.loadPreset(file);
+    if (res.success) {
       mTitlePresetPanel.btnSavePreset.setEnabled(true);
       mArcSpec.loadPreset();
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
       mPianoPanel.waveform.load(mSynth.getAudioBuffer());
-      mParameters.ui.loadedFileName = file.getFullPathName();
-      mParameters.ui.fileName = mParameters.ui.loadedFileName;
-      mTitlePresetPanel.labelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
+      mTitlePresetPanel.labelFileName.setText(mParameters.ui.loadedFileName, juce::dontSendNotification);
       resized();
     } else {
-      displayError(r.message);
+      displayError(res.message);
     }
   } else {
     Utils::Result r = mSynth.loadAudioFile(file, true);

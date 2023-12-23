@@ -12,6 +12,7 @@
 
 #include "Settings.h"
 #include "Utils/Colour.h"
+#include "BinaryData.h"
 
 //==============================================================================
 ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
@@ -28,8 +29,14 @@ ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
     }
   }
 
-  // ComboBox for some reason is not zero indexed like the rest of JUCE and C++
-  // for adding items we go by 'id' base but everything else is 'index' based
+  mCloudLeft.images[CloudType::WAIT] = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeftWait_png, BinaryData::cloudLeftWait_pngSize);
+  mCloudLeft.images[CloudType::SINGING] = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeftSing_png, BinaryData::cloudLeftSing_pngSize);
+  mCloudLeft.images[CloudType::TOUCH] = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeftTouch_png, BinaryData::cloudLeftTouch_pngSize);
+  mCloudRight.images[CloudType::WAIT] = juce::PNGImageFormat::loadFrom(BinaryData::cloudRightWait_png, BinaryData::cloudRightWait_pngSize);
+  mCloudRight.images[CloudType::SINGING] = juce::PNGImageFormat::loadFrom(BinaryData::cloudRightSing_png, BinaryData::cloudRightSing_pngSize);
+  mCloudRight.images[CloudType::TOUCH] = juce::PNGImageFormat::loadFrom(BinaryData::cloudRightTouch_png, BinaryData::cloudRightTouch_pngSize);
+
+  // ComboBox is not zero indexed because 0 represents nothing selected  
   mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::SPECTROGRAM], (int)ParamUI::SpecType::SPECTROGRAM + 1);
   mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::HPCP], (int)ParamUI::SpecType::HPCP + 1);
   mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::DETECTED], (int)ParamUI::SpecType::DETECTED + 1);
@@ -68,6 +75,10 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   // Set gradient
   g.setColour(Utils::BG_COLOUR);
   g.fillAll();
+  
+  // Panel outline
+  g.setColour(Utils::PANEL_COLOUR.darker(0.2f));
+  g.fillRoundedRectangle(getLocalBounds().toFloat(), 10);
 
   // If nothing has been loaded skip image, progress bar will fill in void space
   if (mParameters.ui.specType != ParamUI::SpecType::INVALID) {
@@ -79,7 +90,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
       mSpecType.setSelectedItemIndex(mParameters.ui.specType, juce::dontSendNotification);
       imageIndex = (int)mParameters.ui.specType;
     }
-    g.drawImage(mParameters.ui.specImages[imageIndex], getLocalBounds().toFloat(),
+    g.drawImage(mParameters.ui.specImages[imageIndex], mRainbowRect.toFloat(),
                 juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
   }
 
@@ -105,33 +116,21 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     std::vector<ParamCandidate*> usedCandidates;
     // Draw generator position lines
     for (int i = 0; i < NUM_GENERATORS; ++i) {
+      if (genIdx > -1 && genIdx != i) continue;
       if (note->shouldPlayGenerator(i)) {
         // Draw position line where the gen's candidate is
         ParamCandidate* candidate = note->getCandidate(i);
         usedCandidates.push_back(candidate);
         float endRadians = startRadians + candidate->posRatio * juce::MathConstants<float>::pi;
-        g.setColour(genIdx == i ? noteColour.darker() : noteColour);
+        g.setColour(noteColour);
         g.drawLine(juce::Line<float>(mCenterPoint.getPointOnCircumference(mStartRadius, mStartRadius, endRadians), mCenterPoint.getPointOnCircumference(mEndRadius, mEndRadius, endRadians)), genIdx == i ? 3.0f : 2.0f);
       }
     }
-    // Draw numbered candidate bubbles
-    for (int i = 0; i < note->candidates.size(); ++i) {
-      ParamCandidate& candidate = note->candidates[i];
-      float endRadians = startRadians + candidate.posRatio * juce::MathConstants<float>::pi;
-      juce::Rectangle<int> bubbleRect = juce::Rectangle<int>(CANDIDATE_BUBBLE_SIZE, CANDIDATE_BUBBLE_SIZE).withCentre(mCenterPoint.getPointOnCircumference(mEndRadius + CANDIDATE_BUBBLE_SIZE / 2, mEndRadius + CANDIDATE_BUBBLE_SIZE / 2, endRadians).toInt());
-      if (std::find(usedCandidates.begin(), usedCandidates.end(), &candidate) != usedCandidates.end()) {
-        g.setColour(noteColour);
-        g.fillEllipse(bubbleRect.toFloat());
-        g.setColour(juce::Colours::white);
-        g.drawFittedText(juce::String(i + 1), bubbleRect, juce::Justification::centred, 1);
-      } else {
-        g.setColour(noteColour);
-        g.drawFittedText(juce::String(i + 1), bubbleRect, juce::Justification::centred, 1);
-      }
-      g.setColour(noteColour);
-      g.drawEllipse(bubbleRect.toFloat(), 2.0f);
-    }
   }
+  
+  //mCloudLeft.type 
+  g.drawImage(mCloudLeft.getImage(), mCloudLeft.rect, juce::RectanglePlacement::fillDestination);
+  g.drawImage(mCloudRight.getImage(), mCloudRight.rect, juce::RectanglePlacement::fillDestination);
 
   // Draw active grains
   /* if (PowerUserSettings::get().getAnimated()) {
@@ -178,19 +177,59 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
 void ArcSpectrogram::resized() {
   auto r = getLocalBounds();
+  
+  mRainbowRect = r.reduced(20, 20); // Leaving room for clouds
+  
+  // Cloud centers
+  {
+    const int translation = 30;
+    const auto leftCenter = mRainbowRect.getBottomLeft().translated(translation, -7);
+    const auto rightCenter = mRainbowRect.getBottomRight().translated(-translation, -7);
+    mCloudLeft.rect = mCloudLeft.images[0].getBounds().withCentre(leftCenter).toFloat();
+    mCloudRight.rect = mCloudRight.images[0].getBounds().withCentre(rightCenter).toFloat();
+    
+    // This was figured out by using drawRect() until saw the area it should be
+    // TODO: move rain here too?
+//    const float leftCloudWidth = mCloudLeftTargetArea.getWidth();
+//    const float leftCloudHeight = mCloudLeftTargetArea.getHeight();
+//    mLeftRain = mCloudLeftTargetArea.translated(leftCloudWidth / 3.8f, leftCloudHeight / 1.7f)
+//      .withWidth(leftCloudWidth / 2.0f)
+//      .withHeight(leftCloudHeight / 1.6f);
+//    const float rightCloudWidth = mCloudRightTargetArea.getWidth();
+//    const float rightCloudHeight = mCloudRightTargetArea.getHeight();
+//    mRightRain = mCloudRightTargetArea.translated(rightCloudWidth / 4.2f, rightCloudHeight / 1.7f)
+//      .withWidth(rightCloudWidth / 2.0f)
+//      .withHeight(rightCloudHeight / 1.6f);
+  }
+  
   // Spec type combobox
   mSpecType.setBounds(r.removeFromRight(SPEC_TYPE_WIDTH).removeFromTop(SPEC_TYPE_HEIGHT));
 
-  mCenterPoint = juce::Point<float>(getWidth() / 2.0f, getHeight());
-  mStartRadius = getHeight() / 2.6f;
-  mEndRadius = getHeight() - 20;
+  mCenterPoint = juce::Point<float>(getWidth() / 2.0f, mRainbowRect.getBottom());
+  mStartRadius = mRainbowRect.getHeight() / 2.6f;
+  mEndRadius = mRainbowRect.getHeight() - 20;
   mBowWidth = mEndRadius - mStartRadius;
+}
+
+void ArcSpectrogram::mouseMove(const juce::MouseEvent& evt) {
+  auto pos = evt.getEventRelativeTo(this).getPosition().toFloat();
+  if (mCloudLeft.rect.contains(pos)) mCloudLeft.type = CloudType::TOUCH;
+  else if (mCloudRight.rect.contains(pos)) mCloudRight.type = CloudType::TOUCH;
+  else {
+    if (mCloudLeft.type == CloudType::TOUCH) mCloudLeft.type = CloudType::WAIT;
+    if (mCloudRight.type == CloudType::TOUCH) mCloudRight.type = CloudType::WAIT;
+  }
+}
+
+void ArcSpectrogram::mouseExit(const juce::MouseEvent&) {
+  if (mCloudLeft.type == CloudType::TOUCH) mCloudLeft.type = CloudType::WAIT;
+  if (mCloudRight.type == CloudType::TOUCH) mCloudRight.type = CloudType::WAIT;
 }
 
 void ArcSpectrogram::run() {
   // Initialize rainbow parameters
-  juce::Point<int> startPoint = juce::Point<int>(getWidth() / 2, getHeight());
-  mParameters.ui.specImages[mParameters.ui.specType] = juce::Image(juce::Image::ARGB, getWidth(), getHeight(), true);
+  juce::Point<int> startPoint(mRainbowRect.getWidth() / 2, mRainbowRect.getHeight());
+  mParameters.ui.specImages[mParameters.ui.specType] = juce::Image(juce::Image::ARGB, mRainbowRect.getWidth(), mRainbowRect.getHeight(), true);
   juce::Graphics g(mParameters.ui.specImages[mParameters.ui.specType]);
 
   // Audio waveform (1D) is handled a bit differently than its 2D spectrograms
@@ -345,5 +384,14 @@ void ArcSpectrogram::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes)
   mActivePitchClass.reset();
   for (const Utils::MidiNote note : midiNotes) {
     mActivePitchClass.set(note.pitch, true);
+  }
+  // Make clouds sing/stop singing
+  bool isPlaying = mActivePitchClass.any();
+  if (mActivePitchClass.any()) {
+    if (mCloudLeft.type == CloudType::WAIT) mCloudLeft.type = CloudType::SINGING;
+    if (mCloudRight.type == CloudType::WAIT) mCloudRight.type = CloudType::SINGING;
+  } else {
+    if (mCloudLeft.type == CloudType::SINGING) mCloudLeft.type = CloudType::WAIT;
+    if (mCloudRight.type == CloudType::SINGING) mCloudRight.type = CloudType::WAIT;
   }
 }

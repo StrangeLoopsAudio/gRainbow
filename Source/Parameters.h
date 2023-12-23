@@ -645,8 +645,8 @@ struct ParamUI {
   double loadingProgress = RESET_LOADING_PROGRESS;
 
   // Tracks what component is being displayed
-  enum class CenterComponent { LOGO, ARC_SPEC, TRIM_SELECTION };
-  CenterComponent centerComponent = CenterComponent::LOGO;
+  enum class CenterComponent { ARC_SPEC, TRIM_SELECTION };
+  CenterComponent centerComponent = CenterComponent::ARC_SPEC;
 
   // trim selection status to pass information to the synth so it can pipe the audio out the main output
   bool trimPlaybackOn = false;
@@ -691,10 +691,10 @@ struct Parameters {
       case ParamType::GLOBAL:
         return Utils::GLOBAL_COLOUR;
       case ParamType::NOTE:
-        return Utils::getRainbow12Colour(dynamic_cast<ParamNote*>(selectedParams)->noteIdx).darker();
+        return Utils::getRainbow12Colour(dynamic_cast<ParamNote*>(selectedParams)->noteIdx);
       case ParamType::GENERATOR:
         ParamGenerator* gen = dynamic_cast<ParamGenerator*>(selectedParams);
-        return Utils::getRainbow12Colour(gen->noteIdx).brighter(gen->genIdx * Utils::GENERATOR_BRIGHTNESS_ADD).darker();
+        return Utils::getRainbow12Colour(gen->noteIdx);
     }
     return juce::Colours::black;
   }
