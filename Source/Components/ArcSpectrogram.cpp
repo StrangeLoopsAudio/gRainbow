@@ -36,7 +36,7 @@ ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
   mCloudRight.images[CloudType::SINGING] = juce::PNGImageFormat::loadFrom(BinaryData::cloudRightSing_png, BinaryData::cloudRightSing_pngSize);
   mCloudRight.images[CloudType::TOUCH] = juce::PNGImageFormat::loadFrom(BinaryData::cloudRightTouch_png, BinaryData::cloudRightTouch_pngSize);
 
-  // ComboBox is not zero indexed because 0 represents nothing selected  
+  // ComboBox is not zero indexed because 0 represents nothing selected
   mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::SPECTROGRAM], (int)ParamUI::SpecType::SPECTROGRAM + 1);
   mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::HPCP], (int)ParamUI::SpecType::HPCP + 1);
   mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::DETECTED], (int)ParamUI::SpecType::DETECTED + 1);
@@ -75,7 +75,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   // Set gradient
   g.setColour(Utils::BG_COLOUR);
   g.fillAll();
-  
+
   // Panel outline
   g.setColour(Utils::PANEL_COLOUR.darker(0.2f));
   g.fillRoundedRectangle(getLocalBounds().toFloat(), 10);
@@ -127,8 +127,8 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
       }
     }
   }
-  
-  //mCloudLeft.type 
+
+  // mCloudLeft.type
   g.drawImage(mCloudLeft.getImage(), mCloudLeft.rect, juce::RectanglePlacement::fillDestination);
   g.drawImage(mCloudRight.getImage(), mCloudRight.rect, juce::RectanglePlacement::fillDestination);
 
@@ -177,9 +177,9 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
 void ArcSpectrogram::resized() {
   auto r = getLocalBounds();
-  
+
   mRainbowRect = r.reduced(20, 20); // Leaving room for clouds
-  
+
   // Cloud centers
   {
     const int translation = 30;
@@ -187,7 +187,7 @@ void ArcSpectrogram::resized() {
     const auto rightCenter = mRainbowRect.getBottomRight().translated(-translation, -7);
     mCloudLeft.rect = mCloudLeft.images[0].getBounds().withCentre(leftCenter).toFloat();
     mCloudRight.rect = mCloudRight.images[0].getBounds().withCentre(rightCenter).toFloat();
-    
+
     // This was figured out by using drawRect() until saw the area it should be
     // TODO: move rain here too?
 //    const float leftCloudWidth = mCloudLeftTargetArea.getWidth();
@@ -201,7 +201,7 @@ void ArcSpectrogram::resized() {
 //      .withWidth(rightCloudWidth / 2.0f)
 //      .withHeight(rightCloudHeight / 1.6f);
   }
-  
+
   // Spec type combobox
   mSpecType.setBounds(r.removeFromRight(SPEC_TYPE_WIDTH).removeFromTop(SPEC_TYPE_HEIGHT));
 
@@ -386,7 +386,6 @@ void ArcSpectrogram::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes)
     mActivePitchClass.set(note.pitch, true);
   }
   // Make clouds sing/stop singing
-  bool isPlaying = mActivePitchClass.any();
   if (mActivePitchClass.any()) {
     if (mCloudLeft.type == CloudType::WAIT) mCloudLeft.type = CloudType::SINGING;
     if (mCloudRight.type == CloudType::WAIT) mCloudRight.type = CloudType::SINGING;

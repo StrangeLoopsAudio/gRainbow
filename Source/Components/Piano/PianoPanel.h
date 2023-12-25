@@ -33,7 +33,7 @@ class PianoPanel : public juce::Component, juce::AudioProcessorParameter::Listen
   void timerCallback() override;
 
   void updateSelectedParams();
-  
+
   // Components (public so that editor can access easily, this is more of a container than anything)
   WaveformPanel waveform;
   RainbowKeyboard keyboard;

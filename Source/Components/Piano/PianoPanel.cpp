@@ -13,12 +13,11 @@
 #include "Utils/Colour.h"
 
 PianoPanel::PianoPanel(juce::MidiKeyboardState& state, Parameters& parameters)
-    : mParameters(parameters),
-      mCurSelectedParams(parameters.selectedParams),
-      mParamColour(Utils::GLOBAL_COLOUR),
+    : waveform(parameters),
       keyboard(state, parameters),
-      waveform(parameters) {
-  
+      mParameters(parameters),
+      mCurSelectedParams(parameters.selectedParams),
+      mParamColour(Utils::GLOBAL_COLOUR) {
   addAndMakeVisible(keyboard);
   addAndMakeVisible(waveform);
 
@@ -38,7 +37,6 @@ void PianoPanel::parameterValueChanged(int, float) { mParamHasChanged.store(true
 void PianoPanel::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    
   }
 }
 
@@ -47,7 +45,7 @@ void PianoPanel::updateSelectedParams() {
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  
+
   waveform.updateSelectedParams();
 
   mParamHasChanged.store(true);

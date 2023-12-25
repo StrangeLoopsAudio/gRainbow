@@ -61,7 +61,7 @@ GranularSynth::GranularSynth()
   mReferenceTone.setAmplitude(0.0f);
 
   resetParameters();
-  
+
   juce::MemoryBlock block;
   Utils::getBlockForPreset(Utils::PRESETS[0], block);
   loadPreset(Utils::PRESETS[0].name, block);
@@ -457,22 +457,22 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
               if (random.nextFloat() > 0.5f) posSprayOffset = -posSprayOffset;
               float posOffset = posAdjust * durSamples + posSprayOffset;
               float posSamples = paramCandidate->posRatio * mAudioBuffer.getNumSamples() + posOffset;
-              
+
               /* Pan offset */
               float panSprayOffset = random.nextFloat() * panSpray;
               if (random.nextFloat() > 0.5f) panSprayOffset = -panSprayOffset;
               const float panOffset = juce::jlimit(ParamRanges::PAN_ADJUST.start, ParamRanges::PAN_ADJUST.end, panAdjust + panSprayOffset);
-              
+
               /* Pitch calculation */
               float pitchSprayOffset = juce::jmap(random.nextFloat(), 0.0f, pitchSpray);
               if (random.nextFloat() > 0.5f) pitchSprayOffset = -pitchSprayOffset;
               float pbRate = paramCandidate->pbRate + pitchAdjust + pitchSprayOffset;
               jassert(paramCandidate->pbRate > 0.1f);
-              
+
               /* Add grain */
               grain->set(durSamples, pbRate, posSamples, mTotalSamps, gain, panOffset, shape, tilt);
               gNote->genGrains[i].add(grain);
-              
+
               /* Trigger grain in arcspec */
               float totalGain = gain * gNote->genAmpEnvs[i].amplitude * gNote->velocity;
               mParameters.note.grainCreated(gNote->pitchClass, i, durSec / pbRate, totalGain);
@@ -498,7 +498,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
   mGrainPool.reclaimExpiredGrains(mTotalSamps);
   for (GrainNote* gNote : mActiveNotes) {
     for (int genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
-      gNote->genGrains[genIdx].removeIf([this](Grain* g) { return !g->isActive; });
+      gNote->genGrains[genIdx].removeIf([](Grain* g) { return !g->isActive; });
     }
   }
 
@@ -578,7 +578,6 @@ Utils::Result GranularSynth::loadPreset(juce::File file) {
 }
 
 Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& block) {
-  
   int curBlockPos = 0;
   Preset::Header header;
   block.copyTo(&header, curBlockPos, sizeof(header));
