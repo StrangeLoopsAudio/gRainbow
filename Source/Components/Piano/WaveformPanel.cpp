@@ -20,7 +20,7 @@ mParamColour(Utils::GLOBAL_COLOUR) {
 
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
-        
+
   // Generator toggle button
   juce::Image normal = juce::PNGImageFormat::loadFrom(BinaryData::btnPowerOff_png, BinaryData::btnPowerOff_pngSize);
   juce::Image down = juce::PNGImageFormat::loadFrom(BinaryData::btnPowerOn_png, BinaryData::btnPowerOn_pngSize);
@@ -47,7 +47,7 @@ mParamColour(Utils::GLOBAL_COLOUR) {
   mBtnLock.setToggleable(true);
   mBtnLock.setClickingTogglesState(true);
   addChildComponent(mBtnLock);
-  
+
   startTimer(100);
 }
 
@@ -61,7 +61,6 @@ void WaveformPanel::parameterValueChanged(int, float) { mParamHasChanged.store(t
 void WaveformPanel::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    
   }
 }
 
@@ -72,19 +71,19 @@ void WaveformPanel::updateSelectedParams() {
   if (gen) {
     ParamHelper::setParam(mParameters.note.notes[gen->noteIdx]->soloIdx, SOLO_NONE);
   }
-  
+
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  
+
   // Reset lock if necessary
   if (mBtnLock.getToggleState() && mCurSelectedParams->type == ParamType::GLOBAL) mBtnLock.setToggleState(false, juce::dontSendNotification);
-  
+
   bool isGeneratorMode = mCurSelectedParams->type == ParamType::GENERATOR;
   // Set zoom range
   if (isGeneratorMode && mBuffer.getNumSamples() > 0) {
-    auto* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
+    gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
     if (gen) {
       ParamCandidate* candidate = mParameters.getGeneratorCandidate(gen);
       int start = candidate->posRatio * mBuffer.getNumSamples();
@@ -110,13 +109,13 @@ void WaveformPanel::updateSelectedParams() {
 
 void WaveformPanel::paint(juce::Graphics& g) {
   auto r = getLocalBounds().toFloat();
-  
+
   // Outline
   g.setColour(Utils::GLOBAL_COLOUR);
   g.fillRoundedRectangle(r, 10.0f);
   g.setColour(Utils::BG_COLOUR);
   g.fillRoundedRectangle(r.reduced(Utils::PADDING / 2.0), 10.0f);
-  
+
   // Wave bars
   if (mBuffer.getNumSamples() == 0) return; // Skip if we don't even have a buffer
   g.setColour(Utils::GLOBAL_COLOUR);
@@ -136,11 +135,11 @@ void WaveformPanel::paint(juce::Graphics& g) {
 void WaveformPanel::resized() {
   if (mBuffer.getNumSamples() == 0) return; // Skip if we don't even have a buffer
   auto r = getLocalBounds().reduced(Utils::PADDING, Utils::PADDING);
-  
+
   // Positioning lock and enable buttons
   mBtnGenEnable.setBounds(r.withSize(18, 18));
   mBtnLock.setBounds(r.withWidth(18).withTop(r.getBottom() - 24).reduced(2));
-  
+
   int barWidth = r.getWidth() / NUM_WAVE_BARS;
   float barMaxHeight = r.getHeight();
   float centreY = r.getCentreY();
@@ -162,7 +161,7 @@ void WaveformPanel::load(juce::AudioBuffer<float> &buffer) {
 
 void WaveformPanel::updateWaveBars() {
   if (mBuffer.getNumSamples() == 0) return;
-  
+
   auto* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
   ParamCandidate* candidate = nullptr;
   juce::Range<int> cRange; // Candidate sample range
@@ -171,7 +170,7 @@ void WaveformPanel::updateWaveBars() {
     cRange.setStart(candidate->posRatio * mBuffer.getNumSamples());
     cRange.setLength(candidate->duration * mBuffer.getNumSamples());
   }
-  
+
   // Populate wave bar magnitudes
   int curSample = mZoomRange.getStart();
   for (auto& bar : mWaveBars) {
@@ -186,8 +185,7 @@ void WaveformPanel::updateWaveBars() {
     }
     curSample += mSamplesPerBar;
   }
-  
-  
+
   if (mCurSelectedParams->type == ParamType::GLOBAL) {
     // Color the bars with all note generators
     for (auto& note : mParameters.note.notes) {
@@ -197,7 +195,7 @@ void WaveformPanel::updateWaveBars() {
     // Note view (just show generators and candidates for particular note)
     addBarsForNote(dynamic_cast<ParamNote*>(mCurSelectedParams), true);
   }
-  
+
   resized();
   repaint();
 }
@@ -214,7 +212,6 @@ void WaveformPanel::addBarsForNote(ParamNote* note, bool showCandidates) {
     mWaveBars[closestBarIdx].isEnabled = gen->enable->get();
     mWaveBars[closestBarIdx].generator = gen.get();
   }
-  
 }
 
 void WaveformPanel::mouseMove(const juce::MouseEvent& evt) {

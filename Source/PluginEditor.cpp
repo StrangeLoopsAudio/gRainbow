@@ -29,6 +29,9 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     : AudioProcessorEditor(&synth),
       mSynth(synth),
       mParameters(synth.getParams()),
+      mArcSpec(synth.getParams()),
+      mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
+      mProgressBar(mParameters.ui.loadingProgress),
       mTabsEnvelopes(juce::TabbedButtonBar::Orientation::TabsAtTop),
       mTabsFx(juce::TabbedButtonBar::Orientation::TabsAtTop),
       mTabsModulators(juce::TabbedButtonBar::Orientation::TabsAtTop),
@@ -43,9 +46,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mModLFOs(synth.getParams()),
       mMasterPanel(synth.getParams(), synth.getMeterSource()),
       mFilterControl(synth.getParams()),
-      mArcSpec(synth.getParams()),
-      mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
-      mProgressBar(mParameters.ui.loadingProgress),
       mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
@@ -57,11 +57,11 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mTitlePresetPanel.btnOpenFile.onClick = [this] { openNewFile(); };
   mTitlePresetPanel.btnSavePreset.onClick = [this] { savePreset(); };
   addAndMakeVisible(mTitlePresetPanel);
-        
+
   if (!mParameters.ui.fileName.isEmpty()) {
     mTitlePresetPanel.labelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
   }
-        
+
   // Envelope/adjust tabs
   juce::Image tabImage = juce::PNGImageFormat::loadFrom(BinaryData::ampEnv_png, BinaryData::ampEnv_pngSize);
   auto* tabImageComp = new juce::ImageComponent();
@@ -79,17 +79,17 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
   mTabsEnvelopes.addTab("grain env", Utils::BG_COLOUR, &mEnvGrain, false);
   mTabsEnvelopes.getTabbedButtonBar().getTabButton(1)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
-        
+
   tabImage = juce::PNGImageFormat::loadFrom(BinaryData::adjust_png, BinaryData::adjust_pngSize);
   tabImageComp = new juce::ImageComponent();
   tabImageComp->setInterceptsMouseClicks(false, false);
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
   mTabsEnvelopes.addTab("adjust", Utils::BG_COLOUR, &mAdjustPanel, false);
   mTabsEnvelopes.getTabbedButtonBar().getTabButton(2)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
-          
+
   mTabsEnvelopes.setOutline(0);
   addAndMakeVisible(mTabsEnvelopes);
-        
+
   // FX tabs
   mTabsFx.setTabBarDepth(Utils::TAB_HEIGHT);
   mTabsFx.addTab("FX 1", Utils::BG_COLOUR, &mFx1, false);
@@ -97,7 +97,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   mTabsFx.addTab("FX 3", Utils::BG_COLOUR, &mFx3, false);
   mTabsFx.setOutline(0);
   addAndMakeVisible(mTabsFx);
-        
+
   // Modulator tabs
   mTabsModulators.setTabBarDepth(Utils::TAB_HEIGHT);
   mTabsModulators.addTab("midi", Utils::BG_COLOUR, &mModKeyboard, false);
@@ -188,7 +188,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
     setWantsKeyboardFocus(true);
   }
-        
+
   mPianoPanel.waveform.load(mSynth.getAudioBuffer());
 
   mTooltipWindow->setMillisecondsBeforeTipAppears(500);  // default is 700ms
@@ -342,9 +342,9 @@ void GRainbowAudioProcessorEditor::resized() {
 #ifndef GRAINBOW_PRODUCTION
   mSettings.setBounds(r.removeFromBottom(mSettings.getHeight()));
 #endif
-  
+
   mTitlePresetPanel.setBounds(r.removeFromTop(Utils::PRESET_PANEL_HEIGHT));
-      
+
   // Left and right panels
   auto leftPanel = r.removeFromLeft(Utils::PANEL_WIDTH).reduced(Utils::PADDING, Utils::PADDING);
   mTabsEnvelopes.setBounds(leftPanel.removeFromTop(Utils::PANEL_HEIGHT));

@@ -42,7 +42,7 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
   for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
     drawKey(g, pitchClass);
   }
-  
+
   // Global select rect
   const bool isGlobal = mParameters.selectedParams->type == ParamType::GLOBAL;
   auto globalFillColour = isGlobal ? Utils::GLOBAL_COLOUR : juce::Colours::transparentBlack;
@@ -74,10 +74,10 @@ void RainbowKeyboard::fillNoteRectangleMap() {
   // Keep everything in float to match Rectangle type
   const float width = static_cast<float>(getWidth());
   const float height = static_cast<float>(getHeight() - GLOBAL_RECT_HEIGHT - Utils::PADDING);
-  
+
   const float keyWidth = width / 7.0f;
   const float blackKeyOffset = BLACK_NOTE_SIZE_RATIO * keyWidth / 2.0f;
-  
+
   const float notePos[Utils::PitchClass::COUNT] = {0.0f * keyWidth,
     1.0f * keyWidth - blackKeyOffset,
     1.0f * keyWidth,
@@ -90,29 +90,29 @@ void RainbowKeyboard::fillNoteRectangleMap() {
     5.0f * keyWidth,
     6.0f * keyWidth - blackKeyOffset,
     6.0f * keyWidth};
-  
+
   const float blackNoteWidth = BLACK_NOTE_SIZE_RATIO * keyWidth;
   const float whiteNoteWidth = keyWidth;
   const float blackNoteHeight = height * 0.65f;
   const float whiteNoteHeight = height;
-  
+
   for (Utils::PitchClass key : Utils::ALL_PITCH_CLASS) {
     const bool blackKey = isBlackKey(key);
     const auto keyRect = juce::Rectangle<float>(notePos[key], 0.0f, (blackKey) ? blackNoteWidth : whiteNoteWidth,
                                                 (blackKey) ? blackNoteHeight : whiteNoteHeight);
     mNoteRectMap[key] = keyRect.reduced(1, 1);
   }
-  
+
   mGlobalRect = getLocalBounds().toFloat().removeFromBottom(GLOBAL_RECT_HEIGHT);
 }
 
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
-  const float velocity = mNoteVelocity[pitchClass];
-  const bool isDown = (velocity > 0.0f);
   const auto* note = mParameters.note.notes[pitchClass].get();
   const bool isPitchSelected = mParameters.selectedParams == note;
-  const bool isGenSelected = std::find_if(note->generators.begin(), note->generators.end(), [this](const std::unique_ptr<ParamGenerator>& gen) { return gen.get() == mParameters.selectedParams; }) != std::end(note->generators);
-  const ParamNote& paramNote = *mParameters.note.notes[pitchClass];
+  const bool isGenSelected =
+      std::find_if(note->generators.begin(), note->generators.end(), [this](const std::unique_ptr<ParamGenerator>& gen) {
+        return gen.get() == mParameters.selectedParams;
+      }) != std::end(note->generators);
 
   const bool isBlack = isBlackKey(pitchClass);
   const juce::Colour defaultKeyColour = isBlack ? juce::Colours::black : juce::Colours::white;
@@ -134,11 +134,10 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   // Generator selected indicator
   g.setColour(keyRbColour);
   if (isGenSelected) g.drawRoundedRectangle(area.reduced(1, 1), 4, 2);
-  
+
   // Key hint color
   g.setColour(Utils::getRainbow12Colour(pitchClass));
   g.fillRect(area.withHeight(5));
-  
 }
 
 void RainbowKeyboard::resized() { fillNoteRectangleMap(); }
@@ -177,7 +176,7 @@ void RainbowKeyboard::mouseExit(const juce::MouseEvent& e) {
   Takes input of Component::keyStateChanged from parent component due to lack
   of always having focus on this component
 */
-void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, bool isClick) {
+void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, bool) {
   const juce::Point<float> pos = e.getEventRelativeTo(this).position;
 
   mHoverNote = xyMouseToNote(pos);
@@ -212,7 +211,7 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
       mMouseNote = mHoverNote;
     }
   }
-  
+
   // Check if global is hovered or clicked
   mHoverGlobal = false;
   if (mHoverNote.pitch == Utils::PitchClass::NONE) {
@@ -240,7 +239,7 @@ void RainbowKeyboard::generatorOnClick(ParamGenerator* gen) {
 
 Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
   if (!reallyContains(pos.toInt(), false)) return Utils::MidiNote();
-  
+
   // Check black keys then white keys
   if (pos.getY() < mNoteRectMap[BLACK_KEYS_PITCH_CLASS[0]].getBottom()) {
     for (Utils::PitchClass pitchClass : BLACK_KEYS_PITCH_CLASS) {
@@ -251,7 +250,7 @@ Utils::MidiNote RainbowKeyboard::xyMouseToNote(juce::Point<float> pos) {
       }
     }
   }
-  
+
   for (Utils::PitchClass pitchClass : WHITE_KEYS_PITCH_CLASS) {
     const auto& noteRect = mNoteRectMap[pitchClass];
     if (noteRect.contains(pos)) {

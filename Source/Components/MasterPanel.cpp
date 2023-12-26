@@ -22,7 +22,7 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
       mSliderMacro3(mParameters.global.macro3),
       mSliderMacro4(mParameters.global.macro4) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
-        
+
   // Titles
   mLabelTitle.setText("master", juce::dontSendNotification);
   mLabelTitle.setColour(juce::Label::ColourIds::textColourId, colour);
@@ -37,7 +37,7 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
   mMeter.setMeterSource(&meterSource);
   mMeter.setLookAndFeel(&mMeterLookAndFeel);
   addAndMakeVisible(mMeter);
-  
+
   // Default slider settings
   std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderGain, mSliderMacro1, mSliderMacro2, mSliderMacro3, mSliderMacro4 };
   for (auto& slider : sliders) {
@@ -51,7 +51,7 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
   mSliderMacro2.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
   mSliderMacro3.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
   mSliderMacro4.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
-  
+
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelGain, mLabelRefTone, mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };
   for (auto& label : labels) {
@@ -60,7 +60,7 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
     label.get().setFont(juce::Font(14));
     addAndMakeVisible(label.get());
   }
-        
+
   // Default button settings
   mBtnRefTone.setColour(juce::ToggleButton::ColourIds::tickColourId, Utils::GLOBAL_COLOUR);
   addAndMakeVisible(mBtnRefTone);
@@ -108,7 +108,7 @@ void MasterPanel::updateSelectedParams() {
   mCurSelectedParams = mParameters.selectedParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  
+
   Utils::PitchClass selectedPitch = mParameters.getSelectedPitchClass();
   // Turn ref tone off if global parameters
   if (selectedPitch == Utils::PitchClass::NONE && mBtnRefTone.getToggleState() && onRefToneOff != nullptr) {
@@ -119,7 +119,7 @@ void MasterPanel::updateSelectedParams() {
   if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) onRefToneOn();
   // Disable ref tone button if global parameters
   mBtnRefTone.setEnabled(selectedPitch != Utils::PitchClass::NONE);
-    
+
   mSliderGain.updateSelectedParams();
   mBtnRefTone.setColour(juce::ToggleButton::ColourIds::tickColourId, mParamColour);
 
@@ -128,12 +128,10 @@ void MasterPanel::updateSelectedParams() {
 }
 
 void MasterPanel::paint(juce::Graphics& g) {
-  juce::Colour colour = mParamColour;
-
   // Panel rectangle
   g.setColour(Utils::PANEL_COLOUR);
   g.fillRoundedRectangle(getLocalBounds().toFloat(), 10);
-  
+
   // Separator line between master and macros
   g.setColour(Utils::BG_COLOUR);
   g.drawLine(getWidth() / 2, Utils::PADDING, getWidth() / 2, getHeight() - Utils::PADDING, 2);
@@ -141,13 +139,12 @@ void MasterPanel::paint(juce::Graphics& g) {
 
 void MasterPanel::resized() {
   auto r = getLocalBounds().reduced(Utils::PADDING, Utils::PADDING);
-  
+
   auto masterPanel = r.removeFromRight(r.getWidth() / 2);
   mLabelTitle.setBounds(masterPanel.removeFromTop(Utils::TAB_HEIGHT));
   // Meter
   mMeter.setBounds(masterPanel.removeFromRight(masterPanel.getWidth() / 2).reduced(Utils::PADDING * 2, Utils::PADDING * 2));
-  
-  int knobWidth = masterPanel.getWidth();
+
   // Gain
   auto topKnob = masterPanel.removeFromTop(masterPanel.getHeight() / 2);
   mLabelGain.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
@@ -156,7 +153,7 @@ void MasterPanel::resized() {
   // Reference tone button
   mBtnRefTone.setBounds(masterPanel.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::BUTTON_WIDTH, Utils::LABEL_HEIGHT));
   mLabelRefTone.setBounds(masterPanel.removeFromTop(Utils::LABEL_HEIGHT));
-  
+
   auto macroPanel = r;
   mLabelMacros.setBounds(macroPanel.removeFromTop(Utils::TAB_HEIGHT));
   // Macros 1 and 3

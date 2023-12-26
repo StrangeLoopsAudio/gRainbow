@@ -30,7 +30,7 @@ CommonSlider::CommonSlider(Parameters& parameters, ParamCommon::Type type)
   };
 }
 
-void CommonSlider::mouseDoubleClick(const juce::MouseEvent& evt) {
+void CommonSlider::mouseDoubleClick(const juce::MouseEvent&) {
   const float defaultVal = COMMON_DEFAULTS[mType];
   const float globalVal = P_FLOAT(mParameters.global.common[mType])->get();
   // Reset value to the level above it
@@ -76,7 +76,6 @@ void CommonSlider::mouseDoubleClick(const juce::MouseEvent& evt) {
   mParameters.selectedParams->isUsed[mType] = false;
   updateSelectedParams();
 }
-
 
 // Update slider colours for new selected group
 void CommonSlider::updateSelectedParams() {
