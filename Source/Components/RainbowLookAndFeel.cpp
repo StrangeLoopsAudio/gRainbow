@@ -87,23 +87,6 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
   path.addArc(r.getX() + ((r.getWidth() - size) / 2), r.getY() + ((r.getHeight() - size) / 2), size, size, startRadians, posRadians, true);
   path.lineTo(center);
   g.strokePath(path.createPathWithRoundedCorners(3), juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
-
-  // Get CommonSlider version of the slider
-  CommonSlider* commonSlider = dynamic_cast<CommonSlider*>(&slider);
-  if (commonSlider) {
-    // Draw global tick
-    if (commonSlider->getGlobalValue() != sliderPosProportional) {
-      const float globRadians = startRadians + commonSlider->getGlobalValue() * (endRadians - startRadians);
-      g.setColour(Utils::GLOBAL_COLOUR);
-      g.drawLine(juce::Line<float>(center, center.getPointOnCircumference(size / 2.0f - 3, globRadians)), 3);
-    }
-    if (commonSlider->getParamLevel() == ParamType::GENERATOR && commonSlider->getNoteValue() != sliderPosProportional) {
-      // Draw note tick
-      const float globRadians = startRadians + commonSlider->getNoteValue() * (endRadians - startRadians);
-      g.setColour(rainbowCol);
-      g.drawLine(juce::Line<float>(center, center.getPointOnCircumference(size / 2.0f, globRadians)), 2);
-    }
-  }
 }
 
 void RainbowLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted, bool) {
