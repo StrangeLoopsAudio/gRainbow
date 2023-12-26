@@ -55,7 +55,30 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int width
   const float posRadians = startRadians + sliderPosProportional * (endRadians - startRadians);
 
   const int size = juce::jmin(r.getWidth(), r.getHeight());
-  auto center = r.getCentre().toFloat();
+  auto center = r.getCentre().toFloat().translated(-0.5f, 0);
+  
+  // Get CommonSlider version of the slider
+  CommonSlider* commonSlider = dynamic_cast<CommonSlider*>(&slider);
+  if (commonSlider) {
+    auto* param = commonSlider->getParam();
+    if (param->type == ParamType::GENERATOR && commonSlider->getIsUsed()) {
+      // Draw border around slider representing generator being used
+      g.setColour(rainbowCol);
+      g.drawRoundedRectangle(slider.getLocalBounds().reduced(1, 0).toFloat(), 5, 1);
+    }
+//    // Draw global tick
+//    if (commonSlider->getGlobalValue() != sliderPosProportional) {
+//      const float globRadians = startRadians + commonSlider->getGlobalValue() * (endRadians - startRadians);
+//      g.setColour(Utils::GLOBAL_COLOUR);
+//      g.drawLine(juce::Line<float>(center, center.getPointOnCircumference(size / 2.0f - 3, globRadians)), 2);
+//    }
+//    if (commonSlider->getParamLevel() == ParamType::GENERATOR && commonSlider->getNoteValue() != sliderPosProportional) {
+//      // Draw note tick
+//      const float globRadians = startRadians + commonSlider->getNoteValue() * (endRadians - startRadians);
+//      g.setColour(rainbowCol);
+//      g.drawLine(juce::Line<float>(center, center.getPointOnCircumference(size / 4.0f, globRadians)), 2);
+//    }
+  }
   
   juce::Path path;
   
@@ -64,23 +87,6 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int width
   path.addArc(r.getX() + ((r.getWidth() - size) / 2), r.getY() + ((r.getHeight() - size) / 2), size, size, startRadians, posRadians, true);
   path.lineTo(center);
   g.strokePath(path.createPathWithRoundedCorners(3), juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
-  
-  // Get CommonSlider version of the slider
-  CommonSlider* commonSlider = dynamic_cast<CommonSlider*>(&slider);
-  if (commonSlider) {
-    // Draw global tick
-    if (commonSlider->getGlobalValue() != sliderPosProportional) {
-      const float globRadians = startRadians + commonSlider->getGlobalValue() * (endRadians - startRadians);
-      g.setColour(Utils::GLOBAL_COLOUR);
-      g.drawLine(juce::Line<float>(center, center.getPointOnCircumference(size / 2.0f - 3, globRadians)), 3);
-    }
-    if (commonSlider->getParamLevel() == ParamType::GENERATOR && commonSlider->getNoteValue() != sliderPosProportional) {
-      // Draw note tick
-      const float globRadians = startRadians + commonSlider->getNoteValue() * (endRadians - startRadians);
-      g.setColour(rainbowCol);
-      g.drawLine(juce::Line<float>(center, center.getPointOnCircumference(size / 2.0f, globRadians)), 2);
-    }
-  }
 }
 
 void RainbowLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) {

@@ -15,7 +15,8 @@ class CommonSlider : public juce::Slider {
   void updateSelectedParams();
   float getGlobalValue() { return mGlobalValue; }
   float getNoteValue() { return mNoteValue; }
-  ParamType getParamLevel() { return mParameters.selectedParams->type; }
+  ParamCommon* getParam() { return mParameters.selectedParams; }
+  bool getIsUsed() { return mParameters.selectedParams->isUsed[mType]; }
   void mouseDoubleClick(const juce::MouseEvent& evt) override;
 
  private:
