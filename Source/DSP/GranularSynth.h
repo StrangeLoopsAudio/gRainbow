@@ -143,9 +143,8 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   static constexpr auto FFT_SIZE = 4096;
   static constexpr auto HOP_SIZE = 4096;  // Larger because don't need high resolution for spectrogram
   static constexpr double DEFAULT_BPM = 120.0f;
+  static constexpr int DEFAULT_BEATS_PER_BAR = 4;
   // Param bounds
-  static constexpr float MIN_RATE_RATIO = .25f;
-  static constexpr float MAX_RATE_RATIO = 1.0f;
   static constexpr float MIN_CANDIDATE_SALIENCE = 0.5f;
   static constexpr int MAX_GRAINS = 20;  // Max grains active at once
   static constexpr double INVALID_SAMPLE_RATE = -1.0;  // Max grains active at once
@@ -180,6 +179,8 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   juce::MidiKeyboardState mKeyboardState;
   juce::AudioFormatManager mFormatManager;
   bool mNeedsResample = false;
+  double mBpm = DEFAULT_BPM;
+  int mBeatsPerBar = DEFAULT_BEATS_PER_BAR;
 
   // Reference sine tone
   juce::ToneGeneratorAudioSource mReferenceTone;

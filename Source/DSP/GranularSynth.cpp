@@ -256,6 +256,15 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   for (int i = 0; i < buffer.getNumChannels(); i++) {
     juce::FloatVectorOperations::clip(buffer.getWritePointer(i), buffer.getReadPointer(i), -1.0f, 1.0f, bufferNumSample);
   }
+  
+  if (juce::AudioPlayHead* playhead = getPlayHead()) {
+    if (playhead->getPosition()->getBpm()) {
+      mBpm = *(playhead->getPosition()->getBpm());
+    }
+    if (playhead->getPosition()->getTimeSignature()) {
+      mBeatsPerBar = playhead->getPosition()->getTimeSignature()->numerator;
+    }
+  }
 
   handleGrainAddRemove(bufferNumSample);
 
@@ -427,21 +436,8 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
 
           if (grainSync) {
             float div = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_DURATION.convertTo0to1(grainDuration)));
-            double bpm = DEFAULT_BPM;
-            int beatsPerBar = 4;
-            if (juce::AudioPlayHead* playhead = getPlayHead()) {
-              juce::Optional<juce::AudioPlayHead::PositionInfo> info = playhead->getPosition();
-              juce::Optional<double> newBpm = info->getBpm();
-              if (newBpm) {
-                bpm = *newBpm;
-              }
-              juce::Optional<juce::AudioPlayHead::TimeSignature> newTimeSignature = info->getTimeSignature();
-              if (newTimeSignature) {
-                beatsPerBar = (*newTimeSignature).numerator;
-              }
-            }
             // Find synced duration using bpm
-            durSec = (1.0f / bpm) * 60.0f * (beatsPerBar / div);
+            durSec = (1.0f / mBpm) * 60.0f * (mBeatsPerBar / div);
           } else {
             durSec = grainDuration;
           }
@@ -481,12 +477,12 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           // Reset trigger ts
           if (grainSync) {
             float div = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_RATE.convertTo0to1(grainRate)));
+            float rateSec = (1.0f / mBpm) * 60.0f * (mBeatsPerBar / div);
             // Find synced rate interval using bpm
-            float intervalSamples = mSampleRate * durSec / div;
+            float intervalSamples = mSampleRate * rateSec;
             gNote->grainTriggers[i] += intervalSamples;
           } else {
-            gNote->grainTriggers[i] += mSampleRate * juce::jmap(ParamRanges::GRAIN_RATE.convertTo0to1(grainRate),
-                                         durSec * MIN_RATE_RATIO, durSec * MAX_RATE_RATIO);
+            gNote->grainTriggers[i] += mSampleRate / grainRate;
           }
         } else {
           gNote->grainTriggers[i] -= blockSize;

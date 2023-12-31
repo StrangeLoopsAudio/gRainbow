@@ -33,13 +33,11 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   void updateSelectedParams();
 
  private:
-  static constexpr float MIN_RATE_RATIO = .25f;
-  static constexpr float MAX_RATE_RATIO = 1.0f;
   static constexpr int MAX_NUM_ENVS = 6;
 
   class QuantizedSlider : public CommonSlider {
    public:
-    QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : CommonSlider(parameters, type), mSync(false) {}
+    QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : CommonSlider(parameters, type), mSync(false), mRange(COMMON_RANGES[type]) {}
     void setSync(bool sync) {
       mSync = sync;
       setTextValueSuffix(sync ? "" : suffix);

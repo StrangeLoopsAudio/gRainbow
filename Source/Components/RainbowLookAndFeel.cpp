@@ -94,9 +94,9 @@ void RainbowLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton&
   if (!btn.isEnabled()) fillColour = Utils::BG_COLOUR;
   g.setColour(fillColour);
   g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), btn.getHeight() / 2.0f, 2.0f);
-
+  
   float tickHeight = btn.getHeight() - Utils::PADDING * 2;
-  int tickX = btn.getToggleState() ? btn.getWidth() - tickHeight - Utils::PADDING: Utils::PADDING;
+  int tickX = btn.getToggleState() ? btn.getWidth() - tickHeight - Utils::PADDING : Utils::PADDING;
   auto tickArea = juce::Rectangle<float>(tickHeight, tickHeight);
   if (shouldDrawButtonAsHighlighted && !btn.getToggleState()) {
     fillColour = fillColour.brighter(0.15f);

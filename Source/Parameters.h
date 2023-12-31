@@ -108,7 +108,7 @@ static juce::NormalisableRange<float> CUTOFF(100.0f, 2000.0f, 0.0f, 0.25f);
 static juce::NormalisableRange<float> RESONANCE(0.5f, 1.0f);
 static juce::NormalisableRange<float> GRAIN_SHAPE(0.0f, 1.0f);
 static juce::NormalisableRange<float> GRAIN_TILT(0.0f, 1.0f);
-static juce::NormalisableRange<float> GRAIN_RATE(0.25f, 1.0f);
+static juce::NormalisableRange<float> GRAIN_RATE(0.5f, 50.0f);
 static juce::NormalisableRange<float> GRAIN_DURATION(0.06f, 0.3f);
 static juce::NormalisableRange<float> PITCH_ADJUST(-0.25f, 0.25f);
 static juce::NormalisableRange<float> PITCH_SPRAY(0.0f, 0.1f);
@@ -117,7 +117,7 @@ static juce::NormalisableRange<float> POSITION_SPRAY(0.0f, 0.3f);
 static juce::NormalisableRange<float> PAN_ADJUST(-1.0f, 1.0f);
 static juce::NormalisableRange<float> PAN_SPRAY(0.0f, 1.0f);
 
-static int SYNC_DIV_MAX = 4;  // pow of 2 division, so 1/16
+static int SYNC_DIV_MAX = 7;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
 namespace ParamDefaults {
@@ -132,9 +132,9 @@ static float FILTER_HP_CUTOFF_DEFAULT_HZ = 100.0f;
 static float FILTER_BP_CUTOFF_DEFAULT_HZ = 600.0f;
 static float FILTER_RESONANCE_DEFAULT = 0.707f;
 static int   FILTER_TYPE_DEFAULT = 0;
-static float GRAIN_SHAPE_DEFAULT = 0.25f;
+static float GRAIN_SHAPE_DEFAULT = 0.5f;
 static float GRAIN_TILT_DEFAULT = 0.5f;
-static float GRAIN_RATE_DEFAULT = 0.33f;
+static float GRAIN_RATE_DEFAULT = 10.0f;
 static int   GRAIN_SYNC_DEFAULT = 0;
 static float GRAIN_DURATION_DEFAULT = 0.2f;
 static float PITCH_ADJUST_DEFAULT = 0.0f;
@@ -310,24 +310,44 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
 };
 
 static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GAIN_DEFAULT,
-                                                               ParamDefaults::ATTACK_DEFAULT_SEC,
-                                                               ParamDefaults::DECAY_DEFAULT_SEC,
-                                                               ParamDefaults::SUSTAIN_DEFAULT,
-                                                               ParamDefaults::RELEASE_DEFAULT_SEC,
-                                                               ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ,
-                                                               ParamDefaults::FILTER_RESONANCE_DEFAULT,
-                                                               (float)ParamDefaults::FILTER_TYPE_DEFAULT,
-                                                               ParamDefaults::GRAIN_SHAPE_DEFAULT,
-                                                               ParamDefaults::GRAIN_TILT_DEFAULT,
-                                                               ParamDefaults::GRAIN_RATE_DEFAULT,
-                                                               ParamDefaults::GRAIN_DURATION_DEFAULT,
-                                                               (float)ParamDefaults::GRAIN_SYNC_DEFAULT,
-                                                               ParamDefaults::PITCH_ADJUST_DEFAULT,
-                                                               ParamDefaults::PITCH_SPRAY_DEFAULT,
-                                                               ParamDefaults::POSITION_ADJUST_DEFAULT,
-                                                               ParamDefaults::POSITION_SPRAY_DEFAULT,
-                                                               ParamDefaults::PAN_ADJUST_DEFAULT,
-                                                               ParamDefaults::PAN_SPRAY_DEFAULT};
+  ParamDefaults::ATTACK_DEFAULT_SEC,
+  ParamDefaults::DECAY_DEFAULT_SEC,
+  ParamDefaults::SUSTAIN_DEFAULT,
+  ParamDefaults::RELEASE_DEFAULT_SEC,
+  ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ,
+  ParamDefaults::FILTER_RESONANCE_DEFAULT,
+  (float)ParamDefaults::FILTER_TYPE_DEFAULT,
+  ParamDefaults::GRAIN_SHAPE_DEFAULT,
+  ParamDefaults::GRAIN_TILT_DEFAULT,
+  ParamDefaults::GRAIN_RATE_DEFAULT,
+  ParamDefaults::GRAIN_DURATION_DEFAULT,
+  (float)ParamDefaults::GRAIN_SYNC_DEFAULT,
+  ParamDefaults::PITCH_ADJUST_DEFAULT,
+  ParamDefaults::PITCH_SPRAY_DEFAULT,
+  ParamDefaults::POSITION_ADJUST_DEFAULT,
+  ParamDefaults::POSITION_SPRAY_DEFAULT,
+  ParamDefaults::PAN_ADJUST_DEFAULT,
+  ParamDefaults::PAN_SPRAY_DEFAULT};
+
+static juce::NormalisableRange<float> COMMON_RANGES[ParamCommon::Type::NUM_COMMON] = {ParamRanges::GAIN,
+  ParamRanges::ATTACK,
+  ParamRanges::DECAY,
+  ParamRanges::SUSTAIN,
+  ParamRanges::RELEASE,
+  ParamRanges::CUTOFF,
+  ParamRanges::RESONANCE,
+  juce::NormalisableRange<float>(),
+  ParamRanges::GRAIN_SHAPE,
+  ParamRanges::GRAIN_TILT,
+  ParamRanges::GRAIN_RATE,
+  ParamRanges::GRAIN_DURATION,
+  juce::NormalisableRange<float>(),
+  ParamRanges::PITCH_ADJUST,
+  ParamRanges::PITCH_SPRAY,
+  ParamRanges::POSITION_ADJUST,
+  ParamRanges::POSITION_SPRAY,
+  ParamRanges::PAN_ADJUST,
+  ParamRanges::PAN_SPRAY};
 
 namespace ParamHelper {
 [[maybe_unused]] static void setCommonParam(ParamCommon* common, ParamCommon::Type type, float newValue) {

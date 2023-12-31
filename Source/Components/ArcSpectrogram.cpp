@@ -113,17 +113,18 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   if (note != nullptr) {
     float startRadians = (1.5f * juce::MathConstants<float>::pi);
     juce::Colour noteColour = mParameters.getSelectedParamColour();
-    std::vector<ParamCandidate*> usedCandidates;
     // Draw generator position lines
     for (int i = 0; i < NUM_GENERATORS; ++i) {
       if (genIdx > -1 && genIdx != i) continue;
+      // Draw position line where the gen's candidate is
+      ParamCandidate* candidate = note->getCandidate(i);
+      float endRadians = startRadians + candidate->posRatio * juce::MathConstants<float>::pi;
+      g.setColour(noteColour);
+      juce::Line<float> line = juce::Line<float>(mCenterPoint.getPointOnCircumference(mStartRadius, mStartRadius, endRadians), mCenterPoint.getPointOnCircumference(mEndRadius, mEndRadius, endRadians));
       if (note->shouldPlayGenerator(i)) {
-        // Draw position line where the gen's candidate is
-        ParamCandidate* candidate = note->getCandidate(i);
-        usedCandidates.push_back(candidate);
-        float endRadians = startRadians + candidate->posRatio * juce::MathConstants<float>::pi;
-        g.setColour(noteColour);
-        g.drawLine(juce::Line<float>(mCenterPoint.getPointOnCircumference(mStartRadius, mStartRadius, endRadians), mCenterPoint.getPointOnCircumference(mEndRadius, mEndRadius, endRadians)), genIdx == i ? 3.0f : 2.0f);
+        g.drawLine(line, genIdx == i ? 3.0f : 2.0f);
+      } else {
+        g.drawLine(line.withShortenedStart(line.getLength() - 5), genIdx == i ? 3.0f : 2.0f);
       }
     }
   }
@@ -207,7 +208,7 @@ void ArcSpectrogram::resized() {
 
   mCenterPoint = juce::Point<float>(getWidth() / 2.0f, mRainbowRect.getBottom());
   mStartRadius = mRainbowRect.getHeight() / 2.6f;
-  mEndRadius = mRainbowRect.getHeight() - 20;
+  mEndRadius = mRainbowRect.getHeight();
   mBowWidth = mEndRadius - mStartRadius;
 }
 

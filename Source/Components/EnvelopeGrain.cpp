@@ -46,6 +46,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   // Rate
   mSliderRate.setNumDecimalPlacesToDisplay(2);
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
+  mSliderRate.setSuffix("g/s");
   mSliderRate.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderRate);
 
@@ -102,7 +103,9 @@ void EnvelopeGrain::timerCallback() {
                             juce::dontSendNotification);
     mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "free");
     mSliderRate.setSync(mBtnSync.getToggleState());
+    mSliderRate.setRange(mSliderRate.getRange(), mBtnSync.getToggleState() ? mSliderRate.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX - 1) : 0.01);
     mSliderDuration.setSync(mBtnSync.getToggleState());
+    mSliderDuration.setRange(mSliderDuration.getRange(), mBtnSync.getToggleState() ? mSliderDuration.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX - 1) : 0.01);
   }
 }
 
@@ -132,22 +135,12 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   g.setColour(Utils::BG_COLOUR);
   g.fillRect(mVizRect);
 
-  float duration = mSliderDuration.getValue();
-  float rate = mSliderRate.getValue();
+  const float duration = mSliderDuration.getValue();
+  const float overlap = 1.0f / (duration * mSliderRate.getValue());
 
-  float envWidth;
-  float envOffset;
-  if (mBtnSync.getToggleState()) {
-    float durDiv = std::pow(2, (int)(duration));
-    envWidth = mVizRect.getWidth() / durDiv;
-    float rateDiv = std::pow(2, (int)(rate));
-    envOffset = envWidth / rateDiv;
-  } else {
-    envWidth = juce::jmap(duration,
-                          mVizRect.getWidth() / MAX_NUM_ENVS, mVizRect.getWidth());
-    envOffset = juce::jmap(rate, envWidth * MIN_RATE_RATIO,
-                           envWidth * MAX_RATE_RATIO);
-  }
+  float envWidth = juce::jmap(duration,
+                             mVizRect.getWidth() / MAX_NUM_ENVS, mVizRect.getWidth());
+  float envOffset = envWidth * overlap;
 
   float shapeWidth = envWidth * mSliderShape.getValue() / 2.0f;
   
