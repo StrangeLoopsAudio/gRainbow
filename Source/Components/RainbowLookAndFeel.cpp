@@ -90,18 +90,28 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
 }
 
 void RainbowLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted, bool) {
-  juce::Colour fillColour = btn.findColour(juce::ToggleButton::ColourIds::tickColourId);
-  if (!btn.isEnabled()) fillColour = Utils::BG_COLOUR;
+  const bool enabled = btn.isEnabled();  // not being used
+  const bool on = btn.getToggleState();  // on/off
+
+  juce::Colour fillColour = enabled ? btn.findColour(juce::ToggleButton::ColourIds::tickColourId) : Utils::BG_COLOUR;
   g.setColour(fillColour);
-  g.drawRoundedRectangle(btn.getLocalBounds().toFloat().reduced(1), btn.getHeight() / 2.0f, 2.0f);
-  
-  float tickHeight = btn.getHeight() - Utils::PADDING * 2;
-  int tickX = btn.getToggleState() ? btn.getWidth() - tickHeight - Utils::PADDING : Utils::PADDING;
-  auto tickArea = juce::Rectangle<float>(tickHeight, tickHeight);
-  if (shouldDrawButtonAsHighlighted && !btn.getToggleState()) {
-    fillColour = fillColour.brighter(0.15f);
+
+  auto bounds = btn.getLocalBounds().toFloat();
+  const int height = btn.getHeight();
+  if (on) {
+    g.setColour(fillColour.withAlpha(0.1f));
+    g.fillRoundedRectangle(bounds.reduced(1), height / 2.0f);
   }
-  g.setColour(btn.getToggleState() ? fillColour : fillColour.darker());
+  g.setColour(fillColour);
+  g.drawRoundedRectangle(bounds.reduced(1), height / 2.0f, 2.0f);
+
+  float tickHeight = height - Utils::PADDING * 2;
+  int tickX = on ? btn.getWidth() - tickHeight - Utils::PADDING : Utils::PADDING;
+  auto tickArea = juce::Rectangle<float>(tickHeight, tickHeight);
+  if (!on) {
+    fillColour = shouldDrawButtonAsHighlighted ? fillColour.brighter(0.15f) : fillColour.darker();
+  }
+  g.setColour(fillColour);
   g.fillEllipse(tickArea.translated(tickX, Utils::PADDING));
 }
 
