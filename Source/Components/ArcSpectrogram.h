@@ -35,7 +35,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void update() override {}
   void paint(juce::Graphics &) override;
   void resized() override;
-  
+
   void mouseMove(const juce::MouseEvent& evt) override;
   void mouseExit(const juce::MouseEvent&) override;
 
@@ -72,9 +72,9 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
     ArcGrain(ParamGenerator *paramGenerator_, float gain_, Utils::PitchClass pitchClass_)
         : paramGenerator(paramGenerator_), gain(gain_), pitchClass(pitchClass_) {}
   } ArcGrain;
-  
+
   enum CloudType { WAIT, SINGING, TOUCH, COUNT };
-  
+
   typedef struct Cloud {
     std::array<juce::Image, CloudType::COUNT> images;
     CloudType type = CloudType::WAIT;
