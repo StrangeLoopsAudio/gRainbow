@@ -37,10 +37,10 @@ ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
   mCloudRight.images[CloudType::TOUCH] = juce::PNGImageFormat::loadFrom(BinaryData::cloudRightTouch_png, BinaryData::cloudRightTouch_pngSize);
 
   // ComboBox is not zero indexed because 0 represents nothing selected
-  mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::SPECTROGRAM], (int)ParamUI::SpecType::SPECTROGRAM + 1);
-  mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::HPCP], (int)ParamUI::SpecType::HPCP + 1);
-  mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::DETECTED], (int)ParamUI::SpecType::DETECTED + 1);
-  mSpecType.addItem(Utils::SpecTypeNames[ParamUI::SpecType::WAVEFORM], (int)ParamUI::SpecType::WAVEFORM + 1);
+  mSpecType.addItem("Spectrogram", (int)ParamUI::SpecType::SPECTROGRAM + 1);
+  mSpecType.addItem("Harmonic Profile", (int)ParamUI::SpecType::HPCP + 1);
+  mSpecType.addItem("Detected Pitches", (int)ParamUI::SpecType::DETECTED + 1);
+  mSpecType.addItem("Audio Waveform", (int)ParamUI::SpecType::WAVEFORM + 1);
   mSpecType.setTooltip("Select different spectrum type");
   mSpecType.onChange = [this](void) {
     // Will get called from user using UI ComboBox and from inside this class

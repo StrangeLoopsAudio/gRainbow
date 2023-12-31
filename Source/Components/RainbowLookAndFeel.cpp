@@ -35,7 +35,7 @@ void RainbowLookAndFeel::drawTabButton(juce::TabBarButton& btn, juce::Graphics& 
 
 void RainbowLookAndFeel::drawTabAreaBehindFrontButton(juce::TabbedButtonBar&, juce::Graphics&, int, int) {}  // Do nothing
 
-void RainbowLookAndFeel::drawTabButtonText(juce::TabBarButton& btn, juce::Graphics& g, bool mouseOver, bool mouseDown) {
+void RainbowLookAndFeel::drawTabButtonText(juce::TabBarButton& btn, juce::Graphics& g, bool mouseOver, bool) {
   auto textColour = (btn.isFrontTab() || mouseOver) ? Utils::GLOBAL_COLOUR : Utils::GLOBAL_COLOUR.darker();
   g.setColour(textColour);
   int trim = btn.getExtraComponent() ? btn.getExtraComponent()->getRight() : 0;
@@ -56,7 +56,7 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
 
   const int size = juce::jmin(r.getWidth(), r.getHeight());
   auto center = r.getCentre().toFloat().translated(-0.5f, 0);
-  
+
   // Get CommonSlider version of the slider
   CommonSlider* commonSlider = dynamic_cast<CommonSlider*>(&slider);
   if (commonSlider) {
@@ -137,11 +137,12 @@ void RainbowLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectan
                                            bool, bool, const juce::String& text, const juce::String&, const juce::Drawable*,
                                            const juce::Colour*) {
   // Fill background
+  juce::Colour backgroundColour = findColour(juce::PopupMenu::ColourIds::backgroundColourId);
   if (isHighlighted) {
-    g.setColour(findColour(juce::PopupMenu::ColourIds::backgroundColourId).darker());
+    g.setColour(backgroundColour.darker());
     g.fillRect(area);
   }
-  g.setColour(juce::Colours::white);
+  g.setColour(backgroundColour.contrasting(0.8f));
   g.drawFittedText(text, area, juce::Justification::centred, 1);
 }
 

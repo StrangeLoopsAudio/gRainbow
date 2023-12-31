@@ -46,8 +46,6 @@ typedef struct Result {
 // Constant used for pitch shifting by semitones
 static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
 
-static juce::Array<juce::String> SpecTypeNames{"Spectrogram", "Harmonic Profile", "Detected Pitches", "Audio Waveform"};
-
 enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
 enum FilterType { NO_FILTER, LOWPASS, HIGHPASS, BANDPASS };
 
