@@ -138,8 +138,7 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   const float duration = mSliderDuration.getValue();
   const float overlap = 1.0f / (duration * mSliderRate.getValue());
 
-  float envWidth = juce::jmap(duration,
-                             mVizRect.getWidth() / MAX_NUM_ENVS, mVizRect.getWidth());
+  float envWidth = (duration / WINDOW_SECONDS) * mVizRect.getWidth();
   float envOffset = envWidth * overlap;
 
   float shapeWidth = envWidth * mSliderShape.getValue() / 2.0f;
