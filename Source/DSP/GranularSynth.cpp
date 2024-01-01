@@ -435,7 +435,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           const float tilt = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_TILT);
 
           if (grainSync) {
-            float div = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_DURATION.convertTo0to1(grainDuration)));
+            float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * (1.0f - ParamRanges::GRAIN_DURATION.convertTo0to1(grainDuration))));
             // Find synced duration using bpm
             durSec = (1.0f / mBpm) * 60.0f * (mBeatsPerBar / div);
           } else {
@@ -476,7 +476,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           }
           // Reset trigger ts
           if (grainSync) {
-            float div = std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_RATE.convertTo0to1(grainRate)));
+            float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_RATE.convertTo0to1(grainRate)));
             float rateSec = (1.0f / mBpm) * 60.0f * (mBeatsPerBar / div);
             // Find synced rate interval using bpm
             float intervalSamples = mSampleRate * rateSec;

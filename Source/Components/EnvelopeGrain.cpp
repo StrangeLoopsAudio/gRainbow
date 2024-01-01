@@ -18,8 +18,8 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
       mParamColour(Utils::GLOBAL_COLOUR),
       mSliderShape(parameters, ParamCommon::Type::GRAIN_SHAPE),
       mSliderTilt(parameters, ParamCommon::Type::GRAIN_TILT),
-      mSliderRate(parameters, ParamCommon::Type::GRAIN_RATE),
-      mSliderDuration(parameters, ParamCommon::Type::GRAIN_DURATION),
+      mSliderRate(parameters, ParamCommon::Type::GRAIN_RATE, false),
+      mSliderDuration(parameters, ParamCommon::Type::GRAIN_DURATION, true),
       mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
   mSliderShape.setNumDecimalPlacesToDisplay(2);
@@ -103,9 +103,9 @@ void EnvelopeGrain::timerCallback() {
                             juce::dontSendNotification);
     mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "free");
     mSliderRate.setSync(mBtnSync.getToggleState());
-    mSliderRate.setRange(mSliderRate.getRange(), mBtnSync.getToggleState() ? mSliderRate.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX - 1) : 0.01);
+    mSliderRate.setRange(mSliderRate.getRange(), mBtnSync.getToggleState() ? mSliderRate.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX) : 0.01);
     mSliderDuration.setSync(mBtnSync.getToggleState());
-    mSliderDuration.setRange(mSliderDuration.getRange(), mBtnSync.getToggleState() ? mSliderDuration.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX - 1) : 0.01);
+    mSliderDuration.setRange(mSliderDuration.getRange(), mBtnSync.getToggleState() ? mSliderDuration.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX) : 0.01);
   }
 }
 
@@ -135,11 +135,20 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   g.setColour(Utils::BG_COLOUR);
   g.fillRect(mVizRect);
 
-  const float duration = mSliderDuration.getValue();
-  const float overlap = 1.0f / (duration * mSliderRate.getValue());
-
-  float envWidth = (duration / WINDOW_SECONDS) * mVizRect.getWidth();
-  float envOffset = envWidth * overlap;
+  float durSec, rateSec;
+  if (mBtnSync.getToggleState()) {
+    float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * (1.0f - ParamRanges::GRAIN_DURATION.convertTo0to1(mSliderDuration.getValue()))));
+    // Find synced duration/rate using fixed 120 bpm and 4 beats per bar (different from actual synthesis, just for vis)
+    durSec = (1.0f / 120) * 60.0f * (4 / div);
+    div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_RATE.convertTo0to1(mSliderRate.getValue())));
+    rateSec = (1.0f / 120) * 60.0f * (4 / div);
+  } else {
+    durSec = mSliderDuration.getValue();
+    rateSec = 1.0f / mSliderRate.getValue();
+  }
+  
+  float envWidth = (durSec / WINDOW_SECONDS) * mVizRect.getWidth();
+  float envOffset = (rateSec / WINDOW_SECONDS) * mVizRect.getWidth();
 
   float shapeWidth = envWidth * mSliderShape.getValue() / 2.0f;
   

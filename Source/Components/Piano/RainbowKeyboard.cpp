@@ -48,9 +48,9 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
   auto globalFillColour = isGlobal ? Utils::GLOBAL_COLOUR : juce::Colours::transparentBlack;
   if (mHoverGlobal && !isGlobal) globalFillColour = Utils::GLOBAL_COLOUR.withAlpha(0.2f);
   g.setColour(globalFillColour);
-  g.fillRoundedRectangle(mGlobalRect, 10);
+  g.fillRoundedRectangle(mGlobalRect, 5);
   g.setColour(Utils::GLOBAL_COLOUR);
-  g.drawRoundedRectangle(mGlobalRect, 10, 2);
+  g.drawRoundedRectangle(mGlobalRect, 5, 2);
   auto globalTextColour = isGlobal ? Utils::BG_COLOUR : Utils::GLOBAL_COLOUR;
   g.setColour(globalTextColour);
   g.drawText("global", mGlobalRect, juce::Justification::centred);
@@ -100,10 +100,10 @@ void RainbowKeyboard::fillNoteRectangleMap() {
     const bool blackKey = isBlackKey(key);
     const auto keyRect = juce::Rectangle<float>(notePos[key], 0.0f, (blackKey) ? blackNoteWidth : whiteNoteWidth,
                                                 (blackKey) ? blackNoteHeight : whiteNoteHeight);
-    mNoteRectMap[key] = keyRect.reduced(1, 1);
+    mNoteRectMap[key] = keyRect.reduced(1);
   }
 
-  mGlobalRect = getLocalBounds().toFloat().removeFromBottom(GLOBAL_RECT_HEIGHT);
+  mGlobalRect = getLocalBounds().reduced(1).toFloat().removeFromBottom(GLOBAL_RECT_HEIGHT);
 }
 
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {

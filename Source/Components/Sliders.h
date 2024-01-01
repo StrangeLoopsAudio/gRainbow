@@ -44,7 +44,7 @@ private:
 
 class QuantizedSlider : public CommonSlider {
 public:
-  QuantizedSlider(Parameters& parameters, ParamCommon::Type type) : CommonSlider(parameters, type), mSync(false), mRange(COMMON_RANGES[type]) {}
+  QuantizedSlider(Parameters& parameters, ParamCommon::Type type, bool reverse) : CommonSlider(parameters, type), mSync(false), mRange(COMMON_RANGES[type]), mReverse(reverse) {}
   void setSync(bool sync) {
     mSync = sync;
     setTextValueSuffix(sync ? "" : suffix);
@@ -58,7 +58,8 @@ public:
   juce::String getTextFromValue(double) override {
     if (mSync) {
       float prog = mRange.convertTo0to1(getValue());
-      return juce::String("1/") + juce::String(std::pow(2, (int)(ParamRanges::SYNC_DIV_MAX * prog)));
+      if (mReverse) prog = 1.0f - prog;
+      return juce::String("1/") + juce::String(std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * prog)));
     } else {
       return juce::String(getValue());
     }
@@ -66,6 +67,7 @@ public:
   
 private:
   bool mSync;
+  bool mReverse;
   juce::String suffix;
   juce::NormalisableRange<float> mRange;
   
