@@ -82,7 +82,7 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
 
-  startTimer(100);
+  startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 MasterPanel::~MasterPanel() {
@@ -138,7 +138,7 @@ void MasterPanel::paint(juce::Graphics& g) {
 }
 
 void MasterPanel::resized() {
-  auto r = getLocalBounds().reduced(Utils::PADDING, Utils::PADDING);
+  auto r = getLocalBounds().reduced(Utils::PADDING);
 
   auto masterPanel = r.removeFromRight(r.getWidth() / 2);
   mLabelTitle.setBounds(masterPanel.removeFromTop(Utils::TAB_HEIGHT));

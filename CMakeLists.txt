@@ -149,6 +149,8 @@ set(SOURCE_PLUGIN
     Source/Parameters.h
     Source/Parameters.cpp
     Source/Preset.h
+    Source/Modulators.h
+    Source/Modulators.cpp
 )
 
 target_sources(gRainbow PRIVATE ${SOURCE_UTILS} ${SOURCE_COMPONENTS} ${SOURCE_DSP} ${SOURCE_PLUGIN})

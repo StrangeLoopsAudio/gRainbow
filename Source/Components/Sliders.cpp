@@ -17,7 +17,6 @@ CommonSlider::CommonSlider(Parameters& parameters, ParamCommon::Type type)
   setSkewFactor(mParameters.global.common[mType]->getNormalisableRange().skew);
   setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::GLOBAL_COLOUR);
   setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
-  //setDoubleClickReturnValue(true, COMMON_DEFAULTS[mType]);
   onValueChange = [this] {
     ParamHelper::setCommonParam(mParameters.selectedParams, mType, (float)getValue());
     setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, getUsedColour());
@@ -119,7 +118,6 @@ GlobalSlider::GlobalSlider(juce::RangedAudioParameter* param)
   setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::GLOBAL_COLOUR);
   setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
   setDoubleClickReturnValue(true, mParam->getDefaultValue());
-  // TODO: set global param on value change
   onValueChange = [this] {
     if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(mParam)) ParamHelper::setParam(floatParam, (float)getValue());
     else if (auto* intParam = dynamic_cast<juce::AudioParameterInt*>(mParam)) ParamHelper::setParam(intParam, (int)getValue());

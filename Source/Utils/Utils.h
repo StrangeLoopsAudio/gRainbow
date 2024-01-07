@@ -16,6 +16,9 @@
 namespace Utils {
 typedef std::vector<std::vector<float>> SpecBuffer;
 
+// UI refresh timer interval (for updating sliders/displays when host changes their value)
+static constexpr int UI_REFRESH_INTERVAL = 20; // Interval in ms
+
 // UI spacing and colours
 static constexpr int PADDING = 3;
 static constexpr int EDITOR_WIDTH = 762;

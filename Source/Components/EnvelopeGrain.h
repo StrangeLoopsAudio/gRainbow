@@ -44,8 +44,8 @@ class EnvelopeGrain : public juce::Component, juce::AudioProcessorParameter::Lis
   // Components
   CommonSlider mSliderShape;
   CommonSlider mSliderTilt;
-  QuantizedSlider mSliderRate;
-  QuantizedSlider mSliderDuration;
+  QuantizedCommonSlider mSliderRate;
+  QuantizedCommonSlider mSliderDuration;
   juce::TextButton mBtnSync;
   juce::Label mLabelShape;
   juce::Label mLabelTilt;

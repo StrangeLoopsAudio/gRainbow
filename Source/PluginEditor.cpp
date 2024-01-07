@@ -155,12 +155,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     mFx2.updateSelectedParams();
     mFx3.updateSelectedParams();
     mPianoPanel.updateSelectedParams();
-    mModKeyboard.updateSelectedParams();
-    mModEnvelopes.updateSelectedParams();
-    mModLFOs.updateSelectedParams();
     mFilterControl.updateSelectedParams();
     mMasterPanel.updateSelectedParams();
-    mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, mParameters.getSelectedParamColour());
   };
   addAndMakeVisible(mPianoPanel);
 

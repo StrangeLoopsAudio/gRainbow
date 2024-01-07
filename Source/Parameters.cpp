@@ -12,6 +12,18 @@
 
 void ParamGlobal::addParams(juce::AudioProcessor& p) {
   // Global
+  // LFOs
+  p.addParameter(lfo1.shape =
+                 new juce::AudioParameterChoice({ParamIDs::lfo1Shape, 1}, "LFO 1 Shape", LFO_SHAPE_NAMES, ParamDefaults::LFO_SHAPE_DEFAULT));
+  p.addParameter(lfo1.rate = new juce::AudioParameterFloat({ParamIDs::lfo1Rate, 1}, "LFO 1 Rate", ParamRanges::LFO_RATE,
+                                                           ParamDefaults::LFO_RATE_DEFAULT));
+  p.addParameter(lfo1.depth = new juce::AudioParameterFloat({ParamIDs::lfo1Depth, 1}, "LFO 1 Depth", ParamRanges::LFO_DEPTH,
+                                                           ParamDefaults::LFO_DEPTH_DEFAULT));
+  p.addParameter(lfo1.phase = new juce::AudioParameterFloat({ParamIDs::lfo1Phase, 1}, "LFO 1 Phase", ParamRanges::LFO_PHASE,
+                                                           ParamDefaults::LFO_PHASE_DEFAULT));
+  p.addParameter(lfo1.sync = new juce::AudioParameterBool({ParamIDs::lfo1Sync, 1}, ParamIDs::lfo1Sync, ParamDefaults::LFO_SYNC_DEFAULT));
+  p.addParameter(lfo1.bipolar = new juce::AudioParameterBool({ParamIDs::lfo1Bipolar, 1}, ParamIDs::lfo1Bipolar, ParamDefaults::LFO_BIPOLAR_DEFAULT));
+  // Macros
   p.addParameter(macro1 = new juce::AudioParameterFloat({ParamIDs::macro1, 1}, "Macro 1", ParamRanges::MACRO,
                                                            ParamDefaults::MACRO_DEFAULT));
   p.addParameter(macro2 = new juce::AudioParameterFloat({ParamIDs::macro2, 1}, "Macro 2", ParamRanges::MACRO,
@@ -41,7 +53,7 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                    ParamRanges::RESONANCE, ParamDefaults::FILTER_RESONANCE_DEFAULT));
   common[FILT_RESONANCE]->addListener(this);
   p.addParameter(common[FILT_TYPE] =
-                     new juce::AudioParameterChoice({ParamIDs::globalFilterType, 1}, "Master Filter Type", FILTER_TYPE_NAMES, 0));
+                     new juce::AudioParameterChoice({ParamIDs::globalFilterType, 1}, "Master Filter Type", FILTER_TYPE_NAMES, ParamDefaults::FILTER_TYPE_DEFAULT));
   common[FILT_TYPE]->addListener(this);
 
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat({ParamIDs::globalGrainShape, 1}, "Master Grain Shape",
@@ -104,7 +116,7 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
                                                                         ParamDefaults::FILTER_RESONANCE_DEFAULT));
   common[FILT_RESONANCE]->addListener(this);
   juce::String filterTypeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterType + juce::String(genIdx);
-  p.addParameter(common[FILT_TYPE] = new juce::AudioParameterChoice({filterTypeId, 1}, filterTypeId, FILTER_TYPE_NAMES, 0));
+  p.addParameter(common[FILT_TYPE] = new juce::AudioParameterChoice({filterTypeId, 1}, filterTypeId, FILTER_TYPE_NAMES, ParamDefaults::FILTER_TYPE_DEFAULT));
   common[FILT_TYPE]->addListener(this);
   juce::String pitchAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchAdjust + juce::String(genIdx);
   p.addParameter(common[PITCH_ADJUST] = new juce::AudioParameterFloat({pitchAdjustId, 1}, pitchAdjustId, ParamRanges::PITCH_ADJUST,
@@ -168,7 +180,7 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
                      ParamDefaults::FILTER_RESONANCE_DEFAULT));
   common[FILT_RESONANCE]->addListener(this);
   p.addParameter(common[FILT_TYPE] = new juce::AudioParameterChoice({notePrefix + ParamIDs::noteFilterType, 1},
-                                                                    notePrefix + ParamIDs::noteFilterType, FILTER_TYPE_NAMES, 0));
+                                                                    notePrefix + ParamIDs::noteFilterType, FILTER_TYPE_NAMES, ParamDefaults::FILTER_TYPE_DEFAULT));
   common[FILT_TYPE]->addListener(this);
 
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteGrainShape, 1}, notePrefix + ParamIDs::noteGrainShape,

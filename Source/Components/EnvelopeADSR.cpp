@@ -71,7 +71,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
 
-  startTimer(100);
+  startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 EnvelopeADSR::~EnvelopeADSR() {
@@ -145,9 +145,7 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
 }
 
 void EnvelopeADSR::resized() {
-  juce::Rectangle<int> r = getLocalBounds();
-  // Remove padding
-  r.reduce(Utils::PADDING, Utils::PADDING);
+  auto r = getLocalBounds().reduced(Utils::PADDING);
 
   // Place labels
   juce::Rectangle<int> labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT);
@@ -167,5 +165,5 @@ void EnvelopeADSR::resized() {
 
   r.removeFromBottom(Utils::PADDING);
 
-  mVizRect = r.reduced(2, 2).toFloat();
+  mVizRect = r.toFloat();
 }

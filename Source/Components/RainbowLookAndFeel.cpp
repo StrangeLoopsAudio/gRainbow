@@ -130,7 +130,6 @@ void RainbowLookAndFeel::drawComboBox(juce::Graphics& g, int, int, bool, int, in
   // Draw background
   g.setColour(box.findColour(juce::ComboBox::ColourIds::backgroundColourId));
   g.fillRoundedRectangle(box.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT);
-  // Draw arrow
 }
 
 void RainbowLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area, bool, bool, bool isHighlighted,

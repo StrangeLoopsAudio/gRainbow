@@ -80,7 +80,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
 
-  startTimer(100);
+  startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 EnvelopeGrain::~EnvelopeGrain() {
@@ -196,12 +196,10 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
 }
 
 void EnvelopeGrain::resized() {
-  juce::Rectangle<float> r = getLocalBounds().toFloat();
-  // Remove padding
-  r.reduce(Utils::PADDING, Utils::PADDING);
+  auto r = getLocalBounds().reduced(Utils::PADDING);
 
   // Place labels
-  juce::Rectangle<int> labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT).toNearestInt();
+  auto labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT);
   int labelWidth = labelPanel.getWidth() / 4;
   mLabelShape.setBounds(labelPanel.removeFromLeft(labelWidth));
   mLabelTilt.setBounds(labelPanel.removeFromLeft(labelWidth));
@@ -209,19 +207,19 @@ void EnvelopeGrain::resized() {
   mLabelDuration.setBounds(labelPanel.removeFromLeft(labelWidth));
 
   // Place sliders
-  juce::Rectangle<int> knobPanel = r.removeFromBottom(Utils::KNOB_HEIGHT).toNearestInt();
+  auto knobPanel = r.removeFromBottom(Utils::KNOB_HEIGHT);
   int knobWidth = knobPanel.getWidth() / 4;
   mSliderShape.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderTilt.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderDuration.setBounds(knobPanel.removeFromLeft(knobWidth));
 
-  r.removeFromBottom(Utils::PADDING);
-
   // Place button
-  juce::Rectangle<int> syncPanel = r.removeFromRight(r.getWidth() * 0.25f).toNearestInt();
-  mBtnSync.changeWidthToFitText(Utils::LABEL_HEIGHT);
-  mBtnSync.setCentrePosition(syncPanel.getCentre());
+  auto syncPanel = r.removeFromRight(r.getWidth() * 0.25f);
+  mBtnSync.setBounds(syncPanel.withSizeKeepingCentre(syncPanel.getWidth(), Utils::LABEL_HEIGHT));
 
-  mVizRect = r.reduced(2, 2);
+  r.removeFromRight(Utils::PADDING);
+  r.removeFromBottom(Utils::PADDING);
+  
+  mVizRect = r.toFloat();
 }

@@ -57,7 +57,7 @@ FilterControl::FilterControl(Parameters& parameters)
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
 
-  startTimer(100);
+  startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 FilterControl::~FilterControl() {

@@ -11,8 +11,12 @@ typedef struct {
   const int   size;
 } PresetEntry;
 
-static const std::array<const PresetEntry, 2> PRESETS = {{{"chromatic saw", BinaryData::init_gbow, BinaryData::init_gbowSize},
-                                                          {"billie", BinaryData::billie_gbow, BinaryData::billie_gbowSize}}};
+static const std::array<const PresetEntry, 2> PRESETS = {
+  {
+    {"chromatic saw", BinaryData::init_gbow, BinaryData::init_gbowSize},
+    {"billie", BinaryData::billie_gbow, BinaryData::billie_gbowSize}
+  }
+};
 
 static inline void getBlockForPreset(const PresetEntry& preset, juce::MemoryBlock& block) {
   juce::MemoryInputStream(preset.data, preset.size, false).readIntoMemoryBlock(block);

@@ -16,6 +16,7 @@
 #include "Utils/Utils.h"
 #include "Utils/Colour.h"
 #include "Utils/PitchClass.h"
+#include "Modulators.h"
 
 // Dynamically casts to AudioParameterFloat*
 #define P_FLOAT(X) dynamic_cast<juce::AudioParameterFloat*>(X)
@@ -28,6 +29,12 @@
 
 namespace ParamIDs {
 // Global params
+static juce::String lfo1Shape{"lfo1_shape"};
+static juce::String lfo1Rate{"lfo1_rate"};
+static juce::String lfo1Depth{"lfo1_depth"};
+static juce::String lfo1Phase{"lfo1_phase"};
+static juce::String lfo1Sync{"lfo1_sync"};
+static juce::String lfo1Bipolar{"lfo1_biploar"};
 static juce::String macro1{"macro1"};
 static juce::String macro2{"macro2"};
 static juce::String macro3{"macro3"};
@@ -98,6 +105,9 @@ static juce::String genPanSpray{"_pan_spray_gen_"};
 } // namespace ParamIDs
 
 namespace ParamRanges {
+static juce::NormalisableRange<float> LFO_RATE(0.01f, 10.0f);
+static juce::NormalisableRange<float> LFO_DEPTH(0.0f, 1.0f);
+static juce::NormalisableRange<float> LFO_PHASE(0.0f, 2.0f * M_PI);
 static juce::NormalisableRange<float> MACRO(0.0f, 1.0f);
 static juce::NormalisableRange<float> GAIN(0.0f, 1.0f);
 static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
@@ -121,6 +131,12 @@ static int SYNC_DIV_MAX = 7;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
 
 namespace ParamDefaults {
+static int   LFO_SHAPE_DEFAULT = 0;
+static float LFO_RATE_DEFAULT = 1.0f;
+static float LFO_DEPTH_DEFAULT = 0.7f;
+static float LFO_PHASE_DEFAULT = 0.0f;
+static int   LFO_SYNC_DEFAULT = 0;
+static int   LFO_BIPOLAR_DEFAULT = 1;
 static float MACRO_DEFAULT = 0.5f;
 static float GAIN_DEFAULT = 0.8f;
 static float ATTACK_DEFAULT_SEC = 0.2f;
@@ -149,6 +165,7 @@ enum ParamType { GLOBAL, NOTE, GENERATOR };
 static juce::Array<juce::String> PARAM_TYPE_NAMES{"global", "note", "generator"};
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
 static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "lowpass", "highpass", "bandpass"};
+static juce::Array<juce::String> LFO_SHAPE_NAMES{"sine", "tri", "square", "saw"};
 
 static constexpr int MAX_CANDIDATES = 6;
 static constexpr int NUM_GENERATORS = 4;
@@ -575,6 +592,8 @@ struct ParamGlobal : ParamCommon {
     ParamHelper::setParam(P_FLOAT(macro3), ParamDefaults::MACRO_DEFAULT);
     ParamHelper::setParam(P_FLOAT(macro4), ParamDefaults::MACRO_DEFAULT);
   }
+  
+  LFOModSource lfo1;
   
   // Truly global parameters
   juce::AudioParameterFloat* macro1, *macro2, *macro3, *macro4;

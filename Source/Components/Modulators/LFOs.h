@@ -30,16 +30,31 @@ class LFOs : public juce::Component, juce::AudioProcessorParameter::Listener, ju
 
   void timerCallback() override;
 
-  void updateSelectedParams();
-
  private:
+  static constexpr double WINDOW_SECONDS = 3.0; // Width in seconds of the display window
+  static constexpr int NUM_LFO_SAMPLES = 250; // Width in seconds of the display window
+  
+  void updateLfoPath();
+  
   // Bookkeeping
   Parameters& mParameters;
-  ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
-  juce::Colour mParamColour;
-
+  juce::Path mLfoPath;
+  
   // Components
+  juce::ComboBox mChoiceShape;
+  QuantizedGlobalSlider mSliderRate;
+  GlobalSlider mSliderDepth;
+  GlobalSlider mSliderPhase;
+  juce::Label mLabelShape;
+  juce::Label mLabelRate;
+  juce::Label mLabelDepth;
+  juce::Label mLabelPhase;
+  juce::TextButton mBtnSync;
+  juce::TextButton mBtnBipolar;
+
+  // UI values saved on resize
+  juce::Rectangle<float> mVizRect;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LFOs)
 };
