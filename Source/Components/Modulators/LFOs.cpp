@@ -147,7 +147,7 @@ void LFOs::resized() {
   
   auto knobPanel = r.removeFromBottom(Utils::KNOB_HEIGHT);
   const int knobWidth = knobPanel.getWidth() / 4;
-  mChoiceShape.setBounds(knobPanel.removeFromLeft(knobWidth)); // TODO: shape combobox
+  mChoiceShape.setBounds(knobPanel.removeFromLeft(knobWidth).withTrimmedBottom(Utils::PADDING));
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   mSliderDepth.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   mSliderPhase.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
