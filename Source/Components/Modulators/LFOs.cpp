@@ -116,6 +116,7 @@ void LFOs::timerCallback() {
     mSliderPhase.setValue(mParameters.global.lfo1.phase->get(), juce::dontSendNotification);
     updateLfoPath();
   }
+  repaint();
 }
 
 void LFOs::paint(juce::Graphics& g) {
@@ -127,12 +128,15 @@ void LFOs::paint(juce::Graphics& g) {
   
   // Draw bipolar/unipolar line
   g.setColour(Utils::GLOBAL_COLOUR.withAlpha(0.5f));
-  int y = mBtnBipolar.getToggleState() ? mVizRect.getCentreY() : mVizRect.getBottom();
-  g.drawHorizontalLine(y, mVizRect.getX(), mVizRect.getRight());
+  const int poleY = mBtnBipolar.getToggleState() ? mVizRect.getCentreY() : mVizRect.getBottom();
+  g.drawHorizontalLine(poleY, mVizRect.getX(), mVizRect.getRight());
   
   // Draw LFO path
   g.setColour(Utils::GLOBAL_COLOUR);
   g.strokePath(mLfoPath, juce::PathStrokeType(2, juce::PathStrokeType::JointStyle::curved));
+  
+  const int lfoY = mVizRect.getCentreY() - (mParameters.global.lfo1.getOutput() * mVizRect.getHeight() / 2.0f);
+  g.fillEllipse(juce::Rectangle<float>(3, 3).withPosition(mVizRect.getRight() + 1, lfoY));
 }
 
 void LFOs::resized() {

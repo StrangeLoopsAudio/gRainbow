@@ -146,6 +146,7 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
   }
   mMeterSource.resize(getTotalNumOutputChannels(), sampleRate * 0.1 / samplesPerBlock);
   mReferenceTone.prepareToPlay(samplesPerBlock, sampleRate);
+  mParameters.prepareModSources(samplesPerBlock, sampleRate);
 }
 
 void GranularSynth::releaseResources() {
@@ -179,6 +180,8 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   auto totalNumInputChannels = getTotalNumInputChannels();
   auto totalNumOutputChannels = getTotalNumOutputChannels();
   const int bufferNumSample = buffer.getNumSamples();
+  
+  mParameters.processModSources();
 
   mKeyboardState.processNextMidiBuffer(midiMessages, 0, bufferNumSample, true);
 

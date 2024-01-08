@@ -23,7 +23,7 @@ enum ModSourceType {
 // Base class for modulator sources.. processBlock() should be called once per block and the output can be grabbed with getOutput()
 class ModSource {
 public:
-  ModSource(): mOutput(0.0f), mBlockSize(512), mSampleRate(48000) {}
+  ModSource(): mSampleRate(48000), mBlockSize(512), mOutput(0.0f) {}
   
   void prepare(int blockSize, double sampleRate) { mBlockSize = blockSize; mSampleRate = sampleRate; }
   virtual void processBlock() {}
@@ -35,8 +35,16 @@ protected:
   float mOutput;
 };
 
+/* A single modulation
+ - destination parameter is encoded in hashmap key using parameter id
+ */
+typedef struct Modulation {
+  ModSource& source;
+  float depth;
+} Modulation;
+
 // Simple LFO modulator source
-class LFOModSource : ModSource {
+class LFOModSource : public ModSource {
 public:
   typedef struct Shape {
     juce::String name;
@@ -73,5 +81,5 @@ public:
   juce::AudioParameterBool* bipolar;
   
 private:
-  double mCurPhase = 0.0;
+  double mCurPhase = 0.0; // Phase in radians
 };

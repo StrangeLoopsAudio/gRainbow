@@ -24,13 +24,13 @@ const std::array<const LFOModSource::Shape, LFOModSource::NUM_LFO_SHAPES> LFOMod
 
 void LFOModSource::processBlock() {
   // Calculate sine wave value for the LFO
-  mOutput = LFO_SHAPES[shape->getIndex()].calc(2.0f * M_PI * rate->get() * mCurPhase / mSampleRate);
-  if (!bipolar->get()) mOutput = (mOutput + 1.0f) / 2.0f; // Make uniploar if needed
+  mOutput = LFO_SHAPES[shape->getIndex()].calc(mCurPhase);
+  if (!bipolar->get()) mOutput = (mOutput + 1.0f) / 2.0f; // Make unipolar if needed
   mOutput *= depth->get(); // Scale by depth
   
   // Update phase for the next block
-  mCurPhase += static_cast<double>(mBlockSize);
+  mCurPhase += juce::MathConstants<double>::twoPi * (static_cast<double>(mBlockSize) / mSampleRate) * rate->get();
   
-  // Wrap phase to keep it in the range [0, mSampleRate)
-  if (mCurPhase >= mSampleRate) mCurPhase -= mSampleRate;
+  // Wrap phase to keep it in the range [0, 2PI)
+  if (mCurPhase >= juce::MathConstants<double>::twoPi) mCurPhase -= juce::MathConstants<double>::twoPi;
 }

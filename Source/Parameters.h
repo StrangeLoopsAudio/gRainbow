@@ -698,6 +698,15 @@ struct Parameters {
   ParamUI ui;
   ParamGlobal global;
   ParamsNote note;
+  
+  juce::HashMap<int, Modulation> modulations;
+  
+  void prepareModSources(int blockSize, double sampleRate) {
+    global.lfo1.prepare(blockSize, sampleRate);
+  }
+  void processModSources() {
+    global.lfo1.processBlock();
+  }
 
   // Called when current selected note or generator changes
   // Should be used only by PluginEditor and passed on to subcomponents
