@@ -47,3 +47,13 @@ juce::Range<float> LFOModSource::getRange() {
     return juce::Range<float>(0.0f, 1.0f);
   }
 }
+
+void EnvModSource::processBlock() {
+  // Calculate sine wave value for the LFO
+  mOutput = mEnv.getAmplitude(mCurTs, attack->get() * mSampleRate, decay->get() * mSampleRate, sustain->get(), release->get() * mSampleRate);
+  mCurTs += mBlockSize;
+}
+
+juce::Range<float> EnvModSource::getRange() {
+  return juce::Range<float>(0.0f, 1.0f);
+}

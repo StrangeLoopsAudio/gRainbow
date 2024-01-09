@@ -16,6 +16,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_core/juce_core.h>
+#include "Utils/Envelope.h"
 
 enum ModSourceType {
   LFO_1,
@@ -56,7 +57,7 @@ typedef struct Modulation {
   float depth;
 } Modulation;
 
-// Simple LFO modulator source
+// LFO modulation source
 class LFOModSource : public ModSource {
 public:
   typedef struct Shape {
@@ -102,4 +103,33 @@ private:
   
   float mBarsPerSec = 1.0f; // Rate of blocks/bar when synced to host bpm
   double mCurPhase = 0.0; // Phase in radians
+};
+
+// Envelope modulation source
+class EnvModSource : public ModSource {
+public:
+  
+  EnvModSource() { colour = juce::Colour(0xff58504a); }
+  
+  void processBlock() override;
+  juce::Range<float> getRange() override;
+  
+  void handleNoteOn(int ts) {
+    mEnv.noteOn(ts);
+    mCurTs = ts;
+  }
+  void handleNoteOff(int ts) {
+    mEnv.noteOff(ts);
+    mCurTs = ts;
+  }
+  
+  // Must be initialized externally (in this app done in Parameters.cpp)
+  juce::AudioParameterFloat* attack;
+  juce::AudioParameterFloat* decay;
+  juce::AudioParameterFloat* sustain;
+  juce::AudioParameterFloat* release;
+  
+private:
+  Utils::EnvelopeADSR mEnv;
+  int mCurTs = 0;
 };

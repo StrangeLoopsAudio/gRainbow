@@ -22,6 +22,15 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
   p.addParameter(lfo1.sync = new juce::AudioParameterBool({ParamIDs::lfo1Sync, 1}, ParamIDs::lfo1Sync, ParamDefaults::LFO_SYNC_DEFAULT));
   p.addParameter(lfo1.bipolar = new juce::AudioParameterBool({ParamIDs::lfo1Bipolar, 1}, ParamIDs::lfo1Bipolar, ParamDefaults::LFO_BIPOLAR_DEFAULT));
   p.addParameter(lfo1.retrigger = new juce::AudioParameterBool({ParamIDs::lfo1Retrigger, 1}, ParamIDs::lfo1Retrigger, ParamDefaults::LFO_RETRIGGER_DEFAULT));
+  // Mod envelopes
+  p.addParameter(env1.attack = new juce::AudioParameterFloat({ParamIDs::env1Attack, 1}, "Env 1 Attack", ParamRanges::ATTACK,
+                                                                ParamDefaults::ATTACK_DEFAULT_SEC));
+  p.addParameter(env1.decay = new juce::AudioParameterFloat({ParamIDs::env1Decay, 1}, "Env 1 Decay", ParamRanges::DECAY,
+                                                               ParamDefaults::DECAY_DEFAULT_SEC));
+  p.addParameter(env1.sustain = new juce::AudioParameterFloat({ParamIDs::env1Sustain, 1}, "Env 1 Sustain", ParamRanges::SUSTAIN,
+                                                                 ParamDefaults::SUSTAIN_DEFAULT));
+  p.addParameter(env1.release = new juce::AudioParameterFloat({ParamIDs::env1Release, 1}, "Env 1 Release", ParamRanges::RELEASE,
+                                                                 ParamDefaults::RELEASE_DEFAULT_SEC));
   // Macros
   p.addParameter(macro1 = new juce::AudioParameterFloat({ParamIDs::macro1, 1}, "Macro 1", ParamRanges::MACRO,
                                                            ParamDefaults::MACRO_DEFAULT));

@@ -67,7 +67,7 @@ GranularSynth::GranularSynth()
   loadPreset(Utils::PRESETS[0].name, block);
         
   // TODO: remove this test
-        mParameters.modulations.set(mParameters.global.common[ParamCommon::Type::GAIN]->getParameterIndex(), Modulation(&mParameters.global.lfo1, 1.0f));
+        mParameters.modulations.set(mParameters.global.common[ParamCommon::Type::PITCH_ADJUST]->getParameterIndex(), Modulation(&mParameters.global.env1, 1.0f));
 }
 
 GranularSynth::~GranularSynth() {}
@@ -720,10 +720,19 @@ std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
 
 void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumber, float velocity) {
   mLastPitchClass = Utils::getPitchClass(midiNoteNumber);
-  mMidiNotes.add(Utils::MidiNote(mLastPitchClass, velocity));
-  mActiveNotes.add(new GrainNote(mLastPitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
+  auto foundNote = std::find_if(mActiveNotes.begin(), mActiveNotes.end(), [this](const GrainNote* gNote) { return gNote->pitchClass == mLastPitchClass; });
+  if (foundNote == mActiveNotes.end()) {
+    // New note, start 'er up
+    mMidiNotes.add(Utils::MidiNote(mLastPitchClass, velocity));
+    mActiveNotes.add(new GrainNote(mLastPitchClass, velocity, mTotalSamps));
+  } else {
+    // Already playing note, just reset the envelope
+    (*foundNote)->noteOn(mTotalSamps);
+  }
+    
   // Retrigger modulators
   mParameters.global.lfo1.checkRetrigger();
+  mParameters.global.env1.handleNoteOn(mTotalSamps);
 }
 
 void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNumber, float) {
@@ -748,10 +757,12 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNum
         if (release >= maxRelease) maxRelease = release;
       }
       gNote->removeTs = mTotalSamps + static_cast<int>(maxRelease * mSampleRate);
-
       break;
     }
   }
+  // Update mod envelopes
+  mParameters.global.env1.handleNoteOff(mTotalSamps);
+
 }
 
 void GranularSynth::resetParameters(bool fullClear) {

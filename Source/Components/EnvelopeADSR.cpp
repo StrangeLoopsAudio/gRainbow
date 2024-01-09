@@ -115,11 +115,10 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   g.setColour(Utils::BG_COLOUR);
   g.fillRect(mVizRect);
 
-  // TODO: include other non-global values as well
-  float attack = ParamRanges::ATTACK.convertTo0to1(mSliderAttack.getValue());
-  float decay = ParamRanges::DECAY.convertTo0to1(mSliderDecay.getValue());
-  float sustain = ParamRanges::SUSTAIN.convertTo0to1(mSliderSustain.getValue());
-  float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
+  const float attack = ParamRanges::ATTACK.convertTo0to1(mSliderAttack.getValue());
+  const float decay = ParamRanges::DECAY.convertTo0to1(mSliderDecay.getValue());
+  const float sustain = ParamRanges::SUSTAIN.convertTo0to1(mSliderSustain.getValue());
+  const float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
 
   // Draw ADSR path
   g.setFillType(juce::ColourGradient(colour.withAlpha(0.35f), mVizRect.getTopLeft(), colour.withAlpha(0.05f), mVizRect.getBottomLeft(), false));

@@ -35,6 +35,10 @@ static juce::String lfo1Phase{"lfo1_phase"};
 static juce::String lfo1Sync{"lfo1_sync"};
 static juce::String lfo1Bipolar{"lfo1_biploar"};
 static juce::String lfo1Retrigger{"lfo1_retrigger"};
+static juce::String env1Attack{"env1_attack"};
+static juce::String env1Decay{"env1_decay"};
+static juce::String env1Sustain{"env1_sustain"};
+static juce::String env1Release{"env1_release"};
 static juce::String macro1{"macro1"};
 static juce::String macro2{"macro2"};
 static juce::String macro3{"macro3"};
@@ -593,6 +597,7 @@ struct ParamGlobal : ParamCommon {
   }
   
   LFOModSource lfo1;
+  EnvModSource env1;
   
   // Truly global parameters
   juce::AudioParameterFloat* macro1, *macro2, *macro3, *macro4;
@@ -705,6 +710,7 @@ struct Parameters {
   }
   void processModSources() {
     global.lfo1.processBlock();
+    global.env1.processBlock();
   }
   void applyModulations(juce::RangedAudioParameter* param, float& value0To1) {
     const int idx = param->getParameterIndex();

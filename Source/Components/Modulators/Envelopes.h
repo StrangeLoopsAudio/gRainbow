@@ -30,16 +30,23 @@ class Envelopes : public juce::Component, juce::AudioProcessorParameter::Listene
 
   void timerCallback() override;
 
-  void updateSelectedParams();
-
  private:
   // Bookkeeping
   Parameters& mParameters;
-  ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
-  juce::Colour mParamColour;
 
   // Components
+  ParamSlider mSliderAttack;
+  ParamSlider mSliderDecay;
+  ParamSlider mSliderSustain;
+  ParamSlider mSliderRelease;
+  juce::Label mLabelAttack;
+  juce::Label mLabelDecay;
+  juce::Label mLabelSustain;
+  juce::Label mLabelRelease;
+
+  // UI values saved on resize
+  juce::Rectangle<float> mVizRect;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Envelopes)
 };

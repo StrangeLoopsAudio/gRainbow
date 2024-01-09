@@ -140,14 +140,18 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
     std::array<Utils::EnvelopeADSR, NUM_GENERATORS> genAmpEnvs;
     std::array<juce::Array<Grain*>, NUM_GENERATORS> genGrains;  // Active grains for note per generator
     std::array<float, NUM_GENERATORS> grainTriggers;           // Keeps track of triggering grains from each generator
-    GrainNote(Utils::PitchClass pitchClass_, float velocity_, Utils::EnvelopeADSR ampEnv)
+    GrainNote(Utils::PitchClass pitchClass_, float velocity_, int ts)
         : pitchClass(pitchClass_), velocity(velocity_) {
       // Initialize grain triggering timestamps
       grainTriggers.fill(-1.0f);  // Trigger first set of grains right away
+      noteOn(ts);
+    }
+    
+    void noteOn(int ts) {
       for (size_t i = 0; i < NUM_GENERATORS; ++i) {
-        genGrains[i].ensureStorageAllocated(MAX_GRAINS);
-        genAmpEnvs[i].noteOn(ampEnv.noteOnTs);  // Set note on for each position as well
+        genAmpEnvs[i].noteOn(ts);  // Set note on for each position as well
       }
+      removeTs = -1;
     }
   } GrainNote;
 

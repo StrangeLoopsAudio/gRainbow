@@ -78,6 +78,7 @@ configure_file(
 
 set(SOURCE_UTILS
     Source/Utils/Utils.h
+    Source/Utils/Envelope.h
     Source/Utils/BPF.h
     Source/Utils/Timer.h
     Source/Utils/Colour.h
