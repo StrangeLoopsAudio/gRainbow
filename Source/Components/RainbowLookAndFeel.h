@@ -39,6 +39,7 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
                         juce::Slider& slider) override;
   
   // Buttons
+  juce::Font getTextButtonFont(juce::TextButton& btn, int buttonHeight) override;
   void drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
   void drawButtonBackground(juce::Graphics& g, juce::Button& btn, const juce::Colour&, bool shouldDrawButtonAsHighlighted,
                             bool) override;

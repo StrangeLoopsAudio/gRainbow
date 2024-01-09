@@ -21,6 +21,7 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                            ParamDefaults::LFO_PHASE_DEFAULT));
   p.addParameter(lfo1.sync = new juce::AudioParameterBool({ParamIDs::lfo1Sync, 1}, ParamIDs::lfo1Sync, ParamDefaults::LFO_SYNC_DEFAULT));
   p.addParameter(lfo1.bipolar = new juce::AudioParameterBool({ParamIDs::lfo1Bipolar, 1}, ParamIDs::lfo1Bipolar, ParamDefaults::LFO_BIPOLAR_DEFAULT));
+  p.addParameter(lfo1.retrigger = new juce::AudioParameterBool({ParamIDs::lfo1Retrigger, 1}, ParamIDs::lfo1Retrigger, ParamDefaults::LFO_RETRIGGER_DEFAULT));
   // Macros
   p.addParameter(macro1 = new juce::AudioParameterFloat({ParamIDs::macro1, 1}, "Macro 1", ParamRanges::MACRO,
                                                            ParamDefaults::MACRO_DEFAULT));

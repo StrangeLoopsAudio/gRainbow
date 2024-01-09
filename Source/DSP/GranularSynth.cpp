@@ -722,6 +722,8 @@ void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumb
   mLastPitchClass = Utils::getPitchClass(midiNoteNumber);
   mMidiNotes.add(Utils::MidiNote(mLastPitchClass, velocity));
   mActiveNotes.add(new GrainNote(mLastPitchClass, velocity, Utils::EnvelopeADSR(mTotalSamps)));
+  // Retrigger modulators
+  mParameters.global.lfo1.checkRetrigger();
 }
 
 void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNumber, float) {

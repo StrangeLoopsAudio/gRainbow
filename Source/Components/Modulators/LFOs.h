@@ -52,6 +52,8 @@ class LFOs : public juce::Component, juce::AudioProcessorParameter::Listener, ju
   juce::Label mLabelPhase;
   juce::TextButton mBtnSync;
   juce::TextButton mBtnBipolar;
+  juce::TextButton mBtnRetrigger;
+  juce::TextButton mBtnMap;
 
   // UI values saved on resize
   juce::Rectangle<float> mVizRect;

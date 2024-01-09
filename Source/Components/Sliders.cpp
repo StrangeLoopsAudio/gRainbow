@@ -46,6 +46,8 @@ CommonSlider::CommonSlider(Parameters& _parameters, ParamCommon::Type type)
     } else if (parameters.selectedParams->type == ParamType::NOTE) {
       mNoteValue = param->getNormalisableRange().convertTo0to1(P_FLOAT(param)->get());
     }
+    // Update active parameter pointer
+    parameter = parameters.getUsedParam(parameters.selectedParams, mType);
   };
 }
 

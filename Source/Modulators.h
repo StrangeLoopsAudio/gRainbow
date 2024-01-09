@@ -7,6 +7,8 @@
  
  Influenced by but not copied from Surge XT's modulation code
  
+ Made abstract enough to be reasonably portable to other applications
+ 
  ==============================================================================
  */
 
@@ -72,12 +74,15 @@ public:
   
   // Sets the sync rate of in blocks/bar using 1/(bars/sec * samp/block * sec/samp)
   void setSyncRate(float barsPerSec) { mBarsPerSec = barsPerSec; }
+  void checkRetrigger() { if (retrigger && retrigger->get()) mCurPhase = phase->get(); }
   
+  // Must be initialized externally (in this app done in Parameters.cpp)
   juce::AudioParameterChoice* shape;
   juce::AudioParameterFloat* rate;
   juce::AudioParameterFloat* phase;
   juce::AudioParameterBool* sync;
   juce::AudioParameterBool* bipolar;
+  juce::AudioParameterBool* retrigger;
   
 private:
   // LFO shape calculation functions (all bipolar -1.0 to 1.0)
@@ -85,7 +90,7 @@ private:
     return std::sin(x);
   }
   static float calcTri(float x) {
-    return (2.0f / M_PI) * std::fabs(std::fmodf(x, juce::MathConstants<float>::twoPi) - M_PI) - 1;
+    return (2.0f / M_PI) * std::fabs(std::fmodf(x - M_PI_2 + juce::MathConstants<float>::twoPi, juce::MathConstants<float>::twoPi) - M_PI) - 1;
   }
   static float calcSquare(float x) {
     return std::fmodf(x, juce::MathConstants<float>::twoPi) < M_PI ? 1.0f : -1.0f;

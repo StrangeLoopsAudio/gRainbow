@@ -68,7 +68,7 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   addAndMakeVisible(mLabelDuration);
 
   // Sync
-  mBtnSync.setButtonText("free");
+  mBtnSync.setButtonText("hz");
   mBtnSync.setToggleable(true);
   mBtnSync.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
   mBtnSync.setColour(juce::TextButton::textColourOnId, juce::Colours::black);
@@ -101,7 +101,7 @@ void EnvelopeGrain::timerCallback() {
                              juce::dontSendNotification);
     mBtnSync.setToggleState(mParameters.getBoolParam(mCurSelectedParams, ParamCommon::Type::GRAIN_SYNC),
                             juce::dontSendNotification);
-    mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "free");
+    mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "hz");
     mSliderRate.setSync(mBtnSync.getToggleState());
     mSliderRate.setRange(mSliderRate.getRange(), mBtnSync.getToggleState() ? mSliderRate.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX) : 0.01);
     mSliderDuration.setSync(mBtnSync.getToggleState());

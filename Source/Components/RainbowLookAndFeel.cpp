@@ -46,6 +46,7 @@ void RainbowLookAndFeel::drawTabButtonText(juce::TabBarButton& btn, juce::Graphi
 void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int, float sliderPosProportional, float, float,
                                           juce::Slider& slider) {
   juce::Colour rainbowCol = slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
+  if (!slider.isEnabled()) rainbowCol = rainbowCol.withLightness(0.5f);
 
   auto r = slider.getLocalBounds().reduced(2, 2);
 
@@ -95,6 +96,12 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
   path.addArc(r.getX() + ((r.getWidth() - size) / 2), r.getY() + ((r.getHeight() - size) / 2), size, size, startRadians, posRadians, true);
   path.lineTo(center);
   g.strokePath(path.createPathWithRoundedCorners(3), juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
+}
+
+// Buttons
+
+juce::Font RainbowLookAndFeel::getTextButtonFont(juce::TextButton& btn, int buttonHeight) {
+  return juce::Font(12);
 }
 
 void RainbowLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& btn, bool shouldDrawButtonAsHighlighted, bool) {
