@@ -14,9 +14,10 @@
 #include "Modulators.h"
 
 LFOs::LFOs(Parameters& parameters): mParameters(parameters),
-  mSliderRate(parameters.global.lfo1.rate, ParamRanges::LFO_RATE, false),
-  mSliderDepth(parameters.global.lfo1.depth),
-  mSliderPhase(parameters.global.lfo1.phase) {
+  mSliderRate(mParameters, mParameters.global.lfo1.rate, ParamRanges::LFO_RATE, false),
+  mSliderPhase(mParameters, mParameters.global.lfo1.phase) {
+    
+  mBufDepth.resize(NUM_LFO_SAMPLES, 0.0f);
     
   int shapeId = 1;
   for (const LFOModSource::Shape &shape : LFOModSource::LFO_SHAPES) {
@@ -30,7 +31,7 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   addAndMakeVisible(mChoiceShape);
     
   // Default slider settings
-  std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderRate, mSliderDepth, mSliderPhase };
+  std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderRate, mSliderPhase };
   for (auto& slider : sliders) {
     slider.get().setNumDecimalPlacesToDisplay(2);
     slider.get().setPopupDisplayEnabled(true, true, this);
@@ -39,8 +40,9 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   mSliderRate.setSync(false);
   mSliderRate.setRange(ParamRanges::LFO_RATE.start, ParamRanges::LFO_RATE.end, 0.01);
   mSliderRate.setSuffix("hz");
-  mSliderDepth.setRange(ParamRanges::LFO_DEPTH.start, ParamRanges::LFO_DEPTH.end, 0.01);
+  mSliderRate.setDoubleClickReturnValue(true, ParamDefaults::LFO_RATE_DEFAULT);
   mSliderPhase.setRange(ParamRanges::LFO_PHASE.start, ParamRanges::LFO_PHASE.end, 0.01);
+  mSliderPhase.setDoubleClickReturnValue(true, ParamDefaults::LFO_PHASE_DEFAULT);
   
   // Default button settings
   std::vector<std::reference_wrapper<juce::TextButton>> buttons = { mBtnSync, mBtnBipolar };
@@ -59,10 +61,12 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   mBtnBipolar.setButtonText("bi");
   mBtnBipolar.onClick = [this]() {
     ParamHelper::setParam(mParameters.global.lfo1.bipolar, !mBtnBipolar.getToggleState());
+    mBufDepth.clear();
+    mBufDepth.resize(NUM_LFO_SAMPLES, 0.0f); // Reset sample buffer so that they don't spill into the UI
   };
 
   // Default label settings
-  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelShape, mLabelRate, mLabelDepth, mLabelPhase };
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelShape, mLabelRate, mLabelPhase };
   for (auto& label : labels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
     label.get().setJustificationType(juce::Justification::centredTop);
@@ -71,7 +75,6 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   }
   mLabelShape.setText("shape", juce::dontSendNotification);
   mLabelRate.setText("rate", juce::dontSendNotification);
-  mLabelDepth.setText("depth", juce::dontSendNotification);
   mLabelPhase.setText("phase", juce::dontSendNotification);
   
   
@@ -79,7 +82,6 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   mParameters.global.lfo1.shape->addListener(this);
   mParameters.global.lfo1.rate->addListener(this);
   mParameters.global.lfo1.phase->addListener(this);
-  mParameters.global.lfo1.depth->addListener(this);
   mParameters.global.lfo1.sync->addListener(this);
   mParameters.global.lfo1.bipolar->addListener(this);
     
@@ -93,7 +95,6 @@ LFOs::~LFOs() {
   mParameters.global.lfo1.shape->removeListener(this);
   mParameters.global.lfo1.rate->removeListener(this);
   mParameters.global.lfo1.phase->removeListener(this);
-  mParameters.global.lfo1.depth->removeListener(this);
   mParameters.global.lfo1.sync->removeListener(this);
   mParameters.global.lfo1.bipolar->removeListener(this);
   stopTimer();
@@ -112,11 +113,10 @@ void LFOs::timerCallback() {
     mSliderRate.setValue(mParameters.global.lfo1.rate->get(), juce::dontSendNotification);
     mSliderRate.setSync(mBtnSync.getToggleState());
     mSliderRate.setRange(mSliderRate.getRange(), mBtnSync.getToggleState() ? mSliderRate.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX) : 0.01);
-    mSliderDepth.setValue(mParameters.global.lfo1.depth->get(), juce::dontSendNotification);
     mSliderPhase.setValue(mParameters.global.lfo1.phase->get(), juce::dontSendNotification);
-    updateLfoPath();
   }
-  repaint();
+  // Repaint LFO
+  updateLfoPath();
 }
 
 void LFOs::paint(juce::Graphics& g) {
@@ -134,9 +134,6 @@ void LFOs::paint(juce::Graphics& g) {
   // Draw LFO path
   g.setColour(Utils::GLOBAL_COLOUR);
   g.strokePath(mLfoPath, juce::PathStrokeType(2, juce::PathStrokeType::JointStyle::curved));
-  
-  const int lfoY = mVizRect.getCentreY() - (mParameters.global.lfo1.getOutput() * mVizRect.getHeight() / 2.0f);
-  g.fillEllipse(juce::Rectangle<float>(3, 3).withPosition(mVizRect.getRight() + 1, lfoY));
 }
 
 void LFOs::resized() {
@@ -146,14 +143,14 @@ void LFOs::resized() {
   const int labelWidth = labelPanel.getWidth() / 4;
   mLabelShape.setBounds(labelPanel.removeFromLeft(labelWidth));
   mLabelRate.setBounds(labelPanel.removeFromLeft(labelWidth));
-  mLabelDepth.setBounds(labelPanel.removeFromLeft(labelWidth));
   mLabelPhase.setBounds(labelPanel.removeFromLeft(labelWidth));
+  labelPanel.removeFromLeft(labelWidth);
+
   
   auto knobPanel = r.removeFromBottom(Utils::KNOB_HEIGHT);
   const int knobWidth = knobPanel.getWidth() / 4;
   mChoiceShape.setBounds(knobPanel.removeFromLeft(knobWidth).withTrimmedBottom(Utils::PADDING));
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-  mSliderDepth.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   mSliderPhase.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   
   auto btnPanel = r.removeFromRight(r.getWidth() * 0.25f);
@@ -171,28 +168,35 @@ void LFOs::resized() {
 }
 
 void LFOs::updateLfoPath() {
+  // Update LFO value buffer
+  mBufDepth[mBufDepthWrPos] = mParameters.global.lfo1.getOutput();
+  mBufDepthWrPos = (mBufDepthWrPos == NUM_LFO_SAMPLES - 1) ? 0 : mBufDepthWrPos + 1;
+  
   // Create LFO path
   mLfoPath.clear();
-  float periodSec = 1.0 / mSliderRate.getValue();
-  if (mBtnSync.getToggleState()) {
-    float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * ParamRanges::LFO_RATE.convertTo0to1(mSliderRate.getValue())));
-    // Find synced period using fixed 120 bpm and 4 beats per bar (different from actual synthesis, just for vis)
-    periodSec = (1.0f / 120) * 60.0f * (4 / div);
-  }
-  const float numPeriods = WINDOW_SECONDS / periodSec;
-  const int depthPx = mSliderDepth.getValue() * mVizRect.getHeight() / 2.0f;
+//  float periodSec = 1.0 / mSliderRate.getValue();
+//  if (mBtnSync.getToggleState()) {
+//    float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * ParamRanges::LFO_RATE.convertTo0to1(mSliderRate.getValue())));
+//    // Find synced period using fixed 120 bpm and 4 beats per bar (different from actual synthesis, just for vis)
+//    periodSec = (1.0f / 120) * 60.0f * (4 / div);
+//  }
+//  const float numPeriods = WINDOW_SECONDS / periodSec;
   // Draw lfo shape
-  float pxPerSamp = mVizRect.getWidth() / NUM_LFO_SAMPLES;
-  float radPerSamp = (2.0f * M_PI * numPeriods) / NUM_LFO_SAMPLES;
+  const float pxPerSamp = mVizRect.getWidth() / NUM_LFO_SAMPLES;
+  int maxDepthPx = mVizRect.getHeight();
+  float centerY = mVizRect.getCentreY();
+  if (!mBtnBipolar.getToggleState()) {
+    centerY = mVizRect.getBottom();
+  }
   float curX = mVizRect.getX();
-  float curRad = mSliderPhase.getValue();
-  const float centerY = mBtnBipolar.getToggleState() ? mVizRect.getCentreY() : mVizRect.getBottom() - depthPx;
-  const float startY = centerY - depthPx * LFOModSource::LFO_SHAPES[mChoiceShape.getSelectedId() - 1].calc(curRad);
-  mLfoPath.startNewSubPath(curX, startY);
+  int curIdx = mBufDepthWrPos;
+  mLfoPath.startNewSubPath(curX, centerY - (mBufDepth[curIdx] * mVizRect.getHeight() / 2.0f));
   for (int i = 0; i < NUM_LFO_SAMPLES; ++i) {
-    float y = centerY - depthPx * LFOModSource::LFO_SHAPES[mChoiceShape.getSelectedId() - 1].calc(curRad);
+    const int depthPx = mBufDepth[curIdx] * maxDepthPx;
+    const float y = centerY - depthPx;
     mLfoPath.lineTo(curX, y);
     curX += pxPerSamp;
-    curRad += radPerSamp;
+    curIdx = (curIdx == NUM_LFO_SAMPLES - 1) ? 0 : curIdx + 1;
   }
+  repaint();
 }

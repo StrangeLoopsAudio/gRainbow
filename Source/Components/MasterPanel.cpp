@@ -16,11 +16,11 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
     : mParameters(parameters),
       mCurSelectedParams(parameters.selectedParams),
       mParamColour(Utils::GLOBAL_COLOUR),
-      mSliderGain(parameters, ParamCommon::Type::GAIN),
-      mSliderMacro1(mParameters.global.macro1),
-      mSliderMacro2(mParameters.global.macro2),
-      mSliderMacro3(mParameters.global.macro3),
-      mSliderMacro4(mParameters.global.macro4) {
+      mSliderGain(mParameters, ParamCommon::Type::GAIN),
+      mSliderMacro1(mParameters, mParameters.global.macro1),
+      mSliderMacro2(mParameters, mParameters.global.macro2),
+      mSliderMacro3(mParameters, mParameters.global.macro3),
+      mSliderMacro4(mParameters, mParameters.global.macro4) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
 
   // Titles
@@ -47,10 +47,15 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
   }
 
   mSliderGain.setRange(ParamRanges::GAIN.start, ParamRanges::GAIN.end, 0.01);
+  mSliderGain.setDoubleClickReturnValue(true, ParamDefaults::GAIN_DEFAULT);
   mSliderMacro1.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
+  mSliderMacro1.setDoubleClickReturnValue(true, ParamDefaults::MACRO_DEFAULT);
   mSliderMacro2.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
+  mSliderMacro2.setDoubleClickReturnValue(true, ParamDefaults::MACRO_DEFAULT);
   mSliderMacro3.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
+  mSliderMacro3.setDoubleClickReturnValue(true, ParamDefaults::MACRO_DEFAULT);
   mSliderMacro4.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
+  mSliderMacro4.setDoubleClickReturnValue(true, ParamDefaults::MACRO_DEFAULT);
 
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelGain, mLabelRefTone, mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };

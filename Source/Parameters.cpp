@@ -17,8 +17,6 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                  new juce::AudioParameterChoice({ParamIDs::lfo1Shape, 1}, "LFO 1 Shape", LFO_SHAPE_NAMES, ParamDefaults::LFO_SHAPE_DEFAULT));
   p.addParameter(lfo1.rate = new juce::AudioParameterFloat({ParamIDs::lfo1Rate, 1}, "LFO 1 Rate", ParamRanges::LFO_RATE,
                                                            ParamDefaults::LFO_RATE_DEFAULT));
-  p.addParameter(lfo1.depth = new juce::AudioParameterFloat({ParamIDs::lfo1Depth, 1}, "LFO 1 Depth", ParamRanges::LFO_DEPTH,
-                                                           ParamDefaults::LFO_DEPTH_DEFAULT));
   p.addParameter(lfo1.phase = new juce::AudioParameterFloat({ParamIDs::lfo1Phase, 1}, "LFO 1 Phase", ParamRanges::LFO_PHASE,
                                                            ParamDefaults::LFO_PHASE_DEFAULT));
   p.addParameter(lfo1.sync = new juce::AudioParameterBool({ParamIDs::lfo1Sync, 1}, ParamIDs::lfo1Sync, ParamDefaults::LFO_SYNC_DEFAULT));

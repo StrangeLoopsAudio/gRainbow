@@ -52,13 +52,13 @@ class MasterPanel : public juce::Component, juce::AudioProcessorParameter::Liste
   juce::Label mLabelGain;
   juce::ToggleButton mBtnRefTone;
   juce::Label mLabelRefTone;
-  GlobalSlider mSliderMacro1;
+  ParamSlider mSliderMacro1;
   juce::Label mLabelMacro1;
-  GlobalSlider mSliderMacro2;
+  ParamSlider mSliderMacro2;
   juce::Label mLabelMacro2;
-  GlobalSlider mSliderMacro3;
+  ParamSlider mSliderMacro3;
   juce::Label mLabelMacro3;
-  GlobalSlider mSliderMacro4;
+  ParamSlider mSliderMacro4;
   juce::Label mLabelMacro4;
   foleys::LevelMeter mMeter{foleys::LevelMeter::Default};
 

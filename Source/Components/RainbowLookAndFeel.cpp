@@ -66,18 +66,26 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
       g.setColour(rainbowCol);
       g.drawRoundedRectangle(slider.getLocalBounds().reduced(1, 0).toFloat(), 5, 1);
     }
-//    // Draw global tick
-//    if (commonSlider->getGlobalValue() != sliderPosProportional) {
-//      const float globRadians = startRadians + commonSlider->getGlobalValue() * (endRadians - startRadians);
-//      g.setColour(Utils::GLOBAL_COLOUR);
-//      g.drawLine(juce::Line<float>(center, center.getPointOnCircumference(size / 2.0f - 3, globRadians)), 2);
-//    }
-//    if (commonSlider->getParamLevel() == ParamType::GENERATOR && commonSlider->getNoteValue() != sliderPosProportional) {
-//      // Draw note tick
-//      const float globRadians = startRadians + commonSlider->getNoteValue() * (endRadians - startRadians);
-//      g.setColour(rainbowCol);
-//      g.drawLine(juce::Line<float>(center, center.getPointOnCircumference(size / 4.0f, globRadians)), 2);
-//    }
+  }
+  ParamSlider* paramSlider = dynamic_cast<ParamSlider*>(&slider);
+  if (paramSlider && paramSlider->getParameter()) {
+    // Check for modulations on this param and visualize them
+    const int idx = paramSlider->getParameter()->getParameterIndex();
+    if (paramSlider->parameters.modulations.contains(idx)) {
+      Modulation& mod = paramSlider->parameters.modulations.getReference(idx);
+      // Draw inner arc representing modulation range
+      juce::Range<float> modRange = mod.source->getRange();
+      float lowerVal = juce::jmax(0.0f, sliderPosProportional + (mod.depth * modRange.getStart()));
+      float upperVal = juce::jmin(1.0f, sliderPosProportional + (mod.depth * modRange.getEnd()));
+      const float lowerPosRadians = startRadians + lowerVal * (endRadians - startRadians);
+      const float upperPosRadians = startRadians + upperVal * (endRadians - startRadians);
+      g.setColour(mod.source->colour);
+      juce::Path modArc;
+      auto modRect = r.reduced(Utils::PADDING);
+      const int modRectSize = juce::jmin(modRect.getWidth(), modRect.getHeight());
+      modArc.addArc(modRect.getX() + ((modRect.getWidth() - modRectSize) / 2), modRect.getY() + ((modRect.getHeight() - modRectSize) / 2), modRectSize, modRectSize, lowerPosRadians, upperPosRadians, true);
+      g.strokePath(modArc, juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
+    }
   }
 
   juce::Path path;

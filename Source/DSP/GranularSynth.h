@@ -22,22 +22,6 @@
 
 class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::Listener {
  public:
-  enum ParameterType {
-    ENABLED,  // If position is enabled and playing grains
-    SOLO,     // If position is solo'd
-    PITCH_ADJUST,
-    POSITION_ADJUST,
-    SHAPE,     // Grain env ramp width
-    TILT,      // Grain env center tilt
-    RATE,      // Grain rate
-    DURATION,  // Grain duration
-    GAIN,      // Max amplitude
-    ATTACK,    // Position env attack
-    DECAY,     // Position env decay
-    SUSTAIN,   // Position env sustain
-    RELEASE    // Position env release
-  };
-  
   class GrainPool {
   public:
     GrainPool() {}
@@ -179,8 +163,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   juce::MidiKeyboardState mKeyboardState;
   juce::AudioFormatManager mFormatManager;
   bool mNeedsResample = false;
-  double mBpm = DEFAULT_BPM;
-  int mBeatsPerBar = DEFAULT_BEATS_PER_BAR;
+  float mBarsPerSec = (1.0f / DEFAULT_BPM) * 60.0f * DEFAULT_BEATS_PER_BAR;
 
   // Reference sine tone
   juce::ToneGeneratorAudioSource mReferenceTone;

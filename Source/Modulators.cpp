@@ -11,6 +11,7 @@
  */
 
 #include "Modulators.h"
+#include "Parameters.h"
 #include <cmath>
 
 const std::array<const LFOModSource::Shape, LFOModSource::NUM_LFO_SHAPES> LFOModSource::LFO_SHAPES = {
@@ -24,13 +25,25 @@ const std::array<const LFOModSource::Shape, LFOModSource::NUM_LFO_SHAPES> LFOMod
 
 void LFOModSource::processBlock() {
   // Calculate sine wave value for the LFO
-  mOutput = LFO_SHAPES[shape->getIndex()].calc(mCurPhase);
-  if (!bipolar->get()) mOutput = (mOutput + 1.0f) / 2.0f; // Make unipolar if needed
-  mOutput *= depth->get(); // Scale by depth
+  mOutput = LFO_SHAPES[shape->getIndex()].calc(mCurPhase) / 2.0f;
+  if (!bipolar->get()) mOutput = mOutput + 0.5f; // Make unipolar if needed
   
   // Update phase for the next block
-  mCurPhase += juce::MathConstants<double>::twoPi * (static_cast<double>(mBlockSize) / mSampleRate) * rate->get();
+  if (sync->get()) {
+    const float divInBars = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * rate->convertTo0to1(rate->get())));
+    mCurPhase += mRadPerBlock / (mBarsPerSec / divInBars);
+  } else {
+    mCurPhase += mRadPerBlock * rate->get();
+  }
   
   // Wrap phase to keep it in the range [0, 2PI)
   if (mCurPhase >= juce::MathConstants<double>::twoPi) mCurPhase -= juce::MathConstants<double>::twoPi;
+}
+
+juce::Range<float> LFOModSource::getRange() {
+  if (bipolar->get()) {
+    return juce::Range<float>(-0.5f, 0.5f);
+  } else {
+    return juce::Range<float>(0.0f, 1.0f);
+  }
 }

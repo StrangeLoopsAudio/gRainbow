@@ -31,7 +31,6 @@ namespace ParamIDs {
 // Global params
 static juce::String lfo1Shape{"lfo1_shape"};
 static juce::String lfo1Rate{"lfo1_rate"};
-static juce::String lfo1Depth{"lfo1_depth"};
 static juce::String lfo1Phase{"lfo1_phase"};
 static juce::String lfo1Sync{"lfo1_sync"};
 static juce::String lfo1Bipolar{"lfo1_biploar"};
@@ -106,7 +105,6 @@ static juce::String genPanSpray{"_pan_spray_gen_"};
 
 namespace ParamRanges {
 static juce::NormalisableRange<float> LFO_RATE(0.01f, 10.0f);
-static juce::NormalisableRange<float> LFO_DEPTH(0.0f, 1.0f);
 static juce::NormalisableRange<float> LFO_PHASE(0.0f, 2.0f * M_PI);
 static juce::NormalisableRange<float> MACRO(0.0f, 1.0f);
 static juce::NormalisableRange<float> GAIN(0.0f, 1.0f);
@@ -133,7 +131,6 @@ static int SYNC_DIV_MAX = 7;  // pow of 2 division, so 1/16
 namespace ParamDefaults {
 static int   LFO_SHAPE_DEFAULT = 0;
 static float LFO_RATE_DEFAULT = 1.0f;
-static float LFO_DEPTH_DEFAULT = 0.7f;
 static float LFO_PHASE_DEFAULT = 0.0f;
 static int   LFO_SYNC_DEFAULT = 0;
 static int   LFO_BIPOLAR_DEFAULT = 1;
@@ -707,6 +704,15 @@ struct Parameters {
   void processModSources() {
     global.lfo1.processBlock();
   }
+  void applyModulations(juce::RangedAudioParameter* param, float& value0To1) {
+    const int idx = param->getParameterIndex();
+    if (param && modulations.contains(idx)) {
+      Modulation& mod = modulations.getReference(idx);
+      if (mod.source) {
+        value0To1 = juce::jlimit(0.0f, 1.0f, value0To1 + (mod.depth * mod.source->getOutput()));
+      }
+    }
+  }
 
   // Called when current selected note or generator changes
   // Should be used only by PluginEditor and passed on to subcomponents
@@ -746,66 +752,51 @@ struct Parameters {
     }
     return juce::Colours::black;
   }
+  
+  juce::RangedAudioParameter* getUsedParam(ParamCommon* common, ParamCommon::Type type) {
+    const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
+    juce::RangedAudioParameter* param = nullptr;
+    bool keepLooking = true;
+    if (pGen) {
+      // If gen param is used, use it
+      if (pGen->isUsed[type]) {
+        param = pGen->common[type];
+        keepLooking = false;
+      }
+      pNote = note.notes[pGen->noteIdx].get();
+    }
+    if (pNote && keepLooking) {
+      // Otherwise if note param is used, use it
+      if (pNote->isUsed[type]) {
+        param = pNote->common[type];
+        keepLooking = false;
+      }
+    }
+    if (keepLooking) {
+      // If neither used, just use global param
+      param = global.common[type];
+    }
+    jassert(param);
+    return param;
+  }
 
   // Finds the lowest level parameter that's different from its parent
   // Hierarchy (high to low): global, note, generator
-  float getFloatParam(ParamCommon* common, ParamCommon::Type type) {
-    const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
-    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
-    if (pGen != nullptr) {
-      // If gen value is used, return it
-      if (pGen->isUsed[type]) {
-        return P_FLOAT(pGen->common[type])->get();;
-      }
-      pNote = note.notes[pGen->noteIdx].get();
-    }
-    if (pNote != nullptr) {
-      // Otherwise if note value is used, return it
-      if (pNote->isUsed[type]) {
-        return P_FLOAT(pNote->common[type])->get();;
-      }
-    }
-    // Just use the global value
-    return P_FLOAT(global.common[type])->get();
+  // Optionally applies modulations before returning value
+  float getFloatParam(ParamCommon* common, ParamCommon::Type type, bool withModulations = false) {
+    juce::RangedAudioParameter* param = getUsedParam(common, type);
+    float value0To1 = param->convertTo0to1(P_FLOAT(param)->get());
+    if (withModulations) applyModulations(param, value0To1);
+    return param->convertFrom0to1(value0To1);
   }
   int getChoiceParam(ParamCommon* common, ParamCommon::Type type) {
-    const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
-    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
-    if (pGen != nullptr) {
-      // If gen value is used, return it
-      if (pGen->isUsed[type]) {
-        return P_CHOICE(pGen->common[type])->getIndex();
-      }
-      pNote = note.notes[pGen->noteIdx].get();
-    }
-    if (pNote != nullptr) {
-      // Otherwise if note value is used, return it
-      if (pNote->isUsed[type]) {
-        return P_CHOICE(pNote->common[type])->getIndex();
-      }
-    }
-    // Just use the global value
-    return P_CHOICE(global.common[type])->getIndex();
+    juce::RangedAudioParameter* param = getUsedParam(common, type);
+    return P_CHOICE(param)->getIndex();
   }
   int getBoolParam(ParamCommon* common, ParamCommon::Type type) {
-    const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
-    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
-    if (pGen != nullptr) {
-      // If gen value is used, return it
-      if (pGen->isUsed[type]) {
-        return P_BOOL(pGen->common[type])->get();
-      }
-      pNote = note.notes[pGen->noteIdx].get();
-    }
-    if (pNote != nullptr) {
-      // Otherwise if note value is used, return it
-      if (pNote->isUsed[type]) {
-        return P_BOOL(pNote->common[type])->get();
-      }
-    }
-
-    // Just use the global value
-    return P_BOOL(global.common[type])->get();
+    juce::RangedAudioParameter* param = getUsedParam(common, type);
+    return P_BOOL(param)->get();
   }
   float getFilterOutput(ParamCommon* common, int ch, float sample) {
     ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);

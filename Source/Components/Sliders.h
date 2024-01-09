@@ -15,8 +15,23 @@
 #include "Parameters.h"
 #include <optional>
 
+class ParamSlider : public juce::Slider {
+public:
+  ParamSlider(Parameters& parameters, juce::RangedAudioParameter* parameter);
+  
+  juce::RangedAudioParameter* getParameter() { return parameter; }
+  
+  Parameters& parameters;
+  
+protected:
+  juce::RangedAudioParameter* parameter;
+
+private:
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamSlider)
+};
+
 // Enables a common parameter to be displayed at different levels
-class CommonSlider : public juce::Slider {
+class CommonSlider : public ParamSlider {
  public:
   CommonSlider(Parameters& parameters, ParamCommon::Type type);
 
@@ -24,8 +39,8 @@ class CommonSlider : public juce::Slider {
   void updateSelectedParams();
   float getGlobalValue() { return mGlobalValue; }
   float getNoteValue() { return mNoteValue; }
-  ParamCommon* getParam() { return mParameters.selectedParams; }
-  bool getIsUsed() { return mParameters.selectedParams->isUsed[mType]; }
+  ParamCommon* getParam() { return parameters.selectedParams; }
+  bool getIsUsed() { return parameters.selectedParams->isUsed[mType]; }
   void mouseDoubleClick(const juce::MouseEvent& evt) override;
 
  private:
@@ -33,22 +48,10 @@ class CommonSlider : public juce::Slider {
   juce::Colour getUsedColour();
   
   ParamCommon::Type mType;
-  Parameters& mParameters;
 
   float mGlobalValue, mNoteValue;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CommonSlider)
-};
-
-// Enables a common parameter to be displayed at different levels
-class GlobalSlider : public juce::Slider {
-public:
-  GlobalSlider(juce::RangedAudioParameter* param);
-
-private:
-  juce::RangedAudioParameter* mParam;
-    
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GlobalSlider)
 };
 
 class QuantizedCommonSlider : public CommonSlider {
@@ -83,9 +86,9 @@ private:
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(QuantizedCommonSlider)
 };
 
-class QuantizedGlobalSlider : public GlobalSlider {
+class QuantizedGlobalSlider : public ParamSlider {
 public:
-  QuantizedGlobalSlider(juce::RangedAudioParameter* param, juce::NormalisableRange<float> range, bool reverse) : GlobalSlider(param), mSync(false), mRange(range), mReverse(reverse) {}
+  QuantizedGlobalSlider(Parameters& parameters, juce::RangedAudioParameter* param, juce::NormalisableRange<float> range, bool reverse) : ParamSlider(parameters, param), mSync(false), mRange(range), mReverse(reverse) {}
   void setSync(bool sync) {
     mSync = sync;
     setTextValueSuffix(sync ? "" : suffix);

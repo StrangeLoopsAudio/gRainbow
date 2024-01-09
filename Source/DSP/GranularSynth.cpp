@@ -65,6 +65,9 @@ GranularSynth::GranularSynth()
   juce::MemoryBlock block;
   Utils::getBlockForPreset(Utils::PRESETS[0], block);
   loadPreset(Utils::PRESETS[0].name, block);
+        
+  // TODO: remove this test
+        mParameters.modulations.set(mParameters.global.common[ParamCommon::Type::GAIN]->getParameterIndex(), Modulation(&mParameters.global.lfo1, 1.0f));
 }
 
 GranularSynth::~GranularSynth() {}
@@ -227,11 +230,11 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
       // Add contributions from the grains in this generator
       for (size_t genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
         ParamGenerator* paramGenerator = mParameters.note.notes[gNote->pitchClass]->generators[genIdx].get();
-        const float gain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GAIN);
-        const float attack = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::ATTACK);
-        const float decay = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::DECAY);
-        const float sustain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::SUSTAIN);
-        const float release = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::RELEASE);
+        const float gain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GAIN, true);
+        const float attack = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::ATTACK, true);
+        const float decay = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::DECAY, true);
+        const float sustain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::SUSTAIN, true);
+        const float release = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::RELEASE, true);
         const float grainGain =
             gNote->genAmpEnvs[genIdx].getAmplitude(mTotalSamps, attack * mSampleRate, decay * mSampleRate, sustain,
                                                   release * mSampleRate) * gain;
@@ -260,14 +263,19 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     juce::FloatVectorOperations::clip(buffer.getWritePointer(i), buffer.getReadPointer(i), -1.0f, 1.0f, bufferNumSample);
   }
   
+  double bpm = DEFAULT_BPM;
+  int beatsPerBar = DEFAULT_BEATS_PER_BAR;
   if (juce::AudioPlayHead* playhead = getPlayHead()) {
     if (playhead->getPosition()->getBpm()) {
-      mBpm = *(playhead->getPosition()->getBpm());
+      bpm = *(playhead->getPosition()->getBpm());
     }
     if (playhead->getPosition()->getTimeSignature()) {
-      mBeatsPerBar = playhead->getPosition()->getTimeSignature()->numerator;
+      beatsPerBar = playhead->getPosition()->getTimeSignature()->numerator;
     }
   }
+  // Update sync rate of lfos
+  mBarsPerSec = (1.0f / bpm) * 60.0f * beatsPerBar;
+  mParameters.global.lfo1.setSyncRate(mBarsPerSec);
 
   handleGrainAddRemove(bufferNumSample);
 
@@ -424,23 +432,23 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           ParamGenerator* paramGenerator = mParameters.note.notes[gNote->pitchClass]->generators[i].get();
           ParamCandidate* paramCandidate = mParameters.note.notes[gNote->pitchClass]->getCandidate(i);
           float durSec;
-          const float gain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GAIN);
-          const float grainRate = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_RATE);
-          const float grainDuration = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_DURATION);
+          const float gain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GAIN, true);
+          const float grainRate = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_RATE, true);
+          const float grainDuration = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_DURATION, true);
           const bool grainSync = mParameters.getBoolParam(paramGenerator, ParamCommon::Type::GRAIN_SYNC);
-          const float pitchAdjust = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PITCH_ADJUST);
-          const float pitchSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PITCH_SPRAY);
-          const float posAdjust = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::POS_ADJUST);
-          const float posSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::POS_SPRAY);
-          const float panAdjust = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_ADJUST);
-          const float panSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_SPRAY);
-          const float shape = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_SHAPE);
-          const float tilt = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_TILT);
+          const float pitchAdjust = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PITCH_ADJUST, true);
+          const float pitchSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PITCH_SPRAY, true);
+          const float posAdjust = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::POS_ADJUST, true);
+          const float posSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::POS_SPRAY, true);
+          const float panAdjust = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_ADJUST, true);
+          const float panSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_SPRAY, true);
+          const float shape = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_SHAPE, true);
+          const float tilt = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_TILT, true);
 
           if (grainSync) {
             float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * (1.0f - ParamRanges::GRAIN_DURATION.convertTo0to1(grainDuration))));
             // Find synced duration using bpm
-            durSec = (1.0f / mBpm) * 60.0f * (mBeatsPerBar / div);
+            durSec = mBarsPerSec / div;
           } else {
             durSec = grainDuration;
           }
@@ -480,7 +488,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           // Reset trigger ts
           if (grainSync) {
             float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_RATE.convertTo0to1(grainRate)));
-            float rateSec = (1.0f / mBpm) * 60.0f * (mBeatsPerBar / div);
+            float rateSec = mBarsPerSec / div;
             // Find synced rate interval using bpm
             float intervalSamples = mSampleRate * rateSec;
             gNote->grainTriggers[i] += intervalSamples;
@@ -734,7 +742,7 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNum
         gNote->genAmpEnvs[i].noteOff(mTotalSamps);
         // Update max release time
         float release =
-            mParameters.getFloatParam(mParameters.note.notes[gNote->pitchClass]->generators[i].get(), ParamCommon::Type::RELEASE);
+            mParameters.getFloatParam(mParameters.note.notes[gNote->pitchClass]->generators[i].get(), ParamCommon::Type::RELEASE, true);
         if (release >= maxRelease) maxRelease = release;
       }
       gNote->removeTs = mTotalSamps + static_cast<int>(maxRelease * mSampleRate);

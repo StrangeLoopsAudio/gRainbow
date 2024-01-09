@@ -40,15 +40,15 @@ class LFOs : public juce::Component, juce::AudioProcessorParameter::Listener, ju
   Parameters& mParameters;
   std::atomic<bool> mParamHasChanged;
   juce::Path mLfoPath;
+  int mBufDepthWrPos = 0;
+  std::vector<float> mBufDepth; // LFO depth buffer
   
   // Components
   juce::ComboBox mChoiceShape;
   QuantizedGlobalSlider mSliderRate;
-  GlobalSlider mSliderDepth;
-  GlobalSlider mSliderPhase;
+  ParamSlider mSliderPhase;
   juce::Label mLabelShape;
   juce::Label mLabelRate;
-  juce::Label mLabelDepth;
   juce::Label mLabelPhase;
   juce::TextButton mBtnSync;
   juce::TextButton mBtnBipolar;

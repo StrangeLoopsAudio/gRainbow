@@ -25,21 +25,32 @@ class ModSource {
 public:
   ModSource(): mSampleRate(48000), mBlockSize(512), mOutput(0.0f) {}
   
-  void prepare(int blockSize, double sampleRate) { mBlockSize = blockSize; mSampleRate = sampleRate; }
-  virtual void processBlock() {}
-  virtual float getOutput() { return mOutput; }
+  virtual void processBlock() = 0;
+  virtual juce::Range<float> getRange() = 0;
+  
+  void prepare(int blockSize, double sampleRate) {
+    mBlockSize = blockSize;
+    mSampleRate = sampleRate;
+    mRadPerBlock = juce::MathConstants<double>::twoPi * (static_cast<double>(mBlockSize) / mSampleRate);
+  }
+  float getOutput() { return mOutput; }
+  
+  juce::Colour colour; // Colour of mod source (shown on sliders when modulations are applied)
   
 protected:
   double mSampleRate;
   int mBlockSize;
   float mOutput;
+  float mRadPerBlock = juce::MathConstants<double>::twoPi * (static_cast<double>(mBlockSize) / mSampleRate);
 };
 
 /* A single modulation
  - destination parameter is encoded in hashmap key using parameter id
  */
 typedef struct Modulation {
-  ModSource& source;
+  Modulation(): source(nullptr), depth(0.0f) {}
+  Modulation(ModSource* _source, float _depth): source(_source), depth(_depth) {}
+  ModSource* source; // Would like to make as a ref but since it's hashed it needs a default constructor
   float depth;
 } Modulation;
 
@@ -51,7 +62,25 @@ public:
     std::function<float (float x)> calc;
   } Shape;
   
-  // LFO shape calculation functions (all bipolar, can change to unipolar with (x + 1)/2 )
+  static constexpr int NUM_LFO_SHAPES = 4; // Increment when adding more shapes
+  static const std::array<const Shape, NUM_LFO_SHAPES> LFO_SHAPES;
+  
+  LFOModSource() { colour = juce::Colour(0xffd8ddef); }
+  
+  void processBlock() override;
+  juce::Range<float> getRange() override;
+  
+  // Sets the sync rate of in blocks/bar using 1/(bars/sec * samp/block * sec/samp)
+  void setSyncRate(float barsPerSec) { mBarsPerSec = barsPerSec; }
+  
+  juce::AudioParameterChoice* shape;
+  juce::AudioParameterFloat* rate;
+  juce::AudioParameterFloat* phase;
+  juce::AudioParameterBool* sync;
+  juce::AudioParameterBool* bipolar;
+  
+private:
+  // LFO shape calculation functions (all bipolar -1.0 to 1.0)
   static float calcSine(float x) {
     return std::sin(x);
   }
@@ -66,20 +95,6 @@ public:
     return 2.0f * (scaledX - std::floorf(0.5f + scaledX));
   }
   
-  static constexpr int NUM_LFO_SHAPES = 4; // Increment when adding more shapes
-  static const std::array<const Shape, NUM_LFO_SHAPES> LFO_SHAPES;
-  
-  LFOModSource() {}
-  
-  void processBlock() override;
-  
-  juce::AudioParameterChoice* shape;
-  juce::AudioParameterFloat* rate;
-  juce::AudioParameterFloat* depth;
-  juce::AudioParameterFloat* phase;
-  juce::AudioParameterBool* sync;
-  juce::AudioParameterBool* bipolar;
-  
-private:
+  float mBarsPerSec = 1.0f; // Rate of blocks/bar when synced to host bpm
   double mCurPhase = 0.0; // Phase in radians
 };
