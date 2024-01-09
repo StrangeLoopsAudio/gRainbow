@@ -17,10 +17,10 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
       mCurSelectedParams(parameters.selectedParams),
       mParamColour(Utils::GLOBAL_COLOUR),
       mSliderGain(mParameters, ParamCommon::Type::GAIN),
-      mSliderMacro1(mParameters, mParameters.global.macro1),
-      mSliderMacro2(mParameters, mParameters.global.macro2),
-      mSliderMacro3(mParameters, mParameters.global.macro3),
-      mSliderMacro4(mParameters, mParameters.global.macro4) {
+      mSliderMacro1(mParameters, mParameters.global.macro1.macro),
+      mSliderMacro2(mParameters, mParameters.global.macro2.macro),
+      mSliderMacro3(mParameters, mParameters.global.macro3.macro),
+      mSliderMacro4(mParameters, mParameters.global.macro4.macro) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
 
   // Titles
@@ -85,6 +85,10 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
   mLabelMacro4.setText("macro 4", juce::dontSendNotification);
 
   mCurSelectedParams->addListener(this);
+  mParameters.global.macro1.macro->addListener(this);
+  mParameters.global.macro2.macro->addListener(this);
+  mParameters.global.macro3.macro->addListener(this);
+  mParameters.global.macro4.macro->addListener(this);
   updateSelectedParams();
 
   startTimer(Utils::UI_REFRESH_INTERVAL);
@@ -92,6 +96,10 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
 
 MasterPanel::~MasterPanel() {
   mCurSelectedParams->removeListener(this);
+  mParameters.global.macro1.macro->removeListener(this);
+  mParameters.global.macro2.macro->removeListener(this);
+  mParameters.global.macro3.macro->removeListener(this);
+  mParameters.global.macro4.macro->removeListener(this);
   mMeter.setLookAndFeel(nullptr);
 }
 
@@ -101,10 +109,10 @@ void MasterPanel::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
     mSliderGain.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GAIN), juce::dontSendNotification);
-    mSliderMacro1.setValue(mParameters.global.macro1->get(), juce::dontSendNotification);
-    mSliderMacro2.setValue(mParameters.global.macro2->get(), juce::dontSendNotification);
-    mSliderMacro3.setValue(mParameters.global.macro3->get(), juce::dontSendNotification);
-    mSliderMacro4.setValue(mParameters.global.macro4->get(), juce::dontSendNotification);
+    mSliderMacro1.setValue(mParameters.global.macro1.macro->get(), juce::dontSendNotification);
+    mSliderMacro2.setValue(mParameters.global.macro2.macro->get(), juce::dontSendNotification);
+    mSliderMacro3.setValue(mParameters.global.macro3.macro->get(), juce::dontSendNotification);
+    mSliderMacro4.setValue(mParameters.global.macro4.macro->get(), juce::dontSendNotification);
   }
 }
 

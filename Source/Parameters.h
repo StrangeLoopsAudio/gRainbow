@@ -590,17 +590,22 @@ struct ParamGlobal : ParamCommon {
   
   void resetParams() {
     ParamCommon::resetParams();
-    ParamHelper::setParam(P_FLOAT(macro1), ParamDefaults::MACRO_DEFAULT);
-    ParamHelper::setParam(P_FLOAT(macro2), ParamDefaults::MACRO_DEFAULT);
-    ParamHelper::setParam(P_FLOAT(macro3), ParamDefaults::MACRO_DEFAULT);
-    ParamHelper::setParam(P_FLOAT(macro4), ParamDefaults::MACRO_DEFAULT);
+    ParamHelper::setParam(lfo1.shape, ParamDefaults::LFO_SHAPE_DEFAULT);
+    ParamHelper::setParam(lfo1.rate, ParamDefaults::LFO_RATE_DEFAULT);
+    ParamHelper::setParam(lfo1.phase, ParamDefaults::LFO_PHASE_DEFAULT);
+    ParamHelper::setParam(lfo1.sync, ParamDefaults::LFO_SYNC_DEFAULT);
+    ParamHelper::setParam(lfo1.bipolar, ParamDefaults::LFO_BIPOLAR_DEFAULT);
+    ParamHelper::setParam(lfo1.retrigger, ParamDefaults::LFO_RETRIGGER_DEFAULT);
+    ParamHelper::setParam(macro1.macro, ParamDefaults::MACRO_DEFAULT);
+    ParamHelper::setParam(macro2.macro, ParamDefaults::MACRO_DEFAULT);
+    ParamHelper::setParam(macro3.macro, ParamDefaults::MACRO_DEFAULT);
+    ParamHelper::setParam(macro4.macro, ParamDefaults::MACRO_DEFAULT);
   }
   
+  // Global modulation sources
   LFOModSource lfo1;
   EnvModSource env1;
-  
-  // Truly global parameters
-  juce::AudioParameterFloat* macro1, *macro2, *macro3, *macro4;
+  MacroModSource macro1, macro2, macro3, macro4;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
 };
@@ -707,10 +712,19 @@ struct Parameters {
   
   void prepareModSources(int blockSize, double sampleRate) {
     global.lfo1.prepare(blockSize, sampleRate);
+    global.env1.prepare(blockSize, sampleRate);
+    global.macro1.prepare(blockSize, sampleRate);
+    global.macro2.prepare(blockSize, sampleRate);
+    global.macro3.prepare(blockSize, sampleRate);
+    global.macro4.prepare(blockSize, sampleRate);
   }
   void processModSources() {
     global.lfo1.processBlock();
     global.env1.processBlock();
+    global.macro1.processBlock();
+    global.macro2.processBlock();
+    global.macro3.processBlock();
+    global.macro4.processBlock();
   }
   void applyModulations(juce::RangedAudioParameter* param, float& value0To1) {
     const int idx = param->getParameterIndex();

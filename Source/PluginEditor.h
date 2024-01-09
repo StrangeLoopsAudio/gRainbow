@@ -84,7 +84,6 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   AdjustPanel mAdjustPanel;
   FxPanel mFx1, mFx2, mFx3;
   Envelopes mModEnvelopes;
-  KeyboardMod mModKeyboard;
   LFOs mModLFOs;
   MasterPanel mMasterPanel;
   FilterControl mFilterControl;

@@ -18,11 +18,6 @@
 #include <juce_core/juce_core.h>
 #include "Utils/Envelope.h"
 
-enum ModSourceType {
-  LFO_1,
-  NUM_MOD_SOURCES
-};
-
 // Base class for modulator sources.. processBlock() should be called once per block and the output can be grabbed with getOutput()
 class ModSource {
 public:
@@ -132,4 +127,17 @@ public:
 private:
   Utils::EnvelopeADSR mEnv;
   int mCurTs = 0;
+};
+
+// Macro modulation source
+class MacroModSource : public ModSource {
+public:
+  
+  MacroModSource() { colour = juce::Colour(0xff7a5c61); }
+  
+  void processBlock() override;
+  juce::Range<float> getRange() override;
+  
+  // Must be initialized externally (in this app done in Parameters.cpp)
+  juce::AudioParameterFloat* macro;
 };

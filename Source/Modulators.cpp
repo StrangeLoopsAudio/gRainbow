@@ -24,7 +24,7 @@ const std::array<const LFOModSource::Shape, LFOModSource::NUM_LFO_SHAPES> LFOMod
 };
 
 void LFOModSource::processBlock() {
-  // Calculate sine wave value for the LFO
+  // Calculate LFO output
   mOutput = LFO_SHAPES[shape->getIndex()].calc(mCurPhase) / 2.0f;
   if (!bipolar->get()) mOutput = mOutput + 0.5f; // Make unipolar if needed
   
@@ -49,11 +49,20 @@ juce::Range<float> LFOModSource::getRange() {
 }
 
 void EnvModSource::processBlock() {
-  // Calculate sine wave value for the LFO
+  // Calculate envelope value
   mOutput = mEnv.getAmplitude(mCurTs, attack->get() * mSampleRate, decay->get() * mSampleRate, sustain->get(), release->get() * mSampleRate);
   mCurTs += mBlockSize;
 }
 
 juce::Range<float> EnvModSource::getRange() {
+  return juce::Range<float>(0.0f, 1.0f);
+}
+
+void MacroModSource::processBlock() {
+  // Use macro value as output
+  mOutput = macro->get();
+}
+
+juce::Range<float> MacroModSource::getRange() {
   return juce::Range<float>(0.0f, 1.0f);
 }

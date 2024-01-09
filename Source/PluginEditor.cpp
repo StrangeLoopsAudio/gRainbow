@@ -42,11 +42,10 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mFx2(synth.getParams()),
       mFx3(synth.getParams()),
       mModEnvelopes(synth.getParams()),
-      mModKeyboard(synth.getParams()),
       mModLFOs(synth.getParams()),
       mMasterPanel(synth.getParams(), synth.getMeterSource()),
       mFilterControl(synth.getParams()),
-      mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
+mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mRainbowLookAndFeel.setColour(juce::ComboBox::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
   mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
@@ -64,21 +63,21 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   }
 
   // Envelope/adjust tabs
-  juce::Image tabImage = juce::PNGImageFormat::loadFrom(BinaryData::ampEnv_png, BinaryData::ampEnv_pngSize);
+  juce::Image tabImage = juce::PNGImageFormat::loadFrom(BinaryData::grainEnv_png, BinaryData::grainEnv_pngSize);
   auto* tabImageComp = new juce::ImageComponent();
+  tabImageComp->setInterceptsMouseClicks(false, false);
+  tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
+  mTabsEnvelopes.addTab("grain env", Utils::BG_COLOUR, &mEnvGrain, false);
+  mTabsEnvelopes.getTabbedButtonBar().getTabButton(0)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
+  
+  tabImage = juce::PNGImageFormat::loadFrom(BinaryData::ampEnv_png, BinaryData::ampEnv_pngSize);
+  tabImageComp = new juce::ImageComponent();
   tabImageComp->setInterceptsMouseClicks(false, false);
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
   mTabsEnvelopes.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::tabTextColourId, Utils::GLOBAL_COLOUR);
   mTabsEnvelopes.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::frontTextColourId, Utils::GLOBAL_COLOUR);
   mTabsEnvelopes.setTabBarDepth(Utils::TAB_HEIGHT);
   mTabsEnvelopes.addTab("amp env", Utils::BG_COLOUR, &mEnvAdsr, false);
-  mTabsEnvelopes.getTabbedButtonBar().getTabButton(0)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
-
-  tabImage = juce::PNGImageFormat::loadFrom(BinaryData::grainEnv_png, BinaryData::grainEnv_pngSize);
-  tabImageComp = new juce::ImageComponent();
-  tabImageComp->setInterceptsMouseClicks(false, false);
-  tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
-  mTabsEnvelopes.addTab("grain env", Utils::BG_COLOUR, &mEnvGrain, false);
   mTabsEnvelopes.getTabbedButtonBar().getTabButton(1)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
 
   tabImage = juce::PNGImageFormat::loadFrom(BinaryData::adjust_png, BinaryData::adjust_pngSize);
@@ -101,9 +100,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
 
   // Modulator tabs
   mTabsModulators.setTabBarDepth(Utils::TAB_HEIGHT);
-  mTabsModulators.addTab("midi", Utils::BG_COLOUR, &mModKeyboard, false);
-  mTabsModulators.addTab("envelope", Utils::BG_COLOUR, &mModEnvelopes, false);
   mTabsModulators.addTab("lfo", Utils::BG_COLOUR, &mModLFOs, false);
+  mTabsModulators.addTab("envelope", Utils::BG_COLOUR, &mModEnvelopes, false);
   mTabsModulators.setOutline(0);
   addAndMakeVisible(mTabsModulators);
 

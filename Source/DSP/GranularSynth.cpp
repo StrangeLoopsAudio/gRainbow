@@ -67,7 +67,7 @@ GranularSynth::GranularSynth()
   loadPreset(Utils::PRESETS[0].name, block);
         
   // TODO: remove this test
-        mParameters.modulations.set(mParameters.global.common[ParamCommon::Type::PITCH_ADJUST]->getParameterIndex(), Modulation(&mParameters.global.env1, 1.0f));
+        mParameters.modulations.set(mParameters.global.common[ParamCommon::Type::PITCH_ADJUST]->getParameterIndex(), Modulation(&mParameters.global.macro1, 0.5f));
 }
 
 GranularSynth::~GranularSynth() {}
@@ -187,6 +187,13 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   mParameters.processModSources();
 
   mKeyboardState.processNextMidiBuffer(midiMessages, 0, bufferNumSample, true);
+  for (const auto& messageMeta : midiMessages) {
+    juce::MidiMessage msg = messageMeta.getMessage();
+    if (msg.isController() && msg.getControllerNumber() == 1) {
+      // Update macro 1 based on mod wheel input
+      ParamHelper::setParam(mParameters.global.macro1.macro, msg.getControllerValue() / 127.0f);
+    }
+  }
 
   // In case we have more outputs than inputs, this code clears any output
   // channels that didn't contain input data, (because these aren't
