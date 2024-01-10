@@ -132,6 +132,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   static constexpr float MIN_CANDIDATE_SALIENCE = 0.5f;
   static constexpr int MAX_GRAINS = 20;  // Max grains active at once
   static constexpr double INVALID_SAMPLE_RATE = -1.0;  // Max grains active at once
+  static constexpr int MAX_PITCH_BEND_SEMITONES = 2;  // Max pitch bend semitones allowed
 
   typedef struct GrainNote {
     Utils::PitchClass pitchClass;
@@ -168,6 +169,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   juce::AudioFormatManager mFormatManager;
   bool mNeedsResample = false;
   float mBarsPerSec = (1.0f / DEFAULT_BPM) * 60.0f * DEFAULT_BEATS_PER_BAR;
+  float mCurPitchBendSemitones = 0.0f; // Current pitch bend value from MIDI in semitones
 
   // Reference sine tone
   juce::ToneGeneratorAudioSource mReferenceTone;

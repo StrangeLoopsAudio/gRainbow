@@ -192,6 +192,9 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     if (msg.isController() && msg.getControllerNumber() == 1) {
       // Update macro 1 based on mod wheel input
       ParamHelper::setParam(mParameters.global.macro1.macro, msg.getControllerValue() / 127.0f);
+    } else if (msg.isPitchWheel()) {
+      // Update local pitch bend value
+      mCurPitchBendSemitones = ((msg.getPitchWheelValue() / 8192.0f) - 1.0f) * MAX_PITCH_BEND_SEMITONES;
     }
   }
 
@@ -480,7 +483,8 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
               /* Pitch calculation */
               float pitchSprayOffset = juce::jmap(random.nextFloat(), 0.0f, pitchSpray);
               if (random.nextFloat() > 0.5f) pitchSprayOffset = -pitchSprayOffset;
-              float pbRate = paramCandidate->pbRate + pitchAdjust + pitchSprayOffset;
+              float pitchBendOffset = std::pow(Utils::TIMESTRETCH_RATIO, mCurPitchBendSemitones) - 1;
+              float pbRate = paramCandidate->pbRate + pitchAdjust + pitchSprayOffset + pitchBendOffset;
               jassert(paramCandidate->pbRate > 0.1f);
 
               /* Add grain */

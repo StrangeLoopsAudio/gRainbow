@@ -18,7 +18,6 @@
 #include "Components/AdjustPanel.h"
 #include "Components/FxPanel.h"
 #include "Components/Modulators/Envelopes.h"
-#include "Components/Modulators/KeyboardMod.h"
 #include "Components/Modulators/LFOs.h"
 #include "Components/MasterPanel.h"
 #include "Components/FilterControl.h"

@@ -124,8 +124,6 @@ set(SOURCE_COMPONENTS
     Source/Components/Modulators/LFOs.cpp
     Source/Components/Modulators/Envelopes.h
     Source/Components/Modulators/Envelopes.cpp
-    Source/Components/Modulators/KeyboardMod.h
-    Source/Components/Modulators/KeyboardMod.cpp
 )
 
 set(SOURCE_DSP
