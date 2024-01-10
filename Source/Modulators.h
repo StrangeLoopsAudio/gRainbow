@@ -63,7 +63,7 @@ public:
   static constexpr int NUM_LFO_SHAPES = 4; // Increment when adding more shapes
   static const std::array<const Shape, NUM_LFO_SHAPES> LFO_SHAPES;
   
-  LFOModSource() { colour = juce::Colour(0xffd8ddef); }
+  LFOModSource() { colour = juce::Colour(0xffe7d1c9); }
   
   void processBlock() override;
   juce::Range<float> getRange() override;
@@ -104,7 +104,7 @@ private:
 class EnvModSource : public ModSource {
 public:
   
-  EnvModSource() { colour = juce::Colour(0xff58504a); }
+  EnvModSource() { colour = juce::Colour(0xffd0b49f); }
   
   void processBlock() override;
   juce::Range<float> getRange() override;
@@ -133,7 +133,7 @@ private:
 class MacroModSource : public ModSource {
 public:
   
-  MacroModSource() { colour = juce::Colour(0xff7a5c61); }
+  MacroModSource() { colour = juce::Colour(0xffdeeae8); }
   
   void processBlock() override;
   juce::Range<float> getRange() override;

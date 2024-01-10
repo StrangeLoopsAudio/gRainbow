@@ -28,6 +28,7 @@ class LFOs : public juce::Component, juce::AudioProcessorParameter::Listener, ju
 
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
+  void visibilityChanged() override;
 
   void timerCallback() override;
 

@@ -13,6 +13,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
 #include "../Sliders.h"
+#include "../Buttons.h"
 
 //==============================================================================
 /*
@@ -27,6 +28,7 @@ class Envelopes : public juce::Component, juce::AudioProcessorParameter::Listene
 
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
+  void visibilityChanged() override;
 
   void timerCallback() override;
 
@@ -44,6 +46,7 @@ class Envelopes : public juce::Component, juce::AudioProcessorParameter::Listene
   juce::Label mLabelDecay;
   juce::Label mLabelSustain;
   juce::Label mLabelRelease;
+  MapButton mBtnMap;
 
   // UI values saved on resize
   juce::Rectangle<float> mVizRect;

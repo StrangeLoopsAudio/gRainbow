@@ -29,15 +29,17 @@ void RainbowLookAndFeel::drawTabButton(juce::TabBarButton& btn, juce::Graphics& 
   g.setColour(tabColour);
   g.fillRoundedRectangle(r.withHeight(50).toFloat(), 10);
 
-  g.setColour(Utils::GLOBAL_COLOUR);
   drawTabButtonText(btn, g, mouseOver, mouseDown);
 }
 
 void RainbowLookAndFeel::drawTabAreaBehindFrontButton(juce::TabbedButtonBar&, juce::Graphics&, int, int) {}  // Do nothing
 
 void RainbowLookAndFeel::drawTabButtonText(juce::TabBarButton& btn, juce::Graphics& g, bool mouseOver, bool) {
-  auto textColour = (btn.isFrontTab() || mouseOver) ? Utils::GLOBAL_COLOUR : Utils::GLOBAL_COLOUR.darker();
-  g.setColour(textColour);
+  auto textColour = Utils::GLOBAL_COLOUR;
+  if (btn.isColourSpecified(juce::TextButton::ColourIds::textColourOnId)) {
+    textColour = btn.findColour(juce::TextButton::ColourIds::textColourOnId);
+  }
+  g.setColour((btn.isFrontTab() || mouseOver) ? textColour : textColour.darker());
   int trim = btn.getExtraComponent() ? btn.getExtraComponent()->getRight() : 0;
   g.drawFittedText(btn.getButtonText(), btn.getLocalBounds().withTrimmedLeft(trim), juce::Justification::centred, 2, 1.0f);
 }
@@ -46,7 +48,7 @@ void RainbowLookAndFeel::drawTabButtonText(juce::TabBarButton& btn, juce::Graphi
 void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int, float sliderPosProportional, float, float,
                                           juce::Slider& slider) {
   juce::Colour rainbowCol = slider.findColour(juce::Slider::ColourIds::rotarySliderOutlineColourId);
-  if (!slider.isEnabled()) rainbowCol = rainbowCol.withLightness(0.5f);
+  if (!slider.isEnabled()) rainbowCol = rainbowCol.darker();
 
   auto r = slider.getLocalBounds().reduced(2, 2);
 
@@ -68,14 +70,6 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
       g.drawRoundedRectangle(slider.getLocalBounds().reduced(1, 0).toFloat(), 5, 1);
     }
   }
-
-  juce::Path path;
-
-  // position arc
-  g.setColour(rainbowCol);
-  path.addArc(r.getX() + ((r.getWidth() - size) / 2), r.getY() + ((r.getHeight() - size) / 2), size, size, startRadians, posRadians, true);
-  path.lineTo(center);
-  g.strokePath(path.createPathWithRoundedCorners(3), juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
   
   ParamSlider* paramSlider = dynamic_cast<ParamSlider*>(&slider);
   if (paramSlider && paramSlider->getParameter()) {
@@ -97,6 +91,14 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
       g.strokePath(modArc, juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
     }
   }
+
+  juce::Path path;
+
+  // position arc
+  g.setColour(rainbowCol);
+  path.addArc(r.getX() + ((r.getWidth() - size) / 2), r.getY() + ((r.getHeight() - size) / 2), size, size, startRadians, posRadians, true);
+  path.lineTo(center);
+  g.strokePath(path.createPathWithRoundedCorners(3), juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
 }
 
 // Buttons

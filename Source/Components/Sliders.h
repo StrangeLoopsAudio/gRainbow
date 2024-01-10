@@ -18,7 +18,25 @@ class ParamSlider : public juce::Slider {
 public:
   ParamSlider(Parameters& parameters, juce::RangedAudioParameter* parameter);
   
-  void startedDragging() override { dragStartValue = getValue(); }
+  void mouseDown(const juce::MouseEvent &evt) override {
+    if (evt.mods.isPopupMenu()) {
+      // If modulations exist on this slider, let the user choose to remove them
+      int idx = parameter->getParameterIndex();
+      if (parameters.modulations.contains(idx)) {
+        juce::PopupMenu menu;
+        menu.addItem("Remove modulation", [this, idx]() {
+          parameters.modulations.remove(idx);
+        });
+        menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(this));
+      }
+    } else {
+      juce::Slider::mouseDown(evt);
+    }
+  }
+  void startedDragging() override {
+    // Set drag start so that we can reset the value if mapping
+    dragStartValue = getValue();
+  }
   
   juce::RangedAudioParameter* getParameter() { return parameter; }
   

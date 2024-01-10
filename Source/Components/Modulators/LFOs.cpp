@@ -24,6 +24,8 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   for (const LFOModSource::Shape &shape : LFOModSource::LFO_SHAPES) {
     mChoiceShape.addItem(shape.name, shapeId++);
   }
+  mChoiceShape.setColour(juce::ComboBox::ColourIds::backgroundColourId, mParameters.global.lfo1.colour);
+  mChoiceShape.setColour(juce::ComboBox::ColourIds::textColourId, mParameters.global.lfo1.colour);
   mChoiceShape.setSelectedId(1, juce::dontSendNotification);
   mChoiceShape.onChange = [this]() {
     ParamHelper::setParam(mParameters.global.lfo1.shape, mChoiceShape.getSelectedId() - 1);
@@ -36,6 +38,7 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   for (auto& slider : sliders) {
     slider.get().setNumDecimalPlacesToDisplay(2);
     slider.get().setPopupDisplayEnabled(true, true, this);
+    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParameters.global.lfo1.colour);
     addAndMakeVisible(slider.get());
   }
   mSliderRate.setSync(false);
@@ -49,10 +52,10 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   std::vector<std::reference_wrapper<juce::TextButton>> buttons = { mBtnSync, mBtnBipolar, mBtnRetrigger, mBtnMap };
   for (auto& button : buttons) {
     button.get().setToggleable(true);
-    button.get().setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+    button.get().setColour(juce::TextButton::textColourOffId, mParameters.global.lfo1.colour);
     button.get().setColour(juce::TextButton::textColourOnId, juce::Colours::black);
-    button.get().setColour(juce::TextButton::buttonColourId, Utils::GLOBAL_COLOUR);
-    button.get().setColour(juce::TextButton::buttonOnColourId, Utils::GLOBAL_COLOUR);
+    button.get().setColour(juce::TextButton::buttonColourId, mParameters.global.lfo1.colour);
+    button.get().setColour(juce::TextButton::buttonOnColourId, mParameters.global.lfo1.colour);
     addAndMakeVisible(button.get());
   }
   mBtnSync.setButtonText("hz");
@@ -73,7 +76,7 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelShape, mLabelRate, mLabelPhase };
   for (auto& label : labels) {
-    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
+    label.get().setColour(juce::Label::ColourIds::textColourId, mParameters.global.lfo1.colour);
     label.get().setJustificationType(juce::Justification::centredTop);
     label.get().setFont(juce::Font(14));
     addAndMakeVisible(label.get());
@@ -104,6 +107,12 @@ LFOs::~LFOs() {
   mParameters.global.lfo1.bipolar->removeListener(this);
   mParameters.global.lfo1.retrigger->removeListener(this);
   stopTimer();
+}
+
+void LFOs::visibilityChanged() {
+  if (!isVisible()) {
+    mBtnMap.resetMappingStatus();
+  }
 }
 
 void LFOs::parameterValueChanged(int idx, float) { mParamHasChanged.store(true); }
@@ -137,12 +146,12 @@ void LFOs::paint(juce::Graphics& g) {
   g.fillRect(mVizRect);
   
   // Draw bipolar/unipolar line
-  g.setColour(Utils::GLOBAL_COLOUR.withAlpha(0.5f));
+  g.setColour(mParameters.global.lfo1.colour.withAlpha(0.5f));
   const int poleY = mBtnBipolar.getToggleState() ? mVizRect.getCentreY() : mVizRect.getBottom();
   g.drawHorizontalLine(poleY, mVizRect.getX(), mVizRect.getRight());
   
   // Draw LFO path
-  g.setColour(Utils::GLOBAL_COLOUR);
+  g.setColour(mParameters.global.lfo1.colour);
   g.strokePath(mLfoPath, juce::PathStrokeType(2, juce::PathStrokeType::JointStyle::curved));
 }
 
@@ -189,7 +198,8 @@ void LFOs::resized() {
 void LFOs::updateLfoPath() {
   // Update LFO value buffer
   mBufDepth[mBufDepthWrPos] = mParameters.global.lfo1.getOutput();
-  mBufDepthWrPos = (mBufDepthWrPos == NUM_LFO_SAMPLES - 1) ? 0 : mBufDepthWrPos + 1;
+  // Increment write pos
+  mBufDepthWrPos = (mBufDepthWrPos == (NUM_LFO_SAMPLES - 1)) ? 0 : mBufDepthWrPos + 1;
   
   // Create LFO path
   mLfoPath.clear();
@@ -209,13 +219,14 @@ void LFOs::updateLfoPath() {
   }
   float curX = mVizRect.getX();
   int curIdx = mBufDepthWrPos;
-  mLfoPath.startNewSubPath(curX, centerY - (mBufDepth[curIdx] * mVizRect.getHeight() / 2.0f));
-  for (int i = 0; i < NUM_LFO_SAMPLES; ++i) {
+  mLfoPath.startNewSubPath(curX, centerY - (mBufDepth[curIdx] * maxDepthPx));
+  for (int i = 0; i < NUM_LFO_SAMPLES - 1; ++i) {
+    curX += pxPerSamp;
+    curIdx = (curIdx == (NUM_LFO_SAMPLES - 1)) ? 0 : curIdx + 1;
     const int depthPx = mBufDepth[curIdx] * maxDepthPx;
     const float y = centerY - depthPx;
     mLfoPath.lineTo(curX, y);
-    curX += pxPerSamp;
-    curIdx = (curIdx == NUM_LFO_SAMPLES - 1) ? 0 : curIdx + 1;
   }
+
   repaint();
 }

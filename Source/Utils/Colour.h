@@ -8,10 +8,10 @@ static constexpr float GENERATOR_BRIGHTNESS_ADD = 0.2f;  // Amount to make brigh
 static const juce::Colour BG_COLOUR = juce::Colour(0xff212121);
 static const juce::Colour PANEL_COLOUR = juce::Colour(0xff353535);
 static const juce::Colour MIDI_COLOUR = juce::Colour(0xff7a5c61);
-static const juce::Colour LFO_1_COLOUR = juce::Colour(0xff7293a0);
+static const juce::Colour LFO_1_COLOUR = juce::Colour(0xffe1bb80);
 static const juce::Colour LFO_2_COLOUR = juce::Colour(0xffa0a4b8);
 static const juce::Colour LFO_3_COLOUR = juce::Colour(0xffd8ddef);
-static const juce::Colour ENV_1_COLOUR = juce::Colour(0xff58504a);
+static const juce::Colour ENV_1_COLOUR = juce::Colour(0xff7b6b43);
 static const juce::Colour ENV_2_COLOUR = juce::Colour(0xffebd4cb);
 static const juce::Colour ENV_3_COLOUR = juce::Colour(0xffa9e5bb);
 

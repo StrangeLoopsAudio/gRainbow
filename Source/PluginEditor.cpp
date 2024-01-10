@@ -101,7 +101,9 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   // Modulator tabs
   mTabsModulators.setTabBarDepth(Utils::TAB_HEIGHT);
   mTabsModulators.addTab("lfo", Utils::BG_COLOUR, &mModLFOs, false);
+  mTabsModulators.getTabbedButtonBar().getTabButton(0)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.lfo1.colour);
   mTabsModulators.addTab("envelope", Utils::BG_COLOUR, &mModEnvelopes, false);
+  mTabsModulators.getTabbedButtonBar().getTabButton(1)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.env1.colour);
   mTabsModulators.setOutline(0);
   addAndMakeVisible(mTabsModulators);
 

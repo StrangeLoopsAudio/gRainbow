@@ -20,7 +20,7 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
       mSliderMacro1(mParameters, mParameters.global.macro1.macro),
       mSliderMacro2(mParameters, mParameters.global.macro2.macro),
       mSliderMacro3(mParameters, mParameters.global.macro3.macro),
-      mSliderMacro4(mParameters, mParameters.global.macro4.macro) {
+mSliderMacro4(mParameters, mParameters.global.macro4.macro) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
 
   // Titles
@@ -29,7 +29,7 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
   mLabelTitle.setJustificationType(juce::Justification::centred);
   addAndMakeVisible(mLabelTitle);
   mLabelMacros.setText("macros", juce::dontSendNotification);
-  mLabelMacros.setColour(juce::Label::ColourIds::textColourId, colour);
+  mLabelMacros.setColour(juce::Label::ColourIds::textColourId, mParameters.global.macro1.colour);
   mLabelMacros.setJustificationType(juce::Justification::centred);
   addAndMakeVisible(mLabelMacros);
 
@@ -45,7 +45,12 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
     slider.get().setPopupDisplayEnabled(true, true, this);
     addAndMakeVisible(slider.get());
   }
-
+        
+  // Macro slider settings
+  std::vector<std::reference_wrapper<juce::Slider>> macroSliders = {mSliderMacro1, mSliderMacro2, mSliderMacro3, mSliderMacro4};
+  for (auto& slider : macroSliders) {
+    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParameters.global.macro1.colour);
+  }
   mSliderGain.setRange(ParamRanges::GAIN.start, ParamRanges::GAIN.end, 0.01);
   mSliderGain.setDoubleClickReturnValue(true, ParamDefaults::GAIN_DEFAULT);
   mSliderMacro1.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);
@@ -58,12 +63,18 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
   mSliderMacro4.setDoubleClickReturnValue(true, ParamDefaults::MACRO_DEFAULT);
 
   // Default label settings
-  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelGain, mLabelRefTone, mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };
-  for (auto& label : labels) {
+  std::vector<std::reference_wrapper<juce::Label>> macroLabels = { mLabelGain, mLabelRefTone, mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };
+  for (auto& label : macroLabels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
     label.get().setJustificationType(juce::Justification::centredTop);
     label.get().setFont(juce::Font(14));
     addAndMakeVisible(label.get());
+  }
+  
+  // Macro label settings
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };
+  for (auto& label : labels) {
+    label.get().setColour(juce::Label::ColourIds::textColourId, mParameters.global.macro1.colour);
   }
 
   // Default button settings

@@ -17,13 +17,15 @@ Envelopes::Envelopes(Parameters& parameters)
 mSliderAttack(mParameters, mParameters.global.env1.attack),
 mSliderDecay(mParameters, mParameters.global.env1.decay),
 mSliderSustain(mParameters, mParameters.global.env1.sustain),
-mSliderRelease(mParameters, mParameters.global.env1.release) {
+mSliderRelease(mParameters, mParameters.global.env1.release),
+mBtnMap(mParameters, mParameters.global.env1){
   
   // Default slider settings
   std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderAttack, mSliderDecay, mSliderSustain, mSliderRelease };
   for (auto& slider : sliders) {
     slider.get().setNumDecimalPlacesToDisplay(2);
     slider.get().setPopupDisplayEnabled(true, true, this);
+    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParameters.global.env1.colour);
     addAndMakeVisible(slider.get());
   }
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end, 0.01);
@@ -44,10 +46,21 @@ mSliderRelease(mParameters, mParameters.global.env1.release) {
   mParameters.global.env1.release->addListener(this);
   mParamHasChanged.store(true); // Init param values
   
+  // Default button settings
+  std::vector<std::reference_wrapper<juce::TextButton>> buttons = { mBtnMap };
+  for (auto& button : buttons) {
+    button.get().setToggleable(true);
+    button.get().setColour(juce::TextButton::textColourOffId, mParameters.global.env1.colour);
+    button.get().setColour(juce::TextButton::textColourOnId, juce::Colours::black);
+    button.get().setColour(juce::TextButton::buttonColourId, mParameters.global.env1.colour);
+    button.get().setColour(juce::TextButton::buttonOnColourId, mParameters.global.env1.colour);
+    addAndMakeVisible(button.get());
+  }
+  
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelAttack, mLabelDecay, mLabelSustain, mLabelRelease };
   for (auto& label : labels) {
-    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
+    label.get().setColour(juce::Label::ColourIds::textColourId, mParameters.global.env1.colour);
     label.get().setJustificationType(juce::Justification::centredTop);
     label.get().setFont(juce::Font(14));
     addAndMakeVisible(label.get());
@@ -66,6 +79,12 @@ Envelopes::~Envelopes() {
   mParameters.global.env1.sustain->removeListener(this);
   mParameters.global.env1.release->removeListener(this);
   stopTimer();
+}
+
+void Envelopes::visibilityChanged() {
+  if (!isVisible()) {
+    mBtnMap.resetMappingStatus();
+  }
 }
 
 void Envelopes::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
@@ -93,7 +112,7 @@ void Envelopes::paint(juce::Graphics& g) {
   float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
   
   // Draw ADSR path
-  juce::Colour colour = Utils::GLOBAL_COLOUR;
+  juce::Colour colour = mParameters.global.env1.colour;
   g.setFillType(juce::ColourGradient(colour.withAlpha(0.35f), mVizRect.getTopLeft(), colour.withAlpha(0.05f), mVizRect.getBottomLeft(), false));
   
   auto adsrRect = mVizRect.reduced(Utils::PADDING * 2, Utils::PADDING * 2);
@@ -136,9 +155,12 @@ void Envelopes::resized() {
   mSliderRelease.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   
   auto rightPanel = r.removeFromRight(r.getWidth() * 0.25f);
-  
+    
   r.removeFromRight(Utils::PADDING);
   r.removeFromBottom(Utils::PADDING);
   
   mVizRect = r.toFloat();
+  
+  mBtnMap.setBounds(rightPanel.removeFromTop(mVizRect.getHeight() / 2));
+
 }

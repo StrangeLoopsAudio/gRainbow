@@ -19,6 +19,19 @@ ParamSlider::ParamSlider(Parameters& _parameters, juce::RangedAudioParameter* _p
   setSkewFactor(parameter->getNormalisableRange().skew);
   onValueChange = [this] {
     if (parameters.mappingModSource) {
+      int idx = parameter->getParameterIndex();
+      if (!parameters.modulations.contains(idx)) {
+        // Add modulator if it doesn't exist
+        parameters.modulations.set(idx, Modulation(parameters.mappingModSource, 0.0f));
+      } else {
+        // Increment/decrement its depth
+        Modulation& mod = parameters.modulations.getReference(idx);
+        double diff = parameter->convertTo0to1(getValue()) - parameter->convertTo0to1(dragStartValue);
+        double scale = getRange().getLength() / (getRange().getEnd() - dragStartValue);
+        float depth = juce::jlimit(0.0, 1.0, diff * scale);
+        parameters.modulations.set(idx, Modulation(parameters.mappingModSource, depth));
+      }
+      // Reset actual slider value
       setValue(dragStartValue, juce::dontSendNotification);
     } else {
       if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(parameter)) ParamHelper::setParam(floatParam, (float)getValue());
@@ -53,7 +66,6 @@ CommonSlider::CommonSlider(Parameters& _parameters, ParamCommon::Type type)
         double diff = parameter->convertTo0to1(getValue()) - parameter->convertTo0to1(dragStartValue);
         double scale = getRange().getLength() / (getRange().getEnd() - dragStartValue);
         mod.depth = juce::jlimit(0.0, 1.0, diff * scale);
-        DBG("brady depth: " + juce::String(mod.depth));
       }
       // Reset actual slider value
       setValue(dragStartValue, juce::dontSendNotification);
