@@ -13,6 +13,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
 #include "../Sliders.h"
+#include "../Buttons.h"
 
 //==============================================================================
 /*
@@ -53,7 +54,7 @@ class LFOs : public juce::Component, juce::AudioProcessorParameter::Listener, ju
   juce::TextButton mBtnSync;
   juce::TextButton mBtnBipolar;
   juce::TextButton mBtnRetrigger;
-  juce::TextButton mBtnMap;
+  MapButton mBtnMap;
 
   // UI values saved on resize
   juce::Rectangle<float> mVizRect;

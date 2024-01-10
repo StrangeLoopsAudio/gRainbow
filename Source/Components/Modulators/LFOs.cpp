@@ -15,7 +15,8 @@
 
 LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   mSliderRate(mParameters, mParameters.global.lfo1.rate, ParamRanges::LFO_RATE, false),
-  mSliderPhase(mParameters, mParameters.global.lfo1.phase) {
+  mSliderPhase(mParameters, mParameters.global.lfo1.phase),
+  mBtnMap(mParameters, mParameters.global.lfo1) {
     
   mBufDepth.resize(NUM_LFO_SAMPLES, 0.0f);
     
@@ -80,7 +81,6 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   mLabelShape.setText("shape", juce::dontSendNotification);
   mLabelRate.setText("rate", juce::dontSendNotification);
   mLabelPhase.setText("phase", juce::dontSendNotification);
-  
   
   // Add listeners for relevant params
   mParameters.global.lfo1.shape->addListener(this);

@@ -113,6 +113,7 @@ set(SOURCE_COMPONENTS
     Source/Components/Piano/RainbowKeyboard.cpp
     Source/Components/Piano/WaveformPanel.h
     Source/Components/Piano/WaveformPanel.cpp
+    Source/Components/Buttons.h
     Source/Components/Sliders.h
     Source/Components/Sliders.cpp
     Source/Components/RainbowLookAndFeel.h

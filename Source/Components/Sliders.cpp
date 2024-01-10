@@ -18,9 +18,13 @@ ParamSlider::ParamSlider(Parameters& _parameters, juce::RangedAudioParameter* _p
   if (!parameter) return;
   setSkewFactor(parameter->getNormalisableRange().skew);
   onValueChange = [this] {
-    if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(parameter)) ParamHelper::setParam(floatParam, (float)getValue());
-    else if (auto* intParam = dynamic_cast<juce::AudioParameterInt*>(parameter)) ParamHelper::setParam(intParam, (int)getValue());
-    else jassert(false); // if you get here you should add an if-case for the new param type, it must not be a float or int
+    if (parameters.mappingModSource) {
+      setValue(dragStartValue, juce::dontSendNotification);
+    } else {
+      if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(parameter)) ParamHelper::setParam(floatParam, (float)getValue());
+      else if (auto* intParam = dynamic_cast<juce::AudioParameterInt*>(parameter)) ParamHelper::setParam(intParam, (int)getValue());
+      else jassert(false); // if you get here you should add an if-case for the new param type, it must not be a float or int
+    }
   };
 }
 
@@ -38,16 +42,27 @@ CommonSlider::CommonSlider(Parameters& _parameters, ParamCommon::Type type)
   setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::GLOBAL_COLOUR);
   setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
   onValueChange = [this] {
-    ParamHelper::setCommonParam(parameters.selectedParams, mType, (float)getValue());
-    setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, getUsedColour());
-    auto* param = parameters.selectedParams->common[mType];
-    if (parameters.selectedParams->type == ParamType::GLOBAL) {
-      mGlobalValue = param->getNormalisableRange().convertTo0to1(P_FLOAT(param)->get());
-    } else if (parameters.selectedParams->type == ParamType::NOTE) {
-      mNoteValue = param->getNormalisableRange().convertTo0to1(P_FLOAT(param)->get());
+    if (parameters.mappingModSource) {
+      int idx = parameter->getParameterIndex();
+      if (!parameters.modulations.contains(idx)) {
+        // Add modulator if it doesn't exist
+        parameters.modulations.set(idx, Modulation(parameters.mappingModSource, 0.0f));
+      } else {
+        // Increment/decrement its depth
+        Modulation& mod = parameters.modulations.getReference(idx);
+        double diff = parameter->convertTo0to1(getValue()) - parameter->convertTo0to1(dragStartValue);
+        double scale = getRange().getLength() / (getRange().getEnd() - dragStartValue);
+        mod.depth = juce::jlimit(0.0, 1.0, diff * scale);
+        DBG("brady depth: " + juce::String(mod.depth));
+      }
+      // Reset actual slider value
+      setValue(dragStartValue, juce::dontSendNotification);
+    } else {
+      ParamHelper::setCommonParam(parameters.selectedParams, mType, (float)getValue());
+      setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, getUsedColour());
+      // Update active parameter pointer
+      parameter = parameters.getUsedParam(parameters.selectedParams, mType);
     }
-    // Update active parameter pointer
-    parameter = parameters.getUsedParam(parameters.selectedParams, mType);
   };
 }
 
@@ -101,17 +116,6 @@ void CommonSlider::mouseDoubleClick(const juce::MouseEvent&) {
 // Update slider colours for new selected group
 void CommonSlider::updateSelectedParams() {
   setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, getUsedColour());
-  // Set global tick value
-  auto* globalParam = parameters.global.common[mType];
-  mGlobalValue = globalParam->getNormalisableRange().convertTo0to1(P_FLOAT(globalParam)->get());
-  ParamNote* note = dynamic_cast<ParamNote*>(parameters.selectedParams);
-  if (auto* gen = dynamic_cast<ParamGenerator*>(parameters.selectedParams)) {
-    note = parameters.note.notes[gen->noteIdx].get();
-  }
-  if (note) {
-    auto* noteParam = note->common[mType];
-    mNoteValue = noteParam->getNormalisableRange().convertTo0to1(P_FLOAT(noteParam)->get());
-  }
   // Update active parameter pointer
   parameter = parameters.getUsedParam(parameters.selectedParams, mType);
 }

@@ -65,9 +65,6 @@ GranularSynth::GranularSynth()
   juce::MemoryBlock block;
   Utils::getBlockForPreset(Utils::PRESETS[0], block);
   loadPreset(Utils::PRESETS[0].name, block);
-        
-  // TODO: remove this test
-        mParameters.modulations.set(mParameters.global.common[ParamCommon::Type::PITCH_ADJUST]->getParameterIndex(), Modulation(&mParameters.global.macro1, 0.5f));
 }
 
 GranularSynth::~GranularSynth() {}

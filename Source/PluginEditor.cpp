@@ -215,6 +215,7 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   setLookAndFeel(nullptr);
 
   mSynth.stopReferenceTone();
+  mParameters.mappingModSource = nullptr;
 }
 
 void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponent component) {

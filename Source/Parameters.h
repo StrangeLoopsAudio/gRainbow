@@ -709,6 +709,7 @@ struct Parameters {
   ParamsNote note;
   
   juce::HashMap<int, Modulation> modulations;
+  ModSource* mappingModSource = nullptr; // If not null, then a modulator is waiting to be mapped
   
   void prepareModSources(int blockSize, double sampleRate) {
     global.lfo1.prepare(blockSize, sampleRate);

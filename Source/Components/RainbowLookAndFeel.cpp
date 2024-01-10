@@ -68,6 +68,15 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
       g.drawRoundedRectangle(slider.getLocalBounds().reduced(1, 0).toFloat(), 5, 1);
     }
   }
+
+  juce::Path path;
+
+  // position arc
+  g.setColour(rainbowCol);
+  path.addArc(r.getX() + ((r.getWidth() - size) / 2), r.getY() + ((r.getHeight() - size) / 2), size, size, startRadians, posRadians, true);
+  path.lineTo(center);
+  g.strokePath(path.createPathWithRoundedCorners(3), juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
+  
   ParamSlider* paramSlider = dynamic_cast<ParamSlider*>(&slider);
   if (paramSlider && paramSlider->getParameter()) {
     // Check for modulations on this param and visualize them
@@ -88,14 +97,6 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
       g.strokePath(modArc, juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
     }
   }
-
-  juce::Path path;
-
-  // position arc
-  g.setColour(rainbowCol);
-  path.addArc(r.getX() + ((r.getWidth() - size) / 2), r.getY() + ((r.getHeight() - size) / 2), size, size, startRadians, posRadians, true);
-  path.lineTo(center);
-  g.strokePath(path.createPathWithRoundedCorners(3), juce::PathStrokeType(3, juce::PathStrokeType::JointStyle::curved));
 }
 
 // Buttons

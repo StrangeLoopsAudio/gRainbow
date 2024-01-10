@@ -13,11 +13,12 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Utils/PitchClass.h"
 #include "Parameters.h"
-#include <optional>
 
 class ParamSlider : public juce::Slider {
 public:
   ParamSlider(Parameters& parameters, juce::RangedAudioParameter* parameter);
+  
+  void startedDragging() override { dragStartValue = getValue(); }
   
   juce::RangedAudioParameter* getParameter() { return parameter; }
   
@@ -25,7 +26,7 @@ public:
   
 protected:
   juce::RangedAudioParameter* parameter;
-
+  float dragStartValue;
 private:
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamSlider)
 };
@@ -37,8 +38,6 @@ class CommonSlider : public ParamSlider {
 
   // Update slider colours for new selected group
   void updateSelectedParams();
-  float getGlobalValue() { return mGlobalValue; }
-  float getNoteValue() { return mNoteValue; }
   ParamCommon* getParam() { return parameters.selectedParams; }
   bool getIsUsed() { return parameters.selectedParams->isUsed[mType]; }
   void mouseDoubleClick(const juce::MouseEvent& evt) override;
@@ -48,8 +47,6 @@ class CommonSlider : public ParamSlider {
   juce::Colour getUsedColour();
   
   ParamCommon::Type mType;
-
-  float mGlobalValue, mNoteValue;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CommonSlider)
 };
