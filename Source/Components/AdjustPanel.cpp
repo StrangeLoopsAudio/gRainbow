@@ -82,7 +82,7 @@ mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY) {
         
   // Reverse playback
   mBtnReverse.onClick = [this]() {
-    // TODO: set the param
+    ParamHelper::setParam(P_BOOL(mCurSelectedParams->common[ParamCommon::Type::REVERSE]), mBtnReverse.getToggleState());
   };
   mLabelReverse.setText("reverse", juce::dontSendNotification);
   
@@ -118,6 +118,7 @@ void AdjustPanel::timerCallback() {
     mSliderPanSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PAN_SPRAY),
                              juce::dontSendNotification);
     // TODO: set value of reverse and trigger mode
+    mBtnReverse.setToggleState(mParameters.getBoolParam(mCurSelectedParams, ParamCommon::Type::REVERSE), juce::dontSendNotification);
   }
 }
 

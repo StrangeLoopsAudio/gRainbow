@@ -451,6 +451,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           const float panSpray = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::PAN_SPRAY, true);
           const float shape = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_SHAPE, true);
           const float tilt = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GRAIN_TILT, true);
+          const bool reverse = mParameters.getBoolParam(paramGenerator, ParamCommon::Type::REVERSE);
 
           if (grainSync) {
             float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * (1.0f - ParamRanges::GRAIN_DURATION.convertTo0to1(grainDuration))));
@@ -482,6 +483,10 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
               if (random.nextFloat() > 0.5f) pitchSprayOffset = -pitchSprayOffset;
               float pitchBendOffset = std::pow(Utils::TIMESTRETCH_RATIO, mCurPitchBendSemitones) - 1;
               float pbRate = paramCandidate->pbRate + pitchAdjust + pitchSprayOffset + pitchBendOffset;
+              if (reverse) {
+                pbRate = -pbRate; // Flip playback rate if going in reverse
+                posSamples += durSamples; // Start at the end
+              }
               jassert(paramCandidate->pbRate > 0.1f);
 
               /* Add grain */

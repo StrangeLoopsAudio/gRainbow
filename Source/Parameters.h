@@ -63,6 +63,7 @@ static juce::String globalPositionAdjust{"global_position_adjust"};
 static juce::String globalPositionSpray{"global_position_spray"};
 static juce::String globalPanAdjust{"global_pan_adjust"};
 static juce::String globalPanSpray{"global_pan_spray"};
+static juce::String globalReverse{"global_reverse"};
 // Note params
 static juce::String genSolo{"_solo_gen"};
 static juce::String noteGain{"_note_gain"};
@@ -84,6 +85,7 @@ static juce::String notePositionAdjust{"_note_position_adjust"};
 static juce::String notePositionSpray{"_note_position_spray"};
 static juce::String notePanAdjust{"_note_pan_adjust"};
 static juce::String notePanSpray{"_note_pan_spray"};
+static juce::String noteReverse{"_note_reverse"};
 // Generator params
 static juce::String genEnable{"_enable_gen_"};
 static juce::String genCandidate{"_candidate_gen_"};
@@ -106,6 +108,7 @@ static juce::String genPositionAdjust{"_position_adjust_gen_"};
 static juce::String genPositionSpray{"_position_spray_gen_"};
 static juce::String genPanAdjust{"_pan_adjust_gen_"};
 static juce::String genPanSpray{"_pan_spray_gen_"};
+static juce::String genReverse{"_reverse_gen_"};
 } // namespace ParamIDs
 
 namespace ParamRanges {
@@ -162,6 +165,7 @@ static float POSITION_ADJUST_DEFAULT = 0.0f;
 static float POSITION_SPRAY_DEFAULT = 0.05f;
 static float PAN_ADJUST_DEFAULT = 0.0f;
 static float PAN_SPRAY_DEFAULT = 0.05f;
+static int   REVERSE_DEFAULT = 0;
 }  // namespace ParamDefaults
 
 enum ParamType { GLOBAL, NOTE, GENERATOR };
@@ -222,6 +226,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     POS_SPRAY,
     PAN_ADJUST,
     PAN_SPRAY,
+    REVERSE,
     NUM_COMMON
   };
 
@@ -245,6 +250,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     common[POS_SPRAY]->addListener(listener);
     common[PAN_ADJUST]->addListener(listener);
     common[PAN_SPRAY]->addListener(listener);
+    common[REVERSE]->addListener(listener);
   }
   void removeListener(juce::AudioProcessorParameter::Listener* listener) {
     common[GAIN]->removeListener(listener);
@@ -266,6 +272,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     common[POS_SPRAY]->removeListener(listener);
     common[PAN_ADJUST]->removeListener(listener);
     common[PAN_SPRAY]->removeListener(listener);
+    common[REVERSE]->removeListener(listener);
   }
 
   void resetParams() {
@@ -288,6 +295,7 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     ParamHelper::setParam(P_FLOAT(common[GRAIN_RATE]), ParamDefaults::GRAIN_RATE_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[GRAIN_DURATION]), ParamDefaults::GRAIN_DURATION_DEFAULT);
     ParamHelper::setParam(P_BOOL(common[GRAIN_SYNC]), ParamDefaults::GRAIN_SYNC_DEFAULT);
+    ParamHelper::setParam(P_BOOL(common[REVERSE]), ParamDefaults::REVERSE_DEFAULT);
     for (auto& used : isUsed) { used = false; }
   }
 
@@ -347,7 +355,9 @@ static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GA
   ParamDefaults::POSITION_ADJUST_DEFAULT,
   ParamDefaults::POSITION_SPRAY_DEFAULT,
   ParamDefaults::PAN_ADJUST_DEFAULT,
-  ParamDefaults::PAN_SPRAY_DEFAULT};
+  ParamDefaults::PAN_SPRAY_DEFAULT,
+  (float)ParamDefaults::REVERSE_DEFAULT
+};
 
 static juce::NormalisableRange<float> COMMON_RANGES[ParamCommon::Type::NUM_COMMON] = {ParamRanges::GAIN,
   ParamRanges::ATTACK,
@@ -356,18 +366,20 @@ static juce::NormalisableRange<float> COMMON_RANGES[ParamCommon::Type::NUM_COMMO
   ParamRanges::RELEASE,
   ParamRanges::CUTOFF,
   ParamRanges::RESONANCE,
-  juce::NormalisableRange<float>(),
+  juce::NormalisableRange<float>(), // filter type
   ParamRanges::GRAIN_SHAPE,
   ParamRanges::GRAIN_TILT,
   ParamRanges::GRAIN_RATE,
   ParamRanges::GRAIN_DURATION,
-  juce::NormalisableRange<float>(),
+  juce::NormalisableRange<float>(), // grain sync
   ParamRanges::PITCH_ADJUST,
   ParamRanges::PITCH_SPRAY,
   ParamRanges::POSITION_ADJUST,
   ParamRanges::POSITION_SPRAY,
   ParamRanges::PAN_ADJUST,
-  ParamRanges::PAN_SPRAY};
+  ParamRanges::PAN_SPRAY,
+  juce::NormalisableRange<float>() // reverse
+}; //
 
 namespace ParamHelper {
 [[maybe_unused]] static void setCommonParam(ParamCommon* common, ParamCommon::Type type, float newValue) {

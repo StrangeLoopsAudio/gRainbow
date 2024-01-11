@@ -92,6 +92,7 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                                     ParamRanges::PAN_ADJUST, ParamDefaults::PAN_ADJUST_DEFAULT));
   p.addParameter(common[PAN_SPRAY] = new juce::AudioParameterFloat({ParamIDs::globalPanSpray, 1}, "Master Pan Spray",
                                                                    ParamRanges::PAN_SPRAY, ParamDefaults::PAN_SPRAY_DEFAULT));
+  p.addParameter(common[REVERSE] = new juce::AudioParameterBool({ParamIDs::globalReverse, 1}, ParamIDs::globalReverse, ParamDefaults::REVERSE_DEFAULT));
 }
 
 void ParamGenerator::addParams(juce::AudioProcessor& p) {
@@ -160,6 +161,8 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
                                                                         ParamDefaults::GRAIN_DURATION_DEFAULT));
   juce::String syncId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainSync + juce::String(genIdx);
   p.addParameter(common[GRAIN_SYNC] = new juce::AudioParameterBool({syncId, 1}, syncId, ParamDefaults::GRAIN_SYNC_DEFAULT));
+  juce::String reverseId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genReverse + juce::String(genIdx);
+  p.addParameter(common[REVERSE] = new juce::AudioParameterBool({reverseId, 1}, reverseId, ParamDefaults::REVERSE_DEFAULT));
 }
 
 void ParamNote::addParams(juce::AudioProcessor& p) {
@@ -223,6 +226,7 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
   p.addParameter(common[PAN_SPRAY] =
                      new juce::AudioParameterFloat({notePrefix + ParamIDs::notePanSpray, 1}, notePrefix + ParamIDs::notePanSpray,
                                                    ParamRanges::PAN_SPRAY, ParamDefaults::PAN_SPRAY_DEFAULT));
+  p.addParameter(common[REVERSE] = new juce::AudioParameterBool({notePrefix + ParamIDs::noteReverse, 1}, notePrefix + ParamIDs::noteReverse, ParamDefaults::REVERSE_DEFAULT));
 
   // Then make each of its generators
   for (auto& generator : generators) {

@@ -31,7 +31,7 @@ class Grain {
   float process(float chanPerc, const juce::AudioBuffer<float>& audioBuffer, float gain, int time);
 
   int duration;  // Grain duration in samples
-  float pbRate;  // Playback rate (1.0 being regular speed)
+  float pbRate;  // Playback rate (1.0 being regular speed, -1.0 being regular speed in reverse)
   int startPos;  // Start position in file to play from in samples
   int trigTs;   // Timestamp when grain was triggered in samples
   float gain;  // Grain gain

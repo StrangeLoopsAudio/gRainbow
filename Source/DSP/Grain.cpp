@@ -20,14 +20,19 @@ float Grain::process(float chanPerc, const juce::AudioBuffer<float>& audioBuffer
   const float* fileBuf = audioBuffer.getReadPointer(0);
 
   const float sampleIdx = duration * pbRate * timePerc;
-  const int lowSample = std::floor(sampleIdx);
-  const int highSample = std::ceil(sampleIdx);
-  const float rem = sampleIdx - lowSample;
+  int lowSample = std::floor(sampleIdx);
+  int highSample = std::ceil(sampleIdx);
+  float rem = sampleIdx - lowSample;
+  if (pbRate < 0.0f) {
+    std::swap(lowSample, highSample);
+    rem = std::fabsf(lowSample - sampleIdx);
+    lowSample += audioBuffer.getNumSamples();
+    highSample += audioBuffer.getNumSamples();
+  }
 
   // Some quick interpolation between sample values
   float sample = juce::jmap(rem, fileBuf[(startPos + lowSample) % audioBuffer.getNumSamples()],
                             fileBuf[(startPos + highSample) % audioBuffer.getNumSamples()]);
-
 
   sample *= totalGain;
   return sample;
