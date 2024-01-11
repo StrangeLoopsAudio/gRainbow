@@ -5,7 +5,7 @@
  Created: 01 Jan 2024 8:34:54pm
  Author:  brady
  
- Influenced by but not copied from Surge XT's modulation code
+ Influenced by (but not copied from) Surge XT's modulation code
  
  Made abstract enough to be reasonably portable to other applications
  
@@ -17,7 +17,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_core/juce_core.h>
 #include "Utils/Envelope.h"
-#include <cmath>
+#include <math.h>
 
 // Base class for modulator sources.. processBlock() should be called once per block and the output can be grabbed with getOutput()
 class ModSource {

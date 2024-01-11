@@ -21,7 +21,7 @@ AdjustPanel::AdjustPanel(Parameters& parameters)
       mSliderPosAdjust(parameters, ParamCommon::Type::POS_ADJUST),
       mSliderPosSpray(parameters, ParamCommon::Type::POS_SPRAY),
       mSliderPanAdjust(parameters, ParamCommon::Type::PAN_ADJUST),
-mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY) {
+      mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY) {
   
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
@@ -35,14 +35,14 @@ mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY) {
   }
   
   // Default button settings
-  std::vector<std::reference_wrapper<juce::ToggleButton>> buttons = { mBtnReverse, mBtnTriggerMode };
+  std::vector<std::reference_wrapper<juce::ToggleButton>> buttons = { mBtnReverse };
   for (auto& btn : buttons) {
     btn.get().setColour(juce::ToggleButton::ColourIds::tickColourId, Utils::GLOBAL_COLOUR);
     addAndMakeVisible(btn.get());
   }
   
   // Default label settings
-  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelReverse, mLabelPanSpray, mLabelPanAdjust, mLabelPosSpray, mLabelPosAdjust, mLabelPitchSpray, mLabelPitchAdjust, mLabelTriggerMode };
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelReverse, mLabelPanSpray, mLabelPanAdjust, mLabelPosSpray, mLabelPosAdjust, mLabelPitchSpray, mLabelPitchAdjust };
   for (auto& label : labels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
     label.get().setJustificationType(juce::Justification::centredTop);
@@ -85,12 +85,6 @@ mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY) {
     ParamHelper::setParam(P_BOOL(mCurSelectedParams->common[ParamCommon::Type::REVERSE]), mBtnReverse.getToggleState());
   };
   mLabelReverse.setText("reverse", juce::dontSendNotification);
-  
-  // Trigger mode
-  mBtnTriggerMode.onClick = [this]() {
-    // TODO: set the param
-  };
-  mLabelTriggerMode.setText("trig seq", juce::dontSendNotification);
 
   startTimer(100);
 }
@@ -117,7 +111,6 @@ void AdjustPanel::timerCallback() {
                               juce::dontSendNotification);
     mSliderPanSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PAN_SPRAY),
                              juce::dontSendNotification);
-    // TODO: set value of reverse and trigger mode
     mBtnReverse.setToggleState(mParameters.getBoolParam(mCurSelectedParams, ParamCommon::Type::REVERSE), juce::dontSendNotification);
   }
 }
@@ -135,7 +128,6 @@ void AdjustPanel::updateSelectedParams() {
   mSliderPanAdjust.updateSelectedParams();
   mSliderPanSpray.updateSelectedParams();
   mBtnReverse.setColour(juce::ToggleButton::ColourIds::tickColourId, mParamColour);
-  mBtnTriggerMode.setColour(juce::ToggleButton::ColourIds::tickColourId, mParamColour);
 
   mParamHasChanged.store(true);
   repaint();
@@ -161,8 +153,6 @@ void AdjustPanel::resized() {
                                knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   // Trigger mode button
   knobPanel.removeFromBottom(Utils::PADDING);
-  mLabelTriggerMode.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mBtnTriggerMode.setBounds(knobPanel.withSizeKeepingCentre(Utils::BUTTON_WIDTH, Utils::LABEL_HEIGHT));
   
   // Right: Position spray/adjust and ref tone
   knobPanel = r.removeFromRight(knobWidth);

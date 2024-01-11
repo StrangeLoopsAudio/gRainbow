@@ -54,8 +54,6 @@ class AdjustPanel : public juce::Component, juce::AudioProcessorParameter::Liste
   juce::Label mLabelPanSpray;
   juce::ToggleButton mBtnReverse;
   juce::Label mLabelReverse;
-  juce::ToggleButton mBtnTriggerMode;
-  juce::Label mLabelTriggerMode;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AdjustPanel)
 };
