@@ -13,6 +13,7 @@
 #include "BinaryData.h"
 #include "Utils/Colour.h"
 #include "Utils/MidiNote.h"
+#include "Utils/DSP.h"
 
 // Used for getting memory usage
 #ifdef __linux__
@@ -134,7 +135,7 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
     } else {
       mParameters.ui.trimPlaybackOn = false;
       mSynth.resetParameters();
-      mSynth.trimAudioBuffer(mSynth.getInputBuffer(), mSynth.getAudioBuffer(), juce::Range<juce::int64>(start, end));
+      Utils::trimAudioBuffer(mSynth.getInputBuffer(), mSynth.getAudioBuffer(), juce::Range<juce::int64>(start, end));
       mSynth.extractSpectrograms();
       mSynth.extractPitches();
       // Reset any UI elements that will need to wait until processing

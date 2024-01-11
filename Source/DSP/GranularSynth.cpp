@@ -29,8 +29,9 @@ GranularSynth::GranularSynth()
 #endif
       ,
       // only care about tracking the processing of the DSP, not the spectrogram
-      mFft(FFT_SIZE, HOP_SIZE, 0, 0),
-      mPitchDetector(0.01, 1.0) {
+      mFft(FFT_SIZE, HOP_SIZE),
+      mThreadPool(1) {
+
   mParameters.note.addParams(*this);
   mParameters.global.addParams(*this);
 
@@ -52,7 +53,7 @@ GranularSynth::GranularSynth()
 
   mPitchDetector.onPitchesReady = [this](PitchDetector::PitchMap& pitchMap, Utils::SpecBuffer& pitchSpec) {
     mProcessedSpecs[ParamUI::SpecType::DETECTED] = &pitchSpec;
-    createCandidates(pitchMap);
+    createCandidates();
     mPitchDetector.clear();
   };
 
@@ -116,18 +117,18 @@ void GranularSynth::changeProgramName(int, const juce::String&) {}
 
 //==============================================================================
 void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
-    if (mNeedsResample) {
+  if (mNeedsResample) {
     // File loaded from state but couldn't resample and trim until now
     // Make a temporary buffer copy for resampling
     juce::AudioSampleBuffer inputBuffer = mInputBuffer;
-    resampleAudioBuffer(inputBuffer, mInputBuffer, mSampleRate, sampleRate);
-
+    resampleSynthBuffer(inputBuffer, mInputBuffer, mSampleRate, sampleRate);
+    
     // Convert time to sample range
     const double sampleLength = static_cast<double>(mInputBuffer.getNumSamples());
     const double secondLength = sampleLength / sampleRate;
     juce::int64 start = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getStart() / secondLength));
     juce::int64 end = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getEnd() / secondLength));
-    trimAudioBuffer(mInputBuffer, mAudioBuffer, juce::Range<juce::int64>(start, end));
+    Utils::trimAudioBuffer(mInputBuffer, mAudioBuffer, juce::Range<juce::int64>(start, end));
     mInputBuffer.clear();
     mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
     mNeedsResample = false;
@@ -563,12 +564,12 @@ Utils::Result GranularSynth::loadAudioFile(juce::File file, bool process) {
   }
 
   if (process) {
-    resampleAudioBuffer(fileAudioBuffer, mInputBuffer, formatReader->sampleRate, mSampleRate);
+    resampleSynthBuffer(fileAudioBuffer, mInputBuffer, formatReader->sampleRate, mSampleRate);
     // processAudioBuffer() will be called after trimming in UI, so we don't have to do it here
   }
   else {
     if (mSampleRate != INVALID_SAMPLE_RATE) {
-      resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, formatReader->sampleRate, mSampleRate);
+      resampleSynthBuffer(fileAudioBuffer, mAudioBuffer, formatReader->sampleRate, mSampleRate);
       mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
     }
     else {
@@ -654,7 +655,7 @@ Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& bl
   }
 
   if (mSampleRate != INVALID_SAMPLE_RATE) {
-    resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
+    Utils::resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
   } else {
     mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
     mSampleRate = sampleRate;        // A bit hacky, but we need to store the file's sample rate for resampling
@@ -667,56 +668,24 @@ Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& bl
   return {true, ""};
 }
 
-void GranularSynth::resampleAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
-                                        double inputSampleRate, double outputSampleRate, bool clearInput) {
-  // resamples the buffer from the file sampler rate to the the proper sampler
-  // rate set from the DAW in prepareToPlay.
-  const double ratioToInput = inputSampleRate / outputSampleRate;   // input / output
-  const double ratioToOutput = outputSampleRate / inputSampleRate;  // output / input
-  // The output buffer needs to be size that matches the new sample rate
-  const int resampleSize = static_cast<int>(static_cast<double>(inputBuffer.getNumSamples()) * ratioToOutput);
-  mParameters.ui.trimPlaybackMaxSample = resampleSize;
-  outputBuffer.setSize(inputBuffer.getNumChannels(), resampleSize);
-
-  const float* const* inputs = inputBuffer.getArrayOfReadPointers();
-  float* const* outputs = outputBuffer.getArrayOfWritePointers();
-
-  std::unique_ptr<juce::LagrangeInterpolator> resampler = std::make_unique<juce::LagrangeInterpolator>();
-  for (int c = 0; c < outputBuffer.getNumChannels(); c++) {
-    resampler->reset();
-    resampler->process(ratioToInput, inputs[c], outputs[c], outputBuffer.getNumSamples());
-  }
-  if (clearInput) inputBuffer.setSize(1, 1);
-}
-
-void GranularSynth::trimAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
-                                    juce::Range<juce::int64> range, bool clearInput) {
-  if (range.isEmpty()) {
-    outputBuffer.setSize(inputBuffer.getNumChannels(), inputBuffer.getNumSamples());
-    outputBuffer.makeCopyOf(inputBuffer);
-  } else {
-    juce::AudioBuffer<float> fileAudioBuffer;
-    const int sampleLength = static_cast<int>(range.getLength());
-    outputBuffer.setSize(inputBuffer.getNumChannels(), sampleLength);
-    for (int c = 0; c < inputBuffer.getNumChannels(); c++) {
-      outputBuffer.copyFrom(c, 0, inputBuffer, c, range.getStart(), sampleLength);
-    }
-  }
-  if (clearInput) inputBuffer.setSize(1, 1);
-}
-
 void GranularSynth::extractPitches() {
   // Cancel processing if in progress
-  mPitchDetector.cancelProcessing();
   mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
-  mPitchDetector.process(&mAudioBuffer, mSampleRate);
+  mThreadPool.addJob([this]() {
+    // TODO: resample audio and transcribe
+    mPitchDetector.transcribeToMIDI(
+                                    getSourceAudioManager()->getDownsampledSourceAudioForTranscription().getWritePointer(0),
+                                    getSourceAudioManager()->getNumSamplesDownAcquired());
+  });
+//  mPitchDetector.process(&mAudioBuffer, mSampleRate);
 }
 
 void GranularSynth::extractSpectrograms() {
-  // Cancel processing if in progress
-  mFft.stopThread(4000);
-  mProcessedSpecs.fill(nullptr);
-  mFft.process(&mAudioBuffer);
+  mThreadPool.addJob([this]() {
+    mProcessedSpecs.fill(nullptr);
+    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = &mFft.process(&mAudioBuffer);;
+    mFft.clear(false);
+  });
 }
 
 std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
@@ -729,6 +698,15 @@ std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
     }
   }
   return candidates;
+}
+
+void GranularSynth::resampleSynthBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
+                                        double inputSampleRate, double outputSampleRate, bool clearInput) {
+  Utils::resampleAudioBuffer(inputBuffer, mInputBuffer, mSampleRate, sampleRate);
+  const double ratioToOutput = outputSampleRate / inputSampleRate;  // output / input
+  // The output buffer needs to be size that matches the new sample rate
+  const int resampleSize = static_cast<int>(static_cast<double>(inputBuffer.getNumSamples()) * ratioToOutput);
+  mParameters.ui.trimPlaybackMaxSample = resampleSize;
 }
 
 void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumber, float velocity) {
@@ -783,47 +761,47 @@ void GranularSynth::resetParameters(bool fullClear) {
   mParameters.global.resetParams();
 }
 
-void GranularSynth::createCandidates(juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>& detectedPitches) {
-  // Add candidates for each pitch class
-  for (auto&& note : mParameters.note.notes) {
-    // Look for detected pitches with correct pitch and good gain
-    bool foundAll = false;
-    int numFound = 0;
-    int numSearches = 0;
-
-    while (!foundAll) {
-      int noteMin = note->noteIdx - numSearches;
-      int noteMax = note->noteIdx + numSearches;
-      // Check low note
-      std::vector<PitchDetector::Pitch>& pitchVec = detectedPitches.getReference((Utils::PitchClass)(noteMin % 12));
-      float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
-      for (size_t i = 0; i < pitchVec.size(); ++i) {
-        if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
-        note->candidates.emplace_back(ParamCandidate(pitchVec[i].posRatio, pbRate, pitchVec[i].duration, pitchVec[i].gain));
-        numFound++;
-        if (numFound >= MAX_CANDIDATES) {
-          foundAll = true;
-          break;
-        }
-      }
-      // Check high note if we haven't filled up the list yet
-      if (!foundAll && numSearches > 0) {
-        std::vector<PitchDetector::Pitch>& pitchVec2 = detectedPitches.getReference((Utils::PitchClass)(noteMax % 12));
-        float pbRate2 = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
-        for (size_t i = 0; i < pitchVec2.size(); ++i) {
-          if (pitchVec2[i].gain < MIN_CANDIDATE_SALIENCE) continue;
-          note->candidates.emplace_back(ParamCandidate(pitchVec2[i].posRatio, pbRate2, pitchVec2[i].duration, pitchVec2[i].gain));
-          numFound++;
-          if (numFound >= MAX_CANDIDATES) {
-            foundAll = true;
-            break;
-          }
-        }
-      }
-      numSearches++;
-      if (numSearches >= 6 || foundAll) break;
-    }
-
-    note->setStartingCandidatePosition();
-  }
+void GranularSynth::createCandidates() {
+//  // Add candidates for each pitch class
+//  for (auto&& note : mParameters.note.notes) {
+//    // Look for detected pitches with correct pitch and good gain
+//    bool foundAll = false;
+//    int numFound = 0;
+//    int numSearches = 0;
+//
+//    while (!foundAll) {
+//      int noteMin = note->noteIdx - numSearches;
+//      int noteMax = note->noteIdx + numSearches;
+//      // Check low note
+//      std::vector<PitchDetector::Pitch>& pitchVec = detectedPitches.getReference((Utils::PitchClass)(noteMin % 12));
+//      float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
+//      for (size_t i = 0; i < pitchVec.size(); ++i) {
+//        if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
+//        note->candidates.emplace_back(ParamCandidate(pitchVec[i].posRatio, pbRate, pitchVec[i].duration, pitchVec[i].gain));
+//        numFound++;
+//        if (numFound >= MAX_CANDIDATES) {
+//          foundAll = true;
+//          break;
+//        }
+//      }
+//      // Check high note if we haven't filled up the list yet
+//      if (!foundAll && numSearches > 0) {
+//        std::vector<PitchDetector::Pitch>& pitchVec2 = detectedPitches.getReference((Utils::PitchClass)(noteMax % 12));
+//        float pbRate2 = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
+//        for (size_t i = 0; i < pitchVec2.size(); ++i) {
+//          if (pitchVec2[i].gain < MIN_CANDIDATE_SALIENCE) continue;
+//          note->candidates.emplace_back(ParamCandidate(pitchVec2[i].posRatio, pbRate2, pitchVec2[i].duration, pitchVec2[i].gain));
+//          numFound++;
+//          if (numFound >= MAX_CANDIDATES) {
+//            foundAll = true;
+//            break;
+//          }
+//        }
+//      }
+//      numSearches++;
+//      if (numSearches >= 6 || foundAll) break;
+//    }
+//
+//    note->setStartingCandidatePosition();
+//  }
 }

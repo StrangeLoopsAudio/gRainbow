@@ -14,8 +14,6 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 namespace Utils {
-typedef std::vector<std::vector<float>> SpecBuffer;
-
 // UI refresh timer interval (for updating sliders/displays when host changes their value)
 static constexpr int UI_REFRESH_INTERVAL = 20; // Interval in ms
 

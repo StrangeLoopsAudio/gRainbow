@@ -13,9 +13,12 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 
 #include "Grain.h"
-#include "PitchDetector.h"
+#include "PitchDetection/BasicPitch.h"
+#include "DSP/Fft.h"
+#include "DSP/HPCP.h"
 #include "Parameters.h"
 #include "Utils/Utils.h"
+#include "Utils/DSP.h"
 #include "Utils/MidiNote.h"
 #include <bitset>
 #include "ff_meters/ff_meters.h"
@@ -92,12 +95,6 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   Utils::Result loadAudioFile(juce::File file, bool process);
   Utils::Result loadPreset(juce::File file);
   Utils::Result loadPreset(juce::String name, juce::MemoryBlock& block);
-  // Audio buffer processing
-  void resampleAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer, double inputSampleRate,
-                           double outputSampleRate, bool clearInput = false);
-
-  void trimAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
-                       juce::Range<juce::int64> range, bool clearInput = false);
 
   void extractPitches();
   void extractSpectrograms();
@@ -158,7 +155,10 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
 
   // DSP-preprocessing
   Fft mFft;
-  PitchDetector mPitchDetector;
+  HPCP mHPCP;
+  BasicPitch mPitchDetector;
+  // Thread pool to run ML in background thread
+  juce::ThreadPool mThreadPool;
 
   // Bookkeeping
   juce::AudioBuffer<float> mInputBuffer;  // incoming buffer from file or other source
@@ -190,8 +190,10 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   // Parameters
   Parameters mParameters;
 
+  void resampleSynthBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
+                           double inputSampleRate, double outputSampleRate, bool clearInput);
   void handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
   void handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
   void handleGrainAddRemove(int blockSize);
-  void createCandidates(juce::HashMap<Utils::PitchClass, std::vector<PitchDetector::Pitch>>& detectedPitches);
+  void createCandidates();
 };

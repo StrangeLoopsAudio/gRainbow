@@ -13,7 +13,7 @@
     and
 
     Melody Extraction Using Chroma-Level Note Tracking and Pitch Mapping
-    Weiwei Zhang , Zhe Chen and Fuliang Yin 2018
+    Weiwei Zhang, Zhe Chen and Fuliang Yin 2018
 
     http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.8192&rep=rep1&type=pdf
 
@@ -29,7 +29,7 @@
 
 #include <juce_core/juce_core.h>
 
-#include "Fft.h"
+#include "../Fft.h"
 #include "Utils/Utils.h"
 #include "Utils/PitchClass.h"
 

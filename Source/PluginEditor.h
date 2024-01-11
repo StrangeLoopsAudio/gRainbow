@@ -28,9 +28,9 @@
 #include "Components/RainbowLookAndFeel.h"
 #include "DSP/AudioRecorder.h"
 #include "DSP/Fft.h"
-#include "DSP/TransientDetector.h"
 #include "DSP/GranularSynth.h"
 #include "Utils/Utils.h"
+#include "Utils/DSP.h"
 
 //==============================================================================
 /**

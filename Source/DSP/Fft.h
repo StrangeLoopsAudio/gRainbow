@@ -15,32 +15,21 @@
 #include <juce_core/juce_core.h>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_dsp/juce_dsp.h>
-#include "Utils/Utils.h"
+#include "Utils/DSP.h"
 
-class Fft : public juce::Thread {
+class Fft {
  public:
-  Fft(int windowSize, int hopSize, double startProgress, double endProgress);
+  Fft(int windowSize, int hopSize);
   ~Fft();
 
-  void run() override;
-  // Clear any data not used after lifetime of run()
   void clear(bool clearData);
 
-  void process(const juce::AudioBuffer<float>* audioBuffer);
+  Utils::SpecBuffer& process(const juce::AudioBuffer<float>* audioBuffer);
   const Utils::SpecBuffer& getSpectrum() { return mFftData; }
-
-  std::function<void(Utils::SpecBuffer& spectrum)> onProcessingComplete = nullptr;
-  std::function<void(double progress)> onProgressUpdated = nullptr;
 
  private:
   // pointer to buffer to read from
   const juce::AudioBuffer<float>* mInputBuffer = nullptr;
-
-  // Used to show far along the run thread is
-  void updateProgress(double progress);
-  double mStartProgress;
-  double mEndProgress;
-  double mDiffProgress;
 
   // values passed in at creation time
   int mWindowSize;

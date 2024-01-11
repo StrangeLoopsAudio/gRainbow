@@ -41,11 +41,15 @@ set_property(GLOBAL PROPERTY USE_FOLDERS YES)
 # Create a /Modules directory in the IDE with the JUCE Module code
 option(JUCE_ENABLE_MODULE_SOURCE_GROUPS "Show all module sources in IDE projects" ON)
 
+
+
 # JUCE is setup as a submodule in the /JUCE folder
 # Locally, you'll need to run `git submodule update --init --recursive` once
 # and `git submodule update --remote --merge` to keep it up to date
 # On Github Actions, it's managed by actions/checkout
 add_subdirectory(external/JUCE)
+
+add_subdirectory(external/RTNeural)
 
 juce_add_module(${CMAKE_CURRENT_SOURCE_DIR}/external/ff_meters)
 
@@ -85,6 +89,7 @@ set(SOURCE_UTILS
     Source/Utils/MidiNote.h
     Source/Utils/PitchClass.h
     Source/Utils/Presets.h
+    Source/Utils/DSP.h
 )
 
 # Manually list all .h and .cpp files for the plugin
@@ -130,16 +135,22 @@ set(SOURCE_COMPONENTS
 set(SOURCE_DSP
     Source/DSP/AudioRecorder.h
     Source/DSP/AudioRecorder.cpp
-    Source/DSP/TransientDetector.h
-    Source/DSP/TransientDetector.cpp
-    Source/DSP/PitchDetector.h
-    Source/DSP/PitchDetector.cpp
     Source/DSP/Fft.h
     Source/DSP/Fft.cpp
+    Source/DSP/HPCP.h
+    Source/DSP/HPCP.cpp
     Source/DSP/Grain.h
     Source/DSP/Grain.cpp
     Source/DSP/GranularSynth.h
     Source/DSP/GranularSynth.cpp
+    Source/DSP/PitchDetection/BasicPitch.h
+    Source/DSP/PitchDetection/BasicPitch.cpp
+    Source/DSP/PitchDetection/BasicPitchConstants.h
+    Source/DSP/PitchDetection/Features.h
+    Source/DSP/PitchDetection/Features.cpp
+    Source/DSP/PitchDetection/Notes.h
+    Source/DSP/PitchDetection/Notes.cpp
+    Source/DSP/PitchDetection/Utils.h
 )
 
 set(SOURCE_PLUGIN
@@ -196,6 +207,7 @@ set(BINARY_RESOURCES
     Source/Resources/infoOver.png
     Source/Resources/rain.png
     Source/Resources/LeagueSpartan-SemiBold.ttf
+    Source/Resources/features_model.ort
 )
 
 # Set preset paths (also binary resources)
@@ -204,6 +216,39 @@ file(GLOB PRESETS "presets/*")
 list(APPEND BINARY_RESOURCES ${PRESETS})
 
 juce_add_binary_data(Assets SOURCES ${BINARY_RESOURCES})
+
+add_library(BasicPitchCNN STATIC ${CMAKE_CURRENT_LIST_DIR}/Source/DSP/PitchDetection/BasicPitchCNN.cpp)
+target_include_directories(BasicPitchCNN PRIVATE ${CMAKE_CURRENT_LIST_DIR}/external/RTNeural)
+
+if ((CMAKE_BUILD_TYPE STREQUAL "Debug") AND RTNeural_Release)
+    if (MSVC)
+        target_compile_options(BasicPitchCNN PUBLIC /O2) # or maybe /Ox
+    else () # clang or gcc
+        target_compile_options(BasicPitchCNN PUBLIC -O3) # or maybe -Ofast
+    endif ()
+endif ()
+target_link_libraries(BasicPitchCNN PUBLIC RTNeural Assets)
+
+# ONNX Runtime static library
+target_include_directories(gRainbow PRIVATE ${CMAKE_CURRENT_LIST_DIR}/ONNXRuntime/include)
+add_library(onnxruntime STATIC IMPORTED)
+
+if (APPLE)
+    set_property(TARGET onnxruntime PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime/lib/libonnxruntime.a)
+
+elseif (WIN32)
+    set_property(TARGET onnxruntime APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+
+    set_target_properties(onnxruntime PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
+            IMPORTED_LOCATION_RELEASE "${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime/lib/onnxruntime.lib"
+    )
+    set_target_properties(onnxruntime PROPERTIES
+            MAP_IMPORTED_CONFIG_DEBUG Release
+            MAP_IMPORTED_CONFIG_MINSIZEREL Release
+            MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+    )
+endif ()
 
 # Required for Linux happiness:
 # See https://forum.juce.com/t/loading-pytorch-model-using-binarydata/39997/2
@@ -253,6 +298,7 @@ target_link_libraries(gRainbow
     PRIVATE
     Assets
     ${JUCE_DEPENDENCIES}
+    onnxruntime
     PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
