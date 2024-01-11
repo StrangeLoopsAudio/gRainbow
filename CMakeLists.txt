@@ -237,6 +237,8 @@ set(JUCE_DEPENDENCIES
     juce::juce_audio_utils
     juce::juce_dsp
     ff_meters)
+    
+add_compile_definitions(_USE_MATH_DEFINES)
 
 target_compile_definitions(gRainbow
     PUBLIC

@@ -12,7 +12,7 @@
 
 #include <juce_core/juce_core.h>
 #include <juce_dsp/juce_dsp.h>
-
+#include <cmath>
 #include "Utils/Utils.h"
 #include "Utils/Colour.h"
 #include "Utils/PitchClass.h"

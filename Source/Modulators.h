@@ -17,6 +17,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_core/juce_core.h>
 #include "Utils/Envelope.h"
+#include <cmath>
 
 // Base class for modulator sources.. processBlock() should be called once per block and the output can be grabbed with getOutput()
 class ModSource {
