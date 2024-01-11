@@ -157,6 +157,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   Fft mFft;
   HPCP mHPCP;
   BasicPitch mPitchDetector;
+  juce::AudioBuffer<float> mDownsampledAudio; // Used for feeding into pitch detector
   // Thread pool to run ML in background thread
   juce::ThreadPool mThreadPool;
 
@@ -191,7 +192,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   Parameters mParameters;
 
   void resampleSynthBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
-                           double inputSampleRate, double outputSampleRate, bool clearInput);
+                           double inputSampleRate, double outputSampleRate, bool clearInput = false);
   void handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
   void handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
   void handleGrainAddRemove(int blockSize);

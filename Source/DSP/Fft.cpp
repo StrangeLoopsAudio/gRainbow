@@ -27,7 +27,7 @@ void Fft::clear(bool clearData) {
   }
 }
 
-Utils::SpecBuffer& Fft::process(const juce::AudioBuffer<float>* audioBuffer) {
+Utils::SpecBuffer* Fft::process(const juce::AudioBuffer<float>* audioBuffer) {
   mInputBuffer = audioBuffer;
   clear(true);
   // Runs with first channel
@@ -69,5 +69,5 @@ Utils::SpecBuffer& Fft::process(const juce::AudioBuffer<float>* audioBuffer) {
     }
   }
   
-  return mFftData;
+  return &mFftData;
 }

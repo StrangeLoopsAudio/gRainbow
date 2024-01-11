@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.4)
 
+set(CMAKE_CXX_STANDARD 14)
+
 # Set the plugin formats you'll be building here.
 # Valid formats: AAX Unity VST AU AUv3 Standalone
 set(FORMATS VST3 Standalone)
@@ -41,6 +43,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS YES)
 # Create a /Modules directory in the IDE with the JUCE Module code
 option(JUCE_ENABLE_MODULE_SOURCE_GROUPS "Show all module sources in IDE projects" ON)
 
+option(RTNeural_Release "When CMAKE_BUILD_TYPE=Debug, overwrite it to Release for RTNeural only" OFF)
 
 
 # JUCE is setup as a submodule in the /JUCE folder
@@ -207,6 +210,10 @@ set(BINARY_RESOURCES
     Source/Resources/infoOver.png
     Source/Resources/rain.png
     Source/Resources/LeagueSpartan-SemiBold.ttf
+    Source/Resources/cnn_contour_model.json
+    Source/Resources/cnn_note_model.json
+    Source/Resources/cnn_onset_1_model.json
+    Source/Resources/cnn_onset_2_model.json
     Source/Resources/features_model.ort
 )
 
@@ -298,6 +305,7 @@ target_link_libraries(gRainbow
     PRIVATE
     Assets
     ${JUCE_DEPENDENCIES}
+    BasicPitchCNN
     onnxruntime
     PUBLIC
     juce::juce_recommended_config_flags

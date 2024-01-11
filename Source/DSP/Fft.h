@@ -24,8 +24,8 @@ class Fft {
 
   void clear(bool clearData);
 
-  Utils::SpecBuffer& process(const juce::AudioBuffer<float>* audioBuffer);
-  const Utils::SpecBuffer& getSpectrum() { return mFftData; }
+  Utils::SpecBuffer* process(const juce::AudioBuffer<float>* audioBuffer);
+  Utils::SpecBuffer* getSpectrum() { return &mFftData; }
 
  private:
   // pointer to buffer to read from

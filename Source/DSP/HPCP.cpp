@@ -14,15 +14,16 @@ void HPCP::clear() {
   mHPCP.clear();
 }
 
-Utils::SpecBuffer& HPCP::process(Utils::SpecBuffer& spec, double sampleRate) {
+Utils::SpecBuffer* HPCP::process(Utils::SpecBuffer* spec, double sampleRate) {
+  if (!spec) return nullptr;
   mHPCP.clear();
   mSampleRate = sampleRate;
 
-  for (size_t frame = 0; frame < spec.size(); ++frame) {
-//    updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(frame) / static_cast<double>(spec.size()))));
+  for (size_t frame = 0; frame < spec->size(); ++frame) {
+//    updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(frame) / static_cast<double>(spec->size()))));
     mHPCP.emplace_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
     
-    const std::vector<float>& specFrame = spec[frame];
+    std::vector<float>& specFrame = (*spec)[frame];
     
     // Find local peaks to compute HPCP with
     std::vector<Peak> peaks = getPeaks(MAX_SPEC_PEAKS, specFrame);
@@ -63,7 +64,7 @@ Utils::SpecBuffer& HPCP::process(Utils::SpecBuffer& spec, double sampleRate) {
       std::fill(mHPCP[frame].begin(), mHPCP[frame].end(), 0.0f);
     }
   }
-  return mHPCP;
+  return &mHPCP;
 }
 
 // From essentia:
@@ -101,7 +102,7 @@ void HPCP::initHarmonicWeights() {
   }
 }
 
-std::vector<HPCP::Peak> HPCP::getPeaks(int numPeaks, const std::vector<float>& frame) {
+std::vector<HPCP::Peak> HPCP::getPeaks(int numPeaks, std::vector<float>& frame) {
   int size = frame.size();
   const float scale = 1.0 / (float)(size - 1);
   
@@ -179,23 +180,6 @@ std::vector<HPCP::Peak> HPCP::getPeaks(int numPeaks, const std::vector<float>& f
   int nWantedPeaks = juce::jmin(numPeaks, (int)peaks.size());
   std::sort(peaks.begin(), peaks.end(), [](Peak self, Peak other) { return self.gain > other.gain; });
   return std::vector<Peak>(peaks.begin(), peaks.begin() + nWantedPeaks);
-}
-
-HPCP::Peak HPCP::interpolatePeak(Utils::SpecBuffer& spec, int frame, int bin) {
-  // Use quadratic interpolation to find peak freq and amplitude
-  const int frameSize = spec[frame].size();
-  if (bin == 0 || bin == frameSize - 1) {
-    return Peak((bin * mSampleRate) / frameSize, spec[frame][bin]);
-  }
-  float a = 20 * std::log10(spec[frame][bin - 1]);
-  float b = 20 * std::log10(spec[frame][bin]);
-  float c = 20 * std::log10(spec[frame][bin + 1]);
-  
-  float p = 0.5f * (a - c) / (a - (2.0f * b) + c);
-  float interpBin = bin + p;
-  float freq = (interpBin * mSampleRate) / frameSize;
-  float gainDB = b - (0.25 * (a - c) * p);
-  return Peak(freq, juce::jlimit(0.0, 1.0, std::pow(10, gainDB / 20.0f)));
 }
 
 /**

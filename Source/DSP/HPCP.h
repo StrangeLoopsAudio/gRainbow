@@ -23,8 +23,8 @@ class HPCP {
 
   void clear();
 
-  Utils::SpecBuffer& process(Utils::SpecBuffer& fft, double sampleRate);
-  const Utils::SpecBuffer& getHPCP() { return mHPCP; }
+  Utils::SpecBuffer* process(Utils::SpecBuffer* fft, double sampleRate);
+  Utils::SpecBuffer* getHPCP() { return &mHPCP; }
 
  private:
   // Spectral Whitening
@@ -56,13 +56,9 @@ class HPCP {
   } HarmonicWeight;
   
   void initHarmonicWeights();
-  std::vector<Peak> getPeaks(int numPeaks, const std::vector<float>& frame);
-  Peak interpolatePeak(Utils::SpecBuffer& spec, int frame, int bin);
+  std::vector<Peak> getPeaks(int numPeaks, std::vector<float>& frame);
   void interpolatePeak(const float leftVal, const float middleVal, const float rightVal, int currentBin, float& resultVal,
                        float& resultBin) const;
-  
-  // pointer to buffer to read from
-  const juce::AudioBuffer<float>* mInputBuffer = nullptr;
 
   // HPCP fields
   double mSampleRate;

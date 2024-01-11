@@ -10,8 +10,6 @@ typedef std::vector<std::vector<float>> SpecBuffer;
 // Audio buffer processing
 static void resampleAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
                                         double inputSampleRate, double outputSampleRate, bool clearInput = false) {
-  // resamples the buffer from the file sampler rate to the the proper sampler
-  // rate set from the DAW in prepareToPlay.
   const double ratioToInput = inputSampleRate / outputSampleRate;   // input / output
   const double ratioToOutput = outputSampleRate / inputSampleRate;  // output / input
   // The output buffer needs to be size that matches the new sample rate

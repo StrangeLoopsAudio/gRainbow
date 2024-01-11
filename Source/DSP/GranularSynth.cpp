@@ -42,23 +42,6 @@ GranularSynth::GranularSynth()
 
   mFormatManager.registerBasicFormats();
 
-  mFft.onProcessingComplete = [this](Utils::SpecBuffer& spectrum) {
-    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = &spectrum;
-    mFft.clear(false);
-  };
-
-  mPitchDetector.onHarmonicProfileReady = [this](Utils::SpecBuffer& hpcpBuffer) {
-    mProcessedSpecs[ParamUI::SpecType::HPCP] = &hpcpBuffer;
-  };
-
-  mPitchDetector.onPitchesReady = [this](PitchDetector::PitchMap& pitchMap, Utils::SpecBuffer& pitchSpec) {
-    mProcessedSpecs[ParamUI::SpecType::DETECTED] = &pitchSpec;
-    createCandidates();
-    mPitchDetector.clear();
-  };
-
-  mPitchDetector.onProgressUpdated = [this](double progress) { mParameters.ui.loadingProgress = progress; };
-
   mReferenceTone.setAmplitude(0.0f);
 
   resetParameters();
@@ -669,21 +652,18 @@ Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& bl
 }
 
 void GranularSynth::extractPitches() {
-  // Cancel processing if in progress
   mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
   mThreadPool.addJob([this]() {
-    // TODO: resample audio and transcribe
-    mPitchDetector.transcribeToMIDI(
-                                    getSourceAudioManager()->getDownsampledSourceAudioForTranscription().getWritePointer(0),
-                                    getSourceAudioManager()->getNumSamplesDownAcquired());
+    mPitchDetector.transcribeToMIDI(mDownsampledAudio.getWritePointer(0),
+                                    mDownsampledAudio.getNumSamples());
   });
-//  mPitchDetector.process(&mAudioBuffer, mSampleRate);
 }
 
 void GranularSynth::extractSpectrograms() {
   mThreadPool.addJob([this]() {
     mProcessedSpecs.fill(nullptr);
-    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = &mFft.process(&mAudioBuffer);;
+    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = mFft.process(&mAudioBuffer);;
+    mProcessedSpecs[ParamUI::SpecType::HPCP] = mHPCP.process(mFft.getSpectrum(), mSampleRate);;
     mFft.clear(false);
   });
 }
@@ -702,7 +682,13 @@ std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
 
 void GranularSynth::resampleSynthBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
                                         double inputSampleRate, double outputSampleRate, bool clearInput) {
-  Utils::resampleAudioBuffer(inputBuffer, mInputBuffer, mSampleRate, sampleRate);
+  // resamples the buffer from the file sampler rate to the the proper sampler
+  // rate set from the DAW in prepareToPlay.
+  Utils::resampleAudioBuffer(inputBuffer, outputBuffer, inputSampleRate, outputSampleRate);
+  
+  // Resamples the audio buffer for feeding into the pitch detector
+  Utils::resampleAudioBuffer(inputBuffer, mDownsampledAudio, inputSampleRate, BASIC_PITCH_SAMPLE_RATE);
+
   const double ratioToOutput = outputSampleRate / inputSampleRate;  // output / input
   // The output buffer needs to be size that matches the new sample rate
   const int resampleSize = static_cast<int>(static_cast<double>(inputBuffer.getNumSamples()) * ratioToOutput);
