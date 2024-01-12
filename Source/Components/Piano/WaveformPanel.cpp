@@ -174,7 +174,7 @@ void WaveformPanel::updateWaveBars() {
   // Populate wave bar magnitudes
   int curSample = mZoomRange.getStart();
   for (auto& bar : mWaveBars) {
-    float magnitude = (curSample > 0 && curSample < mBuffer.getNumSamples()) ? mBuffer.getMagnitude(0, curSample, mSamplesPerBar) : 0.0f;
+    float magnitude = (curSample > 0 && (curSample + mSamplesPerBar) < mBuffer.getNumSamples()) ? mBuffer.getMagnitude(0, curSample, mSamplesPerBar) : 0.0f;
     bar = WaveBar(magnitude);
     if (candidate) {
       // Color the bars within candidate area

@@ -74,6 +74,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   ArcSpectrogram mArcSpec;
   TrimSelection mTrimSelection;
   juce::ProgressBar mProgressBar;
+  double PROGRESS_VALUE = -1.0; // Makes indeterminate spinning, shouldn't change
 
   // UI Components
   TitlePresetPanel mTitlePresetPanel;

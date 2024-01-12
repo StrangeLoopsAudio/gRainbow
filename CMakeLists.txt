@@ -40,11 +40,14 @@ SET(GRAINBOW_BINARY_NAME "${CMAKE_PROJECT_NAME}" CACHE STRING "Override plugin n
 # https://github.com/juce-framework/JUCE/commit/6b1b4cf7f6b1008db44411f2c8887d71a3348889
 set_property(GLOBAL PROPERTY USE_FOLDERS YES)
 
+# OPTIONS -------
+
 # Create a /Modules directory in the IDE with the JUCE Module code
 option(JUCE_ENABLE_MODULE_SOURCE_GROUPS "Show all module sources in IDE projects" ON)
 
 option(RTNeural_Release "When CMAKE_BUILD_TYPE=Debug, overwrite it to Release for RTNeural only" OFF)
 
+# ---------------
 
 # JUCE is setup as a submodule in the /JUCE folder
 # Locally, you'll need to run `git submodule update --init --recursive` once

@@ -32,7 +32,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mParameters(synth.getParams()),
       mArcSpec(synth.getParams()),
       mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
-      mProgressBar(mParameters.ui.loadingProgress),
+      mProgressBar(PROGRESS_VALUE),
       mTabsEnvelopes(juce::TabbedButtonBar::Orientation::TabsAtTop),
       mTabsFx(juce::TabbedButtonBar::Orientation::TabsAtTop),
       mTabsModulators(juce::TabbedButtonBar::Orientation::TabsAtTop),
@@ -136,7 +136,6 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
       mParameters.ui.trimPlaybackOn = false;
       mSynth.resetParameters();
       Utils::trimAudioBuffer(mSynth.getInputBuffer(), mSynth.getAudioBuffer(), juce::Range<juce::int64>(start, end));
-      mSynth.extractSpectrograms();
       mSynth.extractPitches();
       // Reset any UI elements that will need to wait until processing
       mArcSpec.reset();
@@ -230,7 +229,7 @@ void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponen
 void GRainbowAudioProcessorEditor::timerCallback() {
   // Update progress bar when loading audio clip
   // Will overlay on the other center components
-  if (mParameters.ui.loadingProgress < 1.0 && mParameters.ui.loadingProgress > 0.0) {
+  if (mParameters.ui.isLoading) {
     mProgressBar.setVisible(true);
   } else if (mProgressBar.isVisible()) {
     mPianoPanel.waveform.load(mSynth.getAudioBuffer());
@@ -322,7 +321,7 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
                   rainHeight);
 
       // make rain slow up as closer to full progress (which is the value 1.0)
-      const int speed = 20 - static_cast<int>(18.0 * mParameters.ui.loadingProgress);
+      const int speed = 10;
       mLeftRainDeltY -= speed;
       mRightRainDeltY -= speed;
       if (mLeftRainDeltY < rainHeight) {

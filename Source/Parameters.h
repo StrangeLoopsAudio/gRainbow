@@ -177,7 +177,6 @@ static juce::Array<juce::String> LFO_SHAPE_NAMES{"sine", "tri", "square", "saw"}
 static constexpr int MAX_CANDIDATES = 6;
 static constexpr int NUM_GENERATORS = 4;
 static constexpr int SOLO_NONE = -1;
-static constexpr double RESET_LOADING_PROGRESS = 1.0;
 
 namespace ParamHelper {
 [[maybe_unused]] static juce::String getParamID(juce::AudioProcessorParameter* param) {
@@ -398,17 +397,19 @@ namespace ParamHelper {
 
 struct ParamCandidate {
   double posRatio;
+  int    octave;
   double pbRate;
   double duration;
   double salience;
 
-  ParamCandidate(float _posRatio, float _pbRate, float _duration, float _salience)
-      : posRatio(_posRatio), pbRate(_pbRate), duration(_duration), salience(_salience) {}
+  ParamCandidate(float _posRatio, int _octave, float _pbRate, float _duration, float _salience)
+      : posRatio(_posRatio), octave(_octave), pbRate(_pbRate), duration(_duration), salience(_salience) {}
 
-  // setXml equivalent since we always need a valid candidate param  value
+  // setXml equivalent since we always need a valid candidate param value
   ParamCandidate(juce::XmlElement* xml) {
     jassert(xml->hasTagName("ParamCandidate"));
     posRatio = xml->getDoubleAttribute("posRatio");
+    octave = xml->getIntAttribute("octave");
     pbRate = xml->getDoubleAttribute("pbRate");
     duration = xml->getDoubleAttribute("duration");
     salience = xml->getDoubleAttribute("salience");
@@ -417,6 +418,7 @@ struct ParamCandidate {
   juce::XmlElement* getXml() {
     juce::XmlElement* xml = new juce::XmlElement("ParamCandidate");
     xml->setAttribute("posRatio", posRatio);
+    xml->setAttribute("octave", octave);
     xml->setAttribute("pbRate", pbRate);
     xml->setAttribute("duration", duration);
     xml->setAttribute("salience", salience);
@@ -702,7 +704,7 @@ struct ParamUI {
   // Where ArcSpectrogram can let others know when it is "complete"
   // Makes no sense to save to preset file
   bool specComplete = false;
-  double loadingProgress = RESET_LOADING_PROGRESS;
+  bool isLoading = false;
 
   // Tracks what component is being displayed
   enum class CenterComponent { ARC_SPEC, TRIM_SELECTION };

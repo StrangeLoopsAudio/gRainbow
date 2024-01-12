@@ -63,7 +63,7 @@ static inline juce::Colour getRainbow6Colour(int value) {
 }
 
 static inline juce::Colour getRainbow12Colour(int value) {
-  jassert(value >= 0 && value <= 11);
+  value = juce::jlimit(0, 11, value);
   float r = 0.0f;
   float g = 0.0f;
   float b = 0.0f;

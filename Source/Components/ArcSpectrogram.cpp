@@ -244,7 +244,7 @@ void ArcSpectrogram::run() {
                                                                       -(juce::MathConstants<float>::pi / 2.0f));
     juce::Colour prevColour = juce::Colours::black;
     for (auto i = 0; i < NUM_COLS; ++i) {
-      if (threadShouldExit()) return;
+      if (threadShouldExit()) { mIsProcessing = false; return; }
       int sampleIdx = ((float)i / NUM_COLS) * audioBuffer->getNumSamples();
       float sampleRadius =
           juce::jmap(bufferSamples[sampleIdx], -maxMagnitude, maxMagnitude, (float)mStartRadius, (float)mEndRadius);
@@ -266,7 +266,7 @@ void ArcSpectrogram::run() {
   } else {
     // All other types of spectrograms
     Utils::SpecBuffer& spec = *(Utils::SpecBuffer*)mBuffers[mParameters.ui.specType];  // cast to SpecBuffer
-    if (spec.empty() || threadShouldExit()) return;
+    if (spec.empty() || threadShouldExit()) { mIsProcessing = false; return; }
 
     const float maxRow =
         static_cast<float>((mParameters.ui.specType == ParamUI::SpecType::SPECTROGRAM) ? spec[0].size() / 8 : spec[0].size());
@@ -320,6 +320,7 @@ void ArcSpectrogram::onImageComplete(ParamUI::SpecType specType) {
     }
   }
   mParameters.ui.specComplete = true;
+  mParameters.ui.isLoading = false;
   // Lets UI know it so it can enable other UI components
   onImagesComplete();
 }

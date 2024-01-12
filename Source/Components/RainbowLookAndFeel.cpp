@@ -190,6 +190,6 @@ void RainbowLookAndFeel::drawProgressBar(juce::Graphics& g, juce::ProgressBar& p
     g.setColour(foreground.contrasting(0.5f));
     g.setFont((float)height * 0.4f);
 
-    g.drawText(textToShow, 0, 0, width, height, juce::Justification::centred, false);
+    g.drawText(textToShow, progressBar.getBounds().reduced(10), juce::Justification::centred, false);
   }
 }

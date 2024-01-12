@@ -113,7 +113,6 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
     juce::int64 end = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getEnd() / secondLength));
     Utils::trimAudioBuffer(mInputBuffer, mAudioBuffer, juce::Range<juce::int64>(start, end));
     mInputBuffer.clear();
-    mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
     mNeedsResample = false;
   }
 
@@ -553,7 +552,6 @@ Utils::Result GranularSynth::loadAudioFile(juce::File file, bool process) {
   else {
     if (mSampleRate != INVALID_SAMPLE_RATE) {
       resampleSynthBuffer(fileAudioBuffer, mAudioBuffer, formatReader->sampleRate, mSampleRate);
-      mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
     }
     else {
       mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
@@ -644,7 +642,7 @@ Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& bl
     mSampleRate = sampleRate;        // A bit hacky, but we need to store the file's sample rate for resampling
     mNeedsResample = true;
   }
-  mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
+  jassert(!mParameters.ui.isLoading);
   mParameters.ui.loadedFileName = name;
   mParameters.ui.fileName = name;
   mParameters.ui.specComplete = true;
@@ -652,19 +650,28 @@ Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& bl
 }
 
 void GranularSynth::extractPitches() {
-  mParameters.ui.loadingProgress = RESET_LOADING_PROGRESS;
+  mParameters.ui.isLoading = true;
+  mParameters.selectedParams = &mParameters.global;
+  if (mParameters.onSelectedChange) mParameters.onSelectedChange();
   mThreadPool.addJob([this]() {
+    // Resample the audio buffer for feeding into the pitch detector
+    Utils::resampleAudioBuffer(mAudioBuffer, mDownsampledAudio, mSampleRate, BASIC_PITCH_SAMPLE_RATE);
+    
+    // Then use BasicPitch ML to extract note events
     mPitchDetector.transcribeToMIDI(mDownsampledAudio.getWritePointer(0),
                                     mDownsampledAudio.getNumSamples());
-  });
-}
-
-void GranularSynth::extractSpectrograms() {
-  mThreadPool.addJob([this]() {
+    createCandidates(); // Create candidates from MIDI events
+    
+    // Finally, calc FFT and HPCP
     mProcessedSpecs.fill(nullptr);
-    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = mFft.process(&mAudioBuffer);;
-    mProcessedSpecs[ParamUI::SpecType::HPCP] = mHPCP.process(mFft.getSpectrum(), mSampleRate);;
+    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = mFft.process(&mAudioBuffer);
+    mProcessedSpecs[ParamUI::SpecType::HPCP] = mHPCP.process(mFft.getSpectrum(), mSampleRate);
+    makePitchSpec();
+    mProcessedSpecs[ParamUI::SpecType::DETECTED] = &mPitchSpecBuffer;
     mFft.clear(false);
+    
+    mParameters.ui.specComplete = false; // Make arc spec render the specs into images
+    // Arc spec turns off isLoading once images are rendered as well
   });
 }
 
@@ -685,14 +692,12 @@ void GranularSynth::resampleSynthBuffer(juce::AudioBuffer<float>& inputBuffer, j
   // resamples the buffer from the file sampler rate to the the proper sampler
   // rate set from the DAW in prepareToPlay.
   Utils::resampleAudioBuffer(inputBuffer, outputBuffer, inputSampleRate, outputSampleRate);
-  
-  // Resamples the audio buffer for feeding into the pitch detector
-  Utils::resampleAudioBuffer(inputBuffer, mDownsampledAudio, inputSampleRate, BASIC_PITCH_SAMPLE_RATE);
 
   const double ratioToOutput = outputSampleRate / inputSampleRate;  // output / input
   // The output buffer needs to be size that matches the new sample rate
   const int resampleSize = static_cast<int>(static_cast<double>(inputBuffer.getNumSamples()) * ratioToOutput);
   mParameters.ui.trimPlaybackMaxSample = resampleSize;
+  jassert(!mParameters.ui.isLoading);
 }
 
 void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumber, float velocity) {
@@ -747,47 +752,67 @@ void GranularSynth::resetParameters(bool fullClear) {
   mParameters.global.resetParams();
 }
 
+void GranularSynth::makePitchSpec() {
+  mPitchSpecBuffer.clear();
+  const int numFrames = mPitchDetector.getNumFrames();
+  const std::vector<Notes::Event>& events = mPitchDetector.getNoteEvents();
+  // Find max and min pitches
+  auto pitchRange = juce::Range<int>(-1, -1);
+  for (auto& evt : events) {
+    if (evt.pitch > pitchRange.getEnd() || pitchRange.getEnd() == -1) pitchRange.setEnd(evt.pitch);
+    if (evt.pitch < pitchRange.getStart() || pitchRange.getStart() == -1) pitchRange.setStart(evt.pitch);
+  }
+  // Init buffer size
+  for (size_t frame = 0; frame < numFrames; ++frame) {
+    mPitchSpecBuffer.emplace_back(std::vector<float>(pitchRange.getLength(), 0.0f));
+  }
+  for (auto& evt : events) {
+    const int duration = (evt.endFrame - evt.startFrame);
+    for (float k = 0; k < duration; ++k) {
+      mPitchSpecBuffer[evt.startFrame + k][pitchRange.getEnd() - 1 - (MAX_MIDI_NOTE - evt.pitch)] = evt.amplitude;
+    }
+  }
+}
+
 void GranularSynth::createCandidates() {
-//  // Add candidates for each pitch class
-//  for (auto&& note : mParameters.note.notes) {
-//    // Look for detected pitches with correct pitch and good gain
-//    bool foundAll = false;
-//    int numFound = 0;
-//    int numSearches = 0;
-//
-//    while (!foundAll) {
-//      int noteMin = note->noteIdx - numSearches;
-//      int noteMax = note->noteIdx + numSearches;
-//      // Check low note
-//      std::vector<PitchDetector::Pitch>& pitchVec = detectedPitches.getReference((Utils::PitchClass)(noteMin % 12));
-//      float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, numSearches);
-//      for (size_t i = 0; i < pitchVec.size(); ++i) {
-//        if (pitchVec[i].gain < MIN_CANDIDATE_SALIENCE) continue;
-//        note->candidates.emplace_back(ParamCandidate(pitchVec[i].posRatio, pbRate, pitchVec[i].duration, pitchVec[i].gain));
-//        numFound++;
-//        if (numFound >= MAX_CANDIDATES) {
-//          foundAll = true;
-//          break;
-//        }
-//      }
-//      // Check high note if we haven't filled up the list yet
-//      if (!foundAll && numSearches > 0) {
-//        std::vector<PitchDetector::Pitch>& pitchVec2 = detectedPitches.getReference((Utils::PitchClass)(noteMax % 12));
-//        float pbRate2 = std::pow(Utils::TIMESTRETCH_RATIO, -numSearches);
-//        for (size_t i = 0; i < pitchVec2.size(); ++i) {
-//          if (pitchVec2[i].gain < MIN_CANDIDATE_SALIENCE) continue;
-//          note->candidates.emplace_back(ParamCandidate(pitchVec2[i].posRatio, pbRate2, pitchVec2[i].duration, pitchVec2[i].gain));
-//          numFound++;
-//          if (numFound >= MAX_CANDIDATES) {
-//            foundAll = true;
-//            break;
-//          }
-//        }
-//      }
-//      numSearches++;
-//      if (numSearches >= 6 || foundAll) break;
-//    }
-//
-//    note->setStartingCandidatePosition();
-//  }
+  // Add candidates for each pitch class
+  const std::vector<Notes::Event>& events = mPitchDetector.getNoteEvents();
+  for (auto& evt : events) {
+    DBG(juce::String(evt.pitch));
+  }
+  const int numFrames = mPitchDetector.getNumFrames();
+  for (auto&& note : mParameters.note.notes) {
+    // Look for detected pitches with correct pitch and good gain
+    bool foundAll = false;
+    int numFound = 0;
+    int numSearches = 0;
+
+    while (!foundAll) {
+      // Check between note ranges, expanding search until we're full
+      int noteMin = note->noteIdx - numSearches;
+      int noteMax = note->noteIdx + numSearches;
+      for (auto& evt : events) {
+        int pitchClass = evt.pitch % 12;
+        if (pitchClass == noteMin || pitchClass == noteMax) {
+          if (evt.amplitude < MIN_CANDIDATE_SALIENCE) continue;
+          // Got through the checks, found a valid candidate
+          // Calc scaled PB rate for this candidate to play at the right pitch, negating if higher than desired pitch to slow down
+          float pbRate = std::pow(Utils::TIMESTRETCH_RATIO, (pitchClass > note->noteIdx) ? -numSearches : numSearches);
+          int octave = evt.pitch / 12;
+          float posRatio = (float)evt.startFrame / numFrames;
+          float duration = (float)(evt.endFrame - evt.startFrame) / numFrames;
+          note->candidates.emplace_back(ParamCandidate(posRatio, octave, pbRate, duration, evt.amplitude));
+          numFound++;
+          if (numFound >= MAX_CANDIDATES) {
+            foundAll = true;
+            break;
+          }
+        }
+      }
+      numSearches++;
+      if (numSearches >= 6 || foundAll) break;
+    }
+
+    note->setStartingCandidatePosition();
+  }
 }

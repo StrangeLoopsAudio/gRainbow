@@ -97,7 +97,6 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   Utils::Result loadPreset(juce::String name, juce::MemoryBlock& block);
 
   void extractPitches();
-  void extractSpectrograms();
   std::vector<Utils::SpecBuffer*> getProcessedSpecs() {
     return std::vector<Utils::SpecBuffer*>(mProcessedSpecs.begin(), mProcessedSpecs.end());
   }
@@ -127,6 +126,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   static constexpr int DEFAULT_BEATS_PER_BAR = 4;
   // Param bounds
   static constexpr float MIN_CANDIDATE_SALIENCE = 0.5f;
+  static constexpr int MAX_MIDI_NOTE = 127;
   static constexpr int MAX_GRAINS = 20;  // Max grains active at once
   static constexpr double INVALID_SAMPLE_RATE = -1.0;  // Max grains active at once
   static constexpr int MAX_PITCH_BEND_SEMITONES = 2;  // Max pitch bend semitones allowed
@@ -158,6 +158,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   HPCP mHPCP;
   BasicPitch mPitchDetector;
   juce::AudioBuffer<float> mDownsampledAudio; // Used for feeding into pitch detector
+  Utils::SpecBuffer mPitchSpecBuffer;
   // Thread pool to run ML in background thread
   juce::ThreadPool mThreadPool;
 
@@ -196,5 +197,6 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   void handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
   void handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
   void handleGrainAddRemove(int blockSize);
+  void makePitchSpec();
   void createCandidates();
 };
