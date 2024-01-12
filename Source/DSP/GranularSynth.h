@@ -23,7 +23,7 @@
 #include <bitset>
 #include "ff_meters/ff_meters.h"
 
-class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::Listener {
+class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardState::Listener, public juce::Thread {
  public:
   class GrainPool {
   public:
@@ -55,6 +55,8 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   //=====================start-inherited-functions================================
   void prepareToPlay(double sampleRate, int samplesPerBlock) override;
   void releaseResources() override;
+  
+  void run() override;
 
 #ifndef JucePlugin_PreferredChannelConfigurations
   bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
@@ -159,9 +161,6 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   BasicPitch mPitchDetector;
   juce::AudioBuffer<float> mDownsampledAudio; // Used for feeding into pitch detector
   Utils::SpecBuffer mPitchSpecBuffer;
-  // Thread pool to run ML in background thread
-  juce::ThreadPool mThreadPool;
-  std::function<void()> mJobLambda;
 
   // Bookkeeping
   juce::AudioBuffer<float> mInputBuffer;  // incoming buffer from file or other source

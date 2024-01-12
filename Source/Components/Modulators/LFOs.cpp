@@ -115,7 +115,7 @@ void LFOs::visibilityChanged() {
   }
 }
 
-void LFOs::parameterValueChanged(int idx, float) { mParamHasChanged.store(true); }
+void LFOs::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
 
 void LFOs::timerCallback() {
   if (mParamHasChanged.load()) {

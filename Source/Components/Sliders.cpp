@@ -25,7 +25,6 @@ ParamSlider::ParamSlider(Parameters& _parameters, juce::RangedAudioParameter* _p
         parameters.modulations.set(idx, Modulation(parameters.mappingModSource, 0.0f));
       } else {
         // Increment/decrement its depth
-        Modulation& mod = parameters.modulations.getReference(idx);
         double diff = parameter->convertTo0to1(getValue()) - parameter->convertTo0to1(dragStartValue);
         double scale = getRange().getLength() / (getRange().getEnd() - dragStartValue);
         float depth = juce::jlimit(0.0, 1.0, diff * scale);

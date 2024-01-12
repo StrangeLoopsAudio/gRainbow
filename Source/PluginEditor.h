@@ -26,7 +26,7 @@
 #include "Components/Piano/PianoPanel.h"
 #include "Components/Settings.h"
 #include "Components/RainbowLookAndFeel.h"
-#include "DSP/AudioRecorder.h"
+//#include "DSP/AudioRecorder.h"
 #include "DSP/Fft.h"
 #include "DSP/GranularSynth.h"
 #include "Utils/Utils.h"
@@ -65,7 +65,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
                                        
   // DSP Modules
   GranularSynth& mSynth;
-  AudioRecorder mRecorder;
+//  AudioRecorder mRecorder;
 
   // Synth owns, but need to grab params on reloading of plugin
   Parameters& mParameters;

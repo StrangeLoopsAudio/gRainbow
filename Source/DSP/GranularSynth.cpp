@@ -29,31 +29,8 @@ GranularSynth::GranularSynth()
 #endif
       ,
       // only care about tracking the processing of the DSP, not the spectrogram
-      mFft(FFT_SIZE, HOP_SIZE),
-mThreadPool(1) {
-        
-  mJobLambda = [this]() {
-    // Resample the audio buffer for feeding into the pitch detector
-    Utils::resampleAudioBuffer(mAudioBuffer, mDownsampledAudio, mSampleRate, BASIC_PITCH_SAMPLE_RATE);
-    
-    // Then use BasicPitch ML to extract note events
-    mPitchDetector.transcribeToMIDI(mDownsampledAudio.getWritePointer(0),
-                                    mDownsampledAudio.getNumSamples());
-    createCandidates(); // Create candidates from MIDI events
-    
-    // Finally, calc FFT and HPCP
-    mProcessedSpecs.fill(nullptr);
-    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = mFft.process(&mAudioBuffer);
-    mProcessedSpecs[ParamUI::SpecType::HPCP] = mHPCP.process(mFft.getSpectrum(), mSampleRate);
-    makePitchSpec();
-    mProcessedSpecs[ParamUI::SpecType::DETECTED] = &mPitchSpecBuffer;
-    
-    //mPitchDetector.reset();
-    
-    mParameters.ui.specComplete = false; // Make arc spec render the specs into images
-    // Arc spec turns off isLoading once images are rendered as well
-    DBG("DONE SYNTH");
-  };
+juce::Thread("pitch detection"),
+mFft(FFT_SIZE, HOP_SIZE) {
 
   mParameters.note.addParams(*this);
   mParameters.global.addParams(*this);
@@ -120,6 +97,35 @@ void GranularSynth::setCurrentProgram(int) {}
 const juce::String GranularSynth::getProgramName(int) { return {}; }
 
 void GranularSynth::changeProgramName(int, const juce::String&) {}
+
+void GranularSynth::run() {
+  // Resample the audio buffer for feeding into the pitch detector
+  Utils::resampleAudioBuffer(mAudioBuffer, mDownsampledAudio, mSampleRate, BASIC_PITCH_SAMPLE_RATE);
+  
+  // Then use BasicPitch ML to extract note events
+  mPitchDetector.transcribeToMIDI(mDownsampledAudio.getWritePointer(0),
+                                  mDownsampledAudio.getNumSamples());
+  
+  if (threadShouldExit()) return;
+  
+  createCandidates(); // Create candidates from MIDI events
+  
+  if (threadShouldExit()) return;
+  
+  // Finally, calc FFT and HPCP
+  mProcessedSpecs.fill(nullptr);
+  mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = mFft.process(&mAudioBuffer);
+  mProcessedSpecs[ParamUI::SpecType::HPCP] = mHPCP.process(mFft.getSpectrum(), mSampleRate);
+  makePitchSpec();
+  mProcessedSpecs[ParamUI::SpecType::DETECTED] = &mPitchSpecBuffer;
+  
+  if (threadShouldExit()) return;
+  
+  //mPitchDetector.reset();
+  
+  mParameters.ui.specComplete = false; // Make arc spec render the specs into images
+  // Arc spec turns off isLoading once images are rendered as well
+}
 
 //==============================================================================
 void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
@@ -673,10 +679,11 @@ Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& bl
 }
 
 void GranularSynth::extractPitches() {
+  stopThread(10000);
   mParameters.ui.isLoading = true;
   mParameters.selectedParams = &mParameters.global;
   if (mParameters.onSelectedChange) mParameters.onSelectedChange();
-  mThreadPool.addJob(mJobLambda);
+  startThread();
 }
 
 std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {
@@ -695,7 +702,7 @@ void GranularSynth::resampleSynthBuffer(juce::AudioBuffer<float>& inputBuffer, j
                                         double inputSampleRate, double outputSampleRate, bool clearInput) {
   // resamples the buffer from the file sampler rate to the the proper sampler
   // rate set from the DAW in prepareToPlay.
-  Utils::resampleAudioBuffer(inputBuffer, outputBuffer, inputSampleRate, outputSampleRate);
+  Utils::resampleAudioBuffer(inputBuffer, outputBuffer, inputSampleRate, outputSampleRate, clearInput);
 
   const double ratioToOutput = outputSampleRate / inputSampleRate;  // output / input
   // The output buffer needs to be size that matches the new sample rate
@@ -768,12 +775,13 @@ void GranularSynth::makePitchSpec() {
   }
   // Init buffer size
   for (size_t frame = 0; frame < numFrames; ++frame) {
-    mPitchSpecBuffer.emplace_back(std::vector<float>(pitchRange.getLength(), 0.0f));
+    mPitchSpecBuffer.emplace_back(std::vector<float>(pitchRange.getLength() + 1, 0.0f));
   }
   for (auto& evt : events) {
     const int duration = (evt.endFrame - evt.startFrame);
-    for (float k = 0; k < duration; ++k) {
-      mPitchSpecBuffer[evt.startFrame + k][pitchRange.getEnd() - 1 - (MAX_MIDI_NOTE - evt.pitch)] = evt.amplitude;
+    for (float k = evt.startFrame; k < evt.endFrame; ++k) {
+      int pitchIdx = pitchRange.getLength() - (evt.pitch - pitchRange.getStart());
+      mPitchSpecBuffer[k][pitchIdx] = evt.amplitude;
     }
   }
 }

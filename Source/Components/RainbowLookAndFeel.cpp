@@ -103,7 +103,7 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
 
 // Buttons
 
-juce::Font RainbowLookAndFeel::getTextButtonFont(juce::TextButton& btn, int buttonHeight) {
+juce::Font RainbowLookAndFeel::getTextButtonFont(juce::TextButton&, int) {
   return juce::Font(12);
 }
 

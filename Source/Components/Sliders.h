@@ -71,7 +71,7 @@ class CommonSlider : public ParamSlider {
 
 class QuantizedCommonSlider : public CommonSlider {
 public:
-  QuantizedCommonSlider(Parameters& parameters, ParamCommon::Type type, bool reverse) : CommonSlider(parameters, type), mSync(false), mRange(COMMON_RANGES[type]), mReverse(reverse) {}
+  QuantizedCommonSlider(Parameters& _parameters, ParamCommon::Type type, bool reverse) : CommonSlider(_parameters, type), mSync(false), mRange(COMMON_RANGES[type]), mReverse(reverse) {}
   void setSync(bool sync) {
     mSync = sync;
     setTextValueSuffix(sync ? "" : suffix);

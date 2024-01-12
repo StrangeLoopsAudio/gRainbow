@@ -205,7 +205,7 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   auto recordFile = parentDir.getChildFile(FILE_RECORDING);
   recordFile.deleteFile();
-  mAudioDeviceManager.removeAudioCallback(&mRecorder);
+//  mAudioDeviceManager.removeAudioCallback(&mRecorder);
   setLookAndFeel(nullptr);
 
   mSynth.stopReferenceTone();
