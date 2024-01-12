@@ -161,6 +161,7 @@ class GranularSynth : public juce::AudioProcessor, juce::MidiKeyboardState::List
   Utils::SpecBuffer mPitchSpecBuffer;
   // Thread pool to run ML in background thread
   juce::ThreadPool mThreadPool;
+  std::function<void()> mJobLambda;
 
   // Bookkeeping
   juce::AudioBuffer<float> mInputBuffer;  // incoming buffer from file or other source

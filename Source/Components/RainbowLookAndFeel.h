@@ -51,8 +51,8 @@ class RainbowLookAndFeel : public juce::LookAndFeel_V4 {
   void positionComboBoxText(juce::ComboBox& box, juce::Label& labelToPosition) override;
   
   // Progress bars
-  void drawProgressBar(juce::Graphics& g, juce::ProgressBar& progressBar, int width, int height, double progress,
-                       const juce::String& textToShow) override;
+//  void drawProgressBar(juce::Graphics& g, juce::ProgressBar& progressBar, int width, int height, double progress,
+//                       const juce::String& textToShow) override;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RainbowLookAndFeel)
 };

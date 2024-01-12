@@ -30,7 +30,30 @@ GranularSynth::GranularSynth()
       ,
       // only care about tracking the processing of the DSP, not the spectrogram
       mFft(FFT_SIZE, HOP_SIZE),
-      mThreadPool(1) {
+mThreadPool(1) {
+        
+  mJobLambda = [this]() {
+    // Resample the audio buffer for feeding into the pitch detector
+    Utils::resampleAudioBuffer(mAudioBuffer, mDownsampledAudio, mSampleRate, BASIC_PITCH_SAMPLE_RATE);
+    
+    // Then use BasicPitch ML to extract note events
+    mPitchDetector.transcribeToMIDI(mDownsampledAudio.getWritePointer(0),
+                                    mDownsampledAudio.getNumSamples());
+    createCandidates(); // Create candidates from MIDI events
+    
+    // Finally, calc FFT and HPCP
+    mProcessedSpecs.fill(nullptr);
+    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = mFft.process(&mAudioBuffer);
+    mProcessedSpecs[ParamUI::SpecType::HPCP] = mHPCP.process(mFft.getSpectrum(), mSampleRate);
+    makePitchSpec();
+    mProcessedSpecs[ParamUI::SpecType::DETECTED] = &mPitchSpecBuffer;
+    
+    //mPitchDetector.reset();
+    
+    mParameters.ui.specComplete = false; // Make arc spec render the specs into images
+    // Arc spec turns off isLoading once images are rendered as well
+    DBG("DONE SYNTH");
+  };
 
   mParameters.note.addParams(*this);
   mParameters.global.addParams(*this);
@@ -653,26 +676,7 @@ void GranularSynth::extractPitches() {
   mParameters.ui.isLoading = true;
   mParameters.selectedParams = &mParameters.global;
   if (mParameters.onSelectedChange) mParameters.onSelectedChange();
-  mThreadPool.addJob([this]() {
-    // Resample the audio buffer for feeding into the pitch detector
-    Utils::resampleAudioBuffer(mAudioBuffer, mDownsampledAudio, mSampleRate, BASIC_PITCH_SAMPLE_RATE);
-    
-    // Then use BasicPitch ML to extract note events
-    mPitchDetector.transcribeToMIDI(mDownsampledAudio.getWritePointer(0),
-                                    mDownsampledAudio.getNumSamples());
-    createCandidates(); // Create candidates from MIDI events
-    
-    // Finally, calc FFT and HPCP
-    mProcessedSpecs.fill(nullptr);
-    mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = mFft.process(&mAudioBuffer);
-    mProcessedSpecs[ParamUI::SpecType::HPCP] = mHPCP.process(mFft.getSpectrum(), mSampleRate);
-    makePitchSpec();
-    mProcessedSpecs[ParamUI::SpecType::DETECTED] = &mPitchSpecBuffer;
-    mFft.clear(false);
-    
-    mParameters.ui.specComplete = false; // Make arc spec render the specs into images
-    // Arc spec turns off isLoading once images are rendered as well
-  });
+  mThreadPool.addJob(mJobLambda);
 }
 
 std::vector<ParamCandidate*> GranularSynth::getActiveCandidates() {

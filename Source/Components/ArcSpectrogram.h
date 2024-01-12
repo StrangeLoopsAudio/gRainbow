@@ -51,9 +51,6 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   //============================================================================
   void run() override;
 
-  // Callback functions when all images are created
-  std::function<void(void)> onImagesComplete = nullptr;
-
  private:
   static constexpr auto BUFFER_PROCESS_TIMEOUT = 10000;
   static constexpr auto REFRESH_RATE_FPS = 30;

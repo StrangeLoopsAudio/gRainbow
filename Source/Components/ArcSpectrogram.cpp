@@ -179,7 +179,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 void ArcSpectrogram::resized() {
   auto r = getLocalBounds();
 
-  mRainbowRect = r.reduced(20, 20); // Leaving room for clouds
+  mRainbowRect = r.reduced(Utils::PADDING, Utils::PADDING); // Leaving room for clouds
 
   // Cloud centers
   {
@@ -207,8 +207,8 @@ void ArcSpectrogram::resized() {
   mSpecType.setBounds(r.removeFromRight(SPEC_TYPE_WIDTH).removeFromTop(SPEC_TYPE_HEIGHT));
 
   mCenterPoint = juce::Point<float>(getWidth() / 2.0f, mRainbowRect.getBottom());
-  mStartRadius = mRainbowRect.getHeight() / 2.6f;
-  mEndRadius = mRainbowRect.getHeight();
+  mStartRadius = (mRainbowRect.getWidth() / 2.0f) / 2.6f;
+  mEndRadius = mRainbowRect.getWidth() / 2.0f;
   mBowWidth = mEndRadius - mStartRadius;
 }
 
@@ -320,9 +320,7 @@ void ArcSpectrogram::onImageComplete(ParamUI::SpecType specType) {
     }
   }
   mParameters.ui.specComplete = true;
-  mParameters.ui.isLoading = false;
-  // Lets UI know it so it can enable other UI components
-  onImagesComplete();
+  DBG("DONE SPEC");
 }
 
 void ArcSpectrogram::reset() {

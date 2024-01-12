@@ -302,6 +302,7 @@ target_compile_definitions(gRainbow
     JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_USE_MP3AUDIOFORMAT=1
+    JUCE_CATCH_UNHANDLED_EXCEPTIONS=1
 )
 
 target_link_libraries(gRainbow

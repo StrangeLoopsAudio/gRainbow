@@ -108,14 +108,6 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   mTabsModulators.setOutline(0);
   addAndMakeVisible(mTabsModulators);
 
-  // Arc spectrogram
-  mArcSpec.onImagesComplete = [this]() {
-    const juce::MessageManagerLock lock;
-    jassert(mParameters.ui.specComplete);
-    mArcSpec.setSpecType(ParamUI::SpecType::WAVEFORM);
-    mTitlePresetPanel.btnSavePreset.setEnabled(true);
-  };
-
   mTrimSelection.onCancel = [this]() {
     // if nothing was ever loaded, got back to the logo
     updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
@@ -244,6 +236,11 @@ void GRainbowAudioProcessorEditor::timerCallback() {
         mArcSpec.loadSpecBuffer(specs[i], (ParamUI::SpecType)i);
       }
     }
+  } else if (mParameters.ui.isLoading) {
+    // Spec complete, we're done loading
+    mArcSpec.setSpecType(ParamUI::SpecType::SPECTROGRAM);
+    mTitlePresetPanel.btnSavePreset.setEnabled(true);
+    mParameters.ui.isLoading = false;
   }
 
   // Get notes being played, send off to each children and then redraw.

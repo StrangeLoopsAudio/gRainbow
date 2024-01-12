@@ -167,29 +167,29 @@ void RainbowLookAndFeel::positionComboBoxText(juce::ComboBox& box, juce::Label& 
   labelToPosition.setBounds(box.getLocalBounds());
 }
 
-void RainbowLookAndFeel::drawProgressBar(juce::Graphics& g, juce::ProgressBar& progressBar, int width, int height, double progress,
-                                         const juce::String& textToShow) {
-  juce::Colour background = juce::Colours::white.withAlpha(0.5f);
-  juce::Colour foreground = Utils::getRainbow12Colour(static_cast<int>(progress * 11.0));
-  auto barBounds = progressBar.getLocalBounds().toFloat();
-  const float halfRectHeight = static_cast<float>(progressBar.getHeight()) * 0.5f;
-  g.setColour(background);
-  g.fillRoundedRectangle(barBounds, halfRectHeight);
-
-  if (progress >= 0.0f && progress <= 1.0f) {
-    juce::Path p;
-    p.addRoundedRectangle(barBounds, halfRectHeight);
-    g.reduceClipRegion(p);
-
-    barBounds.setWidth(barBounds.getWidth() * (float)progress);
-    g.setColour(foreground);
-    g.fillRoundedRectangle(barBounds, halfRectHeight);
-  }
-
-  if (textToShow.isNotEmpty()) {
-    g.setColour(foreground.contrasting(0.5f));
-    g.setFont((float)height * 0.4f);
-
-    g.drawText(textToShow, progressBar.getBounds().reduced(10), juce::Justification::centred, false);
-  }
-}
+//void RainbowLookAndFeel::drawProgressBar(juce::Graphics& g, juce::ProgressBar& progressBar, int width, int height, double progress,
+//                                         const juce::String& textToShow) {
+//  juce::Colour background = juce::Colours::white.withAlpha(0.5f);
+//  juce::Colour foreground = Utils::getRainbow12Colour(static_cast<int>(progress * 11.0));
+//  auto barBounds = progressBar.getLocalBounds().toFloat();
+//  const float halfRectHeight = static_cast<float>(progressBar.getHeight()) * 0.5f;
+//  g.setColour(background);
+//  g.fillRoundedRectangle(barBounds, halfRectHeight);
+//
+//  if (progress >= 0.0f && progress <= 1.0f) {
+//    juce::Path p;
+//    p.addRoundedRectangle(barBounds, halfRectHeight);
+//    g.reduceClipRegion(p);
+//
+//    barBounds.setWidth(barBounds.getWidth() * (float)progress);
+//    g.setColour(foreground);
+//    g.fillRoundedRectangle(barBounds, halfRectHeight);
+//  }
+//
+//  if (textToShow.isNotEmpty()) {
+//    g.setColour(foreground.contrasting(0.5f));
+//    g.setFont((float)height * 0.4f);
+//
+//    g.drawText(textToShow, progressBar.getBounds().reduced(10), juce::Justification::centred, false);
+//  }
+//}
