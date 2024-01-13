@@ -12,6 +12,18 @@
 
 void ParamGlobal::addParams(juce::AudioProcessor& p) {
   // Global
+  // Filter
+  p.addParameter(filterCutoff =
+                 new juce::AudioParameterFloat({ParamIDs::filterCutoff, 1}, "Filter Cutoff", ParamRanges::FILT_CUTOFF,
+                                               ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
+  filterCutoff->addListener(this);
+  p.addParameter(filterRes =
+                 new juce::AudioParameterFloat({ParamIDs::filterResonance, 1}, "Filter Resonance",
+                                               ParamRanges::FILT_RESONANCE, ParamDefaults::FILTER_RESONANCE_DEFAULT));
+  filterRes->addListener(this);
+  p.addParameter(filterType =
+                 new juce::AudioParameterChoice({ParamIDs::filterType, 1}, "Filter Type", FILTER_TYPE_NAMES, ParamDefaults::FILTER_TYPE_DEFAULT));
+  filterType->addListener(this);
   // LFOs
   p.addParameter(lfo1.shape =
                  new juce::AudioParameterChoice({ParamIDs::lfo1Shape, 1}, "LFO 1 Shape", LFO_SHAPE_NAMES, ParamDefaults::LFO_SHAPE_DEFAULT));
@@ -52,18 +64,6 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                                  ParamDefaults::SUSTAIN_DEFAULT));
   p.addParameter(common[RELEASE] = new juce::AudioParameterFloat({ParamIDs::globalRelease, 1}, "Master Release", ParamRanges::RELEASE,
                                                                  ParamDefaults::RELEASE_DEFAULT_SEC));
-  p.addParameter(common[FILT_CUTOFF] =
-                     new juce::AudioParameterFloat({ParamIDs::globalFilterCutoff, 1}, "Master Filter Cutoff", ParamRanges::CUTOFF,
-                                                   ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
-  common[FILT_CUTOFF]->addListener(this);
-  p.addParameter(common[FILT_RESONANCE] =
-                     new juce::AudioParameterFloat({ParamIDs::globalFilterResonance, 1}, "Master Filter Resonance",
-                                                   ParamRanges::RESONANCE, ParamDefaults::FILTER_RESONANCE_DEFAULT));
-  common[FILT_RESONANCE]->addListener(this);
-  p.addParameter(common[FILT_TYPE] =
-                     new juce::AudioParameterChoice({ParamIDs::globalFilterType, 1}, "Master Filter Type", FILTER_TYPE_NAMES, ParamDefaults::FILTER_TYPE_DEFAULT));
-  common[FILT_TYPE]->addListener(this);
-
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat({ParamIDs::globalGrainShape, 1}, "Master Grain Shape",
                                                                      ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
   p.addParameter(common[GRAIN_TILT] = new juce::AudioParameterFloat({ParamIDs::globalGrainTilt, 1}, "Master Grain Tilt",
@@ -115,18 +115,6 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String releaseId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genRelease + juce::String(genIdx);
   p.addParameter(common[RELEASE] =
                      new juce::AudioParameterFloat({releaseId, 1}, releaseId, ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
-  // Filter params have listeners to set juce::dsp::StateVariableFilter parameters when changed
-  juce::String cutoffId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterCutoff + juce::String(genIdx);
-  p.addParameter(common[FILT_CUTOFF] = new juce::AudioParameterFloat({cutoffId, 1}, cutoffId, ParamRanges::CUTOFF,
-                                                                     ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
-  common[FILT_CUTOFF]->addListener(this);
-  juce::String resonanceId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterResonance + juce::String(genIdx);
-  p.addParameter(common[FILT_RESONANCE] = new juce::AudioParameterFloat({resonanceId, 1}, resonanceId, ParamRanges::RESONANCE,
-                                                                        ParamDefaults::FILTER_RESONANCE_DEFAULT));
-  common[FILT_RESONANCE]->addListener(this);
-  juce::String filterTypeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterType + juce::String(genIdx);
-  p.addParameter(common[FILT_TYPE] = new juce::AudioParameterChoice({filterTypeId, 1}, filterTypeId, FILTER_TYPE_NAMES, ParamDefaults::FILTER_TYPE_DEFAULT));
-  common[FILT_TYPE]->addListener(this);
   juce::String pitchAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchAdjust + juce::String(genIdx);
   p.addParameter(common[PITCH_ADJUST] = new juce::AudioParameterFloat({pitchAdjustId, 1}, pitchAdjustId, ParamRanges::PITCH_ADJUST,
                                                                       ParamDefaults::PITCH_ADJUST_DEFAULT));
@@ -182,18 +170,7 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
   p.addParameter(common[RELEASE] =
                      new juce::AudioParameterFloat({notePrefix + ParamIDs::noteRelease, 1}, notePrefix + ParamIDs::noteRelease,
                                                    ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
-  p.addParameter(common[FILT_CUTOFF] =
-                     new juce::AudioParameterFloat({notePrefix + ParamIDs::noteFilterCutoff, 1}, notePrefix + ParamIDs::noteFilterCutoff,
-                                                   ParamRanges::CUTOFF, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
-  common[FILT_CUTOFF]->addListener(this);
-  p.addParameter(common[FILT_RESONANCE] = new juce::AudioParameterFloat({
-                     notePrefix + ParamIDs::noteFilterResonance, 1}, notePrefix + ParamIDs::noteFilterResonance, ParamRanges::RESONANCE,
-                     ParamDefaults::FILTER_RESONANCE_DEFAULT));
-  common[FILT_RESONANCE]->addListener(this);
-  p.addParameter(common[FILT_TYPE] = new juce::AudioParameterChoice({notePrefix + ParamIDs::noteFilterType, 1},
-                                                                    notePrefix + ParamIDs::noteFilterType, FILTER_TYPE_NAMES, ParamDefaults::FILTER_TYPE_DEFAULT));
-  common[FILT_TYPE]->addListener(this);
-
+  
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteGrainShape, 1}, notePrefix + ParamIDs::noteGrainShape,
                                                    ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
   p.addParameter(common[GRAIN_TILT] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteGrainTilt, 1}, notePrefix + ParamIDs::noteGrainTilt,

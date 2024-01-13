@@ -29,6 +29,9 @@
 
 namespace ParamIDs {
 // Global params
+static juce::String filterCutoff{"filt_cutoff"};
+static juce::String filterResonance{"filt_resonance"};
+static juce::String filterType{"filt_type"};
 static juce::String lfo1Shape{"lfo1_shape"};
 static juce::String lfo1Rate{"lfo1_rate"};
 static juce::String lfo1Phase{"lfo1_phase"};
@@ -49,9 +52,6 @@ static juce::String globalAttack{"global_attack"};
 static juce::String globalDecay{"global_decay"};
 static juce::String globalSustain{"global_sustain"};
 static juce::String globalRelease{"global_release"};
-static juce::String globalFilterCutoff{"global_filt_cutoff"};
-static juce::String globalFilterResonance{"global_filt_resonance"};
-static juce::String globalFilterType{"global_filt_type"};
 static juce::String globalGrainShape{"global_grain_shape"};
 static juce::String globalGrainTilt{"global_grain_tilt"};
 static juce::String globalGrainRate{"global_grain_rate"};
@@ -71,9 +71,6 @@ static juce::String noteAttack{"_note_attack"};
 static juce::String noteDecay{"_note_decay"};
 static juce::String noteSustain{"_note_sustain"};
 static juce::String noteRelease{"_note_release"};
-static juce::String noteFilterCutoff{"_note_filt_cutoff"};
-static juce::String noteFilterResonance{"_note_filt_resonance"};
-static juce::String noteFilterType{"_note_filt_type"};
 static juce::String noteGrainShape{"_note_grain_shape"};
 static juce::String noteGrainTilt{"_note_grain_tilt"};
 static juce::String noteGrainRate{"_note_grain_rate"};
@@ -94,9 +91,6 @@ static juce::String genAttack{"_attack_gen_"};
 static juce::String genDecay{"_decay_gen_"};
 static juce::String genSustain{"_sustain_gen_"};
 static juce::String genRelease{"_release_gen_"};
-static juce::String genFilterCutoff{"_filt_cutoff_gen_"};
-static juce::String genFilterResonance{"_filt_resonance_gen_"};
-static juce::String genFilterType{"_filt_type_gen_"};
 static juce::String genGrainShape{"_grain_shape_gen_"};
 static juce::String genGrainTilt{"_grain_tilt_gen_"};
 static juce::String genGrainRate{"_grain_rate_gen_"};
@@ -120,8 +114,8 @@ static juce::NormalisableRange<float> ATTACK(0.01f, 2.0f);
 static juce::NormalisableRange<float> DECAY(0.01f, 2.0f);
 static juce::NormalisableRange<float> SUSTAIN(0.0f, 1.0f);
 static juce::NormalisableRange<float> RELEASE(0.01f, 2.0f);
-static juce::NormalisableRange<float> CUTOFF(100.0f, 2000.0f, 0.0f, 0.25f);
-static juce::NormalisableRange<float> RESONANCE(0.5f, 1.0f);
+static juce::NormalisableRange<float> FILT_CUTOFF(100.0f, 2000.0f, 0.0f, 0.25f);
+static juce::NormalisableRange<float> FILT_RESONANCE(0.5f, 1.0f);
 static juce::NormalisableRange<float> GRAIN_SHAPE(0.0f, 1.0f);
 static juce::NormalisableRange<float> GRAIN_TILT(0.0f, 1.0f);
 static juce::NormalisableRange<float> GRAIN_RATE(0.5f, 50.0f);
@@ -193,17 +187,10 @@ namespace ParamHelper {
 }
 
 // Common parameters types used by each generator, note and globally
-class ParamCommon : public juce::AudioProcessorParameter::Listener {
+class ParamCommon {
  public:
-  ParamCommon(ParamType _type) : type(_type) {
-    filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-    filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
-  }
-  ~ParamCommon() override {
-    common[FILT_TYPE]->removeListener(this);
-    common[FILT_CUTOFF]->removeListener(this);
-    common[FILT_RESONANCE]->removeListener(this);
-  }
+  ParamCommon(ParamType _type) : type(_type) { }
+  virtual ~ParamCommon() { }
 
   enum Type {
     GAIN = 0,
@@ -211,9 +198,6 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     DECAY,
     SUSTAIN,
     RELEASE,
-    FILT_CUTOFF,
-    FILT_RESONANCE,
-    FILT_TYPE,
     GRAIN_SHAPE,
     GRAIN_TILT,
     GRAIN_RATE,
@@ -235,9 +219,6 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     common[DECAY]->addListener(listener);
     common[SUSTAIN]->addListener(listener);
     common[RELEASE]->addListener(listener);
-    common[FILT_CUTOFF]->addListener(listener);
-    common[FILT_RESONANCE]->addListener(listener);
-    common[FILT_TYPE]->addListener(listener);
     common[GRAIN_SHAPE]->addListener(listener);
     common[GRAIN_TILT]->addListener(listener);
     common[GRAIN_RATE]->addListener(listener);
@@ -257,9 +238,6 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     common[DECAY]->removeListener(listener);
     common[SUSTAIN]->removeListener(listener);
     common[RELEASE]->removeListener(listener);
-    common[FILT_CUTOFF]->removeListener(listener);
-    common[FILT_RESONANCE]->removeListener(listener);
-    common[FILT_TYPE]->removeListener(listener);
     common[GRAIN_SHAPE]->removeListener(listener);
     common[GRAIN_TILT]->removeListener(listener);
     common[GRAIN_RATE]->removeListener(listener);
@@ -280,9 +258,6 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     ParamHelper::setParam(P_FLOAT(common[DECAY]), ParamDefaults::DECAY_DEFAULT_SEC);
     ParamHelper::setParam(P_FLOAT(common[SUSTAIN]), ParamDefaults::SUSTAIN_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[RELEASE]), ParamDefaults::RELEASE_DEFAULT_SEC);
-    ParamHelper::setParam(P_FLOAT(common[FILT_CUTOFF]), ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
-    ParamHelper::setParam(P_FLOAT(common[FILT_RESONANCE]), ParamDefaults::FILTER_RESONANCE_DEFAULT);
-    ParamHelper::setParam(P_CHOICE(common[FILT_TYPE]), ParamDefaults::FILTER_TYPE_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[PITCH_ADJUST]), ParamDefaults::PITCH_ADJUST_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[PITCH_SPRAY]), ParamDefaults::PITCH_SPRAY_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[POS_ADJUST]), ParamDefaults::POSITION_ADJUST_DEFAULT);
@@ -298,40 +273,11 @@ class ParamCommon : public juce::AudioProcessorParameter::Listener {
     for (auto& used : isUsed) { used = false; }
   }
 
-  void parameterValueChanged(int paramIdx, float) override {
-    if (paramIdx == common[FILT_TYPE]->getParameterIndex()) {
-      switch (P_CHOICE(common[FILT_TYPE])->getIndex()) {
-        case Utils::FilterType::LOWPASS: {
-          filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-          break;
-        }
-        case Utils::FilterType::HIGHPASS: {
-          filter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
-          break;
-        }
-        case Utils::FilterType::BANDPASS: {
-          filter.setType(juce::dsp::StateVariableTPTFilterType::bandpass);
-          break;
-        }
-        default:
-          break;
-      }
-    } else if (paramIdx == common[FILT_CUTOFF]->getParameterIndex()) {
-      filter.setCutoffFrequency(P_FLOAT(common[FILT_CUTOFF])->get());
-    } else if (paramIdx == common[FILT_RESONANCE]->getParameterIndex()) {
-      filter.setResonance(P_FLOAT(common[FILT_RESONANCE])->get());
-    }
-  }
-  void parameterGestureChanged(int, bool) override {}
-
   juce::RangedAudioParameter* common[Type::NUM_COMMON];
   bool isUsed[Type::NUM_COMMON]; // Flag for each parameter set to true when changed from its default
 
   // Type of derived class
   ParamType type;
-  // State variable filter for generator
-  juce::dsp::StateVariableTPTFilter<float> filter;
-  double sampleRate = 48000;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamCommon)
 };
@@ -341,9 +287,6 @@ static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GA
   ParamDefaults::DECAY_DEFAULT_SEC,
   ParamDefaults::SUSTAIN_DEFAULT,
   ParamDefaults::RELEASE_DEFAULT_SEC,
-  ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ,
-  ParamDefaults::FILTER_RESONANCE_DEFAULT,
-  (float)ParamDefaults::FILTER_TYPE_DEFAULT,
   ParamDefaults::GRAIN_SHAPE_DEFAULT,
   ParamDefaults::GRAIN_TILT_DEFAULT,
   ParamDefaults::GRAIN_RATE_DEFAULT,
@@ -363,9 +306,6 @@ static juce::NormalisableRange<float> COMMON_RANGES[ParamCommon::Type::NUM_COMMO
   ParamRanges::DECAY,
   ParamRanges::SUSTAIN,
   ParamRanges::RELEASE,
-  ParamRanges::CUTOFF,
-  ParamRanges::RESONANCE,
-  juce::NormalisableRange<float>(), // filter type
   ParamRanges::GRAIN_SHAPE,
   ParamRanges::GRAIN_TILT,
   ParamRanges::GRAIN_RATE,
@@ -378,7 +318,7 @@ static juce::NormalisableRange<float> COMMON_RANGES[ParamCommon::Type::NUM_COMMO
   ParamRanges::PAN_ADJUST,
   ParamRanges::PAN_SPRAY,
   juce::NormalisableRange<float>() // reverse
-}; //
+};
 
 namespace ParamHelper {
 [[maybe_unused]] static void setCommonParam(ParamCommon* common, ParamCommon::Type type, float newValue) {
@@ -591,19 +531,28 @@ struct ParamsNote {
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamsNote)
 };
 
-struct ParamGlobal : ParamCommon {
+struct ParamGlobal : ParamCommon, public juce::AudioProcessorParameter::Listener {
   ParamGlobal() : ParamCommon(ParamType::GLOBAL) {
+    filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
+    filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
     // Default to using global parameters
     for (auto& used : isUsed) {
       used = true;
     }
   }
-  ~ParamGlobal() {}
+  ~ParamGlobal() {
+    filterType->removeListener(this);
+    filterCutoff->removeListener(this);
+    filterRes->removeListener(this);
+  }
 
   void addParams(juce::AudioProcessor& p);
   
   void resetParams() {
     ParamCommon::resetParams();
+    ParamHelper::setParam(filterCutoff, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+    ParamHelper::setParam(filterRes, ParamDefaults::FILTER_RESONANCE_DEFAULT);
+    ParamHelper::setParam(filterType, ParamDefaults::FILTER_TYPE_DEFAULT);
     ParamHelper::setParam(lfo1.shape, ParamDefaults::LFO_SHAPE_DEFAULT);
     ParamHelper::setParam(lfo1.rate, ParamDefaults::LFO_RATE_DEFAULT);
     ParamHelper::setParam(lfo1.phase, ParamDefaults::LFO_PHASE_DEFAULT);
@@ -616,10 +565,44 @@ struct ParamGlobal : ParamCommon {
     ParamHelper::setParam(macro4.macro, ParamDefaults::MACRO_DEFAULT);
   }
   
+  void parameterValueChanged(int paramIdx, float) override {
+    if (paramIdx == filterType->getParameterIndex()) {
+      switch (filterType->getIndex()) {
+        case Utils::FilterType::LOWPASS: {
+          filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
+          break;
+        }
+        case Utils::FilterType::HIGHPASS: {
+          filter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
+          break;
+        }
+        case Utils::FilterType::BANDPASS: {
+          filter.setType(juce::dsp::StateVariableTPTFilterType::bandpass);
+          break;
+        }
+        default:
+          break;
+      }
+    } else if (paramIdx == filterCutoff->getParameterIndex()) {
+      filter.setCutoffFrequency(filterCutoff->get());
+    } else if (paramIdx == filterRes->getParameterIndex()) {
+      filter.setResonance(filterRes->get());
+    }
+  }
+  void parameterGestureChanged(int, bool) override {}
+  
+  // Global parameters
+  juce::AudioParameterChoice* filterType;
+  juce::AudioParameterFloat* filterCutoff;
+  juce::AudioParameterFloat* filterRes;
+
   // Global modulation sources
   LFOModSource lfo1;
   EnvModSource env1;
   MacroModSource macro1, macro2, macro3, macro4;
+  
+  // State variable filter for generator
+  juce::dsp::StateVariableTPTFilter<float> filter;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
 };
@@ -834,25 +817,5 @@ struct Parameters {
   int getBoolParam(ParamCommon* common, ParamCommon::Type type) {
     juce::RangedAudioParameter* param = getUsedParam(common, type);
     return P_BOOL(param)->get();
-  }
-  float getFilterOutput(ParamCommon* common, int ch, float sample) {
-    ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
-    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
-    if (pGen != nullptr) {
-      // If gen values are used, return it
-      if (pGen->isUsed[ParamCommon::Type::FILT_TYPE] || pGen->isUsed[ParamCommon::Type::FILT_CUTOFF] || pGen->isUsed[ParamCommon::Type::FILT_RESONANCE]) {
-        return pGen->filter.processSample(ch, sample);
-      }
-      pNote = note.notes[pGen->noteIdx].get();
-    }
-    if (pNote != nullptr) {
-      // Otherwise if note value is different from global, return it
-      if (pNote->isUsed[ParamCommon::Type::FILT_TYPE] || pNote->isUsed[ParamCommon::Type::FILT_CUTOFF] || pNote->isUsed[ParamCommon::Type::FILT_RESONANCE]) {
-        return pNote->filter.processSample(ch, sample);
-      }
-    }
-
-    // Just use the global value
-    return global.filter.processSample(ch, sample);
   }
 };

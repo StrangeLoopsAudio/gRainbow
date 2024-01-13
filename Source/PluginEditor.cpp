@@ -39,7 +39,7 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mEnvAdsr(synth.getParams()),
       mEnvGrain(synth.getParams()),
       mAdjustPanel(synth.getParams()),
-      mFx1(synth.getParams()),
+      mFilterPanel(synth.getParams()),
       mFx2(synth.getParams()),
       mFx3(synth.getParams()),
       mModEnvelopes(synth.getParams()),
@@ -93,7 +93,7 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
 
   // FX tabs
   mTabsFx.setTabBarDepth(Utils::TAB_HEIGHT);
-  mTabsFx.addTab("FX 1", Utils::BG_COLOUR, &mFx1, false);
+  mTabsFx.addTab("filter", Utils::BG_COLOUR, &mFilterPanel, false);
   mTabsFx.addTab("FX 2", Utils::BG_COLOUR, &mFx2, false);
   mTabsFx.addTab("FX 3", Utils::BG_COLOUR, &mFx3, false);
   mTabsFx.setOutline(0);
@@ -144,11 +144,9 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
     mEnvAdsr.updateSelectedParams();
     mEnvGrain.updateSelectedParams();
     mAdjustPanel.updateSelectedParams();
-    mFx1.updateSelectedParams();
     mFx2.updateSelectedParams();
     mFx3.updateSelectedParams();
     mPianoPanel.updateSelectedParams();
-    mFilterControl.updateSelectedParams();
     mMasterPanel.updateSelectedParams();
   };
   addAndMakeVisible(mPianoPanel);
@@ -343,13 +341,13 @@ void GRainbowAudioProcessorEditor::resized() {
   // Left and right panels
   auto leftPanel = r.removeFromLeft(Utils::PANEL_WIDTH).reduced(Utils::PADDING, Utils::PADDING);
   mTabsEnvelopes.setBounds(leftPanel.removeFromTop(Utils::PANEL_HEIGHT));
-  mTabsFx.setBounds(leftPanel.removeFromBottom(Utils::PANEL_HEIGHT));
+  mTabsModulators.setBounds(leftPanel.removeFromBottom(Utils::PANEL_HEIGHT));
+
 
   auto rightPanel = r.removeFromRight(Utils::PANEL_WIDTH).reduced(Utils::PADDING, Utils::PADDING);
   // TODO: add back in resource usage
   mMasterPanel.setBounds(rightPanel.removeFromTop(Utils::PANEL_HEIGHT));
-  mTabsModulators.setBounds(rightPanel.removeFromBottom(Utils::PANEL_HEIGHT));
-  //mFilterControl.setBounds(rightPanel);
+  mTabsFx.setBounds(rightPanel.removeFromBottom(Utils::PANEL_HEIGHT));
 
   // Center middle space
   auto centerPanel = r.reduced(0, Utils::PADDING);

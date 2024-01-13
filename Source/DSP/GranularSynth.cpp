@@ -149,13 +149,6 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
 
   const juce::dsp::ProcessSpec filtConfig = {sampleRate, (juce::uint32)samplesPerBlock, (unsigned int)getTotalNumOutputChannels()};
   mParameters.global.filter.prepare(filtConfig);
-  for (auto&& note : mParameters.note.notes) {
-    note->filter.prepare(filtConfig);
-    for (auto&& gen : note->generators) {
-      gen->filter.prepare(filtConfig);
-      gen->sampleRate = sampleRate;
-    }
-  }
   mMeterSource.resize(getTotalNumOutputChannels(), sampleRate * 0.1 / samplesPerBlock);
   mReferenceTone.prepareToPlay(samplesPerBlock, sampleRate);
   mParameters.prepareModSources(samplesPerBlock, sampleRate);
@@ -194,6 +187,14 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   const int bufferNumSample = buffer.getNumSamples();
   
   mParameters.processModSources();
+  
+  // Apply modulations to filter parameters
+  float filtCutoff0To1 = mParameters.global.filterCutoff->convertTo0to1(mParameters.global.filterCutoff->get());
+  float filtRes0To1 = mParameters.global.filterRes->convertTo0to1(mParameters.global.filterRes->get());
+  mParameters.applyModulations(mParameters.global.filterCutoff, filtCutoff0To1);
+  mParameters.applyModulations(mParameters.global.filterRes, filtRes0To1);
+  mParameters.global.filter.setCutoffFrequency(mParameters.global.filterCutoff->convertFrom0to1(filtCutoff0To1));
+  mParameters.global.filter.setResonance(mParameters.global.filterRes->convertFrom0to1(filtRes0To1));
 
   mKeyboardState.processNextMidiBuffer(midiMessages, 0, bufferNumSample, true);
   for (const auto& messageMeta : midiMessages) {
@@ -262,16 +263,16 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
           for (Grain* grain : gNote->genGrains[genIdx]) {
             genSample += grain->process(ch / (float)(buffer.getNumChannels() - 1), mAudioBuffer, grainGain, mTotalSamps);
           }
-          // Process filter and optionally use for output
-          const float filterOutput = mParameters.getFilterOutput(paramGenerator, ch, genSample);
-          // If filter type isn't "none", use its output
-          const int filtType = mParameters.getChoiceParam(paramGenerator, ParamCommon::Type::FILT_TYPE);
-          if (filtType != Utils::FilterType::NO_FILTER) {
-            genSample = filterOutput;
-          }
-
           bufferChannels[ch][i] += genSample;
         }
+      }
+    }
+    // Process filter and optionally use for output
+    const int filtType = mParameters.global.filterType->getIndex();
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+      const float filterOutput = mParameters.global.filter.processSample(ch, bufferChannels[ch][i]);
+      if (filtType != Utils::FilterType::NO_FILTER) {
+        bufferChannels[ch][i] = filterOutput;
       }
     }
     mTotalSamps++;

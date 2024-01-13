@@ -30,26 +30,24 @@ class FilterControl : public juce::Component, juce::AudioProcessorParameter::Lis
 
   void timerCallback() override;
 
-  void updateSelectedParams();
-
  private:
-  static constexpr const char* SECTION_TITLE = "filter";
+  
+  void updateFilterPath();
 
   // Bookkeeping
   Parameters& mParameters;
-  ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
-  juce::Colour mParamColour;
+  juce::PathStrokeType mPathStroke;
+  juce::Path mFilterPath;
 
   // Components
-  CommonSlider mSliderCutoff;
-  CommonSlider mSliderResonance;
+  ParamSlider mSliderCutoff;
+  ParamSlider mSliderResonance;
   juce::Label mLabelCutoff;
   juce::Label mLabelResonance;
   juce::ComboBox mFilterType;
 
   // UI values saved on resize
-  juce::Rectangle<float> mTitleRect;
   juce::Rectangle<float> mVizRect;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterControl)
