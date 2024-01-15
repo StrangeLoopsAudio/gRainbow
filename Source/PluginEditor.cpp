@@ -27,24 +27,26 @@
 
 //==============================================================================
 GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
-    : AudioProcessorEditor(&synth),
-      mSynth(synth),
-      mParameters(synth.getParams()),
-      mArcSpec(synth.getParams()),
-      mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
-      mProgressBar(PROGRESS_VALUE),
-      mTabsEnvelopes(juce::TabbedButtonBar::Orientation::TabsAtTop),
-      mTabsFx(juce::TabbedButtonBar::Orientation::TabsAtTop),
-      mTabsModulators(juce::TabbedButtonBar::Orientation::TabsAtTop),
-      mEnvAdsr(synth.getParams()),
-      mEnvGrain(synth.getParams()),
-      mAdjustPanel(synth.getParams()),
-      mFx2(synth.getParams()),
-      mFx3(synth.getParams()),
-      mModEnvelopes(synth.getParams()),
-      mModLFOs(synth.getParams()),
-      mMasterPanel(synth.getParams(), synth.getMeterSource()),
-      mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
+: AudioProcessorEditor(&synth),
+mSynth(synth),
+mParameters(synth.getParams()),
+mArcSpec(synth.getParams()),
+mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
+mProgressBar(PROGRESS_VALUE),
+mTabsGrains(juce::TabbedButtonBar::Orientation::TabsAtTop),
+mTabsLFOs(juce::TabbedButtonBar::Orientation::TabsAtTop),
+mTabsEnvs(juce::TabbedButtonBar::Orientation::TabsAtTop),
+mEnvAdsr(synth.getParams()),
+mEnvGrain(synth.getParams()),
+mAdjustPanel(synth.getParams()),
+mModEnv1(0, synth.getParams()),
+mModEnv2(1, synth.getParams()),
+mModEnv3(2, synth.getParams()),
+mModLFO1(0, synth.getParams()),
+mModLFO2(1, synth.getParams()),
+mModLFO3(2, synth.getParams()),
+mMasterPanel(synth.getParams(), synth.getMeterSource()),
+mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mRainbowLookAndFeel.setColour(juce::ComboBox::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
   mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
@@ -66,44 +68,50 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   auto* tabImageComp = new juce::ImageComponent();
   tabImageComp->setInterceptsMouseClicks(false, false);
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
-  mTabsEnvelopes.addTab("grain env", Utils::BG_COLOUR, &mEnvGrain, false);
-  mTabsEnvelopes.getTabbedButtonBar().getTabButton(0)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
+  mTabsGrains.addTab("grain env", Utils::BG_COLOUR, &mEnvGrain, false);
+  mTabsGrains.getTabbedButtonBar().getTabButton(0)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
   
   tabImage = juce::PNGImageFormat::loadFrom(BinaryData::ampEnv_png, BinaryData::ampEnv_pngSize);
   tabImageComp = new juce::ImageComponent();
   tabImageComp->setInterceptsMouseClicks(false, false);
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
-  mTabsEnvelopes.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::tabTextColourId, Utils::GLOBAL_COLOUR);
-  mTabsEnvelopes.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::frontTextColourId, Utils::GLOBAL_COLOUR);
-  mTabsEnvelopes.setTabBarDepth(Utils::TAB_HEIGHT);
-  mTabsEnvelopes.addTab("amp env", Utils::BG_COLOUR, &mEnvAdsr, false);
-  mTabsEnvelopes.getTabbedButtonBar().getTabButton(1)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
+  mTabsGrains.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::tabTextColourId, Utils::GLOBAL_COLOUR);
+  mTabsGrains.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::frontTextColourId, Utils::GLOBAL_COLOUR);
+  mTabsGrains.setTabBarDepth(Utils::TAB_HEIGHT);
+  mTabsGrains.addTab("amp env", Utils::BG_COLOUR, &mEnvAdsr, false);
+  mTabsGrains.getTabbedButtonBar().getTabButton(1)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
 
   tabImage = juce::PNGImageFormat::loadFrom(BinaryData::adjust_png, BinaryData::adjust_pngSize);
   tabImageComp = new juce::ImageComponent();
   tabImageComp->setInterceptsMouseClicks(false, false);
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
-  mTabsEnvelopes.addTab("adjust", Utils::BG_COLOUR, &mAdjustPanel, false);
-  mTabsEnvelopes.getTabbedButtonBar().getTabButton(2)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
+  mTabsGrains.addTab("adjust", Utils::BG_COLOUR, &mAdjustPanel, false);
+  mTabsGrains.getTabbedButtonBar().getTabButton(2)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
 
-  mTabsEnvelopes.setOutline(0);
-  addAndMakeVisible(mTabsEnvelopes);
+  mTabsGrains.setOutline(0);
+  addAndMakeVisible(mTabsGrains);
 
-  // FX tabs
-  mTabsFx.setTabBarDepth(Utils::TAB_HEIGHT);
-  mTabsFx.addTab("FX 2", Utils::BG_COLOUR, &mFx2, false);
-  mTabsFx.addTab("FX 3", Utils::BG_COLOUR, &mFx3, false);
-  mTabsFx.setOutline(0);
-  addAndMakeVisible(mTabsFx);
+  // Mod LFO tabs
+  mTabsLFOs.setTabBarDepth(Utils::TAB_HEIGHT);
+  mTabsLFOs.addTab("LFO 1", Utils::BG_COLOUR, &mModLFO1, false);
+  mTabsLFOs.getTabbedButtonBar().getTabButton(0)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modLFOs[0].colour);
+  mTabsLFOs.addTab("LFO 2", Utils::BG_COLOUR, &mModLFO2, false);
+  mTabsLFOs.getTabbedButtonBar().getTabButton(1)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modLFOs[1].colour);
+  mTabsLFOs.addTab("LFO 3", Utils::BG_COLOUR, &mModLFO3, false);
+  mTabsLFOs.getTabbedButtonBar().getTabButton(2)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modLFOs[2].colour);
+  mTabsLFOs.setOutline(0);
+  addAndMakeVisible(mTabsLFOs);
 
-  // Modulator tabs
-  mTabsModulators.setTabBarDepth(Utils::TAB_HEIGHT);
-  mTabsModulators.addTab("lfo", Utils::BG_COLOUR, &mModLFOs, false);
-  mTabsModulators.getTabbedButtonBar().getTabButton(0)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.lfo1.colour);
-  mTabsModulators.addTab("envelope", Utils::BG_COLOUR, &mModEnvelopes, false);
-  mTabsModulators.getTabbedButtonBar().getTabButton(1)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.env1.colour);
-  mTabsModulators.setOutline(0);
-  addAndMakeVisible(mTabsModulators);
+  // Mod enveople tabs
+  mTabsEnvs.setTabBarDepth(Utils::TAB_HEIGHT);
+  mTabsEnvs.addTab("Env 1", Utils::BG_COLOUR, &mModEnv1, false);
+  mTabsEnvs.getTabbedButtonBar().getTabButton(0)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[0].colour);
+  mTabsEnvs.addTab("Env 2", Utils::BG_COLOUR, &mModEnv2, false);
+  mTabsEnvs.getTabbedButtonBar().getTabButton(1)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[1].colour);
+  mTabsEnvs.addTab("Env 3", Utils::BG_COLOUR, &mModEnv3, false);
+  mTabsEnvs.getTabbedButtonBar().getTabButton(2)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[2].colour);
+  mTabsEnvs.setOutline(0);
+  addAndMakeVisible(mTabsEnvs);
 
   mTrimSelection.onCancel = [this]() {
     // if nothing was ever loaded, got back to the logo
@@ -141,8 +149,6 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     mEnvAdsr.updateSelectedParams();
     mEnvGrain.updateSelectedParams();
     mAdjustPanel.updateSelectedParams();
-    mFx2.updateSelectedParams();
-    mFx3.updateSelectedParams();
     mPianoPanel.updateSelectedParams();
     mMasterPanel.updateSelectedParams();
   };
@@ -336,14 +342,14 @@ void GRainbowAudioProcessorEditor::resized() {
 
   // Left and right panels
   auto leftPanel = r.removeFromLeft(Utils::PANEL_WIDTH).reduced(Utils::PADDING, Utils::PADDING);
-  mTabsEnvelopes.setBounds(leftPanel.removeFromTop(Utils::PANEL_HEIGHT));
-  mTabsModulators.setBounds(leftPanel.removeFromBottom(Utils::PANEL_HEIGHT));
+  mTabsGrains.setBounds(leftPanel.removeFromTop(Utils::PANEL_HEIGHT));
+  mTabsEnvs.setBounds(leftPanel.removeFromBottom(Utils::PANEL_HEIGHT));
 
 
   auto rightPanel = r.removeFromRight(Utils::PANEL_WIDTH).reduced(Utils::PADDING, Utils::PADDING);
   // TODO: add back in resource usage
   mMasterPanel.setBounds(rightPanel.removeFromTop(Utils::PANEL_HEIGHT));
-  mTabsFx.setBounds(rightPanel.removeFromBottom(Utils::PANEL_HEIGHT));
+  mTabsLFOs.setBounds(rightPanel.removeFromBottom(Utils::PANEL_HEIGHT));
 
   // Center middle space
   auto centerPanel = r.reduced(0, Utils::PADDING);

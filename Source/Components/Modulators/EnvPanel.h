@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    Envelopes.h
+    EnvPanel.h
     Created: 15 Dec 2023 8:34:54pm
     Author:  brady
 
@@ -18,10 +18,10 @@
 //==============================================================================
 /*
  */
-class Envelopes : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
+class EnvPanel : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
-  Envelopes(Parameters& parameters);
-  ~Envelopes();
+  EnvPanel(int modIdx, Parameters& parameters);
+  ~EnvPanel();
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -35,6 +35,7 @@ class Envelopes : public juce::Component, juce::AudioProcessorParameter::Listene
  private:
   // Bookkeeping
   Parameters& mParameters;
+  EnvModSource& mModEnv;
   std::atomic<bool> mParamHasChanged;
 
   // Components
@@ -51,5 +52,5 @@ class Envelopes : public juce::Component, juce::AudioProcessorParameter::Listene
   // UI values saved on resize
   juce::Rectangle<float> mVizRect;
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Envelopes)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvPanel)
 };

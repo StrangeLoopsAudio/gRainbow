@@ -29,16 +29,16 @@
 
 namespace ParamIDs {
 // Global params
-static juce::String lfo1Shape{"lfo1_shape"};
-static juce::String lfo1Rate{"lfo1_rate"};
-static juce::String lfo1Phase{"lfo1_phase"};
-static juce::String lfo1Sync{"lfo1_sync"};
-static juce::String lfo1Bipolar{"lfo1_biploar"};
-static juce::String lfo1Retrigger{"lfo1_retrigger"};
-static juce::String env1Attack{"env1_attack"};
-static juce::String env1Decay{"env1_decay"};
-static juce::String env1Sustain{"env1_sustain"};
-static juce::String env1Release{"env1_release"};
+static juce::String lfoShape{"lfo_shape_"};
+static juce::String lfoRate{"lfo_rate_"};
+static juce::String lfoPhase{"lfo_phase_"};
+static juce::String lfoSync{"lfo_sync_"};
+static juce::String lfoBipolar{"lfo_bipolar_"};
+static juce::String lfoRetrigger{"lfo_retrigger_"};
+static juce::String envAttack{"env_attack_"};
+static juce::String envDecay{"env_decay_"};
+static juce::String envSustain{"env_sustain_"};
+static juce::String envRelease{"env_release_"};
 static juce::String macro1{"macro1"};
 static juce::String macro2{"macro2"};
 static juce::String macro3{"macro3"};
@@ -159,6 +159,7 @@ static juce::Array<juce::String> PARAM_TYPE_NAMES{"global", "note", "generator"}
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
 static juce::Array<juce::String> LFO_SHAPE_NAMES{"sine", "tri", "square", "saw"};
 
+static constexpr int NUM_MODS = 3; // Number of modulators per type (e.g. 3 lfos, 3 envs)
 static constexpr int MAX_CANDIDATES = 6;
 static constexpr int NUM_GENERATORS = 4;
 static constexpr int SOLO_NONE = -1;
@@ -535,12 +536,20 @@ struct ParamGlobal : ParamCommon {
   
   void resetParams() {
     ParamCommon::resetParams();
-    ParamHelper::setParam(lfo1.shape, ParamDefaults::LFO_SHAPE_DEFAULT);
-    ParamHelper::setParam(lfo1.rate, ParamDefaults::LFO_RATE_DEFAULT);
-    ParamHelper::setParam(lfo1.phase, ParamDefaults::LFO_PHASE_DEFAULT);
-    ParamHelper::setParam(lfo1.sync, ParamDefaults::LFO_SYNC_DEFAULT);
-    ParamHelper::setParam(lfo1.bipolar, ParamDefaults::LFO_BIPOLAR_DEFAULT);
-    ParamHelper::setParam(lfo1.retrigger, ParamDefaults::LFO_RETRIGGER_DEFAULT);
+    for (auto& lfo : modLFOs) {
+      ParamHelper::setParam(lfo.shape, ParamDefaults::LFO_SHAPE_DEFAULT);
+      ParamHelper::setParam(lfo.rate, ParamDefaults::LFO_RATE_DEFAULT);
+      ParamHelper::setParam(lfo.phase, ParamDefaults::LFO_PHASE_DEFAULT);
+      ParamHelper::setParam(lfo.sync, ParamDefaults::LFO_SYNC_DEFAULT);
+      ParamHelper::setParam(lfo.bipolar, ParamDefaults::LFO_BIPOLAR_DEFAULT);
+      ParamHelper::setParam(lfo.retrigger, ParamDefaults::LFO_RETRIGGER_DEFAULT);
+    }
+    for (auto& env : modEnvs) {
+      ParamHelper::setParam(env.attack, ParamDefaults::ATTACK_DEFAULT_SEC);
+      ParamHelper::setParam(env.decay, ParamDefaults::DECAY_DEFAULT_SEC);
+      ParamHelper::setParam(env.sustain, ParamDefaults::SUSTAIN_DEFAULT);
+      ParamHelper::setParam(env.release, ParamDefaults::RELEASE_DEFAULT_SEC);
+    }
     ParamHelper::setParam(macro1.macro, ParamDefaults::MACRO_DEFAULT);
     ParamHelper::setParam(macro2.macro, ParamDefaults::MACRO_DEFAULT);
     ParamHelper::setParam(macro3.macro, ParamDefaults::MACRO_DEFAULT);
@@ -548,8 +557,8 @@ struct ParamGlobal : ParamCommon {
   }
 
   // Global modulation sources
-  LFOModSource lfo1;
-  EnvModSource env1;
+  std::array<LFOModSource, NUM_MODS> modLFOs;
+  std::array<EnvModSource, NUM_MODS> modEnvs;
   MacroModSource macro1, macro2, macro3, macro4;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
@@ -657,16 +666,24 @@ struct Parameters {
   ModSource* mappingModSource = nullptr; // If not null, then a modulator is waiting to be mapped
   
   void prepareModSources(int blockSize, double sampleRate) {
-    global.lfo1.prepare(blockSize, sampleRate);
-    global.env1.prepare(blockSize, sampleRate);
+    for (auto& lfo : global.modLFOs) {
+      lfo.prepare(blockSize, sampleRate);
+    }
+    for (auto& env : global.modEnvs) {
+      env.prepare(blockSize, sampleRate);
+    }
     global.macro1.prepare(blockSize, sampleRate);
     global.macro2.prepare(blockSize, sampleRate);
     global.macro3.prepare(blockSize, sampleRate);
     global.macro4.prepare(blockSize, sampleRate);
   }
   void processModSources() {
-    global.lfo1.processBlock();
-    global.env1.processBlock();
+    for (auto& lfo : global.modLFOs) {
+      lfo.processBlock();
+    }
+    for (auto& env : global.modEnvs) {
+      env.processBlock();
+    }
     global.macro1.processBlock();
     global.macro2.processBlock();
     global.macro3.processBlock();

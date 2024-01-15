@@ -141,8 +141,6 @@ set(SOURCE_COMPONENTS
     Source/Components/AdjustPanel.cpp
     Source/Components/MasterPanel.h
     Source/Components/MasterPanel.cpp
-    Source/Components/FxPanel.h
-    Source/Components/FxPanel.cpp
     Source/Components/ArcSpectrogram.h
     Source/Components/ArcSpectrogram.cpp
     Source/Components/TrimSelection.h
@@ -161,10 +159,10 @@ set(SOURCE_COMPONENTS
     Source/Components/RainbowLookAndFeel.h
     Source/Components/RainbowLookAndFeel.cpp
     Source/Components/MeterLookAndFeel.h
-    Source/Components/Modulators/LFOs.h
-    Source/Components/Modulators/LFOs.cpp
-    Source/Components/Modulators/Envelopes.h
-    Source/Components/Modulators/Envelopes.cpp
+    Source/Components/Modulators/LFOPanel.h
+    Source/Components/Modulators/LFOPanel.cpp
+    Source/Components/Modulators/EnvPanel.h
+    Source/Components/Modulators/EnvPanel.cpp
 )
 
 set(SOURCE_DSP

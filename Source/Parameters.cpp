@@ -13,24 +13,30 @@
 void ParamGlobal::addParams(juce::AudioProcessor& p) {
   // Global
   // LFOs
-  p.addParameter(lfo1.shape =
-                 new juce::AudioParameterChoice({ParamIDs::lfo1Shape, 1}, "LFO 1 Shape", LFO_SHAPE_NAMES, ParamDefaults::LFO_SHAPE_DEFAULT));
-  p.addParameter(lfo1.rate = new juce::AudioParameterFloat({ParamIDs::lfo1Rate, 1}, "LFO 1 Rate", ParamRanges::LFO_RATE,
-                                                           ParamDefaults::LFO_RATE_DEFAULT));
-  p.addParameter(lfo1.phase = new juce::AudioParameterFloat({ParamIDs::lfo1Phase, 1}, "LFO 1 Phase", ParamRanges::LFO_PHASE,
-                                                           ParamDefaults::LFO_PHASE_DEFAULT));
-  p.addParameter(lfo1.sync = new juce::AudioParameterBool({ParamIDs::lfo1Sync, 1}, ParamIDs::lfo1Sync, ParamDefaults::LFO_SYNC_DEFAULT));
-  p.addParameter(lfo1.bipolar = new juce::AudioParameterBool({ParamIDs::lfo1Bipolar, 1}, ParamIDs::lfo1Bipolar, ParamDefaults::LFO_BIPOLAR_DEFAULT));
-  p.addParameter(lfo1.retrigger = new juce::AudioParameterBool({ParamIDs::lfo1Retrigger, 1}, ParamIDs::lfo1Retrigger, ParamDefaults::LFO_RETRIGGER_DEFAULT));
-  // Mod envelopes
-  p.addParameter(env1.attack = new juce::AudioParameterFloat({ParamIDs::env1Attack, 1}, "Env 1 Attack", ParamRanges::ATTACK,
-                                                                ParamDefaults::ATTACK_DEFAULT_SEC));
-  p.addParameter(env1.decay = new juce::AudioParameterFloat({ParamIDs::env1Decay, 1}, "Env 1 Decay", ParamRanges::DECAY,
-                                                               ParamDefaults::DECAY_DEFAULT_SEC));
-  p.addParameter(env1.sustain = new juce::AudioParameterFloat({ParamIDs::env1Sustain, 1}, "Env 1 Sustain", ParamRanges::SUSTAIN,
-                                                                 ParamDefaults::SUSTAIN_DEFAULT));
-  p.addParameter(env1.release = new juce::AudioParameterFloat({ParamIDs::env1Release, 1}, "Env 1 Release", ParamRanges::RELEASE,
-                                                                 ParamDefaults::RELEASE_DEFAULT_SEC));
+  for (int i = 0; i < NUM_MODS; ++i) {
+    auto strI = juce::String(i);
+    p.addParameter(modLFOs[i].shape = new juce::AudioParameterChoice({ParamIDs::lfoShape + strI, 1}, "LFO " + strI + " Shape",
+                                                                     LFO_SHAPE_NAMES, ParamDefaults::LFO_SHAPE_DEFAULT));
+    p.addParameter(modLFOs[i].rate = new juce::AudioParameterFloat({ParamIDs::lfoRate + strI, 1}, "LFO " + strI + " Rate",
+                                                                   ParamRanges::LFO_RATE, ParamDefaults::LFO_RATE_DEFAULT));
+    p.addParameter(modLFOs[i].phase = new juce::AudioParameterFloat({ParamIDs::lfoPhase + strI, 1}, "LFO " + strI + " Phase",
+                                                                    ParamRanges::LFO_PHASE, ParamDefaults::LFO_PHASE_DEFAULT));
+    p.addParameter(modLFOs[i].sync = new juce::AudioParameterBool({ParamIDs::lfoSync + strI, 1}, "LFO " + strI + " Sync",
+                                                                  ParamDefaults::LFO_SYNC_DEFAULT));
+    p.addParameter(modLFOs[i].bipolar = new juce::AudioParameterBool({ParamIDs::lfoBipolar + strI, 1}, "LFO " + strI + " Bipolar",
+                                                                     ParamDefaults::LFO_BIPOLAR_DEFAULT));
+    p.addParameter(modLFOs[i].retrigger = new juce::AudioParameterBool(
+                                                                       {ParamIDs::lfoRetrigger + strI, 1}, "LFO " + strI + " Retrigger", ParamDefaults::LFO_RETRIGGER_DEFAULT));
+    // Mod envelopes
+    p.addParameter(modEnvs[i].attack = new juce::AudioParameterFloat({ParamIDs::envAttack + strI, 1}, "Env " + strI + " Attack",
+                                                                     ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
+    p.addParameter(modEnvs[i].decay = new juce::AudioParameterFloat({ParamIDs::envDecay + strI, 1}, "Env " + strI + " Decay",
+                                                                    ParamRanges::DECAY, ParamDefaults::DECAY_DEFAULT_SEC));
+    p.addParameter(modEnvs[i].sustain = new juce::AudioParameterFloat({ParamIDs::envSustain + strI, 1}, "Env " + strI + " Sustain",
+                                                                      ParamRanges::SUSTAIN, ParamDefaults::SUSTAIN_DEFAULT));
+    p.addParameter(modEnvs[i].release = new juce::AudioParameterFloat({ParamIDs::envRelease + strI, 1}, "Env " + strI + " Release",
+                                                                      ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
+  }
   // Macros
   p.addParameter(macro1.macro = new juce::AudioParameterFloat({ParamIDs::macro1, 1}, "Macro 1", ParamRanges::MACRO,
                                                            ParamDefaults::MACRO_DEFAULT));

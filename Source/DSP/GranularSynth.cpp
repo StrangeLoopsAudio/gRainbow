@@ -279,7 +279,9 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   }
   // Update sync rate of lfos
   mBarsPerSec = (1.0f / bpm) * 60.0f * beatsPerBar;
-  mParameters.global.lfo1.setSyncRate(mBarsPerSec);
+  for (auto& lfo : mParameters.global.modLFOs) {
+    lfo.setSyncRate(mBarsPerSec);
+  }
 
   handleGrainAddRemove(bufferNumSample);
 
@@ -709,8 +711,12 @@ void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumb
   }
     
   // Retrigger modulators
-  mParameters.global.lfo1.checkRetrigger();
-  mParameters.global.env1.handleNoteOn(mTotalSamps);
+  for (auto& lfo : mParameters.global.modLFOs) {
+    lfo.checkRetrigger();
+  }
+  for (auto& env : mParameters.global.modEnvs) {
+    env.handleNoteOn(mTotalSamps);
+  }
 }
 
 void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNumber, float) {
@@ -739,8 +745,9 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNum
     }
   }
   // Update mod envelopes
-  mParameters.global.env1.handleNoteOff(mTotalSamps);
-
+  for (auto& env : mParameters.global.modEnvs) {
+    env.handleNoteOff(mTotalSamps);
+  }
 }
 
 void GranularSynth::resetParameters(bool fullClear) {

@@ -1,31 +1,32 @@
 /*
   ==============================================================================
 
-    Envelopes.cpp
+    EnvPanel.cpp
     Created: 23 Jun 2021 8:34:54pm
     Author:  brady
 
   ==============================================================================
 */
 
-#include "Envelopes.h"
+#include "EnvPanel.h"
 #include "Utils/Utils.h"
 #include "Utils/Colour.h"
 
-Envelopes::Envelopes(Parameters& parameters)
-    : mParameters(parameters),
-mSliderAttack(mParameters, mParameters.global.env1.attack),
-mSliderDecay(mParameters, mParameters.global.env1.decay),
-mSliderSustain(mParameters, mParameters.global.env1.sustain),
-mSliderRelease(mParameters, mParameters.global.env1.release),
-mBtnMap(mParameters, mParameters.global.env1){
+EnvPanel::EnvPanel(int modIdx, Parameters& parameters)
+: mParameters(parameters),
+mModEnv(mParameters.global.modEnvs[modIdx]),
+mSliderAttack(mParameters, mModEnv.attack),
+mSliderDecay(mParameters, mModEnv.decay),
+mSliderSustain(mParameters, mModEnv.sustain),
+mSliderRelease(mParameters, mModEnv.release),
+mBtnMap(mParameters, mModEnv) {
   
   // Default slider settings
   std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderAttack, mSliderDecay, mSliderSustain, mSliderRelease };
   for (auto& slider : sliders) {
     slider.get().setNumDecimalPlacesToDisplay(2);
     slider.get().setPopupDisplayEnabled(true, true, this);
-    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParameters.global.env1.colour);
+    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mModEnv.colour);
     addAndMakeVisible(slider.get());
   }
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end, 0.01);
@@ -40,27 +41,27 @@ mBtnMap(mParameters, mParameters.global.env1){
   mSliderRelease.setDoubleClickReturnValue(true, ParamDefaults::RELEASE_DEFAULT_SEC);
   mSliderRelease.setTextValueSuffix("s");
 
-  mParameters.global.env1.attack->addListener(this);
-  mParameters.global.env1.decay->addListener(this);
-  mParameters.global.env1.sustain->addListener(this);
-  mParameters.global.env1.release->addListener(this);
+  mModEnv.attack->addListener(this);
+  mModEnv.decay->addListener(this);
+  mModEnv.sustain->addListener(this);
+  mModEnv.release->addListener(this);
   mParamHasChanged.store(true); // Init param values
   
   // Default button settings
   std::vector<std::reference_wrapper<juce::TextButton>> buttons = { mBtnMap };
   for (auto& button : buttons) {
     button.get().setToggleable(true);
-    button.get().setColour(juce::TextButton::textColourOffId, mParameters.global.env1.colour);
+    button.get().setColour(juce::TextButton::textColourOffId, mModEnv.colour);
     button.get().setColour(juce::TextButton::textColourOnId, juce::Colours::black);
-    button.get().setColour(juce::TextButton::buttonColourId, mParameters.global.env1.colour);
-    button.get().setColour(juce::TextButton::buttonOnColourId, mParameters.global.env1.colour);
+    button.get().setColour(juce::TextButton::buttonColourId, mModEnv.colour);
+    button.get().setColour(juce::TextButton::buttonOnColourId, mModEnv.colour);
     addAndMakeVisible(button.get());
   }
   
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelAttack, mLabelDecay, mLabelSustain, mLabelRelease };
   for (auto& label : labels) {
-    label.get().setColour(juce::Label::ColourIds::textColourId, mParameters.global.env1.colour);
+    label.get().setColour(juce::Label::ColourIds::textColourId, mModEnv.colour);
     label.get().setJustificationType(juce::Justification::centredTop);
     label.get().setFont(juce::Font(14));
     addAndMakeVisible(label.get());
@@ -73,33 +74,33 @@ mBtnMap(mParameters, mParameters.global.env1){
   startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
-Envelopes::~Envelopes() {
-  mParameters.global.env1.attack->removeListener(this);
-  mParameters.global.env1.decay->removeListener(this);
-  mParameters.global.env1.sustain->removeListener(this);
-  mParameters.global.env1.release->removeListener(this);
+EnvPanel::~EnvPanel() {
+  mModEnv.attack->removeListener(this);
+  mModEnv.decay->removeListener(this);
+  mModEnv.sustain->removeListener(this);
+  mModEnv.release->removeListener(this);
   stopTimer();
 }
 
-void Envelopes::visibilityChanged() {
+void EnvPanel::visibilityChanged() {
   if (!isVisible()) {
     mBtnMap.resetMappingStatus();
   }
 }
 
-void Envelopes::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
+void EnvPanel::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
 
-void Envelopes::timerCallback() {
+void EnvPanel::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    mSliderAttack.setValue(mParameters.global.env1.attack->get(), juce::dontSendNotification);
-    mSliderDecay.setValue(mParameters.global.env1.decay->get(), juce::dontSendNotification);
-    mSliderSustain.setValue(mParameters.global.env1.sustain->get(), juce::dontSendNotification);
-    mSliderRelease.setValue(mParameters.global.env1.release->get(), juce::dontSendNotification);
+    mSliderAttack.setValue(mModEnv.attack->get(), juce::dontSendNotification);
+    mSliderDecay.setValue(mModEnv.decay->get(), juce::dontSendNotification);
+    mSliderSustain.setValue(mModEnv.sustain->get(), juce::dontSendNotification);
+    mSliderRelease.setValue(mModEnv.release->get(), juce::dontSendNotification);
   }
 }
 
-void Envelopes::paint(juce::Graphics& g) {
+void EnvPanel::paint(juce::Graphics& g) {
   g.setColour(Utils::PANEL_COLOUR);
   g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
   
@@ -112,7 +113,7 @@ void Envelopes::paint(juce::Graphics& g) {
   float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
   
   // Draw ADSR path
-  juce::Colour colour = mParameters.global.env1.colour;
+  juce::Colour colour = mModEnv.colour;
   g.setFillType(juce::ColourGradient(colour.withAlpha(0.35f), mVizRect.getTopLeft(), colour.withAlpha(0.05f), mVizRect.getBottomLeft(), false));
   
   auto adsrRect = mVizRect.reduced(Utils::PADDING * 2, Utils::PADDING * 2);
@@ -135,7 +136,7 @@ void Envelopes::paint(juce::Graphics& g) {
   g.strokePath(adsrPath.createPathWithRoundedCorners(5), juce::PathStrokeType(3));
 }
 
-void Envelopes::resized() {
+void EnvPanel::resized() {
   auto r = getLocalBounds().reduced(Utils::PADDING);
 
   // Labels

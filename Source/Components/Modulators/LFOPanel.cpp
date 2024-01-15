@@ -1,22 +1,24 @@
 /*
   ==============================================================================
 
-    LFOs.cpp
+    LFOPanel.cpp
     Created: 23 Jun 2021 8:34:54pm
     Author:  brady
 
   ==============================================================================
 */
 
-#include "LFOs.h"
+#include "LFOPanel.h"
 #include "Utils/Utils.h"
 #include "Utils/Colour.h"
 #include "Modulators.h"
 
-LFOs::LFOs(Parameters& parameters): mParameters(parameters),
-  mSliderRate(mParameters, mParameters.global.lfo1.rate, ParamRanges::LFO_RATE, false),
-  mSliderPhase(mParameters, mParameters.global.lfo1.phase),
-  mBtnMap(mParameters, mParameters.global.lfo1) {
+LFOPanel::LFOPanel(int modIdx, Parameters& parameters)
+: mParameters(parameters),
+mModLFO(mParameters.global.modLFOs[modIdx]),
+mSliderRate(mParameters, mParameters.global.modLFOs[modIdx].rate, ParamRanges::LFO_RATE, false),
+mSliderPhase(mParameters, mModLFO.phase),
+mBtnMap(mParameters, mModLFO) {
     
   mBufDepth.resize(NUM_LFO_SAMPLES, 0.0f);
     
@@ -24,11 +26,11 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   for (const LFOModSource::Shape &shape : LFOModSource::LFO_SHAPES) {
     mChoiceShape.addItem(shape.name, shapeId++);
   }
-  mChoiceShape.setColour(juce::ComboBox::ColourIds::backgroundColourId, mParameters.global.lfo1.colour);
-  mChoiceShape.setColour(juce::ComboBox::ColourIds::textColourId, mParameters.global.lfo1.colour);
+  mChoiceShape.setColour(juce::ComboBox::ColourIds::backgroundColourId, mModLFO.colour);
+  mChoiceShape.setColour(juce::ComboBox::ColourIds::textColourId, mModLFO.colour);
   mChoiceShape.setSelectedId(1, juce::dontSendNotification);
   mChoiceShape.onChange = [this]() {
-    ParamHelper::setParam(mParameters.global.lfo1.shape, mChoiceShape.getSelectedId() - 1);
+    ParamHelper::setParam(mModLFO.shape, mChoiceShape.getSelectedId() - 1);
   };
   mChoiceShape.setJustificationType(juce::Justification::centred);
   addAndMakeVisible(mChoiceShape);
@@ -38,7 +40,7 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   for (auto& slider : sliders) {
     slider.get().setNumDecimalPlacesToDisplay(2);
     slider.get().setPopupDisplayEnabled(true, true, this);
-    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParameters.global.lfo1.colour);
+    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mModLFO.colour);
     addAndMakeVisible(slider.get());
   }
   mSliderRate.setSync(false);
@@ -52,31 +54,31 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   std::vector<std::reference_wrapper<juce::TextButton>> buttons = { mBtnSync, mBtnBipolar, mBtnRetrigger, mBtnMap };
   for (auto& button : buttons) {
     button.get().setToggleable(true);
-    button.get().setColour(juce::TextButton::textColourOffId, mParameters.global.lfo1.colour);
+    button.get().setColour(juce::TextButton::textColourOffId, mModLFO.colour);
     button.get().setColour(juce::TextButton::textColourOnId, juce::Colours::black);
-    button.get().setColour(juce::TextButton::buttonColourId, mParameters.global.lfo1.colour);
-    button.get().setColour(juce::TextButton::buttonOnColourId, mParameters.global.lfo1.colour);
+    button.get().setColour(juce::TextButton::buttonColourId, mModLFO.colour);
+    button.get().setColour(juce::TextButton::buttonOnColourId, mModLFO.colour);
     addAndMakeVisible(button.get());
   }
   mBtnSync.setButtonText("hz");
   mBtnSync.onClick = [this]() {
-    ParamHelper::setParam(mParameters.global.lfo1.sync, !mBtnSync.getToggleState());
+    ParamHelper::setParam(mModLFO.sync, !mBtnSync.getToggleState());
   };
   mBtnBipolar.setButtonText("bipolar");
   mBtnBipolar.onClick = [this]() {
-    ParamHelper::setParam(mParameters.global.lfo1.bipolar, !mBtnBipolar.getToggleState());
+    ParamHelper::setParam(mModLFO.bipolar, !mBtnBipolar.getToggleState());
     mBufDepth.clear();
     mBufDepth.resize(NUM_LFO_SAMPLES, 0.0f); // Reset sample buffer so that they don't spill into the UI
   };
   mBtnRetrigger.setButtonText("free");
   mBtnRetrigger.onClick = [this]() {
-    ParamHelper::setParam(mParameters.global.lfo1.retrigger, !mBtnRetrigger.getToggleState());
+    ParamHelper::setParam(mModLFO.retrigger, !mBtnRetrigger.getToggleState());
   };
 
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelShape, mLabelRate, mLabelPhase };
   for (auto& label : labels) {
-    label.get().setColour(juce::Label::ColourIds::textColourId, mParameters.global.lfo1.colour);
+    label.get().setColour(juce::Label::ColourIds::textColourId, mModLFO.colour);
     label.get().setJustificationType(juce::Justification::centredTop);
     label.get().setFont(juce::Font(14));
     addAndMakeVisible(label.get());
@@ -86,51 +88,51 @@ LFOs::LFOs(Parameters& parameters): mParameters(parameters),
   mLabelPhase.setText("phase", juce::dontSendNotification);
   
   // Add listeners for relevant params
-  mParameters.global.lfo1.shape->addListener(this);
-  mParameters.global.lfo1.rate->addListener(this);
-  mParameters.global.lfo1.phase->addListener(this);
-  mParameters.global.lfo1.sync->addListener(this);
-  mParameters.global.lfo1.bipolar->addListener(this);
-  mParameters.global.lfo1.retrigger->addListener(this);
+  mModLFO.shape->addListener(this);
+  mModLFO.rate->addListener(this);
+  mModLFO.phase->addListener(this);
+  mModLFO.sync->addListener(this);
+  mModLFO.bipolar->addListener(this);
+  mModLFO.retrigger->addListener(this);
     
   mParamHasChanged.store(true); // Init param values
   
   startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
-LFOs::~LFOs() {
+LFOPanel::~LFOPanel() {
   // Remove listeners before destruction
-  mParameters.global.lfo1.shape->removeListener(this);
-  mParameters.global.lfo1.rate->removeListener(this);
-  mParameters.global.lfo1.phase->removeListener(this);
-  mParameters.global.lfo1.sync->removeListener(this);
-  mParameters.global.lfo1.bipolar->removeListener(this);
-  mParameters.global.lfo1.retrigger->removeListener(this);
+  mModLFO.shape->removeListener(this);
+  mModLFO.rate->removeListener(this);
+  mModLFO.phase->removeListener(this);
+  mModLFO.sync->removeListener(this);
+  mModLFO.bipolar->removeListener(this);
+  mModLFO.retrigger->removeListener(this);
   stopTimer();
 }
 
-void LFOs::visibilityChanged() {
+void LFOPanel::visibilityChanged() {
   if (!isVisible()) {
     mBtnMap.resetMappingStatus();
   }
 }
 
-void LFOs::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
+void LFOPanel::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
 
-void LFOs::timerCallback() {
+void LFOPanel::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    mBtnSync.setToggleState(mParameters.global.lfo1.sync->get(), juce::dontSendNotification);
+    mBtnSync.setToggleState(mModLFO.sync->get(), juce::dontSendNotification);
     mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "hz");
-    mBtnBipolar.setToggleState(mParameters.global.lfo1.bipolar->get(), juce::dontSendNotification);
+    mBtnBipolar.setToggleState(mModLFO.bipolar->get(), juce::dontSendNotification);
     mBtnBipolar.setButtonText(mBtnBipolar.getToggleState() ? "bipolar" : "unipolar");
-    mBtnRetrigger.setToggleState(mParameters.global.lfo1.retrigger->get(), juce::dontSendNotification);
+    mBtnRetrigger.setToggleState(mModLFO.retrigger->get(), juce::dontSendNotification);
     mBtnRetrigger.setButtonText(mBtnRetrigger.getToggleState() ? "retrigger" : "free");
-    mChoiceShape.setSelectedId(mParameters.global.lfo1.shape->getIndex() + 1, juce::dontSendNotification);
-    mSliderRate.setValue(mParameters.global.lfo1.rate->get(), juce::dontSendNotification);
+    mChoiceShape.setSelectedId(mModLFO.shape->getIndex() + 1, juce::dontSendNotification);
+    mSliderRate.setValue(mModLFO.rate->get(), juce::dontSendNotification);
     mSliderRate.setSync(mBtnSync.getToggleState());
     mSliderRate.setRange(mSliderRate.getRange(), mBtnSync.getToggleState() ? mSliderRate.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX) : 0.01);
-    mSliderPhase.setValue(mParameters.global.lfo1.phase->get(), juce::dontSendNotification);
+    mSliderPhase.setValue(mModLFO.phase->get(), juce::dontSendNotification);
     mLabelPhase.setEnabled(mBtnRetrigger.getToggleState());
     mSliderPhase.setEnabled(mBtnRetrigger.getToggleState());
   }
@@ -138,7 +140,7 @@ void LFOs::timerCallback() {
   updateLfoPath();
 }
 
-void LFOs::paint(juce::Graphics& g) {
+void LFOPanel::paint(juce::Graphics& g) {
   g.setColour(Utils::PANEL_COLOUR);
   g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
   
@@ -146,16 +148,16 @@ void LFOs::paint(juce::Graphics& g) {
   g.fillRect(mVizRect);
   
   // Draw bipolar/unipolar line
-  g.setColour(mParameters.global.lfo1.colour.withAlpha(0.5f));
+  g.setColour(mModLFO.colour.withAlpha(0.5f));
   const int poleY = mBtnBipolar.getToggleState() ? mVizRect.getCentreY() : mVizRect.getBottom();
   g.drawHorizontalLine(poleY, mVizRect.getX(), mVizRect.getRight());
   
   // Draw LFO path
-  g.setColour(mParameters.global.lfo1.colour);
+  g.setColour(mModLFO.colour);
   g.strokePath(mLfoPath, juce::PathStrokeType(2, juce::PathStrokeType::JointStyle::curved));
 }
 
-void LFOs::resized() {
+void LFOPanel::resized() {
   auto r = getLocalBounds().reduced(Utils::PADDING);
   
   auto rightPanel = r.removeFromRight(r.getWidth() * 0.25f);
@@ -195,9 +197,9 @@ void LFOs::resized() {
   mBtnRetrigger.setBounds(btnPanel.removeFromTop(btnHeight).withSizeKeepingCentre(btnWidth, btnHeight));
 }
 
-void LFOs::updateLfoPath() {
+void LFOPanel::updateLfoPath() {
   // Update LFO value buffer
-  mBufDepth[mBufDepthWrPos] = mParameters.global.lfo1.getOutput();
+  mBufDepth[mBufDepthWrPos] = mModLFO.getOutput();
   // Increment write pos
   mBufDepthWrPos = (mBufDepthWrPos == (NUM_LFO_SAMPLES - 1)) ? 0 : mBufDepthWrPos + 1;
   

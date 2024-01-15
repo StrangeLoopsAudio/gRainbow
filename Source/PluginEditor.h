@@ -16,9 +16,8 @@
 #include "Components/EnvelopeADSR.h"
 #include "Components/EnvelopeGrain.h"
 #include "Components/AdjustPanel.h"
-#include "Components/FxPanel.h"
-#include "Components/Modulators/Envelopes.h"
-#include "Components/Modulators/LFOs.h"
+#include "Components/Modulators/EnvPanel.h"
+#include "Components/Modulators/LFOPanel.h"
 #include "Components/MasterPanel.h"
 #include "Components/TrimSelection.h"
 #include "Components/ArcSpectrogram.h"
@@ -77,13 +76,12 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   // UI Components
   TitlePresetPanel mTitlePresetPanel;
-  juce::TabbedComponent mTabsEnvelopes, mTabsFx, mTabsModulators;
+  juce::TabbedComponent mTabsGrains, mTabsLFOs, mTabsEnvs;
   EnvelopeADSR mEnvAdsr;
   EnvelopeGrain mEnvGrain;
   AdjustPanel mAdjustPanel;
-  FxPanel mFx2, mFx3;
-  Envelopes mModEnvelopes;
-  LFOs mModLFOs;
+  EnvPanel mModEnv1, mModEnv2, mModEnv3;
+  LFOPanel mModLFO1, mModLFO2, mModLFO3;
   MasterPanel mMasterPanel;
   PianoPanel mPianoPanel;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;

@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    LFOs.h
+    LFOPanel.h
     Created: 15 Dec 2023 8:34:54pm
     Author:  brady
 
@@ -18,10 +18,10 @@
 //==============================================================================
 /*
  */
-class LFOs : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
+class LFOPanel : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
  public:
-  LFOs(Parameters& parameters);
-  ~LFOs();
+  LFOPanel(int modIdx, Parameters& parameters);
+  ~LFOPanel();
 
   void paint(juce::Graphics&) override;
   void resized() override;
@@ -40,6 +40,7 @@ class LFOs : public juce::Component, juce::AudioProcessorParameter::Listener, ju
   
   // Bookkeeping
   Parameters& mParameters;
+  LFOModSource& mModLFO;
   std::atomic<bool> mParamHasChanged;
   juce::Path mLfoPath;
   int mBufDepthWrPos = 0;
@@ -60,5 +61,5 @@ class LFOs : public juce::Component, juce::AudioProcessorParameter::Listener, ju
   // UI values saved on resize
   juce::Rectangle<float> mVizRect;
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LFOs)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LFOPanel)
 };
