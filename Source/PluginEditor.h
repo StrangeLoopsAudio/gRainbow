@@ -20,7 +20,6 @@
 #include "Components/Modulators/Envelopes.h"
 #include "Components/Modulators/LFOs.h"
 #include "Components/MasterPanel.h"
-#include "Components/FilterControl.h"
 #include "Components/TrimSelection.h"
 #include "Components/ArcSpectrogram.h"
 #include "Components/Piano/PianoPanel.h"
@@ -82,12 +81,10 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   EnvelopeADSR mEnvAdsr;
   EnvelopeGrain mEnvGrain;
   AdjustPanel mAdjustPanel;
-  FilterControl mFilterPanel;
   FxPanel mFx2, mFx3;
   Envelopes mModEnvelopes;
   LFOs mModLFOs;
   MasterPanel mMasterPanel;
-  FilterControl mFilterControl;
   PianoPanel mPianoPanel;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;

@@ -29,9 +29,6 @@
 
 namespace ParamIDs {
 // Global params
-static juce::String filterCutoff{"filt_cutoff"};
-static juce::String filterResonance{"filt_resonance"};
-static juce::String filterType{"filt_type"};
 static juce::String lfo1Shape{"lfo1_shape"};
 static juce::String lfo1Rate{"lfo1_rate"};
 static juce::String lfo1Phase{"lfo1_phase"};
@@ -143,11 +140,6 @@ static float ATTACK_DEFAULT_SEC = 0.2f;
 static float DECAY_DEFAULT_SEC = 0.2f;
 static float SUSTAIN_DEFAULT = 0.8f;
 static float RELEASE_DEFAULT_SEC = 0.2f;
-static float FILTER_LP_CUTOFF_DEFAULT_HZ = 1000.0f;
-static float FILTER_HP_CUTOFF_DEFAULT_HZ = 100.0f;
-static float FILTER_BP_CUTOFF_DEFAULT_HZ = 600.0f;
-static float FILTER_RESONANCE_DEFAULT = 0.707f;
-static int   FILTER_TYPE_DEFAULT = 0;
 static float GRAIN_SHAPE_DEFAULT = 0.5f;
 static float GRAIN_TILT_DEFAULT = 0.5f;
 static float GRAIN_RATE_DEFAULT = 10.0f;
@@ -165,7 +157,6 @@ static int   REVERSE_DEFAULT = 0;
 enum ParamType { GLOBAL, NOTE, GENERATOR };
 static juce::Array<juce::String> PARAM_TYPE_NAMES{"global", "note", "generator"};
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
-static juce::Array<juce::String> FILTER_TYPE_NAMES{"none", "lowpass", "highpass", "bandpass"};
 static juce::Array<juce::String> LFO_SHAPE_NAMES{"sine", "tri", "square", "saw"};
 
 static constexpr int MAX_CANDIDATES = 6;
@@ -531,28 +522,19 @@ struct ParamsNote {
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamsNote)
 };
 
-struct ParamGlobal : ParamCommon, public juce::AudioProcessorParameter::Listener {
+struct ParamGlobal : ParamCommon {
   ParamGlobal() : ParamCommon(ParamType::GLOBAL) {
-    filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-    filter.setCutoffFrequency(ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
     // Default to using global parameters
     for (auto& used : isUsed) {
       used = true;
     }
   }
-  ~ParamGlobal() {
-    filterType->removeListener(this);
-    filterCutoff->removeListener(this);
-    filterRes->removeListener(this);
-  }
+  ~ParamGlobal() {}
 
   void addParams(juce::AudioProcessor& p);
   
   void resetParams() {
     ParamCommon::resetParams();
-    ParamHelper::setParam(filterCutoff, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
-    ParamHelper::setParam(filterRes, ParamDefaults::FILTER_RESONANCE_DEFAULT);
-    ParamHelper::setParam(filterType, ParamDefaults::FILTER_TYPE_DEFAULT);
     ParamHelper::setParam(lfo1.shape, ParamDefaults::LFO_SHAPE_DEFAULT);
     ParamHelper::setParam(lfo1.rate, ParamDefaults::LFO_RATE_DEFAULT);
     ParamHelper::setParam(lfo1.phase, ParamDefaults::LFO_PHASE_DEFAULT);
@@ -564,45 +546,11 @@ struct ParamGlobal : ParamCommon, public juce::AudioProcessorParameter::Listener
     ParamHelper::setParam(macro3.macro, ParamDefaults::MACRO_DEFAULT);
     ParamHelper::setParam(macro4.macro, ParamDefaults::MACRO_DEFAULT);
   }
-  
-  void parameterValueChanged(int paramIdx, float) override {
-    if (paramIdx == filterType->getParameterIndex()) {
-      switch (filterType->getIndex()) {
-        case Utils::FilterType::LOWPASS: {
-          filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-          break;
-        }
-        case Utils::FilterType::HIGHPASS: {
-          filter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
-          break;
-        }
-        case Utils::FilterType::BANDPASS: {
-          filter.setType(juce::dsp::StateVariableTPTFilterType::bandpass);
-          break;
-        }
-        default:
-          break;
-      }
-    } else if (paramIdx == filterCutoff->getParameterIndex()) {
-      filter.setCutoffFrequency(filterCutoff->get());
-    } else if (paramIdx == filterRes->getParameterIndex()) {
-      filter.setResonance(filterRes->get());
-    }
-  }
-  void parameterGestureChanged(int, bool) override {}
-  
-  // Global parameters
-  juce::AudioParameterChoice* filterType;
-  juce::AudioParameterFloat* filterCutoff;
-  juce::AudioParameterFloat* filterRes;
 
   // Global modulation sources
   LFOModSource lfo1;
   EnvModSource env1;
   MacroModSource macro1, macro2, macro3, macro4;
-  
-  // State variable filter for generator
-  juce::dsp::StateVariableTPTFilter<float> filter;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
 };

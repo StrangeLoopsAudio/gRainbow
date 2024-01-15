@@ -161,8 +161,6 @@ set(SOURCE_COMPONENTS
     Source/Components/RainbowLookAndFeel.h
     Source/Components/RainbowLookAndFeel.cpp
     Source/Components/MeterLookAndFeel.h
-    Source/Components/FilterControl.h
-    Source/Components/FilterControl.cpp
     Source/Components/Modulators/LFOs.h
     Source/Components/Modulators/LFOs.cpp
     Source/Components/Modulators/Envelopes.h

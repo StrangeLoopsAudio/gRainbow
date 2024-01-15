@@ -12,18 +12,6 @@
 
 void ParamGlobal::addParams(juce::AudioProcessor& p) {
   // Global
-  // Filter
-  p.addParameter(filterCutoff =
-                 new juce::AudioParameterFloat({ParamIDs::filterCutoff, 1}, "Filter Cutoff", ParamRanges::FILT_CUTOFF,
-                                               ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
-  filterCutoff->addListener(this);
-  p.addParameter(filterRes =
-                 new juce::AudioParameterFloat({ParamIDs::filterResonance, 1}, "Filter Resonance",
-                                               ParamRanges::FILT_RESONANCE, ParamDefaults::FILTER_RESONANCE_DEFAULT));
-  filterRes->addListener(this);
-  p.addParameter(filterType =
-                 new juce::AudioParameterChoice({ParamIDs::filterType, 1}, "Filter Type", FILTER_TYPE_NAMES, ParamDefaults::FILTER_TYPE_DEFAULT));
-  filterType->addListener(this);
   // LFOs
   p.addParameter(lfo1.shape =
                  new juce::AudioParameterChoice({ParamIDs::lfo1Shape, 1}, "LFO 1 Shape", LFO_SHAPE_NAMES, ParamDefaults::LFO_SHAPE_DEFAULT));

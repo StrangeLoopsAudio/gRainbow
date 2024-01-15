@@ -39,14 +39,12 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       mEnvAdsr(synth.getParams()),
       mEnvGrain(synth.getParams()),
       mAdjustPanel(synth.getParams()),
-      mFilterPanel(synth.getParams()),
       mFx2(synth.getParams()),
       mFx3(synth.getParams()),
       mModEnvelopes(synth.getParams()),
       mModLFOs(synth.getParams()),
       mMasterPanel(synth.getParams(), synth.getMeterSource()),
-      mFilterControl(synth.getParams()),
-mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
+      mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
   mRainbowLookAndFeel.setColour(juce::ComboBox::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
   mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
@@ -93,7 +91,6 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
 
   // FX tabs
   mTabsFx.setTabBarDepth(Utils::TAB_HEIGHT);
-  mTabsFx.addTab("filter", Utils::BG_COLOUR, &mFilterPanel, false);
   mTabsFx.addTab("FX 2", Utils::BG_COLOUR, &mFx2, false);
   mTabsFx.addTab("FX 3", Utils::BG_COLOUR, &mFx3, false);
   mTabsFx.setOutline(0);
@@ -156,7 +153,6 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   addChildComponent(mProgressBar);
   addChildComponent(mTrimSelection);
 
-  addAndMakeVisible(mFilterControl);
   mMasterPanel.onRefToneOn = [this](){
     mSynth.startReferenceTone(mParameters.getSelectedPitchClass());
   };
