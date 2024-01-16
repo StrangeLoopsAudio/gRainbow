@@ -10,10 +10,132 @@
 
 #include "Parameters.h"
 
+void Parameters::prepareModSources(int blockSize, double sampleRate) {
+  for (auto& lfo : global.modLFOs) {
+    lfo.prepare(blockSize, sampleRate);
+  }
+  for (auto& env : global.modEnvs) {
+    env.prepare(blockSize, sampleRate);
+  }
+  for (auto& macro : global.macros) {
+    macro.prepare(blockSize, sampleRate);
+  }
+}
+void Parameters::processModSources() {
+  for (auto& lfo : global.modLFOs) {
+    lfo.processBlock();
+  }
+  for (auto& env : global.modEnvs) {
+    env.processBlock();
+  }
+  for (auto& macro : global.macros) {
+    macro.processBlock();
+  }
+}
+void Parameters::applyModulations(juce::RangedAudioParameter* param, float& value0To1) {
+  const int idx = param->getParameterIndex();
+  if (param && modulations.contains(idx)) {
+    Modulation& mod = modulations.getReference(idx);
+    if (mod.source) {
+      value0To1 = juce::jlimit(0.0f, 1.0f, value0To1 + (mod.depth * mod.source->getOutput()));
+    }
+  }
+}
+
+// Returns the candidate used in a given generator
+ParamCandidate* Parameters::getGeneratorCandidate(ParamGenerator* gen) {
+  if (gen == nullptr) return nullptr;
+  return &note.notes[gen->noteIdx]->candidates[gen->candidate->get()];
+}
+
+// Returns the currently selected pitch class, or NONE if global selected
+Utils::PitchClass Parameters::getSelectedPitchClass() {
+  switch (getSelectedParams()->type) {
+    case ParamType::GLOBAL:
+      return Utils::PitchClass::NONE;
+    case ParamType::NOTE:
+      return (Utils::PitchClass) dynamic_cast<ParamNote*>(getSelectedParams())->noteIdx;
+    case ParamType::GENERATOR:
+      ParamGenerator* gen = dynamic_cast<ParamGenerator*>(getSelectedParams());
+      return (Utils::PitchClass)gen->noteIdx;
+  }
+  return Utils::PitchClass::NONE;
+}
+// Keeps track of the current selected global/note/generator parameters for editing, global by default
+juce::Colour Parameters::getSelectedParamColour() {
+  switch (getSelectedParams()->type) {
+    case ParamType::GLOBAL:
+      return Utils::GLOBAL_COLOUR;
+    case ParamType::NOTE:
+      return Utils::getRainbow12Colour(dynamic_cast<ParamNote*>(getSelectedParams())->noteIdx);
+    case ParamType::GENERATOR:
+      ParamGenerator* gen = dynamic_cast<ParamGenerator*>(getSelectedParams());
+      return Utils::getRainbow12Colour(gen->noteIdx);
+  }
+  return juce::Colours::black;
+}
+
+juce::RangedAudioParameter* Parameters::getUsedParam(ParamCommon* common, ParamCommon::Type type) {
+  const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+  ParamNote* pNote = dynamic_cast<ParamNote*>(common);
+  juce::RangedAudioParameter* param = nullptr;
+  bool keepLooking = true;
+  if (pGen) {
+    // If gen param is used, use it
+    if (pGen->isUsed[type]) {
+      param = pGen->common[type];
+      keepLooking = false;
+    }
+    pNote = note.notes[pGen->noteIdx].get();
+  }
+  if (pNote && keepLooking) {
+    // Otherwise if note param is used, use it
+    if (pNote->isUsed[type]) {
+      param = pNote->common[type];
+      keepLooking = false;
+    }
+  }
+  if (keepLooking) {
+    // If neither used, just use global param
+    param = global.common[type];
+  }
+  jassert(param);
+  return param;
+}
+
+void Parameters::addListener(Parameters::Listener* listener)
+{
+  mListeners.add(listener);
+}
+
+void Parameters::removeListener(Parameters::Listener* listener)
+{
+  mListeners.remove(listener);
+}
+
+// Finds the lowest level parameter that's different from its parent
+// Hierarchy (high to low): global, note, generator
+// Optionally applies modulations before returning value
+float Parameters::getFloatParam(ParamCommon* common, ParamCommon::Type type, bool withModulations) {
+  juce::RangedAudioParameter* param = getUsedParam(common, type);
+  float value0To1 = param->convertTo0to1(P_FLOAT(param)->get());
+  if (withModulations) applyModulations(param, value0To1);
+  return param->convertFrom0to1(value0To1);
+}
+int Parameters::getChoiceParam(ParamCommon* common, ParamCommon::Type type) {
+  juce::RangedAudioParameter* param = getUsedParam(common, type);
+  return P_CHOICE(param)->getIndex();
+}
+int Parameters::getBoolParam(ParamCommon* common, ParamCommon::Type type) {
+  juce::RangedAudioParameter* param = getUsedParam(common, type);
+  return P_BOOL(param)->get();
+}
+
+// Parameter classes init
 void ParamGlobal::addParams(juce::AudioProcessor& p) {
   // Global
   // LFOs
-  for (int i = 0; i < NUM_MODS; ++i) {
+  for (int i = 0; i < modLFOs.size(); ++i) {
     auto strI = juce::String(i);
     p.addParameter(modLFOs[i].shape = new juce::AudioParameterChoice({ParamIDs::lfoShape + strI, 1}, "LFO " + strI + " Shape",
                                                                      LFO_SHAPE_NAMES, ParamDefaults::LFO_SHAPE_DEFAULT));
@@ -27,6 +149,9 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                                      ParamDefaults::LFO_BIPOLAR_DEFAULT));
     p.addParameter(modLFOs[i].retrigger = new juce::AudioParameterBool(
                                                                        {ParamIDs::lfoRetrigger + strI, 1}, "LFO " + strI + " Retrigger", ParamDefaults::LFO_RETRIGGER_DEFAULT));
+  }
+  for (int i = 0; i < modEnvs.size(); ++i) {
+    auto strI = juce::String(i);
     // Mod envelopes
     p.addParameter(modEnvs[i].attack = new juce::AudioParameterFloat({ParamIDs::envAttack + strI, 1}, "Env " + strI + " Attack",
                                                                      ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
@@ -38,7 +163,7 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                                       ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
   }
   // Macros
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < macros.size(); ++i) {
     auto strI = juce::String(i);
     p.addParameter(macros[i].macro = new juce::AudioParameterFloat({ParamIDs::macro + strI, 1}, "Macro " + strI, ParamRanges::MACRO,
                                                                    ParamDefaults::MACRO_DEFAULT));

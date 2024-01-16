@@ -156,7 +156,6 @@ static juce::Array<juce::String> PARAM_TYPE_NAMES{"global", "note", "generator"}
 static juce::Array<juce::String> PITCH_CLASS_NAMES{"C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"};
 static juce::Array<juce::String> LFO_SHAPE_NAMES{"sine", "tri", "square", "saw"};
 
-static constexpr int NUM_MODS = 3; // Number of modulators per type (e.g. 3 lfos, 3 envs)
 static constexpr int MAX_CANDIDATES = 6;
 static constexpr int NUM_GENERATORS = 4;
 static constexpr int SOLO_NONE = -1;
@@ -563,8 +562,8 @@ struct ParamGlobal : ParamCommon {
   }
 
   // Global modulation sources
-  std::array<LFOModSource, NUM_MODS> modLFOs;
-  std::array<EnvModSource, NUM_MODS> modEnvs;
+  std::array<LFOModSource, 3> modLFOs;
+  std::array<EnvModSource, 2> modEnvs;
   std::array<MacroModSource, 4> macros;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
@@ -664,7 +663,19 @@ struct ParamUI {
 
 class Parameters {
 public:
-  Parameters() {}
+  class Listener
+  {
+  public:
+    virtual ~Listener() = default;
+    // Called when selected parameters changes
+    virtual void selectedCommonParamsChanged(ParamCommon* newParams) {}
+    // Called when a modulator component wants to start mapping
+    virtual void mappingBtnEnabled() {}
+  };
+  
+  Parameters() {
+    mSelectedParams = &global; // Init to using global params
+  }
   
   // The 3 types of parameter sets
   ParamUI ui;
@@ -674,120 +685,43 @@ public:
   juce::HashMap<int, Modulation> modulations;
   ModSource* mappingModSource = nullptr; // If not null, then a modulator is waiting to be mapped
   
-  void prepareModSources(int blockSize, double sampleRate) {
-    for (auto& lfo : global.modLFOs) {
-      lfo.prepare(blockSize, sampleRate);
-    }
-    for (auto& env : global.modEnvs) {
-      env.prepare(blockSize, sampleRate);
-    }
-    for (auto& macro : global.macros) {
-      macro.prepare(blockSize, sampleRate);
-    }
-  }
-  void processModSources() {
-    for (auto& lfo : global.modLFOs) {
-      lfo.processBlock();
-    }
-    for (auto& env : global.modEnvs) {
-      env.processBlock();
-    }
-    for (auto& macro : global.macros) {
-      macro.processBlock();
-    }
-  }
-  void applyModulations(juce::RangedAudioParameter* param, float& value0To1) {
-    const int idx = param->getParameterIndex();
-    if (param && modulations.contains(idx)) {
-      Modulation& mod = modulations.getReference(idx);
-      if (mod.source) {
-        value0To1 = juce::jlimit(0.0f, 1.0f, value0To1 + (mod.depth * mod.source->getOutput()));
-      }
-    }
-  }
-
-  // Called when current selected note or generator changes
-  // Should be used only by PluginEditor and passed on to subcomponents
-  // TODO: should be refactored into a listener/broadcaster relationship
-  std::function<void()> onSelectedChange = nullptr;
-  
-  // Returns the candidate used in a given generator
-  ParamCandidate* getGeneratorCandidate(ParamGenerator* gen) {
-    if (gen == nullptr) return nullptr;
-    return &note.notes[gen->noteIdx]->candidates[gen->candidate->get()];
-  }
+  // Listeners for callbacks relating to parameters
+  void addListener(Parameters::Listener* listener);
+  void removeListener(Parameters::Listener* listener);
   
   // Returns the currently selected pitch class, or NONE if global selected
-  Utils::PitchClass getSelectedPitchClass() {
-    switch (selectedParams->type) {
-      case ParamType::GLOBAL:
-        return Utils::PitchClass::NONE;
-      case ParamType::NOTE:
-        return (Utils::PitchClass) dynamic_cast<ParamNote*>(selectedParams)->noteIdx;
-      case ParamType::GENERATOR:
-        ParamGenerator* gen = dynamic_cast<ParamGenerator*>(selectedParams);
-        return (Utils::PitchClass)gen->noteIdx;
-    }
-    return Utils::PitchClass::NONE;
+  Utils::PitchClass getSelectedPitchClass();
+  juce::Colour getSelectedParamColour();
+  ParamCommon* getSelectedParams() {
+    return mSelectedParams;
   }
-  // Keeps track of the current selected global/note/generator parameters for editing, global by default
-  ParamCommon* selectedParams = &global;
-  juce::Colour getSelectedParamColour() {
-    switch (selectedParams->type) {
-      case ParamType::GLOBAL:
-        return Utils::GLOBAL_COLOUR;
-      case ParamType::NOTE:
-        return Utils::getRainbow12Colour(dynamic_cast<ParamNote*>(selectedParams)->noteIdx);
-      case ParamType::GENERATOR:
-        ParamGenerator* gen = dynamic_cast<ParamGenerator*>(selectedParams);
-        return Utils::getRainbow12Colour(gen->noteIdx);
-    }
-    return juce::Colours::black;
+  void setSelectedParams(ParamCommon* params) {
+    jassert(params);
+    mSelectedParams = params;
+    mListeners.call(&Parameters::Listener::selectedCommonParamsChanged, mSelectedParams);
   }
   
-  juce::RangedAudioParameter* getUsedParam(ParamCommon* common, ParamCommon::Type type) {
-    const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
-    ParamNote* pNote = dynamic_cast<ParamNote*>(common);
-    juce::RangedAudioParameter* param = nullptr;
-    bool keepLooking = true;
-    if (pGen) {
-      // If gen param is used, use it
-      if (pGen->isUsed[type]) {
-        param = pGen->common[type];
-        keepLooking = false;
-      }
-      pNote = note.notes[pGen->noteIdx].get();
-    }
-    if (pNote && keepLooking) {
-      // Otherwise if note param is used, use it
-      if (pNote->isUsed[type]) {
-        param = pNote->common[type];
-        keepLooking = false;
-      }
-    }
-    if (keepLooking) {
-      // If neither used, just use global param
-      param = global.common[type];
-    }
-    jassert(param);
-    return param;
-  }
+  // Modulation processing
+  void prepareModSources(int blockSize, double sampleRate);
+  void processModSources();
+  void applyModulations(juce::RangedAudioParameter* param, float& value0To1);
+  
+  // Returns the candidate used in a given generator
+  ParamCandidate* getGeneratorCandidate(ParamGenerator* gen);
+  
+  juce::RangedAudioParameter* getUsedParam(ParamCommon* common, ParamCommon::Type type);
 
   // Finds the lowest level parameter that's different from its parent
   // Hierarchy (high to low): global, note, generator
   // Optionally applies modulations before returning value
-  float getFloatParam(ParamCommon* common, ParamCommon::Type type, bool withModulations = false) {
-    juce::RangedAudioParameter* param = getUsedParam(common, type);
-    float value0To1 = param->convertTo0to1(P_FLOAT(param)->get());
-    if (withModulations) applyModulations(param, value0To1);
-    return param->convertFrom0to1(value0To1);
-  }
-  int getChoiceParam(ParamCommon* common, ParamCommon::Type type) {
-    juce::RangedAudioParameter* param = getUsedParam(common, type);
-    return P_CHOICE(param)->getIndex();
-  }
-  int getBoolParam(ParamCommon* common, ParamCommon::Type type) {
-    juce::RangedAudioParameter* param = getUsedParam(common, type);
-    return P_BOOL(param)->get();
-  }
+  float getFloatParam(ParamCommon* common, ParamCommon::Type type, bool withModulations = false);
+  int getChoiceParam(ParamCommon* common, ParamCommon::Type type);
+  int getBoolParam(ParamCommon* common, ParamCommon::Type type);
+  
+private:
+  // Keeps track of the current selected global/note/generator parameters for editing, global by default
+  ParamCommon* mSelectedParams = &global;
+  
+  // Listener list for our callbacks
+  juce::ListenerList<Listener> mListeners;
 };

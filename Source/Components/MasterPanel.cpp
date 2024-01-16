@@ -14,7 +14,7 @@
 
 MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meterSource)
 : mParameters(parameters),
-mCurSelectedParams(parameters.selectedParams),
+mCurSelectedParams(parameters.getSelectedParams()),
 mParamColour(Utils::GLOBAL_COLOUR),
 mSliderGain(mParameters, ParamCommon::Type::GAIN),
 mSliderMacro1(mParameters, mParameters.global.macros[0].macro),
@@ -69,7 +69,7 @@ mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
   mSliderMacro4.setDoubleClickReturnValue(true, ParamDefaults::MACRO_DEFAULT);
 
   // Default label settings
-  std::vector<std::reference_wrapper<juce::Label>> macroLabels = { mLabelGain, mLabelRefTone, mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };
+  std::vector<std::reference_wrapper<juce::Label>> macroLabels = { mLabelGain, mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };
   for (auto& label : macroLabels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
     label.get().setJustificationType(juce::Justification::centredTop);
@@ -97,17 +97,6 @@ mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
     addAndMakeVisible(button.get());
     i++;
   }
-  
-  mBtnRefTone.setColour(juce::ToggleButton::ColourIds::tickColourId, Utils::GLOBAL_COLOUR);
-  addAndMakeVisible(mBtnRefTone);
-  // Reference tone
-  mBtnRefTone.onClick = [this]() {
-    if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) {
-      onRefToneOn();
-    }
-    else if (!mBtnRefTone.getToggleState() && onRefToneOff != nullptr) onRefToneOff();
-  };
-  mLabelRefTone.setText("ref tone", juce::dontSendNotification);
 
   mLabelGain.setText("gain", juce::dontSendNotification);
   mLabelMacro1.setText("macro 1", juce::dontSendNotification);
@@ -115,17 +104,19 @@ mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
   mLabelMacro3.setText("macro 3", juce::dontSendNotification);
   mLabelMacro4.setText("macro 4", juce::dontSendNotification);
 
+  mParameters.addListener(this);
   mCurSelectedParams->addListener(this);
   mParameters.global.macros[0].macro->addListener(this);
   mParameters.global.macros[1].macro->addListener(this);
   mParameters.global.macros[2].macro->addListener(this);
   mParameters.global.macros[3].macro->addListener(this);
-  updateSelectedParams();
+  selectedCommonParamsChanged(mCurSelectedParams);
 
   startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 MasterPanel::~MasterPanel() {
+  mParameters.removeListener(this);
   mCurSelectedParams->removeListener(this);
   mParameters.global.macros[0].macro->removeListener(this);
   mParameters.global.macros[1].macro->removeListener(this);
@@ -147,26 +138,12 @@ void MasterPanel::timerCallback() {
   }
 }
 
-void MasterPanel::updateSelectedParams() {
+void MasterPanel::selectedCommonParamsChanged(ParamCommon* newParams) {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
-  mCurSelectedParams = mParameters.selectedParams;
+  mCurSelectedParams = newParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-
-  Utils::PitchClass selectedPitch = mParameters.getSelectedPitchClass();
-  // Turn ref tone off if global parameters
-  if (selectedPitch == Utils::PitchClass::NONE && mBtnRefTone.getToggleState() && onRefToneOff != nullptr) {
-    mBtnRefTone.setToggleState(false, juce::dontSendNotification);
-    onRefToneOff();
-  }
-  // Change ref tone frequency if already active
-  if (mBtnRefTone.getToggleState() && onRefToneOn != nullptr) onRefToneOn();
-  // Disable ref tone button if global parameters
-  mBtnRefTone.setEnabled(selectedPitch != Utils::PitchClass::NONE);
-
-  mSliderGain.updateSelectedParams();
-  mBtnRefTone.setColour(juce::ToggleButton::ColourIds::tickColourId, mParamColour);
-
+    
   mParamHasChanged.store(true);
   repaint();
 }
@@ -194,9 +171,6 @@ void MasterPanel::resized() {
   mLabelGain.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderGain.setBounds(topKnob.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   masterPanel.removeFromTop(Utils::PADDING);
-  // Reference tone button
-  mBtnRefTone.setBounds(masterPanel.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::BUTTON_WIDTH, Utils::LABEL_HEIGHT));
-  mLabelRefTone.setBounds(masterPanel.removeFromTop(Utils::LABEL_HEIGHT));
 
   auto macroPanel = r;
   mLabelMacros.setBounds(macroPanel.removeFromTop(Utils::TAB_HEIGHT));

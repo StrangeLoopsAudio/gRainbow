@@ -50,15 +50,16 @@ private:
 };
 
 // Enables a common parameter to be displayed at different levels
-class CommonSlider : public ParamSlider {
+class CommonSlider : public ParamSlider, public Parameters::Listener {
  public:
   CommonSlider(Parameters& parameters, ParamCommon::Type type);
+  ~CommonSlider();
 
-  // Update slider colours for new selected group
-  void updateSelectedParams();
-  ParamCommon* getParam() { return parameters.selectedParams; }
-  bool getIsUsed() { return parameters.selectedParams->isUsed[mType]; }
+  ParamCommon* getParam() { return parameters.getSelectedParams(); }
+  bool getIsUsed() { return parameters.getSelectedParams()->isUsed[mType]; }
   void mouseDoubleClick(const juce::MouseEvent& evt) override;
+  
+  void selectedCommonParamsChanged(ParamCommon* newParams) override;
 
  private:
   // Get the colour of the parameter at the level that's used (global, note)
@@ -88,7 +89,7 @@ public:
       if (mReverse) prog = 1.0f - prog;
       return juce::String("1/") + juce::String(std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * prog)));
     } else {
-      return juce::String(getValue());
+      return juce::String(getValue()) + " " + getTextValueSuffix();
     }
   }
   

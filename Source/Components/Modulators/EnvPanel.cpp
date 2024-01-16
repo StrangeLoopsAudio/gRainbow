@@ -31,15 +31,15 @@ mBtnMap(mParameters, mModEnv) {
   }
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end, 0.01);
   mSliderAttack.setDoubleClickReturnValue(true, ParamDefaults::ATTACK_DEFAULT_SEC);
-  mSliderAttack.setTextValueSuffix("s");
+  mSliderAttack.setTextValueSuffix(" s");
   mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
   mSliderDecay.setDoubleClickReturnValue(true, ParamDefaults::DECAY_DEFAULT_SEC);
-  mSliderDecay.setTextValueSuffix("s");
+  mSliderDecay.setTextValueSuffix(" s");
   mSliderSustain.setRange(ParamRanges::SUSTAIN.start, ParamRanges::SUSTAIN.end, 0.01);
   mSliderSustain.setDoubleClickReturnValue(true, ParamDefaults::SUSTAIN_DEFAULT);
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
   mSliderRelease.setDoubleClickReturnValue(true, ParamDefaults::RELEASE_DEFAULT_SEC);
-  mSliderRelease.setTextValueSuffix("s");
+  mSliderRelease.setTextValueSuffix(" s");
 
   mModEnv.attack->addListener(this);
   mModEnv.decay->addListener(this);
@@ -113,9 +113,6 @@ void EnvPanel::paint(juce::Graphics& g) {
   float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
   
   // Draw ADSR path
-  juce::Colour colour = mModEnv.colour;
-  g.setFillType(juce::ColourGradient(colour.withAlpha(0.35f), mVizRect.getTopLeft(), colour.withAlpha(0.05f), mVizRect.getBottomLeft(), false));
-  
   auto adsrRect = mVizRect.reduced(Utils::PADDING * 2, Utils::PADDING * 2);
   
   juce::Path adsrPath;
@@ -131,8 +128,7 @@ void EnvPanel::paint(juce::Graphics& g) {
   adsrPath.lineTo(sustainPt);
   adsrPath.lineTo(endPt);
   adsrPath.closeSubPath();
-  g.fillPath(adsrPath.createPathWithRoundedCorners(5));
-  g.setColour(colour);
+  g.setColour(mModEnv.colour);
   g.strokePath(adsrPath.createPathWithRoundedCorners(5), juce::PathStrokeType(3));
 }
 

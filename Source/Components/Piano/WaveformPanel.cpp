@@ -15,7 +15,7 @@
 
 WaveformPanel::WaveformPanel(Parameters& parameters)
     : mParameters(parameters),
-      mCurSelectedParams(parameters.selectedParams),
+      mCurSelectedParams(parameters.getSelectedParams()),
 mParamColour(Utils::GLOBAL_COLOUR) {
 
   mCurSelectedParams->addListener(this);
@@ -65,7 +65,7 @@ void WaveformPanel::timerCallback() {
 }
 
 void WaveformPanel::updateSelectedParams() {
-  if (mBtnLock.isVisible() && mBtnLock.getToggleState() && mParameters.selectedParams->type != ParamType::GLOBAL) return; // Skip if locked to generator (but not if wanting to change to global)
+  if (mBtnLock.isVisible() && mBtnLock.getToggleState() && mParameters.getSelectedParams()->type != ParamType::GLOBAL) return; // Skip if locked to generator (but not if wanting to change to global)
   // Remove solo from note if was in generator mode
   auto* gen = dynamic_cast<ParamGenerator*>(mCurSelectedParams);
   if (gen) {
@@ -73,7 +73,7 @@ void WaveformPanel::updateSelectedParams() {
   }
 
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
-  mCurSelectedParams = mParameters.selectedParams;
+  mCurSelectedParams = mParameters.getSelectedParams();
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
 
@@ -254,8 +254,7 @@ void WaveformPanel::mouseUp(const juce::MouseEvent& evt) {
   auto pos = evt.getEventRelativeTo(this).getPosition();
   for (auto& bar : mWaveBars) {
     if (bar.rect.contains(pos.toFloat()) && bar.pitchClass != Utils::PitchClass::NONE) {
-      mParameters.selectedParams = bar.generator;
-      if (mParameters.onSelectedChange) mParameters.onSelectedChange();
+      mParameters.setSelectedParams(bar.generator);
       return;
     }
   }

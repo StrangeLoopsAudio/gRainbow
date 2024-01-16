@@ -44,7 +44,7 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
   }
 
   // Global select rect
-  const bool isGlobal = mParameters.selectedParams->type == ParamType::GLOBAL;
+  const bool isGlobal = mParameters.getSelectedParams()->type == ParamType::GLOBAL;
   auto globalFillColour = isGlobal ? Utils::GLOBAL_COLOUR : juce::Colours::transparentBlack;
   if (mHoverGlobal && !isGlobal) globalFillColour = Utils::GLOBAL_COLOUR.withAlpha(0.2f);
   g.setColour(globalFillColour);
@@ -108,10 +108,10 @@ void RainbowKeyboard::fillNoteRectangleMap() {
 
 void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   const auto* note = mParameters.note.notes[pitchClass].get();
-  const bool isPitchSelected = mParameters.selectedParams == note;
+  const bool isPitchSelected = mParameters.getSelectedParams() == note;
   const bool isGenSelected =
       std::find_if(note->generators.begin(), note->generators.end(), [this](const std::unique_ptr<ParamGenerator>& gen) {
-        return gen.get() == mParameters.selectedParams;
+        return gen.get() == mParameters.getSelectedParams();
       }) != std::end(note->generators);
 
   const bool isBlack = isBlackKey(pitchClass);
@@ -194,8 +194,7 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
       mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch, mHoverNote.velocity);
       mMouseNote = mHoverNote;
       // Select current note for parameter edits and send update
-      mParameters.selectedParams = mParameters.note.notes[mHoverNote.pitch].get();
-      if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
+      mParameters.setSelectedParams(mParameters.note.notes[mHoverNote.pitch].get());
     }
   } else {
     if (isDown && (mMouseNote.pitch == Utils::PitchClass::NONE) && isValidNote) {
@@ -217,10 +216,9 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
   if (mHoverNote.pitch == Utils::PitchClass::NONE) {
     if (mGlobalRect.contains(pos)) {
       mHoverGlobal = true;
-      if (isDown && mParameters.selectedParams != &mParameters.global) {
+      if (isDown && mParameters.getSelectedParams() != &mParameters.global) {
         // Select global for parameter edits and send update
-        mParameters.selectedParams = &mParameters.global;
-        if (mParameters.onSelectedChange != nullptr) mParameters.onSelectedChange();
+        mParameters.setSelectedParams(&mParameters.global);
       }
     }
   }
@@ -229,11 +227,8 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
 
 void RainbowKeyboard::generatorOnClick(ParamGenerator* gen) {
   // If you have selected Gen "X" and then Increase on gen "Y", it will swap to "Y" on top of increasing the candidate value
-  if (mParameters.selectedParams != gen) {
-    mParameters.selectedParams = gen;
-    if (mParameters.onSelectedChange != nullptr) {
-      mParameters.onSelectedChange();
-    }
+  if (mParameters.getSelectedParams() != gen) {
+    mParameters.setSelectedParams(gen);
   }
 }
 

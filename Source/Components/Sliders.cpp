@@ -41,7 +41,9 @@ ParamSlider::ParamSlider(Parameters& _parameters, juce::RangedAudioParameter* _p
 }
 
 CommonSlider::CommonSlider(Parameters& _parameters, ParamCommon::Type type)
-    : ParamSlider(_parameters, _parameters.global.common[type]), mType(type) {
+: ParamSlider(_parameters, _parameters.global.common[type]), mType(type) {
+  parameters.addListener(this);
+  
   // Knob params
   auto rotaryParams = juce::Slider::RotaryParameters();
   rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
@@ -69,73 +71,77 @@ CommonSlider::CommonSlider(Parameters& _parameters, ParamCommon::Type type)
       // Reset actual slider value
       setValue(dragStartValue, juce::dontSendNotification);
     } else {
-      ParamHelper::setCommonParam(parameters.selectedParams, mType, (float)getValue());
+      ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, (float)getValue());
       setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, getUsedColour());
       // Update active parameter pointer
-      parameter = parameters.getUsedParam(parameters.selectedParams, mType);
+      parameter = parameters.getUsedParam(parameters.getSelectedParams(), mType);
     }
   };
+}
+
+CommonSlider::~CommonSlider() {
+  parameters.removeListener(this);
 }
 
 void CommonSlider::mouseDoubleClick(const juce::MouseEvent&) {
   const float defaultVal = COMMON_DEFAULTS[mType];
   const float globalVal = P_FLOAT(parameters.global.common[mType])->get();
   // Reset value to the level above it
-  if (parameters.selectedParams->type == ParamType::GLOBAL) {
+  if (parameters.getSelectedParams()->type == ParamType::GLOBAL) {
     // If global, reset to the parameter's default
-    ParamHelper::setCommonParam(parameters.selectedParams, mType, defaultVal);
-  } else if (parameters.selectedParams->type == ParamType::NOTE) {
+    ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, defaultVal);
+  } else if (parameters.getSelectedParams()->type == ParamType::NOTE) {
     // If note is used, reset to global value.. if not, reset to common default
-    if (parameters.selectedParams->isUsed[mType]) {
-      ParamHelper::setCommonParam(parameters.selectedParams, mType, globalVal);
+    if (parameters.getSelectedParams()->isUsed[mType]) {
+      ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, globalVal);
     } else {
-      ParamHelper::setCommonParam(parameters.selectedParams, mType, defaultVal);
+      ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, defaultVal);
       ParamHelper::setCommonParam(&parameters.global, mType, defaultVal);
     }
-  } else if (parameters.selectedParams->type == ParamType::GENERATOR) {
-    auto* gen = dynamic_cast<ParamGenerator*>(parameters.selectedParams);
+  } else if (parameters.getSelectedParams()->type == ParamType::GENERATOR) {
+    auto* gen = dynamic_cast<ParamGenerator*>(parameters.getSelectedParams());
     auto* note = parameters.note.notes[gen->noteIdx].get();
-    if (parameters.selectedParams->isUsed[mType]) {
+    if (parameters.getSelectedParams()->isUsed[mType]) {
       // If gen is used, reset to level above that's used (note or global)
       if (note->isUsed[mType]) {
         // Note is used, reset to its value
-        ParamHelper::setCommonParam(parameters.selectedParams, mType, P_FLOAT(note->common[mType])->get());
+        ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, P_FLOAT(note->common[mType])->get());
       } else {
         // Neither gen nor note is used, reset to global
-        ParamHelper::setCommonParam(parameters.selectedParams, mType, globalVal);
+        ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, globalVal);
       }
     } else {
       // If gen is not used, reset to either global or common default
       if (note->isUsed[mType]) {
         // Note is used, reset to global
-        ParamHelper::setCommonParam(parameters.selectedParams, mType, globalVal);
+        ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, globalVal);
         ParamHelper::setCommonParam(note, mType, globalVal);
         note->isUsed[mType] = false;
       } else {
         // Nothing is used, reset to common default
-        ParamHelper::setCommonParam(parameters.selectedParams, mType, defaultVal);
+        ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, defaultVal);
         ParamHelper::setCommonParam(note, mType, defaultVal);
         note->isUsed[mType] = false;
         ParamHelper::setCommonParam(&parameters.global, mType, defaultVal);
       }
     }
   }
-  parameters.selectedParams->isUsed[mType] = false;
-  updateSelectedParams();
+  parameters.getSelectedParams()->isUsed[mType] = false;
+  selectedCommonParamsChanged(parameters.getSelectedParams());
 }
 
 // Update slider colours for new selected group
-void CommonSlider::updateSelectedParams() {
+void CommonSlider::selectedCommonParamsChanged(ParamCommon* newParams) {
   setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, getUsedColour());
   // Update active parameter pointer
-  parameter = parameters.getUsedParam(parameters.selectedParams, mType);
+  parameter = parameters.getUsedParam(newParams, mType);
 }
 
 // Get the colour of the parameter at the level that's used (global, note)
 juce::Colour CommonSlider::getUsedColour() {
   // Is generator used?
-  if (parameters.selectedParams->isUsed[mType]) return parameters.getSelectedParamColour();
-  else if (auto* gen = dynamic_cast<ParamGenerator*>(parameters.selectedParams)) {
+  if (parameters.getSelectedParams()->isUsed[mType]) return parameters.getSelectedParamColour();
+  else if (auto* gen = dynamic_cast<ParamGenerator*>(parameters.getSelectedParams())) {
     if (parameters.note.notes[gen->noteIdx]->isUsed[mType]) return parameters.getSelectedParamColour();
   }
   return Utils::GLOBAL_COLOUR;

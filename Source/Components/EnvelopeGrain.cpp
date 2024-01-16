@@ -14,7 +14,7 @@
 
 EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
     : mParameters(parameters),
-      mCurSelectedParams(parameters.selectedParams),
+      mCurSelectedParams(parameters.getSelectedParams()),
       mParamColour(Utils::GLOBAL_COLOUR),
       mSliderShape(parameters, ParamCommon::Type::GRAIN_SHAPE),
       mSliderTilt(parameters, ParamCommon::Type::GRAIN_TILT),
@@ -73,17 +73,19 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mBtnSync.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
   mBtnSync.setColour(juce::TextButton::textColourOnId, juce::Colours::black);
   mBtnSync.onClick = [this]() {
-    ParamHelper::setCommonParam(mParameters.selectedParams, ParamCommon::Type::GRAIN_SYNC, !mBtnSync.getToggleState());
+    ParamHelper::setCommonParam(mParameters.getSelectedParams(), ParamCommon::Type::GRAIN_SYNC, !mBtnSync.getToggleState());
   };
   addAndMakeVisible(mBtnSync);
 
+  mParameters.addListener(this);
   mCurSelectedParams->addListener(this);
-  updateSelectedParams();
+  selectedCommonParamsChanged(mCurSelectedParams);
 
   startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 EnvelopeGrain::~EnvelopeGrain() {
+  mParameters.removeListener(this);
   mCurSelectedParams->removeListener(this);
   stopTimer();
 }
@@ -109,15 +111,11 @@ void EnvelopeGrain::timerCallback() {
   }
 }
 
-void EnvelopeGrain::updateSelectedParams() {
+void EnvelopeGrain::selectedCommonParamsChanged(ParamCommon* newParams) {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
-  mCurSelectedParams = mParameters.selectedParams;
+  mCurSelectedParams = newParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  mSliderShape.updateSelectedParams();
-  mSliderTilt.updateSelectedParams();
-  mSliderRate.updateSelectedParams();
-  mSliderDuration.updateSelectedParams();
   mBtnSync.setColour(juce::TextButton::buttonColourId, mParamColour);
   mBtnSync.setColour(juce::TextButton::buttonOnColourId, mParamColour.interpolatedWith(juce::Colours::white, 0.6f));
   mParamHasChanged.store(true);

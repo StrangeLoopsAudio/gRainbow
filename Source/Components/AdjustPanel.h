@@ -17,7 +17,10 @@
 //==============================================================================
 /*
  */
-class AdjustPanel : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
+class AdjustPanel : public juce::Component,
+public Parameters::Listener,
+public juce::AudioProcessorParameter::Listener,
+public juce::Timer {
  public:
   AdjustPanel(Parameters& parameters);
   ~AdjustPanel();
@@ -28,9 +31,12 @@ class AdjustPanel : public juce::Component, juce::AudioProcessorParameter::Liste
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
 
-  void timerCallback() override;
+  void selectedCommonParamsChanged(ParamCommon* newParams) override;
 
-  void updateSelectedParams();
+  void timerCallback() override;
+  
+  std::function<void(void)> onRefToneOn = nullptr;
+  std::function<void(void)> onRefToneOff = nullptr;
 
  private:
   // Bookkeeping
@@ -54,6 +60,8 @@ class AdjustPanel : public juce::Component, juce::AudioProcessorParameter::Liste
   juce::Label mLabelPanSpray;
   juce::ToggleButton mBtnReverse;
   juce::Label mLabelReverse;
+  juce::ToggleButton mBtnRefTone;
+  juce::Label mLabelRefTone;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AdjustPanel)
 };

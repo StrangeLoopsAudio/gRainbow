@@ -16,18 +16,20 @@ PianoPanel::PianoPanel(juce::MidiKeyboardState& state, Parameters& parameters)
     : waveform(parameters),
       keyboard(state, parameters),
       mParameters(parameters),
-      mCurSelectedParams(parameters.selectedParams),
+      mCurSelectedParams(parameters.getSelectedParams()),
       mParamColour(Utils::GLOBAL_COLOUR) {
   addAndMakeVisible(keyboard);
   addAndMakeVisible(waveform);
 
+  mParameters.addListener(this);
   mCurSelectedParams->addListener(this);
-  updateSelectedParams();
+  selectedCommonParamsChanged(mCurSelectedParams);
 
   startTimer(100);
 }
 
 PianoPanel::~PianoPanel() {
+  mParameters.removeListener(this);
   mCurSelectedParams->removeListener(this);
   stopTimer();
 }
@@ -40,14 +42,14 @@ void PianoPanel::timerCallback() {
   }
 }
 
-void PianoPanel::updateSelectedParams() {
+void PianoPanel::selectedCommonParamsChanged(ParamCommon* newParams) {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
-  mCurSelectedParams = mParameters.selectedParams;
+  mCurSelectedParams = newParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-
+  
   waveform.updateSelectedParams();
-
+  
   mParamHasChanged.store(true);
   repaint();
 }

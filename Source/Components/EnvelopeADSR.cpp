@@ -14,7 +14,7 @@
 //==============================================================================
 EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
     : mParameters(parameters),
-      mCurSelectedParams(parameters.selectedParams),
+      mCurSelectedParams(parameters.getSelectedParams()),
       mSliderAttack(parameters, ParamCommon::Type::ATTACK),
       mSliderDecay(parameters, ParamCommon::Type::DECAY),
       mSliderSustain(parameters, ParamCommon::Type::SUSTAIN),
@@ -36,7 +36,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   // Decay
   mSliderDecay.setNumDecimalPlacesToDisplay(2);
   mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
-  mSliderDecay.setTextValueSuffix("s");
+  mSliderDecay.setTextValueSuffix(" s");
   mSliderDecay.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderDecay);
 
@@ -59,7 +59,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   // Release
   mSliderRelease.setNumDecimalPlacesToDisplay(2);
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
-  mSliderRelease.setTextValueSuffix("s");
+  mSliderRelease.setTextValueSuffix(" s");
   mSliderRelease.setPopupDisplayEnabled(true, true, this);
   addAndMakeVisible(mSliderRelease);
 
@@ -68,13 +68,15 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mLabelRelease.setJustificationType(juce::Justification::centredTop);
   addAndMakeVisible(mLabelRelease);
 
+  mParameters.addListener(this);
   mCurSelectedParams->addListener(this);
-  updateSelectedParams();
+  selectedCommonParamsChanged(mCurSelectedParams);
 
   startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 EnvelopeADSR::~EnvelopeADSR() {
+  mParameters.removeListener(this);
   mCurSelectedParams->removeListener(this);
   stopTimer();
 }
@@ -91,15 +93,11 @@ void EnvelopeADSR::timerCallback() {
   }
 }
 
-void EnvelopeADSR::updateSelectedParams() {
+void EnvelopeADSR::selectedCommonParamsChanged(ParamCommon* newParams) {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
-  mCurSelectedParams = mParameters.selectedParams;
+  mCurSelectedParams = newParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  mSliderAttack.updateSelectedParams();
-  mSliderDecay.updateSelectedParams();
-  mSliderSustain.updateSelectedParams();
-  mSliderRelease.updateSelectedParams();
   mParamHasChanged.store(true);
   repaint();
 }
@@ -121,8 +119,6 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   const float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
 
   // Draw ADSR path
-  g.setFillType(juce::ColourGradient(colour.withAlpha(0.35f), mVizRect.getTopLeft(), colour.withAlpha(0.05f), mVizRect.getBottomLeft(), false));
-  
   auto adsrRect = mVizRect.reduced(Utils::PADDING * 2, Utils::PADDING * 2);
 
   juce::Path adsrPath;
@@ -138,7 +134,6 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   adsrPath.lineTo(sustainPt);
   adsrPath.lineTo(endPt);
   adsrPath.closeSubPath();
-  g.fillPath(adsrPath.createPathWithRoundedCorners(5));
   g.setColour(colour);
   g.strokePath(adsrPath.createPathWithRoundedCorners(5), juce::PathStrokeType(3));
 }

@@ -19,7 +19,10 @@
 //==============================================================================
 /*
  */
-class PianoPanel : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
+class PianoPanel : public juce::Component,
+public Parameters::Listener,
+public juce::AudioProcessorParameter::Listener,
+public juce::Timer {
  public:
   PianoPanel(juce::MidiKeyboardState& state, Parameters& parameters);
   ~PianoPanel();
@@ -29,10 +32,10 @@ class PianoPanel : public juce::Component, juce::AudioProcessorParameter::Listen
 
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
+  
+  void selectedCommonParamsChanged(ParamCommon* newParams) override;
 
   void timerCallback() override;
-
-  void updateSelectedParams();
 
   // Components (public so that editor can access easily, this is more of a container than anything)
   WaveformPanel waveform;

@@ -35,8 +35,8 @@
  * @brief The "Main component" that parents all UI elements.
  */
 class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                     public juce::FileDragAndDropTarget,
-                                     juce::Timer {
+public juce::FileDragAndDropTarget,
+juce::Timer {
  public:
   GRainbowAudioProcessorEditor(GranularSynth& synth);
   ~GRainbowAudioProcessorEditor() override;
@@ -80,7 +80,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   EnvelopeADSR mEnvAdsr;
   EnvelopeGrain mEnvGrain;
   AdjustPanel mAdjustPanel;
-  EnvPanel mModEnv1, mModEnv2, mModEnv3;
+  EnvPanel mModEnv1, mModEnv2;
   LFOPanel mModLFO1, mModLFO2, mModLFO3;
   MasterPanel mMasterPanel;
   PianoPanel mPianoPanel;

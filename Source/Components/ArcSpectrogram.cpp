@@ -100,10 +100,10 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   // Draw position lines from active note
   ParamNote* note = nullptr;
   int genIdx = -1; // Currently selected generator. If >= 0, darken generator's line
-  switch (mParameters.selectedParams->type) {
-    case ParamType::NOTE: note = dynamic_cast<ParamNote*>(mParameters.selectedParams); break;
+  switch (mParameters.getSelectedParams()->type) {
+    case ParamType::NOTE: note = dynamic_cast<ParamNote*>(mParameters.getSelectedParams()); break;
     case ParamType::GENERATOR: {
-      auto gen = dynamic_cast<ParamGenerator*>(mParameters.selectedParams);
+      auto gen = dynamic_cast<ParamGenerator*>(mParameters.getSelectedParams());
       note = mParameters.note.notes[gen->noteIdx].get();
       genIdx = gen->genIdx;
     }
