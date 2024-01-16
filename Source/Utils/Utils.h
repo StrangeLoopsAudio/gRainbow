@@ -36,8 +36,6 @@ static constexpr float ROUNDED_AMOUNT = 6.0f;
 
 // Grain envelopes and limits
 static constexpr int MAX_GRAINS = 20;  // Max grains active at once
-static constexpr auto ENV_LUT_SIZE = 64;  // grain env lookup table size
-typedef std::array<float, ENV_LUT_SIZE> GrainEnv;
 
 typedef struct Result {
   bool success;
@@ -48,30 +46,6 @@ typedef struct Result {
 static constexpr auto TIMESTRETCH_RATIO = 1.0594f;
 
 enum FilterType { NO_FILTER, LOWPASS, HIGHPASS, BANDPASS };
-
-[[maybe_unused]] static void fillGrainEnvelopeLUT(GrainEnv& lut, const float shape, const float tilt) {
-  /* LUT divided into 3 parts
-
-               1.0
-              -----
-     rampUp  /     \  rampDown
-            /       \
-  */
-  float scaledShape = (shape * ENV_LUT_SIZE) / 2.0f;
-  float scaledTilt = tilt * ENV_LUT_SIZE;
-  int rampUpEndSample = juce::jmax(0.0f, scaledTilt - scaledShape);
-  int rampDownStartSample = juce::jmin((float)ENV_LUT_SIZE, scaledTilt + scaledShape);
-  for (int i = 0; i < ENV_LUT_SIZE; i++) {
-    if (i < rampUpEndSample) {
-      lut[i] = static_cast<float>(i / rampUpEndSample);
-    } else if (i > rampDownStartSample) {
-      lut[i] = 1.0f - (float)(i - rampDownStartSample) / (ENV_LUT_SIZE - rampDownStartSample);
-    } else {
-      lut[i] = 1.0f;
-    }
-  }
-  juce::FloatVectorOperations::clip(lut.data(), lut.data(), 0.0f, 1.0f, lut.size());
-}
 
 static inline float db2lin(float value) { return std::pow(10.0f, value / 10.0f); }
 static inline float lin2db(float value) { return value < 1e-10 ? -100 : 10.0f * std::log10(value); }

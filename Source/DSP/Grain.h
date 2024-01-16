@@ -10,7 +10,7 @@
 
 #pragma once
 #include <juce_audio_basics/juce_audio_basics.h>
-#include "Utils/Utils.h"
+#include "Utils/Envelope.h"
 
 class Grain {
  public:
