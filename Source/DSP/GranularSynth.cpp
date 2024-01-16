@@ -534,6 +534,12 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
     }
   }
   for (auto* gNote : notesToRemove) {
+    for (Utils::MidiNote* it = mMidiNotes.begin(); it != mMidiNotes.end(); it++) {
+      if (Utils::getPitchClass(it->pitch) == gNote->pitchClass) {
+        mMidiNotes.remove(it);
+        break;  // will only be at most 1 note (TODO assuming mouse and midi aren't set at same time)
+      }
+    }
     mActiveNotes.removeObject(gNote);
   }
 }
@@ -721,13 +727,6 @@ void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumb
 
 void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNumber, float) {
   const Utils::PitchClass pitchClass = Utils::getPitchClass(midiNoteNumber);
-
-  for (Utils::MidiNote* it = mMidiNotes.begin(); it != mMidiNotes.end(); it++) {
-    if (it->pitch == pitchClass) {
-      mMidiNotes.remove(it);
-      break;  // will only be at most 1 note (TODO assuming mouse and midi aren't set at same time)
-    }
-  }
 
   for (GrainNote* gNote : mActiveNotes) {
     if (gNote->pitchClass == pitchClass && gNote->removeTs == -1) {
