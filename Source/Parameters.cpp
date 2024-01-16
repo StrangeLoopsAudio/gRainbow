@@ -38,15 +38,11 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                                       ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
   }
   // Macros
-  p.addParameter(macro1.macro = new juce::AudioParameterFloat({ParamIDs::macro1, 1}, "Macro 1", ParamRanges::MACRO,
-                                                           ParamDefaults::MACRO_DEFAULT));
-  p.addParameter(macro2.macro = new juce::AudioParameterFloat({ParamIDs::macro2, 1}, "Macro 2", ParamRanges::MACRO,
-                                                           ParamDefaults::MACRO_DEFAULT));
-  p.addParameter(macro3.macro = new juce::AudioParameterFloat({ParamIDs::macro3, 1}, "Macro 3", ParamRanges::MACRO,
-                                                           ParamDefaults::MACRO_DEFAULT));
-  p.addParameter(macro4.macro = new juce::AudioParameterFloat({ParamIDs::macro4, 1}, "Macro 4", ParamRanges::MACRO,
-                                                           ParamDefaults::MACRO_DEFAULT));
-  
+  for (int i = 0; i < 4; ++i) {
+    auto strI = juce::String(i);
+    p.addParameter(macros[i].macro = new juce::AudioParameterFloat({ParamIDs::macro + strI, 1}, "Macro " + strI, ParamRanges::MACRO,
+                                                                   ParamDefaults::MACRO_DEFAULT));
+  }
   // Common
   p.addParameter(common[GAIN] = new juce::AudioParameterFloat({ParamIDs::globalGain, 1}, "Master Gain", ParamRanges::GAIN,
                                                               ParamDefaults::GAIN_DEFAULT));

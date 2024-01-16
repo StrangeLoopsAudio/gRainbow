@@ -13,6 +13,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
 #include "Sliders.h"
+#include "Buttons.h"
 #include "MeterLookAndFeel.h"
 #include "ff_meters/ff_meters.h"
 
@@ -60,8 +61,11 @@ class MasterPanel : public juce::Component, juce::AudioProcessorParameter::Liste
   juce::Label mLabelMacro3;
   ParamSlider mSliderMacro4;
   juce::Label mLabelMacro4;
+  MapButton mBtnMapMacro1;
+  MapButton mBtnMapMacro2;
+  MapButton mBtnMapMacro3;
+  MapButton mBtnMapMacro4;
   foleys::LevelMeter mMeter{foleys::LevelMeter::Default};
-
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MasterPanel)
 };

@@ -193,7 +193,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     juce::MidiMessage msg = messageMeta.getMessage();
     if (msg.isController() && msg.getControllerNumber() == 1) {
       // Update macro 1 based on mod wheel input
-      ParamHelper::setParam(mParameters.global.macro1.macro, msg.getControllerValue() / 127.0f);
+      ParamHelper::setParam(mParameters.global.macros[0].macro, msg.getControllerValue() / 127.0f);
     } else if (msg.isPitchWheel()) {
       // Update local pitch bend value
       mCurPitchBendSemitones = ((msg.getPitchWheelValue() / 8192.0f) - 1.0f) * MAX_PITCH_BEND_SEMITONES;

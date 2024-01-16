@@ -39,10 +39,7 @@ static juce::String envAttack{"env_attack_"};
 static juce::String envDecay{"env_decay_"};
 static juce::String envSustain{"env_sustain_"};
 static juce::String envRelease{"env_release_"};
-static juce::String macro1{"macro1"};
-static juce::String macro2{"macro2"};
-static juce::String macro3{"macro3"};
-static juce::String macro4{"macro4"};
+static juce::String macro{"macro_"};
 // Global common
 static juce::String globalGain{"global_gain"};
 static juce::String globalAttack{"global_attack"};
@@ -529,6 +526,16 @@ struct ParamGlobal : ParamCommon {
     for (auto& used : isUsed) {
       used = true;
     }
+    modLFOs[0].colour = juce::Colour(0xffffe8d6);
+    modLFOs[1].colour = juce::Colour(0xffddbea9);
+    modLFOs[2].colour = juce::Colour(0xffcb997e);
+    modEnvs[0].colour = juce::Colour(0xffb8d8d8);
+    modEnvs[1].colour = juce::Colour(0xff88a9af);
+    modEnvs[2].colour = juce::Colour(0xff7a9e9f);
+    macros[0].colour = juce::Colour(0xffB9DAC9);
+    macros[1].colour = juce::Colour(0xffA2C3B1);
+    macros[2].colour = juce::Colour(0xff85BCA2);
+    macros[3].colour = juce::Colour(0xff7b9d8f);
   }
   ~ParamGlobal() {}
 
@@ -550,16 +557,15 @@ struct ParamGlobal : ParamCommon {
       ParamHelper::setParam(env.sustain, ParamDefaults::SUSTAIN_DEFAULT);
       ParamHelper::setParam(env.release, ParamDefaults::RELEASE_DEFAULT_SEC);
     }
-    ParamHelper::setParam(macro1.macro, ParamDefaults::MACRO_DEFAULT);
-    ParamHelper::setParam(macro2.macro, ParamDefaults::MACRO_DEFAULT);
-    ParamHelper::setParam(macro3.macro, ParamDefaults::MACRO_DEFAULT);
-    ParamHelper::setParam(macro4.macro, ParamDefaults::MACRO_DEFAULT);
+    for (auto& macro : macros) {
+      ParamHelper::setParam(macro.macro, ParamDefaults::MACRO_DEFAULT);
+    }
   }
 
   // Global modulation sources
   std::array<LFOModSource, NUM_MODS> modLFOs;
   std::array<EnvModSource, NUM_MODS> modEnvs;
-  MacroModSource macro1, macro2, macro3, macro4;
+  std::array<MacroModSource, 4> macros;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamGlobal)
 };
@@ -656,7 +662,10 @@ struct ParamUI {
   int trimPlaybackMaxSample;
 };
 
-struct Parameters {
+class Parameters {
+public:
+  Parameters() {}
+  
   // The 3 types of parameter sets
   ParamUI ui;
   ParamGlobal global;
@@ -672,10 +681,9 @@ struct Parameters {
     for (auto& env : global.modEnvs) {
       env.prepare(blockSize, sampleRate);
     }
-    global.macro1.prepare(blockSize, sampleRate);
-    global.macro2.prepare(blockSize, sampleRate);
-    global.macro3.prepare(blockSize, sampleRate);
-    global.macro4.prepare(blockSize, sampleRate);
+    for (auto& macro : global.macros) {
+      macro.prepare(blockSize, sampleRate);
+    }
   }
   void processModSources() {
     for (auto& lfo : global.modLFOs) {
@@ -684,10 +692,9 @@ struct Parameters {
     for (auto& env : global.modEnvs) {
       env.processBlock();
     }
-    global.macro1.processBlock();
-    global.macro2.processBlock();
-    global.macro3.processBlock();
-    global.macro4.processBlock();
+    for (auto& macro : global.macros) {
+      macro.processBlock();
+    }
   }
   void applyModulations(juce::RangedAudioParameter* param, float& value0To1) {
     const int idx = param->getParameterIndex();
