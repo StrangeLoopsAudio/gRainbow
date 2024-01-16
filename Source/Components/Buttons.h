@@ -13,7 +13,9 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
 
-class MapButton : public juce::TextButton, public juce::Timer {
+class MapButton : public juce::TextButton,
+public Parameters::Listener,
+public juce::Timer {
 public:
   MapButton(Parameters& parameters, ModSource& modSource): mParameters(parameters), mModSource(modSource) {
     setColour(juce::TextButton::ColourIds::buttonColourId, mModSource.colour);
@@ -22,21 +24,13 @@ public:
     setTooltip("Once enabled, drag sliders to create modulations");
     startTimer(300);
     onClick = [this]() {
-      mIsBright = true;
-      setColour(juce::TextButton::ColourIds::buttonOnColourId, mModSource.colour);
-      mParameters.mappingModSource = getToggleState() ? &mModSource : nullptr;
+      mParameters.setMappingModSource(getToggleState() ? &mModSource : nullptr);
     };
+    mParameters.addListener(this);
   }
   ~MapButton() {
+    mParameters.removeListener(this);
     stopTimer();
-  }
-  
-  // Call this when leaving a tab where mapping is active to reset the status
-  void resetMappingStatus() {
-    setToggleState(false, juce::dontSendNotification);
-    mIsBright = true;
-    setColour(juce::TextButton::ColourIds::buttonOnColourId, mModSource.colour);
-    mParameters.mappingModSource = nullptr;
   }
   
   void timerCallback() override {
@@ -47,8 +41,18 @@ public:
     }
   }
   
-private:
+  void mappingSourceChanged(ModSource* mod) override {
+    if (mod == &mModSource) {
+      mIsBright = true;
+      setColour(juce::TextButton::ColourIds::buttonOnColourId, mModSource.colour);
+    } else {
+      setToggleState(false, juce::dontSendNotification);
+      mIsBright = true;
+      setColour(juce::TextButton::ColourIds::buttonOnColourId, mModSource.colour);
+    }
+  }
   
+private:
   Parameters& mParameters;
   ModSource& mModSource;
   bool mIsBright = false;

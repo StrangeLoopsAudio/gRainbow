@@ -168,6 +168,7 @@ void MasterPanel::resized() {
 
   // Gain
   auto topKnob = masterPanel.removeFromTop(masterPanel.getHeight() / 2);
+  topKnob.removeFromBottom(Utils::LABEL_HEIGHT); // TODO: put something here
   mLabelGain.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderGain.setBounds(topKnob.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   masterPanel.removeFromTop(Utils::PADDING);

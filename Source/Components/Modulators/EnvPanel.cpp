@@ -70,7 +70,7 @@ mBtnMap(mParameters, mModEnv) {
   mLabelDecay.setText("decay", juce::dontSendNotification);
   mLabelSustain.setText("sustain", juce::dontSendNotification);
   mLabelRelease.setText("release", juce::dontSendNotification);
-
+  
   startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
@@ -83,8 +83,8 @@ EnvPanel::~EnvPanel() {
 }
 
 void EnvPanel::visibilityChanged() {
-  if (!isVisible()) {
-    mBtnMap.resetMappingStatus();
+  if (!isVisible() && mBtnMap.getToggleState()) {
+    mParameters.setMappingModSource(nullptr);
   }
 }
 

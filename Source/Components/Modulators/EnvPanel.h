@@ -18,7 +18,9 @@
 //==============================================================================
 /*
  */
-class EnvPanel : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
+class EnvPanel : public juce::Component,
+public juce::AudioProcessorParameter::Listener,
+public juce::Timer {
  public:
   EnvPanel(int modIdx, Parameters& parameters);
   ~EnvPanel();
@@ -29,7 +31,7 @@ class EnvPanel : public juce::Component, juce::AudioProcessorParameter::Listener
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
   void visibilityChanged() override;
-
+  
   void timerCallback() override;
 
  private:

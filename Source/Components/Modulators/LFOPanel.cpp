@@ -112,8 +112,8 @@ LFOPanel::~LFOPanel() {
 }
 
 void LFOPanel::visibilityChanged() {
-  if (!isVisible()) {
-    mBtnMap.resetMappingStatus();
+  if (!isVisible() && mBtnMap.getToggleState()) {
+    mParameters.setMappingModSource(nullptr);
   }
 }
 

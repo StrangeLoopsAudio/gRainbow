@@ -18,17 +18,17 @@ ParamSlider::ParamSlider(Parameters& _parameters, juce::RangedAudioParameter* _p
   if (!parameter) return;
   setSkewFactor(parameter->getNormalisableRange().skew);
   onValueChange = [this] {
-    if (parameters.mappingModSource) {
+    if (parameters.getMappingModSource()) {
       int idx = parameter->getParameterIndex();
       if (!parameters.modulations.contains(idx)) {
         // Add modulator if it doesn't exist
-        parameters.modulations.set(idx, Modulation(parameters.mappingModSource, 0.0f));
+        parameters.modulations.set(idx, Modulation(parameters.getMappingModSource(), 0.0f));
       } else {
         // Increment/decrement its depth
         double diff = parameter->convertTo0to1(getValue()) - parameter->convertTo0to1(dragStartValue);
         double scale = getRange().getLength() / (getRange().getEnd() - dragStartValue);
         float depth = juce::jlimit(0.0, 1.0, diff * scale);
-        parameters.modulations.set(idx, Modulation(parameters.mappingModSource, depth));
+        parameters.modulations.set(idx, Modulation(parameters.getMappingModSource(), depth));
       }
       // Reset actual slider value
       setValue(dragStartValue, juce::dontSendNotification);
@@ -56,11 +56,11 @@ CommonSlider::CommonSlider(Parameters& _parameters, ParamCommon::Type type)
   setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::GLOBAL_COLOUR);
   setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
   onValueChange = [this] {
-    if (parameters.mappingModSource) {
+    if (parameters.getMappingModSource()) {
       int idx = parameter->getParameterIndex();
       if (!parameters.modulations.contains(idx)) {
         // Add modulator if it doesn't exist
-        parameters.modulations.set(idx, Modulation(parameters.mappingModSource, 0.0f));
+        parameters.modulations.set(idx, Modulation(parameters.getMappingModSource(), 0.0f));
       } else {
         // Increment/decrement its depth
         Modulation& mod = parameters.modulations.getReference(idx);

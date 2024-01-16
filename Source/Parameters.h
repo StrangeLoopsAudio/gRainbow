@@ -669,8 +669,8 @@ public:
     virtual ~Listener() = default;
     // Called when selected parameters changes
     virtual void selectedCommonParamsChanged(ParamCommon* newParams) {}
-    // Called when a modulator component wants to start mapping
-    virtual void mappingBtnEnabled() {}
+    // Called when the current modulator mapping source changes
+    virtual void mappingSourceChanged(ModSource* mod) {}
   };
   
   Parameters() {
@@ -683,7 +683,12 @@ public:
   ParamsNote note;
   
   juce::HashMap<int, Modulation> modulations;
-  ModSource* mappingModSource = nullptr; // If not null, then a modulator is waiting to be mapped
+  
+  ModSource* getMappingModSource() { return mMappingModSource; }
+  void setMappingModSource(ModSource* mod) {
+    mMappingModSource = mod;
+    mListeners.call(&Parameters::Listener::mappingSourceChanged, mMappingModSource);
+  }
   
   // Listeners for callbacks relating to parameters
   void addListener(Parameters::Listener* listener);
@@ -721,6 +726,8 @@ public:
 private:
   // Keeps track of the current selected global/note/generator parameters for editing, global by default
   ParamCommon* mSelectedParams = &global;
+  
+  ModSource* mMappingModSource = nullptr; // If not null, then a modulator is waiting to be mapped
   
   // Listener list for our callbacks
   juce::ListenerList<Listener> mListeners;
