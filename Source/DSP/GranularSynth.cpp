@@ -243,10 +243,10 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
       for (size_t genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
         ParamGenerator* paramGenerator = mParameters.note.notes[gNote->pitchClass]->generators[genIdx].get();
         const float gain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::GAIN, true);
-        const float attack = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::ATTACK, true);
-        const float decay = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::DECAY, true);
-        const float sustain = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::SUSTAIN, true);
-        const float release = mParameters.getFloatParam(paramGenerator, ParamCommon::Type::RELEASE, true);
+        const float attack = mParameters.getFloatParam(mParameters.global.ampEnvAttack, true);
+        const float decay = mParameters.getFloatParam(mParameters.global.ampEnvDecay, true);
+        const float sustain = mParameters.getFloatParam(mParameters.global.ampEnvSustain, true);
+        const float release = mParameters.getFloatParam(mParameters.global.ampEnvRelease, true);
         const float grainGain =
             gNote->genAmpEnvs[genIdx].getAmplitude(mTotalSamps, attack * mSampleRate, decay * mSampleRate, sustain,
                                                   release * mSampleRate) * gain;
@@ -732,15 +732,11 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNum
   for (GrainNote* gNote : mActiveNotes) {
     if (gNote->pitchClass == pitchClass && gNote->removeTs == -1) {
       // Set timestamp to delete note based on release time and set note off for all generators
-      float maxRelease = 0;
+      float release = mParameters.getFloatParam(mParameters.global.ampEnvRelease, true);;
       for (size_t i = 0; i < NUM_GENERATORS; ++i) {
         gNote->genAmpEnvs[i].noteOff(mTotalSamps);
-        // Update max release time
-        float release =
-            mParameters.getFloatParam(mParameters.note.notes[gNote->pitchClass]->generators[i].get(), ParamCommon::Type::RELEASE, true);
-        if (release >= maxRelease) maxRelease = release;
       }
-      gNote->removeTs = mTotalSamps + static_cast<int>(maxRelease * mSampleRate);
+      gNote->removeTs = mTotalSamps + static_cast<int>(release * mSampleRate);
       break;
     }
   }

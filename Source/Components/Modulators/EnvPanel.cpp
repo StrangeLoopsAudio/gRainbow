@@ -40,12 +40,6 @@ mBtnMap(mParameters, mModEnv) {
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
   mSliderRelease.setDoubleClickReturnValue(true, ParamDefaults::RELEASE_DEFAULT_SEC);
   mSliderRelease.setTextValueSuffix(" s");
-
-  mModEnv.attack->addListener(this);
-  mModEnv.decay->addListener(this);
-  mModEnv.sustain->addListener(this);
-  mModEnv.release->addListener(this);
-  mParamHasChanged.store(true); // Init param values
   
   // Default button settings
   std::vector<std::reference_wrapper<juce::TextButton>> buttons = { mBtnMap };
@@ -70,6 +64,12 @@ mBtnMap(mParameters, mModEnv) {
   mLabelDecay.setText("decay", juce::dontSendNotification);
   mLabelSustain.setText("sustain", juce::dontSendNotification);
   mLabelRelease.setText("release", juce::dontSendNotification);
+  
+  mModEnv.attack->addListener(this);
+  mModEnv.decay->addListener(this);
+  mModEnv.sustain->addListener(this);
+  mModEnv.release->addListener(this);
+  mParamHasChanged.store(true); // Init param values
   
   startTimer(Utils::UI_REFRESH_INTERVAL);
 }

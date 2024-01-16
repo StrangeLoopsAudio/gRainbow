@@ -29,16 +29,21 @@
 
 namespace ParamIDs {
 // Global params
+static juce::String ampEnvAttack{"env_attack"};
+static juce::String ampEnvDecay{"amp_env_decay"};
+static juce::String ampEnvSustain{"amp_env_sustain"};
+static juce::String ampEnvRelease{"amp_env_release"};
+// Modulators
 static juce::String lfoShape{"lfo_shape_"};
 static juce::String lfoRate{"lfo_rate_"};
 static juce::String lfoPhase{"lfo_phase_"};
 static juce::String lfoSync{"lfo_sync_"};
 static juce::String lfoBipolar{"lfo_bipolar_"};
 static juce::String lfoRetrigger{"lfo_retrigger_"};
-static juce::String envAttack{"env_attack_"};
-static juce::String envDecay{"env_decay_"};
-static juce::String envSustain{"env_sustain_"};
-static juce::String envRelease{"env_release_"};
+static juce::String modEnvAttack{"mod_env_attack_"};
+static juce::String modEnvDecay{"mod_env_decay_"};
+static juce::String modEnvSustain{"mod_env_sustain_"};
+static juce::String modEnvRelease{"mod_env_release_"};
 static juce::String macro{"macro_"};
 // Global common
 static juce::String globalGain{"global_gain"};
@@ -182,10 +187,6 @@ class ParamCommon {
 
   enum Type {
     GAIN = 0,
-    ATTACK,
-    DECAY,
-    SUSTAIN,
-    RELEASE,
     GRAIN_SHAPE,
     GRAIN_TILT,
     GRAIN_RATE,
@@ -203,10 +204,6 @@ class ParamCommon {
 
   void addListener(juce::AudioProcessorParameter::Listener* listener) {
     common[GAIN]->addListener(listener);
-    common[ATTACK]->addListener(listener);
-    common[DECAY]->addListener(listener);
-    common[SUSTAIN]->addListener(listener);
-    common[RELEASE]->addListener(listener);
     common[GRAIN_SHAPE]->addListener(listener);
     common[GRAIN_TILT]->addListener(listener);
     common[GRAIN_RATE]->addListener(listener);
@@ -222,10 +219,6 @@ class ParamCommon {
   }
   void removeListener(juce::AudioProcessorParameter::Listener* listener) {
     common[GAIN]->removeListener(listener);
-    common[ATTACK]->removeListener(listener);
-    common[DECAY]->removeListener(listener);
-    common[SUSTAIN]->removeListener(listener);
-    common[RELEASE]->removeListener(listener);
     common[GRAIN_SHAPE]->removeListener(listener);
     common[GRAIN_TILT]->removeListener(listener);
     common[GRAIN_RATE]->removeListener(listener);
@@ -242,10 +235,6 @@ class ParamCommon {
 
   void resetParams() {
     ParamHelper::setParam(P_FLOAT(common[GAIN]), ParamDefaults::GAIN_DEFAULT);
-    ParamHelper::setParam(P_FLOAT(common[ATTACK]), ParamDefaults::ATTACK_DEFAULT_SEC);
-    ParamHelper::setParam(P_FLOAT(common[DECAY]), ParamDefaults::DECAY_DEFAULT_SEC);
-    ParamHelper::setParam(P_FLOAT(common[SUSTAIN]), ParamDefaults::SUSTAIN_DEFAULT);
-    ParamHelper::setParam(P_FLOAT(common[RELEASE]), ParamDefaults::RELEASE_DEFAULT_SEC);
     ParamHelper::setParam(P_FLOAT(common[PITCH_ADJUST]), ParamDefaults::PITCH_ADJUST_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[PITCH_SPRAY]), ParamDefaults::PITCH_SPRAY_DEFAULT);
     ParamHelper::setParam(P_FLOAT(common[POS_ADJUST]), ParamDefaults::POSITION_ADJUST_DEFAULT);
@@ -271,10 +260,6 @@ class ParamCommon {
 };
 
 static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GAIN_DEFAULT,
-  ParamDefaults::ATTACK_DEFAULT_SEC,
-  ParamDefaults::DECAY_DEFAULT_SEC,
-  ParamDefaults::SUSTAIN_DEFAULT,
-  ParamDefaults::RELEASE_DEFAULT_SEC,
   ParamDefaults::GRAIN_SHAPE_DEFAULT,
   ParamDefaults::GRAIN_TILT_DEFAULT,
   ParamDefaults::GRAIN_RATE_DEFAULT,
@@ -290,10 +275,6 @@ static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GA
 };
 
 static juce::NormalisableRange<float> COMMON_RANGES[ParamCommon::Type::NUM_COMMON] = {ParamRanges::GAIN,
-  ParamRanges::ATTACK,
-  ParamRanges::DECAY,
-  ParamRanges::SUSTAIN,
-  ParamRanges::RELEASE,
   ParamRanges::GRAIN_SHAPE,
   ParamRanges::GRAIN_TILT,
   ParamRanges::GRAIN_RATE,
@@ -528,9 +509,8 @@ struct ParamGlobal : ParamCommon {
     modLFOs[0].colour = juce::Colour(0xffffe8d6);
     modLFOs[1].colour = juce::Colour(0xffddbea9);
     modLFOs[2].colour = juce::Colour(0xffcb997e);
-    modEnvs[0].colour = juce::Colour(0xffb8d8d8);
-    modEnvs[1].colour = juce::Colour(0xff88a9af);
-    modEnvs[2].colour = juce::Colour(0xff7a9e9f);
+    modEnvs[0].colour = juce::Colour(0xff88a9af);
+    modEnvs[1].colour = juce::Colour(0xff7a9e9f);
     macros[0].colour = juce::Colour(0xffB9DAC9);
     macros[1].colour = juce::Colour(0xffA2C3B1);
     macros[2].colour = juce::Colour(0xff85BCA2);
@@ -542,6 +522,10 @@ struct ParamGlobal : ParamCommon {
   
   void resetParams() {
     ParamCommon::resetParams();
+    ParamHelper::setParam(ampEnvAttack, ParamDefaults::ATTACK_DEFAULT_SEC);
+    ParamHelper::setParam(ampEnvDecay, ParamDefaults::DECAY_DEFAULT_SEC);
+    ParamHelper::setParam(ampEnvSustain, ParamDefaults::SUSTAIN_DEFAULT);
+    ParamHelper::setParam(ampEnvRelease, ParamDefaults::RELEASE_DEFAULT_SEC);
     for (auto& lfo : modLFOs) {
       ParamHelper::setParam(lfo.shape, ParamDefaults::LFO_SHAPE_DEFAULT);
       ParamHelper::setParam(lfo.rate, ParamDefaults::LFO_RATE_DEFAULT);
@@ -560,6 +544,12 @@ struct ParamGlobal : ParamCommon {
       ParamHelper::setParam(macro.macro, ParamDefaults::MACRO_DEFAULT);
     }
   }
+  
+  // Global parameters
+  juce::AudioParameterFloat* ampEnvAttack;
+  juce::AudioParameterFloat* ampEnvDecay;
+  juce::AudioParameterFloat* ampEnvSustain;
+  juce::AudioParameterFloat* ampEnvRelease;
 
   // Global modulation sources
   std::array<LFOModSource, 3> modLFOs;
@@ -720,6 +710,7 @@ public:
   // Hierarchy (high to low): global, note, generator
   // Optionally applies modulations before returning value
   float getFloatParam(ParamCommon* common, ParamCommon::Type type, bool withModulations = false);
+  float getFloatParam(juce::RangedAudioParameter* param, bool withModulations = false);
   int getChoiceParam(ParamCommon* common, ParamCommon::Type type);
   int getBoolParam(ParamCommon* common, ParamCommon::Type type);
   

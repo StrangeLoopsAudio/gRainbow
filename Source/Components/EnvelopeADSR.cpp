@@ -11,73 +11,63 @@
 #include "EnvelopeADSR.h"
 #include "Utils/Utils.h"
 
+// Just like EnvelopePanel but for the amp env (no map button and global params)
+// TODO: can probably consolidate the 2 classes in a clever way
 //==============================================================================
 EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
     : mParameters(parameters),
-      mCurSelectedParams(parameters.getSelectedParams()),
-      mSliderAttack(parameters, ParamCommon::Type::ATTACK),
-      mSliderDecay(parameters, ParamCommon::Type::DECAY),
-      mSliderSustain(parameters, ParamCommon::Type::SUSTAIN),
-      mSliderRelease(parameters, ParamCommon::Type::RELEASE)
+      mSliderAttack(mParameters, mParameters.global.ampEnvAttack),
+      mSliderDecay(mParameters, mParameters.global.ampEnvDecay),
+      mSliderSustain(mParameters, mParameters.global.ampEnvSustain),
+      mSliderRelease(mParameters, mParameters.global.ampEnvRelease)
 {
-  juce::Colour knobColour = Utils::GLOBAL_COLOUR;
-  // Attack
-  mSliderAttack.setNumDecimalPlacesToDisplay(2);
+  // Default slider settings
+  std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderAttack, mSliderDecay, mSliderSustain, mSliderRelease };
+  for (auto& slider : sliders) {
+    slider.get().setNumDecimalPlacesToDisplay(2);
+    slider.get().setPopupDisplayEnabled(true, true, this);
+    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
+    addAndMakeVisible(slider.get());
+  }
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end, 0.01);
-  mSliderAttack.setTextValueSuffix("s");
-  mSliderAttack.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderAttack);
-
-  mLabelAttack.setText("attack", juce::dontSendNotification);
-  mLabelAttack.setColour(juce::Label::ColourIds::textColourId, knobColour);
-  mLabelAttack.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelAttack);
-
-  // Decay
-  mSliderDecay.setNumDecimalPlacesToDisplay(2);
+  mSliderAttack.setDoubleClickReturnValue(true, ParamDefaults::ATTACK_DEFAULT_SEC);
+  mSliderAttack.setTextValueSuffix(" s");
   mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
+  mSliderDecay.setDoubleClickReturnValue(true, ParamDefaults::DECAY_DEFAULT_SEC);
   mSliderDecay.setTextValueSuffix(" s");
-  mSliderDecay.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderDecay);
-
-  mLabelDecay.setText("decay", juce::dontSendNotification);
-  mLabelDecay.setColour(juce::Label::ColourIds::textColourId, knobColour);
-  mLabelDecay.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelDecay);
-
-  // Sustain
-  mSliderSustain.setNumDecimalPlacesToDisplay(2);
-  mSliderSustain.setRange(0.0, 1.0, 0.01);
-  mSliderSustain.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderSustain);
-
-  mLabelSustain.setText("sustain", juce::dontSendNotification);
-  mLabelSustain.setColour(juce::Label::ColourIds::textColourId, knobColour);
-  mLabelSustain.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelSustain);
-
-  // Release
-  mSliderRelease.setNumDecimalPlacesToDisplay(2);
+  mSliderSustain.setRange(ParamRanges::SUSTAIN.start, ParamRanges::SUSTAIN.end, 0.01);
+  mSliderSustain.setDoubleClickReturnValue(true, ParamDefaults::SUSTAIN_DEFAULT);
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
+  mSliderRelease.setDoubleClickReturnValue(true, ParamDefaults::RELEASE_DEFAULT_SEC);
   mSliderRelease.setTextValueSuffix(" s");
-  mSliderRelease.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderRelease);
-
+  
+  // Default label settings
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelAttack, mLabelDecay, mLabelSustain, mLabelRelease };
+  for (auto& label : labels) {
+    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
+    label.get().setJustificationType(juce::Justification::centredTop);
+    label.get().setFont(juce::Font(14));
+    addAndMakeVisible(label.get());
+  }
+  mLabelAttack.setText("attack", juce::dontSendNotification);
+  mLabelDecay.setText("decay", juce::dontSendNotification);
+  mLabelSustain.setText("sustain", juce::dontSendNotification);
   mLabelRelease.setText("release", juce::dontSendNotification);
-  mLabelRelease.setColour(juce::Label::ColourIds::textColourId, knobColour);
-  mLabelRelease.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelRelease);
-
-  mParameters.addListener(this);
-  mCurSelectedParams->addListener(this);
-  selectedCommonParamsChanged(mCurSelectedParams);
+  
+  mParameters.global.ampEnvAttack->addListener(this);
+  mParameters.global.ampEnvDecay->addListener(this);
+  mParameters.global.ampEnvSustain->addListener(this);
+  mParameters.global.ampEnvRelease->addListener(this);
+  mParamHasChanged.store(true); // Init param values
 
   startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 EnvelopeADSR::~EnvelopeADSR() {
-  mParameters.removeListener(this);
-  mCurSelectedParams->removeListener(this);
+  mParameters.global.ampEnvAttack->removeListener(this);
+  mParameters.global.ampEnvDecay->removeListener(this);
+  mParameters.global.ampEnvSustain->removeListener(this);
+  mParameters.global.ampEnvRelease->removeListener(this);
   stopTimer();
 }
 
@@ -86,24 +76,15 @@ void EnvelopeADSR::parameterValueChanged(int, float) { mParamHasChanged.store(tr
 void EnvelopeADSR::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    mSliderAttack.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::ATTACK), juce::dontSendNotification);
-    mSliderDecay.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::DECAY), juce::dontSendNotification);
-    mSliderSustain.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::SUSTAIN), juce::dontSendNotification);
-    mSliderRelease.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::RELEASE), juce::dontSendNotification);
+    mSliderAttack.setValue(mParameters.global.ampEnvAttack->get(), juce::dontSendNotification);
+    mSliderDecay.setValue(mParameters.global.ampEnvDecay->get(), juce::dontSendNotification);
+    mSliderSustain.setValue(mParameters.global.ampEnvSustain->get(), juce::dontSendNotification);
+    mSliderRelease.setValue(mParameters.global.ampEnvRelease->get(), juce::dontSendNotification);
   }
 }
 
-void EnvelopeADSR::selectedCommonParamsChanged(ParamCommon* newParams) {
-  if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
-  mCurSelectedParams = newParams;
-  mCurSelectedParams->addListener(this);
-  mParamColour = mParameters.getSelectedParamColour();
-  mParamHasChanged.store(true);
-  repaint();
-}
-
 void EnvelopeADSR::paint(juce::Graphics& g) {
-  juce::Colour colour = mParamColour;
+  juce::Colour colour = Utils::GLOBAL_COLOUR;
 
   // Panel rectangle
   g.setColour(Utils::PANEL_COLOUR);

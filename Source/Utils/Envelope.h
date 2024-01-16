@@ -45,11 +45,11 @@ typedef std::array<float, ENV_LUT_SIZE> GrainEnv;
   //juce::FloatVectorOperations::clip(lut.data(), lut.data(), 0.0f, 1.0f, lut.size());
 }
 
-enum EnvelopeState { ATTACK, DECAY, SUSTAIN, RELEASE };
+enum ADSRState { ATTACK, DECAY, SUSTAIN, RELEASE };
 
 typedef struct EnvelopeADSR {
   // All adsr params are in samples (except for sustain amp)
-  EnvelopeState state = EnvelopeState::ATTACK;
+  ADSRState state = ADSRState::ATTACK;
   float amplitude = 0.0f;
   float noteOffAmplitude = 0.0f;
   int noteOnTs = -1;
@@ -58,45 +58,45 @@ typedef struct EnvelopeADSR {
   void noteOn(int ts) {
     noteOnTs = ts;
     noteOffTs = -1;
-    state = EnvelopeState::ATTACK;
+    state = ADSRState::ATTACK;
     amplitude = 0.0f;
     noteOffAmplitude = 0.0f;
   }
   void noteOff(int ts) {
     noteOffTs = ts;
     noteOffAmplitude = amplitude;
-    state = EnvelopeState::RELEASE;
+    state = ADSRState::RELEASE;
   }
   /* ADSR params (except sustain) should be in samples */
   float getAmplitude(int curTs, float attack, float decay, float sustain, float release) {
-    float newAmp = 0.0f;
-    float tsDiff = static_cast<float>(curTs - noteOnTs);
+    const float refTs = (state == Utils::ADSRState::RELEASE) ? noteOffTs : noteOnTs;
+    float tsDiff = static_cast<float>(curTs - refTs);
     switch (state) {
-      case Utils::EnvelopeState::ATTACK: {
+      case Utils::ADSRState::ATTACK: {
         if (noteOnTs < 0) return 0.0f;
-        newAmp = tsDiff / attack;
+        amplitude = tsDiff / attack;
         if (tsDiff >= attack) {
-          state = Utils::EnvelopeState::DECAY;
+          state = Utils::ADSRState::DECAY;
         }
         break;
       }
-      case Utils::EnvelopeState::DECAY: {
+      case Utils::ADSRState::DECAY: {
         if (noteOnTs < 0) return 0.0f;
-        newAmp = 1.0f - ((tsDiff - attack) / (float)decay) * (1.0f - sustain);
+        amplitude = 1.0f - ((tsDiff - attack) / (float)decay) * (1.0f - sustain);
         if (tsDiff - attack >= decay) {
-          state = Utils::EnvelopeState::SUSTAIN;
+          state = Utils::ADSRState::SUSTAIN;
         }
         break;
       }
-      case Utils::EnvelopeState::SUSTAIN: {
-        newAmp = sustain;
+      case Utils::ADSRState::SUSTAIN: {
+        amplitude = sustain;
         // Note: setting note off sets state to release, we don't need to
         // here
         break;
       }
-      case Utils::EnvelopeState::RELEASE: {
+      case Utils::ADSRState::RELEASE: {
         if (noteOffTs < 0) return 0.0f;
-        newAmp = noteOffAmplitude - ((tsDiff / release) * noteOffAmplitude);
+        amplitude = noteOffAmplitude - ((tsDiff / release) * noteOffAmplitude);
         if (tsDiff > release) {
           noteOnTs = -1;
           noteOffTs = -1;
@@ -104,7 +104,6 @@ typedef struct EnvelopeADSR {
         break;
       }
     }
-    amplitude = juce::jlimit(0.0f, 1.0f, newAmp);
     return amplitude;
   }
 } EnvelopeADSR;

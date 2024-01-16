@@ -118,6 +118,9 @@ void Parameters::removeListener(Parameters::Listener* listener)
 // Optionally applies modulations before returning value
 float Parameters::getFloatParam(ParamCommon* common, ParamCommon::Type type, bool withModulations) {
   juce::RangedAudioParameter* param = getUsedParam(common, type);
+  return getFloatParam(param, withModulations);
+}
+float Parameters::getFloatParam(juce::RangedAudioParameter* param, bool withModulations) {
   float value0To1 = param->convertTo0to1(P_FLOAT(param)->get());
   if (withModulations) applyModulations(param, value0To1);
   return param->convertFrom0to1(value0To1);
@@ -133,7 +136,16 @@ int Parameters::getBoolParam(ParamCommon* common, ParamCommon::Type type) {
 
 // Parameter classes init
 void ParamGlobal::addParams(juce::AudioProcessor& p) {
-  // Global
+  // Global amp env
+  p.addParameter(ampEnvAttack = new juce::AudioParameterFloat({ParamIDs::ampEnvAttack, 1}, "Amp Env Attack",
+                                                                   ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
+  p.addParameter(ampEnvDecay = new juce::AudioParameterFloat({ParamIDs::ampEnvDecay, 1}, "Amp Env Decay",
+                                                                  ParamRanges::DECAY, ParamDefaults::DECAY_DEFAULT_SEC));
+  p.addParameter(ampEnvSustain = new juce::AudioParameterFloat({ParamIDs::ampEnvSustain, 1}, "Amp Env Sustain",
+                                                                    ParamRanges::SUSTAIN, ParamDefaults::SUSTAIN_DEFAULT));
+  p.addParameter(ampEnvRelease = new juce::AudioParameterFloat({ParamIDs::ampEnvRelease, 1}, "Amp Env Release",
+                                                                    ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
+  // Modulators
   // LFOs
   for (int i = 0; i < modLFOs.size(); ++i) {
     auto strI = juce::String(i);
@@ -150,16 +162,16 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
     p.addParameter(modLFOs[i].retrigger = new juce::AudioParameterBool(
                                                                        {ParamIDs::lfoRetrigger + strI, 1}, "LFO " + strI + " Retrigger", ParamDefaults::LFO_RETRIGGER_DEFAULT));
   }
+  // Mod envelopes
   for (int i = 0; i < modEnvs.size(); ++i) {
     auto strI = juce::String(i);
-    // Mod envelopes
-    p.addParameter(modEnvs[i].attack = new juce::AudioParameterFloat({ParamIDs::envAttack + strI, 1}, "Env " + strI + " Attack",
+    p.addParameter(modEnvs[i].attack = new juce::AudioParameterFloat({ParamIDs::modEnvAttack + strI, 1}, "Env " + strI + " Attack",
                                                                      ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
-    p.addParameter(modEnvs[i].decay = new juce::AudioParameterFloat({ParamIDs::envDecay + strI, 1}, "Env " + strI + " Decay",
+    p.addParameter(modEnvs[i].decay = new juce::AudioParameterFloat({ParamIDs::modEnvDecay + strI, 1}, "Env " + strI + " Decay",
                                                                     ParamRanges::DECAY, ParamDefaults::DECAY_DEFAULT_SEC));
-    p.addParameter(modEnvs[i].sustain = new juce::AudioParameterFloat({ParamIDs::envSustain + strI, 1}, "Env " + strI + " Sustain",
+    p.addParameter(modEnvs[i].sustain = new juce::AudioParameterFloat({ParamIDs::modEnvSustain + strI, 1}, "Env " + strI + " Sustain",
                                                                       ParamRanges::SUSTAIN, ParamDefaults::SUSTAIN_DEFAULT));
-    p.addParameter(modEnvs[i].release = new juce::AudioParameterFloat({ParamIDs::envRelease + strI, 1}, "Env " + strI + " Release",
+    p.addParameter(modEnvs[i].release = new juce::AudioParameterFloat({ParamIDs::modEnvRelease + strI, 1}, "Env " + strI + " Release",
                                                                       ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
   }
   // Macros
@@ -171,14 +183,6 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
   // Common
   p.addParameter(common[GAIN] = new juce::AudioParameterFloat({ParamIDs::globalGain, 1}, "Master Gain", ParamRanges::GAIN,
                                                               ParamDefaults::GAIN_DEFAULT));
-  p.addParameter(common[ATTACK] = new juce::AudioParameterFloat({ParamIDs::globalAttack, 1}, "Master Attack", ParamRanges::ATTACK,
-                                                                ParamDefaults::ATTACK_DEFAULT_SEC));
-  p.addParameter(common[DECAY] = new juce::AudioParameterFloat({ParamIDs::globalDecay, 1}, "Master Decay", ParamRanges::DECAY,
-                                                               ParamDefaults::DECAY_DEFAULT_SEC));
-  p.addParameter(common[SUSTAIN] = new juce::AudioParameterFloat({ParamIDs::globalSustain, 1}, "Master Sustain", ParamRanges::SUSTAIN,
-                                                                 ParamDefaults::SUSTAIN_DEFAULT));
-  p.addParameter(common[RELEASE] = new juce::AudioParameterFloat({ParamIDs::globalRelease, 1}, "Master Release", ParamRanges::RELEASE,
-                                                                 ParamDefaults::RELEASE_DEFAULT_SEC));
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat({ParamIDs::globalGrainShape, 1}, "Master Grain Shape",
                                                                      ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
   p.addParameter(common[GRAIN_TILT] = new juce::AudioParameterFloat({ParamIDs::globalGrainTilt, 1}, "Master Grain Tilt",
@@ -218,18 +222,6 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
 
   juce::String gainId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGain + juce::String(genIdx);
   p.addParameter(common[GAIN] = new juce::AudioParameterFloat({gainId, 1}, gainId, ParamRanges::GAIN, ParamDefaults::GAIN_DEFAULT));
-  juce::String attackId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genAttack + juce::String(genIdx);
-  p.addParameter(common[ATTACK] =
-                     new juce::AudioParameterFloat({attackId, 1}, attackId, ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
-  juce::String decayId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genDecay + juce::String(genIdx);
-  p.addParameter(common[DECAY] =
-                     new juce::AudioParameterFloat({decayId, 1}, decayId, ParamRanges::DECAY, ParamDefaults::DECAY_DEFAULT_SEC));
-  juce::String sustainId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genSustain + juce::String(genIdx);
-  p.addParameter(common[SUSTAIN] =
-                     new juce::AudioParameterFloat({sustainId, 1}, sustainId, ParamRanges::SUSTAIN, ParamDefaults::SUSTAIN_DEFAULT));
-  juce::String releaseId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genRelease + juce::String(genIdx);
-  p.addParameter(common[RELEASE] =
-                     new juce::AudioParameterFloat({releaseId, 1}, releaseId, ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
   juce::String pitchAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchAdjust + juce::String(genIdx);
   p.addParameter(common[PITCH_ADJUST] = new juce::AudioParameterFloat({pitchAdjustId, 1}, pitchAdjustId, ParamRanges::PITCH_ADJUST,
                                                                       ParamDefaults::PITCH_ADJUST_DEFAULT));
@@ -274,17 +266,6 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
   // First the note's common parameters
   p.addParameter(common[GAIN] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteGain, 1}, notePrefix + ParamIDs::noteGain,
                                                               ParamRanges::GAIN, ParamDefaults::GAIN_DEFAULT));
-  p.addParameter(common[ATTACK] =
-                     new juce::AudioParameterFloat({notePrefix + ParamIDs::noteAttack, 1}, notePrefix + ParamIDs::noteAttack,
-                                                   ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
-  p.addParameter(common[DECAY] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteDecay, 1}, notePrefix + ParamIDs::noteDecay,
-                                                               ParamRanges::DECAY, ParamDefaults::DECAY_DEFAULT_SEC));
-  p.addParameter(common[SUSTAIN] =
-                     new juce::AudioParameterFloat({notePrefix + ParamIDs::noteSustain, 1}, notePrefix + ParamIDs::noteSustain,
-                                                   ParamRanges::SUSTAIN, ParamDefaults::SUSTAIN_DEFAULT));
-  p.addParameter(common[RELEASE] =
-                     new juce::AudioParameterFloat({notePrefix + ParamIDs::noteRelease, 1}, notePrefix + ParamIDs::noteRelease,
-                                                   ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
   
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteGrainShape, 1}, notePrefix + ParamIDs::noteGrainShape,
                                                    ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));

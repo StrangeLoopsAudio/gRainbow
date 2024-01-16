@@ -97,9 +97,9 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   mTabsEnvs.setTabBarDepth(Utils::TAB_HEIGHT);
   mTabsEnvs.addTab("env amp", Utils::BG_COLOUR, &mEnvAdsr, false);
   mTabsEnvs.addTab("env 2", Utils::BG_COLOUR, &mModEnv1, false);
-  mTabsEnvs.getTabbedButtonBar().getTabButton(0)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[0].colour);
+  mTabsEnvs.getTabbedButtonBar().getTabButton(1)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[0].colour);
   mTabsEnvs.addTab("env 3", Utils::BG_COLOUR, &mModEnv2, false);
-  mTabsEnvs.getTabbedButtonBar().getTabButton(1)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[1].colour);
+  mTabsEnvs.getTabbedButtonBar().getTabButton(2)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[1].colour);
   mTabsEnvs.setOutline(0);
   addAndMakeVisible(mTabsEnvs);
 

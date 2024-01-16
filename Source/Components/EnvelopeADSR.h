@@ -19,7 +19,6 @@
 /*
  */
 class EnvelopeADSR : public juce::Component,
-public Parameters::Listener,
 public juce::AudioProcessorParameter::Listener,
 public juce::Timer {
  public:
@@ -32,22 +31,18 @@ public juce::Timer {
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
   
-  void selectedCommonParamsChanged(ParamCommon* newParams) override;
-
   void timerCallback() override;
 
  private:
   // Bookkeeping
   Parameters& mParameters;
-  ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
-  juce::Colour mParamColour;
 
   // Components
-  CommonSlider mSliderAttack;
-  CommonSlider mSliderDecay;
-  CommonSlider mSliderSustain;
-  CommonSlider mSliderRelease;
+  ParamSlider mSliderAttack;
+  ParamSlider mSliderDecay;
+  ParamSlider mSliderSustain;
+  ParamSlider mSliderRelease;
   juce::Label mLabelAttack;
   juce::Label mLabelDecay;
   juce::Label mLabelSustain;
