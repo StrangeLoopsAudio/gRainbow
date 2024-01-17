@@ -9,6 +9,7 @@
 #include <cmath>
 #include <vector>
 #include <assert.h>
+#include <algorithm>
 
 #include "BasicPitchConstants.h"
 
