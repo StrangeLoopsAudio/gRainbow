@@ -674,8 +674,7 @@ Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& bl
 void GranularSynth::extractPitches() {
   stopThread(10000);
   mParameters.ui.isLoading = true;
-  mParameters.selectedParams = &mParameters.global;
-  if (mParameters.onSelectedChange) mParameters.onSelectedChange();
+  mParameters.setSelectedParams(&mParameters.global);
   startThread();
 }
 
