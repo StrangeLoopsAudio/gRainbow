@@ -25,7 +25,7 @@ float Grain::process(float chanPerc, const juce::AudioBuffer<float>& audioBuffer
   float rem = sampleIdx - lowSample;
   if (pbRate < 0.0f) {
     std::swap(lowSample, highSample);
-    rem = std::fabsf(lowSample - sampleIdx);
+    rem = fabsf(lowSample - sampleIdx);
     lowSample += audioBuffer.getNumSamples();
     highSample += audioBuffer.getNumSamples();
   }
