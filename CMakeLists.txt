@@ -45,12 +45,14 @@ SET(GRAINBOW_BINARY_NAME "${CMAKE_PROJECT_NAME}" CACHE STRING "Override plugin n
 # https://github.com/juce-framework/JUCE/commit/6b1b4cf7f6b1008db44411f2c8887d71a3348889
 set_property(GLOBAL PROPERTY USE_FOLDERS YES)
 
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 # OPTIONS -------
 
 # Create a /Modules directory in the IDE with the JUCE Module code
 option(JUCE_ENABLE_MODULE_SOURCE_GROUPS "Show all module sources in IDE projects" ON)
 
-option(RTNeural_Release "When CMAKE_BUILD_TYPE=Debug, overwrite it to Release for RTNeural only" ON)
+option(RTNeural_Release "When CMAKE_BUILD_TYPE=Debug, overwrite it to Release for RTNeural only" OFF)
 
 # ---------------
 
@@ -270,6 +272,9 @@ add_library(onnxruntime STATIC IMPORTED)
 if (APPLE OR UNIX)
     set_property(TARGET onnxruntime PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime/lib/libonnxruntime.a)
 elseif (WIN32)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+
     set_property(TARGET onnxruntime APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 
     set_target_properties(onnxruntime PROPERTIES
@@ -337,8 +342,8 @@ target_link_libraries(gRainbow
     onnxruntime
     PUBLIC
     juce::juce_recommended_config_flags
-    juce::juce_recommended_lto_flags
-    juce::juce_recommended_warning_flags)
+    juce::juce_recommended_lto_flags)
+ #   juce::juce_recommended_warning_flags)
 
 # When present, use Intel IPP for performance on Windows
 if(MSVC)
