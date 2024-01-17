@@ -125,8 +125,6 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
     keyColour = isBlack ? keyColour.brighter() : keyColour.darker();
   }
 
-  g.setColour(keyColour);
-
   juce::Rectangle<float> area = mNoteRectMap[pitchClass];
   // Main key outline
   g.setColour(keyColour);
@@ -134,6 +132,9 @@ void RainbowKeyboard::drawKey(juce::Graphics& g, Utils::PitchClass pitchClass) {
   // Generator selected indicator
   g.setColour(keyRbColour);
   if (isGenSelected) g.drawRoundedRectangle(area.reduced(1, 1), 4, 2);
+  // Note playing rect
+  g.setColour(keyRbColour);
+  if (mNoteVelocity[pitchClass] > 0.0f) g.fillRect(area.withHeight(10));
 
   // Key hint color
   g.setColour(Utils::getRainbow12Colour(pitchClass));
@@ -147,6 +148,7 @@ void RainbowKeyboard::setMidiNotes(const juce::Array<Utils::MidiNote>& midiNotes
   for (const Utils::MidiNote& midiNote : midiNotes) {
     mNoteVelocity[midiNote.pitch] = midiNote.velocity;
   }
+  repaint();
 }
 
 void RainbowKeyboard::mouseMove(const juce::MouseEvent& e) { updateMouseState(e, false, false); }

@@ -26,6 +26,8 @@ public:
   
   virtual void processBlock() = 0;
   virtual juce::Range<float> getRange() = 0;
+  // Mod sources can override this to let UI elements show the source's progression
+  virtual float getPhase() { return 0.0f; }
   
   void prepare(int blockSize, double sampleRate) {
     mBlockSize = blockSize;
@@ -68,6 +70,7 @@ public:
   
   void processBlock() override;
   juce::Range<float> getRange() override;
+  float getPhase() override;
   
   // Sets the sync rate of in blocks/bar using 1/(bars/sec * samp/block * sec/samp)
   void setSyncRate(float barsPerSec) { mBarsPerSec = barsPerSec; }
@@ -109,6 +112,7 @@ public:
   
   void processBlock() override;
   juce::Range<float> getRange() override;
+  float getPhase() override { return (float)mEnv.state; }
   
   void handleNoteOn(int ts) {
     mEnv.noteOn(ts);

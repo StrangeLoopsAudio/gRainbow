@@ -45,7 +45,7 @@ typedef std::array<float, ENV_LUT_SIZE> GrainEnv;
   //juce::FloatVectorOperations::clip(lut.data(), lut.data(), 0.0f, 1.0f, lut.size());
 }
 
-enum ADSRState { ATTACK, DECAY, SUSTAIN, RELEASE };
+enum ADSRState { ATTACK, DECAY, SUSTAIN, RELEASE, NUM_ADSR_STATES };
 
 typedef struct EnvelopeADSR {
   // All adsr params are in samples (except for sustain amp)

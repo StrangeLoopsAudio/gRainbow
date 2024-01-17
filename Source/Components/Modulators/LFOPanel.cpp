@@ -67,8 +67,6 @@ mBtnMap(mParameters, mModLFO) {
   mBtnBipolar.setButtonText("bipolar");
   mBtnBipolar.onClick = [this]() {
     ParamHelper::setParam(mModLFO.bipolar, !mBtnBipolar.getToggleState());
-    mBufDepth.clear();
-    mBufDepth.resize(NUM_LFO_SAMPLES, 0.0f); // Reset sample buffer so that they don't spill into the UI
   };
   mBtnRetrigger.setButtonText("free");
   mBtnRetrigger.onClick = [this]() {
@@ -120,10 +118,16 @@ void LFOPanel::visibilityChanged() {
 void LFOPanel::parameterValueChanged(int, float) { mParamHasChanged.store(true); }
 
 void LFOPanel::timerCallback() {
+  bool updatePath = false;
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
     mBtnSync.setToggleState(mModLFO.sync->get(), juce::dontSendNotification);
     mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "hz");
+    if (mBtnBipolar.getToggleState() != mModLFO.bipolar->get() || mBtnRetrigger.getToggleState() != mModLFO.retrigger->get()) {
+      // Reset sample buffer because we need to redraw it all
+      mBufDepth.clear();
+      mBufDepth.resize(NUM_LFO_SAMPLES, 0.0f);
+    }
     mBtnBipolar.setToggleState(mModLFO.bipolar->get(), juce::dontSendNotification);
     mBtnBipolar.setButtonText(mBtnBipolar.getToggleState() ? "bipolar" : "unipolar");
     mBtnRetrigger.setToggleState(mModLFO.retrigger->get(), juce::dontSendNotification);
@@ -135,9 +139,11 @@ void LFOPanel::timerCallback() {
     mSliderPhase.setValue(mModLFO.phase->get(), juce::dontSendNotification);
     mLabelPhase.setEnabled(mBtnRetrigger.getToggleState());
     mSliderPhase.setEnabled(mBtnRetrigger.getToggleState());
+    updatePath = true;
   }
-  // Repaint LFO
-  updateLfoPath();
+  // Repaint LFO if param changed or if not retriggering
+  if (updatePath || !mBtnRetrigger.getToggleState()) updateLfoPath();
+  repaint();
 }
 
 void LFOPanel::paint(juce::Graphics& g) {
@@ -155,6 +161,35 @@ void LFOPanel::paint(juce::Graphics& g) {
   // Draw LFO path
   g.setColour(mModLFO.colour);
   g.strokePath(mLfoPath, juce::PathStrokeType(2, juce::PathStrokeType::JointStyle::curved));
+  
+  // Draw circle at current phase
+  auto pathDrawRect = mVizRect.reduced(Utils::PADDING);
+  auto phaseRect = juce::Rectangle<float>(6, 6);
+  if (mBtnRetrigger.getToggleState()) {
+    // Path will be constant so move dot along path
+    float periodSec = 1.0 / mSliderRate.getValue();
+    if (mBtnSync.getToggleState()) {
+      float div =
+      std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * ParamRanges::LFO_RATE.convertTo0to1(mSliderRate.getValue())));
+      // Find synced period using fixed 120 bpm and 4 beats per bar (different from actual synthesis, just for vis)
+      periodSec = (1.0f / 120) * 60.0f * (4 / div);
+    }
+    const float numPeriods = WINDOW_SECONDS / periodSec;
+    const int depthPx = pathDrawRect.getHeight() / 2.0f;
+    const float curRad = mModLFO.getPhase();
+    const float centerY = mBtnBipolar.getToggleState() ? pathDrawRect.getCentreY() : pathDrawRect.getBottom() - depthPx;
+    float y = centerY - depthPx * LFOModSource::LFO_SHAPES[mChoiceShape.getSelectedId() - 1].calc(curRad);
+    float correctedPhase = curRad - mSliderPhase.getValue();
+    if (correctedPhase < 0.0f) correctedPhase += juce::MathConstants<float>::twoPi;
+    float x = pathDrawRect.getX() + ((pathDrawRect.getWidth() / numPeriods) * (correctedPhase / juce::MathConstants<float>::twoPi));
+    g.setColour(mModLFO.colour);
+    g.fillEllipse(phaseRect.withCentre(juce::Point<float>(x, y)));
+  }
+  else {
+    // Path always pushing new values, just put the dot at the right side
+    g.setColour(mModLFO.colour);
+    g.fillEllipse(phaseRect.withCentre(mLfoPath.getPointAlongPath(mLfoPath.getLength())));
+  }
 }
 
 void LFOPanel::resized() {
@@ -198,37 +233,54 @@ void LFOPanel::resized() {
 }
 
 void LFOPanel::updateLfoPath() {
-  // Update LFO value buffer
-  mBufDepth[mBufDepthWrPos] = mModLFO.getOutput();
-  // Increment write pos
-  mBufDepthWrPos = (mBufDepthWrPos == (NUM_LFO_SAMPLES - 1)) ? 0 : mBufDepthWrPos + 1;
-  
-  // Create LFO path
   mLfoPath.clear();
-//  float periodSec = 1.0 / mSliderRate.getValue();
-//  if (mBtnSync.getToggleState()) {
-//    float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * ParamRanges::LFO_RATE.convertTo0to1(mSliderRate.getValue())));
-//    // Find synced period using fixed 120 bpm and 4 beats per bar (different from actual synthesis, just for vis)
-//    periodSec = (1.0f / 120) * 60.0f * (4 / div);
-//  }
-//  const float numPeriods = WINDOW_SECONDS / periodSec;
-  // Draw lfo shape
-  const float pxPerSamp = mVizRect.getWidth() / NUM_LFO_SAMPLES;
-  int maxDepthPx = mVizRect.getHeight();
-  float centerY = mVizRect.getCentreY();
-  if (!mBtnBipolar.getToggleState()) {
-    centerY = mVizRect.getBottom();
+  auto drawRect = mVizRect.reduced(Utils::PADDING);
+  if (mBtnRetrigger.getToggleState()) {
+    // Make the path once by looking up values
+    float periodSec = 1.0 / mSliderRate.getValue();
+    if (mBtnSync.getToggleState()) {
+      float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * ParamRanges::LFO_RATE.convertTo0to1(mSliderRate.getValue())));
+      // Find synced period using fixed 120 bpm and 4 beats per bar (different from actual synthesis, just for vis)
+      periodSec = (1.0f / 120) * 60.0f * (4 / div);
+    }
+    const float numPeriods = WINDOW_SECONDS / periodSec;
+    const int depthPx = drawRect.getHeight() / 2.0f;
+    
+    float pxPerSamp = drawRect.getWidth() / NUM_LFO_SAMPLES;
+    float radPerSamp = (2.0f * M_PI * numPeriods) / NUM_LFO_SAMPLES;
+    float curX = drawRect.getX();
+    float curRad = mSliderPhase.getValue();
+    const float centerY = mBtnBipolar.getToggleState() ? drawRect.getCentreY() : drawRect.getBottom() - depthPx;
+    const float startY = centerY - depthPx * LFOModSource::LFO_SHAPES[mChoiceShape.getSelectedId() - 1].calc(curRad);
+    mLfoPath.startNewSubPath(curX, startY);
+    for (int i = 0; i < NUM_LFO_SAMPLES - 1; ++i) {
+      float y = centerY - depthPx * LFOModSource::LFO_SHAPES[mChoiceShape.getSelectedId() - 1].calc(curRad);
+      mLfoPath.lineTo(curX, y);
+      curX += pxPerSamp;
+      curRad += radPerSamp;
+    }
+  } else {
+    // Update LFO value realtime buffer
+    mBufDepth[mBufDepthWrPos] = mModLFO.getOutput();
+    // Increment write pos
+    mBufDepthWrPos = (mBufDepthWrPos == (NUM_LFO_SAMPLES - 1)) ? 0 : mBufDepthWrPos + 1;
+    
+    // Create LFO path
+    const float pxPerSamp = drawRect.getWidth() / NUM_LFO_SAMPLES;
+    int maxDepthPx = drawRect.getHeight();
+    float centerY = drawRect.getCentreY();
+    if (!mBtnBipolar.getToggleState()) {
+      centerY = drawRect.getBottom();
+    }
+    float curX = drawRect.getX();
+    int curIdx = mBufDepthWrPos;
+    mLfoPath.startNewSubPath(curX, centerY - (mBufDepth[curIdx] * maxDepthPx));
+    for (int i = 0; i < NUM_LFO_SAMPLES - 1; ++i) {
+      curX += pxPerSamp;
+      curIdx = (curIdx == (NUM_LFO_SAMPLES - 1)) ? 0 : curIdx + 1;
+      const int depthPx = mBufDepth[curIdx] * maxDepthPx;
+      const float y = centerY - depthPx;
+      mLfoPath.lineTo(curX, y);
+    }
   }
-  float curX = mVizRect.getX();
-  int curIdx = mBufDepthWrPos;
-  mLfoPath.startNewSubPath(curX, centerY - (mBufDepth[curIdx] * maxDepthPx));
-  for (int i = 0; i < NUM_LFO_SAMPLES - 1; ++i) {
-    curX += pxPerSamp;
-    curIdx = (curIdx == (NUM_LFO_SAMPLES - 1)) ? 0 : curIdx + 1;
-    const int depthPx = mBufDepth[curIdx] * maxDepthPx;
-    const float y = centerY - depthPx;
-    mLfoPath.lineTo(curX, y);
-  }
-
-  repaint();
 }

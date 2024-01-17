@@ -33,8 +33,8 @@ class LFOPanel : public juce::Component, juce::AudioProcessorParameter::Listener
   void timerCallback() override;
 
  private:
-  static constexpr double WINDOW_SECONDS = 3.0; // Width in seconds of the display window
-  static constexpr int NUM_LFO_SAMPLES = 250; // Width in seconds of the display window
+  static constexpr int NUM_LFO_SAMPLES = 250; // # samples in the LFO buffer
+  static constexpr double WINDOW_SECONDS = Utils::UI_REFRESH_INTERVAL * 0.001 * NUM_LFO_SAMPLES; // Width in seconds of the display window
   
   void updateLfoPath();
   

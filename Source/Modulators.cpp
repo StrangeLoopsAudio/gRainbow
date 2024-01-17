@@ -48,6 +48,9 @@ juce::Range<float> LFOModSource::getRange() {
   }
 }
 
+float LFOModSource::getPhase() { return (float)mCurPhase; }
+
+
 void EnvModSource::processBlock() {
   // Calculate envelope value
   mOutput = mEnv.getAmplitude(mCurTs, attack->get() * mSampleRate, decay->get() * mSampleRate, sustain->get(), release->get() * mSampleRate);
