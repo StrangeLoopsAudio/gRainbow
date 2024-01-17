@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.4)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24:
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
 # Set the plugin formats you'll be building here.
 # Valid formats: AAX Unity VST AU AUv3 Standalone
 set(FORMATS VST3 Standalone)
@@ -46,6 +51,31 @@ set_property(GLOBAL PROPERTY USE_FOLDERS YES)
 option(JUCE_ENABLE_MODULE_SOURCE_GROUPS "Show all module sources in IDE projects" ON)
 
 option(RTNeural_Release "When CMAKE_BUILD_TYPE=Debug, overwrite it to Release for RTNeural only" OFF)
+
+# ---------------
+
+# ONNX Runtime static library for running BasicPitch ML model (downloads if not present)
+include (FetchContent)
+if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime)
+    # Downloads the built ONNX model and runtime library
+    if (APPLE)
+        FetchContent_Declare(
+            ONNXRuntime
+            URL      https://github.com/tiborvass/libonnxruntime-neuralnote/releases/download/v1.14.1-neuralnote.2/onnxruntime-v1.14.1-neuralnote.2-macOS-universal.tar.gz
+            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime
+        )
+    elseif (UNIX AND NOT APPLE)
+        # TODO: get Linux model
+    elseif (WIN32)
+        FetchContent_Declare(
+            ONNXRuntime
+            URL      https://github.com/tiborvass/libonnxruntime-neuralnote/releases/download/v1.14.1-neuralnote.1/onnxruntime-v1.14.1-neuralnote.1-windows-x86_64.tar.gz
+            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime
+        )
+    endif ()
+    FetchContent_MakeAvailable(ONNXRuntime)
+    file(RENAME ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime/model.with_runtime_opt.ort ${CMAKE_CURRENT_LIST_DIR}/Source/Resources/features_model.ort)
+endif ()
 
 # ---------------
 
@@ -240,13 +270,11 @@ if ((CMAKE_BUILD_TYPE STREQUAL "Debug") AND RTNeural_Release)
 endif ()
 target_link_libraries(BasicPitchCNN PUBLIC RTNeural Assets)
 
-# ONNX Runtime static library
 target_include_directories(gRainbow PRIVATE ${CMAKE_CURRENT_LIST_DIR}/ONNXRuntime/include)
 add_library(onnxruntime STATIC IMPORTED)
 
-if (APPLE)
+if (APPLE OR UNIX)
     set_property(TARGET onnxruntime PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime/lib/libonnxruntime.a)
-
 elseif (WIN32)
     set_property(TARGET onnxruntime APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 
@@ -260,6 +288,7 @@ elseif (WIN32)
             MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
     )
 endif ()
+
 
 # Required for Linux happiness:
 # See https://forum.juce.com/t/loading-pytorch-model-using-binarydata/39997/2

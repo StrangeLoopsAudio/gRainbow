@@ -6,6 +6,8 @@
 .vscode/*
 out/*
 Source/Version.h
+Source/Resources/features_model.ort
+External/ONNXRuntime/*
 
 *.DS_Store
 
