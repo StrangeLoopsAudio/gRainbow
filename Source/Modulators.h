@@ -90,14 +90,14 @@ private:
     return std::sin(x);
   }
   static float calcTri(float x) {
-    return (2.0f / M_PI) * std::fabs(std::fmodf(x - M_PI_2 + juce::MathConstants<float>::twoPi, juce::MathConstants<float>::twoPi) - M_PI) - 1;
+    return (2.0f / M_PI) * fabs(fmodf(x - M_PI_2 + juce::MathConstants<float>::twoPi, juce::MathConstants<float>::twoPi) - M_PI) - 1;
   }
   static float calcSquare(float x) {
-    return std::fmodf(x, juce::MathConstants<float>::twoPi) < M_PI ? 1.0f : -1.0f;
+    return fmodf(x, juce::MathConstants<float>::twoPi) < M_PI ? 1.0f : -1.0f;
   }
   static float calcSaw(float x) {
     const float scaledX = (x - M_PI) / juce::MathConstants<float>::twoPi;
-    return 2.0f * (scaledX - std::floorf(0.5f + scaledX));
+    return 2.0f * (scaledX - floorf(0.5f + scaledX));
   }
   
   float mBarsPerSec = 1.0f; // Rate of blocks/bar when synced to host bpm
