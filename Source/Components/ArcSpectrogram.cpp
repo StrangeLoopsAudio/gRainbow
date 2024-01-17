@@ -179,11 +179,11 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 void ArcSpectrogram::resized() {
   auto r = getLocalBounds();
 
-  mRainbowRect = r.reduced(Utils::PADDING, Utils::PADDING); // Leaving room for clouds
+  mRainbowRect = r.withTrimmedBottom(20).reduced(10, 5); // Leaving room for clouds
 
   // Cloud centers
   {
-    const int translation = 30;
+    const int translation = 38;
     const auto leftCenter = mRainbowRect.getBottomLeft().translated(translation, -7);
     const auto rightCenter = mRainbowRect.getBottomRight().translated(-translation, -7);
     mCloudLeft.rect = mCloudLeft.images[0].getBounds().withCentre(leftCenter).toFloat();
