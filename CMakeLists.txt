@@ -236,8 +236,6 @@ set(BINARY_RESOURCES
     Source/Resources/cloudRightWait.png
     Source/Resources/cloudRightSing.png
     Source/Resources/cloudRightTouch.png
-    Source/Resources/infoNormal.png
-    Source/Resources/infoOver.png
     Source/Resources/rain.png
     Source/Resources/LeagueSpartan-SemiBold.ttf
     Source/Resources/cnn_contour_model.json
@@ -353,16 +351,6 @@ if(MSVC)
         message("IPP LIBRARIES *NOT* FOUND")
     endif()
 endif()
-
-# Use Catch2 v3 on the devel branch
-Include(FetchContent)
-FetchContent_Declare(
-    Catch2
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_PROGRESS TRUE
-    GIT_SHALLOW TRUE
-    GIT_TAG v3.3.2)
-FetchContent_MakeAvailable(Catch2) # find_package equivalent
 
 # Color our warnings and errors
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
