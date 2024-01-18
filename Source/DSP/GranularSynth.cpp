@@ -48,7 +48,7 @@ mFft(FFT_SIZE, HOP_SIZE) {
 
   juce::MemoryBlock block;
   Utils::getBlockForPreset(Utils::PRESETS[0], block);
-  loadPreset(Utils::PRESETS[0].name, block);
+  loadPreset(block);
 }
 
 GranularSynth::~GranularSynth() {}
@@ -319,55 +319,18 @@ juce::AudioProcessorEditor* GranularSynth::createEditor() {
 
 //==============================================================================
 void GranularSynth::getStateInformation(juce::MemoryBlock& destData) {
-  juce::XmlElement xml("PluginState");
-
-  juce::XmlElement* params = new juce::XmlElement("AudioParams");
-  for (auto& param : getParameters()) {
-    params->setAttribute(ParamHelper::getParamID(param), param->getValue());
-  }
-
-  xml.addChildElement(params);
-  xml.addChildElement(mParameters.note.getXml());
-  xml.addChildElement(mParameters.ui.getXml());
-
-  copyXmlToBinary(xml, destData);
+  Utils::Result r = savePreset(destData);
+  if (!r.success) DBG(juce::String("Error during getStateInformation(): ") + r.message);
 }
 
 void GranularSynth::setStateInformation(const void* data, int sizeInBytes) {
   if (this->wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
     return;  // reloadPluginState() can try loading old/bad/stale info and crash at launch
   }
-
-  auto xml = getXmlFromBinary(data, sizeInBytes);
-
-  if (xml != nullptr) {
-    // Set audio parameters
-    auto params = xml->getChildByName("AudioParams");
-    if (params != nullptr) {
-      for (auto& param : getParameters()) {
-        param->setValueNotifyingHost(params->getDoubleAttribute(ParamHelper::getParamID(param), param->getValue()));
-      }
-    }
-
-    // Load candidates
-    params = xml->getChildByName("NotesParams");
-    if (params != nullptr) {
-      mParameters.note.setXml(params);
-    }
-
-    // Set UI state
-    params = xml->getChildByName("ParamUI");
-    if (params != nullptr) {
-      mParameters.ui.setXml(params);
-    }
-
-    // Load the file if we haven't yet
-    if (mAudioBuffer.getNumSamples() == 0 && mParameters.ui.loadedFileName.isNotEmpty()) {
-      juce::File file = juce::File(mParameters.ui.loadedFileName);
-      if (file.getFileExtension() == ".gbow") loadPreset(file);
-      else loadAudioFile(juce::File(mParameters.ui.loadedFileName), false);
-    }
-  }
+  
+  juce::MemoryBlock block(data, sizeInBytes);
+  Utils::Result r = loadPreset(block);
+  if (!r.success) DBG(juce::String("Error during getStateInformation(): ") + r.message);
 }
 
 // These are slightly different then the get/setStateInformation. These are for
@@ -610,7 +573,7 @@ Utils::Result GranularSynth::loadPreset(juce::File file) {
   if (input.openedOk()) {
     juce::MemoryBlock block;
     input.readIntoMemoryBlock(block);
-    Utils::Result r = loadPreset(file.getFileName(), block);
+    Utils::Result r = loadPreset(block);
     if (r.success) mParameters.ui.fileName = file.getFullPathName();
     return r;
   } else {
@@ -619,7 +582,7 @@ Utils::Result GranularSynth::loadPreset(juce::File file) {
   }
 }
 
-Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& block) {
+Utils::Result GranularSynth::loadPreset(juce::MemoryBlock& block) {
   int curBlockPos = 0;
   Preset::Header header;
   block.copyTo(&header, curBlockPos, sizeof(header));
@@ -676,6 +639,7 @@ Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& bl
   }
 
   if (mSampleRate != INVALID_SAMPLE_RATE) {
+    mAudioBuffer.clear();
     Utils::resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
   } else {
     mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
@@ -683,9 +647,75 @@ Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& bl
     mNeedsResample = true;
   }
   jassert(!mParameters.ui.isLoading);
-  mParameters.ui.loadedFileName = name;
-  mParameters.ui.fileName = name;
-  mParameters.ui.specComplete = true;
+  return {true, ""};
+}
+
+Utils::Result GranularSynth::savePreset(juce::File file) {
+  if (file.hasWriteAccess()) {
+    file.deleteFile();  // clear file if replacing
+    juce::MemoryBlock block;
+    Utils::Result r = savePreset(block);
+    if (r.success) {
+      mParameters.ui.fileName = file.getFullPathName();
+      file.replaceWithData(block.getData(), block.getSize());
+    }
+    return r;
+  } else {
+    juce::String error = "The file does not have write access: " + file.getFullPathName();
+    return {true, error};
+  }
+}
+
+Utils::Result GranularSynth::savePreset(juce::MemoryBlock& block) {
+  Preset::Header header;
+  header.magic = Preset::MAGIC;
+  header.versionMajor = Preset::VERSION_MAJOR;
+  header.versionMinor = Preset::VERSION_MINOR;
+  // Audio buffer data is grabbed from current synth
+  header.audioBufferSamplerRate = mSampleRate;
+  header.audioBufferNumberOfSamples = mAudioBuffer.getNumSamples();
+  header.audioBufferChannel = mAudioBuffer.getNumChannels();
+  header.audioBufferSize = header.audioBufferNumberOfSamples * header.audioBufferChannel * sizeof(float);
+  
+  // There is no way in JUCE to be able to know the size of the
+  // png/imageFormat blob until after it is written into the outstream which
+  // is too late. To keep things working, just do a double copy to a
+  // internal memory object so the size is know prior to writing the image
+  // data to the stream.
+  juce::MemoryOutputStream spectrogramStaging;
+  if (!mParameters.ui.saveSpecImage(spectrogramStaging, ParamUI::SpecType::SPECTROGRAM)) {
+    return {false, "Unable to write spectrogram image out the file" };
+  }
+  header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
+  
+  juce::MemoryOutputStream hpcpStaging;
+  if (!mParameters.ui.saveSpecImage(hpcpStaging, ParamUI::SpecType::HPCP)) {
+    return {false, "Unable to write HPCP image out the file"};
+  }
+  header.specImageHpcpSize = hpcpStaging.getDataSize();
+  
+  juce::MemoryOutputStream detectedStaging;
+  if (!mParameters.ui.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED)) {
+    return {false, "Unable to write Detected image out the file"};
+  }
+  header.specImageDetectedSize = detectedStaging.getDataSize();
+  
+  // XML structure of preset contains all audio related information
+  // These include not just AudioParams but also other params not exposes to
+  // the DAW or UI directly
+  juce::MemoryBlock xmlMemoryBlock;
+  getPresetParamsXml(xmlMemoryBlock);
+  
+  // Write data out section by section
+  juce::MemoryOutputStream blockStream(block, true);
+  blockStream.write(&header, sizeof(header));
+  if (mAudioBuffer.getNumSamples() > 0)
+    blockStream.write(reinterpret_cast<const void*>(mAudioBuffer.getReadPointer(0)), header.audioBufferSize);  blockStream.write(spectrogramStaging.getData(), header.specImageSpectrogramSize);
+  blockStream.write(hpcpStaging.getData(), header.specImageHpcpSize);
+  blockStream.write(detectedStaging.getData(), header.specImageDetectedSize);
+  blockStream.write(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
+  blockStream.flush();
+
   return {true, ""};
 }
 

@@ -225,6 +225,11 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     mTitlePresetPanel.btnSavePreset.setEnabled(true);
     mParameters.ui.isLoading = false;
   }
+  
+  if (mTitlePresetPanel.labelFileName.getText() != mParameters.ui.loadedFileName) {
+    // Set title bar to display new preset name
+    mTitlePresetPanel.labelFileName.setText(mParameters.ui.loadedFileName, juce::dontSendNotification);
+  }
 
   // Get notes being played, send off to each children and then redraw.
   // Grab the notes from the Synth instead of MidiKeyboardState::Listener to not block the thread to draw.
@@ -476,68 +481,8 @@ void GRainbowAudioProcessorEditor::savePreset() {
 
   mFileChooser->launchAsync(saveFlags, [this](const juce::FileChooser& fc) {
     juce::File file = fc.getResult().withFileExtension("gbow");
-    file.deleteFile();  // clear file if replacing
-    juce::FileOutputStream outputStream(file);
-
-    if (file.hasWriteAccess() && outputStream.openedOk()) {
-      Preset::Header header;
-      header.magic = Preset::MAGIC;
-      header.versionMajor = Preset::VERSION_MAJOR;
-      header.versionMinor = Preset::VERSION_MINOR;
-      // Audio buffer data is grabbed from current synth
-      const juce::AudioBuffer<float>& audioBuffer = mSynth.getAudioBuffer();
-      header.audioBufferSamplerRate = mSynth.getSampleRate();
-      header.audioBufferNumberOfSamples = audioBuffer.getNumSamples();
-      header.audioBufferChannel = audioBuffer.getNumChannels();
-      header.audioBufferSize = header.audioBufferNumberOfSamples * header.audioBufferChannel * sizeof(float);
-
-      // There is no way in JUCE to be able to know the size of the
-      // png/imageFormat blob until after it is written into the outstream which
-      // is too late. To keep things working, just do a double copy to a
-      // internal memory object so the size is know prior to writing the image
-      // data to the stream.
-      juce::MemoryOutputStream spectrogramStaging;
-      if (!mParameters.ui.saveSpecImage(spectrogramStaging, ParamUI::SpecType::SPECTROGRAM)) {
-        displayError("Unable to write spectrogram image out the file");
-        return;
-      }
-      header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
-
-      juce::MemoryOutputStream hpcpStaging;
-      if (!mParameters.ui.saveSpecImage(hpcpStaging, ParamUI::SpecType::HPCP)) {
-        displayError("Unable to write HPCP image out the file");
-        return;
-      }
-      header.specImageHpcpSize = hpcpStaging.getDataSize();
-
-      juce::MemoryOutputStream detectedStaging;
-      if (!mParameters.ui.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED)) {
-        displayError("Unable to write Detected image out the file");
-        return;
-      }
-      header.specImageDetectedSize = detectedStaging.getDataSize();
-
-      // XML structure of preset contains all audio related information
-      // These include not just AudioParams but also other params not exposes to
-      // the DAW or UI directly
-      juce::MemoryBlock xmlMemoryBlock;
-      mSynth.getPresetParamsXml(xmlMemoryBlock);
-
-      // Write data out section by section
-      outputStream.write(&header, sizeof(header));
-      outputStream.write(reinterpret_cast<const void*>(audioBuffer.getReadPointer(0)), header.audioBufferSize);
-      outputStream.write(spectrogramStaging.getData(), header.specImageSpectrogramSize);
-      outputStream.write(hpcpStaging.getData(), header.specImageHpcpSize);
-      outputStream.write(detectedStaging.getData(), header.specImageDetectedSize);
-      outputStream.write(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
-      
-      // Set title bar to display new preset name
-      mParameters.ui.loadedFileName = file.getFileName();
-      mTitlePresetPanel.labelFileName.setText(mParameters.ui.loadedFileName, juce::dontSendNotification);
-    } else {
-      displayError(juce::String::formatted("Unable to open %s to write", file.getFullPathName().toRawUTF8()));
-      return;
-    }
+    Utils::Result r = mSynth.savePreset(file); // Ask synth to do the proper saving
+    if (!r.success) displayError(juce::String::formatted("Unable to open %s to write", file.getFullPathName().toRawUTF8()));
   });
 }
 

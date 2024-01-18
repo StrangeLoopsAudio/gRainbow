@@ -96,7 +96,9 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   juce::AudioBuffer<float>& getInputBuffer() { return mInputBuffer; }
   Utils::Result loadAudioFile(juce::File file, bool process);
   Utils::Result loadPreset(juce::File file);
-  Utils::Result loadPreset(juce::String name, juce::MemoryBlock& block);
+  Utils::Result loadPreset(juce::MemoryBlock& fromBlock);
+  Utils::Result savePreset(juce::File file);
+  Utils::Result savePreset(juce::MemoryBlock& intoBlock);
 
   void extractPitches();
   std::vector<Utils::SpecBuffer*> getProcessedSpecs() {
