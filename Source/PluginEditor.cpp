@@ -121,7 +121,6 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
       displayError("Attempted to select an empty range");
     } else {
       mParameters.ui.trimPlaybackOn = false;
-      mSynth.resetParameters();
       Utils::trimAudioBuffer(mSynth.getInputBuffer(), mSynth.getAudioBuffer(), juce::Range<juce::int64>(start, end));
       mSynth.extractPitches();
       // Reset any UI elements that will need to wait until processing
@@ -222,7 +221,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     }
   } else if (mParameters.ui.isLoading) {
     // Spec complete, we're done loading
-    mArcSpec.setSpecType(ParamUI::SpecType::SPECTROGRAM);
+    mArcSpec.setSpecType(ParamUI::SpecType::HPCP);
     mTitlePresetPanel.btnSavePreset.setEnabled(true);
     mParameters.ui.isLoading = false;
   }
@@ -442,7 +441,7 @@ void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
       mArcSpec.loadPreset();
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
       mPianoPanel.waveform.load(mSynth.getAudioBuffer());
-      mTitlePresetPanel.labelFileName.setText(mParameters.ui.loadedFileName, juce::dontSendNotification);
+      mTitlePresetPanel.labelFileName.setText(mParameters.ui.loadedFileName, juce::sendNotificationAsync);
       resized();
     } else {
       displayError(res.message);
@@ -531,6 +530,10 @@ void GRainbowAudioProcessorEditor::savePreset() {
       outputStream.write(hpcpStaging.getData(), header.specImageHpcpSize);
       outputStream.write(detectedStaging.getData(), header.specImageDetectedSize);
       outputStream.write(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
+      
+      // Set title bar to display new preset name
+      mParameters.ui.loadedFileName = file.getFileName();
+      mTitlePresetPanel.labelFileName.setText(mParameters.ui.loadedFileName, juce::dontSendNotification);
     } else {
       displayError(juce::String::formatted("Unable to open %s to write", file.getFullPathName().toRawUTF8()));
       return;

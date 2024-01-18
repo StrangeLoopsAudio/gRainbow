@@ -44,7 +44,7 @@ mFft(FFT_SIZE, HOP_SIZE) {
 
   mReferenceTone.setAmplitude(0.0f);
 
-  resetParameters();
+  mParameters.resetParams();
 
   juce::MemoryBlock block;
   Utils::getBlockForPreset(Utils::PRESETS[0], block);
@@ -113,7 +113,6 @@ void GranularSynth::run() {
   if (threadShouldExit()) return;
   
   // Finally, calc FFT and HPCP
-  mProcessedSpecs.fill(nullptr);
   mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = mFft.process(&mAudioBuffer);
   mProcessedSpecs[ParamUI::SpecType::HPCP] = mHPCP.process(mFft.getSpectrum(), mSampleRate);
   makePitchSpec();
@@ -390,7 +389,9 @@ void GranularSynth::getPresetParamsXml(juce::MemoryBlock& destData) {
 
 // Sets parameters based on memory stored in a preset
 void GranularSynth::setPresetParamsXml(const void* data, int sizeInBytes) {
-  resetParameters(true); // Clear all params and candidates
+  // Reset all params and candidates
+  mParameters.resetParams();
+  mParameters.note.clearCandidates();
   
   auto xml = getXmlFromBinary(data, sizeInBytes);
   if (xml != nullptr) {
@@ -570,7 +571,7 @@ Utils::Result GranularSynth::loadAudioFile(juce::File file, bool process) {
   fileAudioBuffer.setSize(1, length);
   formatReader->read(&fileAudioBuffer, 0, length, 0, true, false);
 
-  // .mp3 files, unlike .wav files, can contain PCM values greater than abs(1.0) (aka, clipping) which will produce aweful
+  // .mp3 files, unlike .wav files, can contain PCM values greater than abs(1.0) (aka, clipping) which will produce awful
   // sounding grains, so normalize the gain of any mp3 file clipping before using anywhere
   if (file.getFileExtension() == ".mp3") {
     float absMax = 0.0f;
@@ -690,7 +691,10 @@ Utils::Result GranularSynth::loadPreset(juce::String name, juce::MemoryBlock& bl
 
 void GranularSynth::extractPitches() {
   stopThread(10000);
+  mParameters.ui.isLoading = false;
+  mProcessedSpecs.fill(nullptr);
   mParameters.ui.isLoading = true;
+  mParameters.note.clearCandidates();
   mParameters.setSelectedParams(&mParameters.global);
   startThread();
 }
@@ -759,11 +763,6 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNum
   for (auto& env : mParameters.global.modEnvs) {
     env.handleNoteOff(mTotalSamps);
   }
-}
-
-void GranularSynth::resetParameters(bool fullClear) {
-  mParameters.note.resetParams(fullClear);
-  mParameters.global.resetParams();
 }
 
 void GranularSynth::makePitchSpec() {

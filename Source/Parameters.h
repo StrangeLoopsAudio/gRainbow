@@ -350,7 +350,7 @@ struct ParamGenerator : ParamCommon {
     candidate->removeListener(listener);
   }
 
-  void resetParams(bool) {
+  void resetParams() {
     ParamCommon::resetParams();
     ParamHelper::setParam(enable, true);
     ParamHelper::setParam(candidate, genIdx);
@@ -413,15 +413,16 @@ struct ParamNote : ParamCommon {
     soloIdx->removeListener(listener);
   }
 
-  void resetParams(bool fullClear) {
+  void resetParams() {
     ParamCommon::resetParams();
     for (auto& generator : generators) {
-      generator->resetParams(fullClear);
-    }
-    if (fullClear) {
-      candidates.clear();
+      generator->resetParams();
     }
     ParamHelper::setParam(soloIdx, SOLO_NONE);
+  }
+  
+  void clearCandidates() {
+    candidates.clear();
   }
 
   bool shouldPlayGenerator(int genIdx);
@@ -465,9 +466,15 @@ struct ParamsNote {
 
   void addParams(juce::AudioProcessor& p);
 
-  void resetParams(bool fullClear = true) {
+  void resetParams() {
     for (auto& note : notes) {
-      note->resetParams(fullClear);
+      note->resetParams();
+    }
+  }
+  
+  void clearCandidates() {
+    for (auto& note : notes) {
+      note->clearCandidates();
     }
   }
 
@@ -671,6 +678,11 @@ public:
   ParamUI ui;
   ParamGlobal global;
   ParamsNote note;
+  
+  void resetParams() {
+    global.resetParams();
+    note.resetParams();
+  }
   
   juce::HashMap<int, Modulation> modulations;
   

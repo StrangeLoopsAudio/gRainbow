@@ -41,11 +41,11 @@ ArcSpectrogram::ArcSpectrogram(Parameters& parameters) : juce::Thread("spectrogr
   mSpecType.addItem("detected pitches", (int)ParamUI::SpecType::DETECTED + 1);
   mSpecType.addItem("waveform", (int)ParamUI::SpecType::WAVEFORM + 1);
   mSpecType.setTooltip("view different spectrum types");
+  mSpecType.setJustificationType(juce::Justification::centred);
   mSpecType.onChange = [this](void) {
     // Will get called from user using UI ComboBox and from inside this class
     // when loading buffers
     mParameters.ui.specType = (ParamUI::SpecType)(mSpecType.getSelectedId() - 1);
-    repaint();
   };
   addAndMakeVisible(mSpecType);
 
@@ -64,7 +64,7 @@ ArcSpectrogram::ArcSpectrogram(Parameters& parameters) : juce::Thread("spectrogr
 
 ArcSpectrogram::~ArcSpectrogram() {
   mParameters.note.onGrainCreated = nullptr;
-  stopThread(4000);
+  stopThread(BUFFER_PROCESS_TIMEOUT);
 }
 
 void ArcSpectrogram::paint(juce::Graphics& g) {
@@ -92,8 +92,8 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
   // Note and Candidate can be null while loading new values
   if (!mParameters.ui.specComplete) return;
-
-  // Draw position lines from active note
+  
+  // Draw border arcs under clouds
   ParamNote* note = nullptr;
   int genIdx = -1; // Currently selected generator. If >= 0, darken generator's line
   switch (mParameters.getSelectedParams()->type) {
@@ -106,28 +106,33 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     case ParamType::GLOBAL: break; // Do nothing, leave note as nullptr
     default: break; // do nothing
   }
+  
+  // Draw clouds
+  g.drawImage(mCloudLeft.getImage(), mCloudLeft.rect, juce::RectanglePlacement::fillDestination);
+  g.drawImage(mCloudRight.getImage(), mCloudRight.rect, juce::RectanglePlacement::fillDestination);
+  
+  // Draw position lines from active note
   if (note != nullptr) {
     float startRadians = (1.5f * juce::MathConstants<float>::pi);
+    
     juce::Colour noteColour = mParameters.getSelectedParamColour();
     // Draw generator position lines
     for (int i = 0; i < NUM_GENERATORS; ++i) {
       if (genIdx > -1 && genIdx != i) continue;
-      // Draw position line where the gen's candidate is
       ParamCandidate* candidate = note->getCandidate(i);
-      float endRadians = startRadians + candidate->posRatio * juce::MathConstants<float>::pi;
-      g.setColour(noteColour);
-      juce::Line<float> line = juce::Line<float>(mCenterPoint, mCenterPoint.getPointOnCircumference(mEndRadius, mEndRadius, endRadians));
-      if (note->shouldPlayGenerator(i)) {
-        g.drawLine(line, genIdx == i ? 3.0f : 2.0f);
-      } else {
-        g.drawLine(line.withShortenedEnd(line.getLength() - mStartRadius), genIdx == i ? 3.0f : 2.0f);
+      if (candidate) {
+        // Draw position line where the gen's candidate is
+        float endRadians = startRadians + candidate->posRatio * juce::MathConstants<float>::pi;
+        auto genRect = juce::Rectangle<float>(6, 6).withCentre(mCenterPoint.getPointOnCircumference(mEndRadius + 5, mEndRadius + 5, endRadians));
+        g.setColour(noteColour);
+        if (note->generators[i]->enable->get()) {
+          g.fillEllipse(genRect);
+        } else {
+          g.drawEllipse(genRect, 2.0f);
+        }
       }
     }
   }
-
-  // mCloudLeft.type
-  g.drawImage(mCloudLeft.getImage(), mCloudLeft.rect, juce::RectanglePlacement::fillDestination);
-  g.drawImage(mCloudRight.getImage(), mCloudRight.rect, juce::RectanglePlacement::fillDestination);
 
   // Draw active grains
   /* if (PowerUserSettings::get().getAnimated()) {
@@ -179,7 +184,7 @@ void ArcSpectrogram::resized() {
 
   // Cloud centers
   {
-    const int translation = 38;
+    const int translation = 45;
     const auto leftCenter = mRainbowRect.getBottomLeft().translated(translation, -7);
     const auto rightCenter = mRainbowRect.getBottomRight().translated(-translation, -7);
     mCloudLeft.rect = mCloudLeft.images[0].getBounds().withCentre(leftCenter).toFloat();
@@ -332,18 +337,15 @@ void ArcSpectrogram::reset() {
 }
 
 void ArcSpectrogram::loadSpecBuffer(Utils::SpecBuffer* buffer, ParamUI::SpecType type) {
-  if (buffer == nullptr) return;
+  if (buffer == nullptr || getWidth() == 0 || getHeight() == 0) return;
   waitForThreadToExit(BUFFER_PROCESS_TIMEOUT);
   if (mImagesComplete[type]) return;
 
+  // Only make image if component size has been set
   mParameters.ui.specType = type;
   mBuffers[mParameters.ui.specType] = buffer;
-
-  // Only make image if component size has been set
-  if (getWidth() > 0 && getHeight() > 0) {
-    mIsProcessing = true;
-    startThread();
-  }
+  mIsProcessing = true;
+  startThread();
 }
 
 void ArcSpectrogram::loadWaveformBuffer(juce::AudioBuffer<float>* audioBuffer) {

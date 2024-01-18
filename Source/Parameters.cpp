@@ -310,7 +310,7 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
 }
 
 ParamCandidate* ParamNote::getCandidate(int genIdx) {
-  if (candidates.empty()) return nullptr;
+  if (candidates.size() <= genIdx) return nullptr;
   return &candidates[generators[genIdx]->candidate->get()];
 }
 
