@@ -15,8 +15,7 @@
 #include "BinaryData.h"
 
 //==============================================================================
-ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
-    : juce::Thread("spectrogram thread"), mParameters(parameters) {
+ArcSpectrogram::ArcSpectrogram(Parameters& parameters) : juce::Thread("spectrogram thread"), mParameters(parameters) {
   setFramesPerSecond(REFRESH_RATE_FPS);
   mBuffers.fill(nullptr);
 
@@ -37,19 +36,18 @@ ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
   mCloudRight.images[CloudType::TOUCH] = juce::PNGImageFormat::loadFrom(BinaryData::cloudRightTouch_png, BinaryData::cloudRightTouch_pngSize);
 
   // ComboBox is not zero indexed because 0 represents nothing selected
-  mSpecType.addItem("Spectrogram", (int)ParamUI::SpecType::SPECTROGRAM + 1);
-  mSpecType.addItem("Harmonic Profile", (int)ParamUI::SpecType::HPCP + 1);
-  mSpecType.addItem("Detected Pitches", (int)ParamUI::SpecType::DETECTED + 1);
-  mSpecType.addItem("Audio Waveform", (int)ParamUI::SpecType::WAVEFORM + 1);
-  mSpecType.setTooltip("Select different spectrum type");
+  mSpecType.addItem("spectrogram", (int)ParamUI::SpecType::SPECTROGRAM + 1);
+  mSpecType.addItem("harmonic profile", (int)ParamUI::SpecType::HPCP + 1);
+  mSpecType.addItem("detected pitches", (int)ParamUI::SpecType::DETECTED + 1);
+  mSpecType.addItem("waveform", (int)ParamUI::SpecType::WAVEFORM + 1);
+  mSpecType.setTooltip("view different spectrum types");
   mSpecType.onChange = [this](void) {
     // Will get called from user using UI ComboBox and from inside this class
     // when loading buffers
-    mParameters.ui.specType = (ParamUI::SpecType)mSpecType.getSelectedItemIndex();
+    mParameters.ui.specType = (ParamUI::SpecType)(mSpecType.getSelectedId() - 1);
     repaint();
   };
-  mSpecType.setTooltip("Change Spectrogram type to view");
-  mSpecType.setVisible(true);
+  addAndMakeVisible(mSpecType);
 
   mActivePitchClass.reset(false);
 
@@ -62,8 +60,6 @@ ArcSpectrogram::ArcSpectrogram(Parameters& parameters)
     float envIncSamples = Utils::ENV_LUT_SIZE / (durationSec * REFRESH_RATE_FPS);
     mArcGrains.add(ArcGrain(gen, envGain, envIncSamples, pitchClass));
   }; */
-
-  addChildComponent(mSpecType);
 }
 
 ArcSpectrogram::~ArcSpectrogram() {
@@ -82,12 +78,12 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
 
   // If nothing has been loaded skip image, progress bar will fill in void space
   if (mParameters.ui.specType != ParamUI::SpecType::INVALID) {
-    int imageIndex = mSpecType.getSelectedItemIndex();
+    int imageIndex = mSpecType.getSelectedId() - 1;
     // When loading up a plugin a second time, need to set the ComboBox state,
     // but can't in the constructor so there is the first spot we can enforce
     // it. Without this, the logo will appear when reopening the plugin
     if (imageIndex == -1) {
-      mSpecType.setSelectedItemIndex(mParameters.ui.specType, juce::dontSendNotification);
+      mSpecType.setSelectedId(mParameters.ui.specType + 1, juce::dontSendNotification);
       imageIndex = (int)mParameters.ui.specType;
     }
     g.drawImage(mParameters.ui.specImages[imageIndex], mRainbowRect.toFloat(),
@@ -120,11 +116,11 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
       ParamCandidate* candidate = note->getCandidate(i);
       float endRadians = startRadians + candidate->posRatio * juce::MathConstants<float>::pi;
       g.setColour(noteColour);
-      juce::Line<float> line = juce::Line<float>(mCenterPoint.getPointOnCircumference(mStartRadius, mStartRadius, endRadians), mCenterPoint.getPointOnCircumference(mEndRadius, mEndRadius, endRadians));
+      juce::Line<float> line = juce::Line<float>(mCenterPoint, mCenterPoint.getPointOnCircumference(mEndRadius, mEndRadius, endRadians));
       if (note->shouldPlayGenerator(i)) {
         g.drawLine(line, genIdx == i ? 3.0f : 2.0f);
       } else {
-        g.drawLine(line.withShortenedStart(line.getLength() - 5), genIdx == i ? 3.0f : 2.0f);
+        g.drawLine(line.withShortenedEnd(line.getLength() - mStartRadius), genIdx == i ? 3.0f : 2.0f);
       }
     }
   }
@@ -320,7 +316,6 @@ void ArcSpectrogram::onImageComplete(ParamUI::SpecType specType) {
     }
   }
   mParameters.ui.specComplete = true;
-  DBG("DONE SPEC");
 }
 
 void ArcSpectrogram::reset() {
@@ -344,12 +339,6 @@ void ArcSpectrogram::loadSpecBuffer(Utils::SpecBuffer* buffer, ParamUI::SpecType
   mParameters.ui.specType = type;
   mBuffers[mParameters.ui.specType] = buffer;
 
-  // As each buffer is loaded, want to display it being generated
-  // Will be loaded in what ever order loaded from async callbacks
-  // The last item loaded will be the first item selected in ComboBox
-  if ((int)mParameters.ui.specType < mSpecType.getNumItems()) {
-    mSpecType.setSelectedItemIndex(mParameters.ui.specType, juce::sendNotification);
-  }
   // Only make image if component size has been set
   if (getWidth() > 0 && getHeight() > 0) {
     mIsProcessing = true;
@@ -376,7 +365,7 @@ void ArcSpectrogram::loadWaveformBuffer(juce::AudioBuffer<float>* audioBuffer) {
 void ArcSpectrogram::loadPreset() {
   // make visible if preset was loaded first
   mParameters.ui.specComplete = true;
-  mSpecType.setSelectedItemIndex(mParameters.ui.specType, juce::dontSendNotification);
+  mSpecType.setSelectedId(mParameters.ui.specType + 1, juce::dontSendNotification);
   repaint();
 }
 

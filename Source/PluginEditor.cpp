@@ -138,6 +138,8 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
 
   // These share the same space, but only 1 is seen at a time
   addChildComponent(mArcSpec);
+  mProgressBar.setColour(juce::ProgressBar::ColourIds::foregroundColourId, juce::Colours::green);
+  mProgressBar.setColour(juce::ProgressBar::ColourIds::backgroundColourId, juce::Colours::whitesmoke);
   addChildComponent(mProgressBar);
   addChildComponent(mTrimSelection);
 

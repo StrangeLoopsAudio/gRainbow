@@ -168,13 +168,13 @@ void WaveformPanel::updateWaveBars() {
   if (gen) {
     candidate = mParameters.getGeneratorCandidate(gen);
     cRange.setStart(candidate->posRatio * mBuffer.getNumSamples());
-    cRange.setLength(candidate->duration * mBuffer.getNumSamples());
+    cRange.setLength(candidate->duration * mBuffer.getNumSamples() + 1);
   }
 
   // Populate wave bar magnitudes
   int curSample = mZoomRange.getStart();
   for (auto& bar : mWaveBars) {
-    float magnitude = (curSample > 0 && (curSample + mSamplesPerBar) < mBuffer.getNumSamples()) ? mBuffer.getMagnitude(0, curSample, mSamplesPerBar) : 0.0f;
+    float magnitude = (curSample >= 0 && (curSample + mSamplesPerBar) < mBuffer.getNumSamples()) ? mBuffer.getMagnitude(0, curSample, mSamplesPerBar) : 0.0f;
     bar = WaveBar(magnitude);
     if (candidate) {
       // Color the bars within candidate area
@@ -204,10 +204,11 @@ void WaveformPanel::addBarsForNote(ParamNote* note, bool showCandidates) {
   if (note->candidates.empty()) return;
   for (auto& gen : note->generators) {
     if (!gen->enable->get() && !showCandidates) continue; // Skip if generator is off (unless we want to show its candidate)
-    int sample = note->candidates[gen->candidate->get()].posRatio * mBuffer.getNumSamples();
+    auto& candidate = note->candidates[gen->candidate->get()];
+    int sample = candidate.posRatio * mBuffer.getNumSamples();
     if (!mZoomRange.contains(sample)) continue; // Skip if we're outside of the visible range
     // Find the wave bar closest to this generator
-    int closestBarIdx = (sample - mZoomRange.getStart()) / mSamplesPerBar;
+    int closestBarIdx = juce::roundToInt((sample - mZoomRange.getStart()) / (float)mSamplesPerBar);
     mWaveBars[closestBarIdx].pitchClass = (Utils::PitchClass)note->noteIdx;
     mWaveBars[closestBarIdx].isEnabled = gen->enable->get();
     mWaveBars[closestBarIdx].generator = gen.get();

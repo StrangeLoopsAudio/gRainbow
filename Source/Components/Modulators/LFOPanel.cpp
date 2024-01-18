@@ -182,8 +182,10 @@ void LFOPanel::paint(juce::Graphics& g) {
     float correctedPhase = curRad - mSliderPhase.getValue();
     if (correctedPhase < 0.0f) correctedPhase += juce::MathConstants<float>::twoPi;
     float x = pathDrawRect.getX() + ((pathDrawRect.getWidth() / numPeriods) * (correctedPhase / juce::MathConstants<float>::twoPi));
-    g.setColour(mModLFO.colour);
-    g.fillEllipse(phaseRect.withCentre(juce::Point<float>(x, y)));
+    if (x <= pathDrawRect.getRight()) {
+      g.setColour(mModLFO.colour);
+      g.fillEllipse(phaseRect.withCentre(juce::Point<float>(x, y)));
+    }
   }
   else {
     // Path always pushing new values, just put the dot at the right side

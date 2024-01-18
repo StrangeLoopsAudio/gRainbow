@@ -775,9 +775,6 @@ void GranularSynth::makePitchSpec() {
 void GranularSynth::createCandidates() {
   // Add candidates for each pitch class
   const std::vector<Notes::Event>& events = mPitchDetector.getNoteEvents();
-  for (auto& evt : events) {
-    DBG(juce::String(evt.pitch));
-  }
   const int numFrames = mPitchDetector.getNumFrames();
   for (auto&& note : mParameters.note.notes) {
     // Look for detected pitches with correct pitch and good gain
