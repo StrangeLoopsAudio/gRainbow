@@ -386,14 +386,30 @@ void GranularSynth::getPresetParamsXml(juce::MemoryBlock& destData) {
   copyXmlToBinary(xml, destData);
 }
 
+// Sets parameters based on memory stored in a preset
 void GranularSynth::setPresetParamsXml(const void* data, int sizeInBytes) {
+  resetParameters(true); // Clear all params and candidates
+  
   auto xml = getXmlFromBinary(data, sizeInBytes);
-
   if (xml != nullptr) {
     auto params = xml->getChildByName("AudioParams");
     if (params != nullptr) {
       for (auto& param : getParameters()) {
         param->setValueNotifyingHost(params->getDoubleAttribute(ParamHelper::getParamID(param), param->getValue()));
+      }
+    }
+    
+    // Set isUsed for each common parameter based on param values
+    for (int i = 0; i < ParamCommon::Type::NUM_COMMON; ++i) {
+      for (auto& note: mParameters.note.notes) {
+        if (note->common[i]->getValue() != COMMON_RANGES[i].convertTo0to1(COMMON_DEFAULTS[i])) {
+          note->isUsed[i] = true;
+        }
+        for (auto& gen : note->generators) {
+          if (gen->common[i]->getValue() != COMMON_RANGES[i].convertTo0to1(COMMON_DEFAULTS[i])) {
+            gen->isUsed[i] = true;
+          }
+        }
       }
     }
 

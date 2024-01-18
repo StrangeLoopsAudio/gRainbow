@@ -279,14 +279,14 @@ static juce::NormalisableRange<float> COMMON_RANGES[ParamCommon::Type::NUM_COMMO
   ParamRanges::GRAIN_TILT,
   ParamRanges::GRAIN_RATE,
   ParamRanges::GRAIN_DURATION,
-  juce::NormalisableRange<float>(), // grain sync
+  juce::NormalisableRange<float>(0.0f, 1.0f), // grain sync
   ParamRanges::PITCH_ADJUST,
   ParamRanges::PITCH_SPRAY,
   ParamRanges::POSITION_ADJUST,
   ParamRanges::POSITION_SPRAY,
   ParamRanges::PAN_ADJUST,
   ParamRanges::PAN_SPRAY,
-  juce::NormalisableRange<float>() // reverse
+  juce::NormalisableRange<float>(0.0f, 1.0f) // reverse
 };
 
 namespace ParamHelper {
