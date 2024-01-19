@@ -37,6 +37,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderDecay.setTextValueSuffix(" s");
   mSliderSustain.setRange(ParamRanges::SUSTAIN.start, ParamRanges::SUSTAIN.end, 0.01);
   mSliderSustain.setDoubleClickReturnValue(true, ParamDefaults::SUSTAIN_DEFAULT);
+  mSliderSustain.setTextValueSuffix(" dB");
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
   mSliderRelease.setDoubleClickReturnValue(true, ParamDefaults::RELEASE_DEFAULT_SEC);
   mSliderRelease.setTextValueSuffix(" s");

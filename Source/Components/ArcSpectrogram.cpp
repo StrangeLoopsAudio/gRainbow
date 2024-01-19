@@ -89,6 +89,8 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     g.drawImage(mParameters.ui.specImages[imageIndex], mRainbowRect.toFloat(),
                 juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
   }
+  
+  mSpecType.setVisible(mParameters.ui.specComplete);
 
   // Note and Candidate can be null while loading new values
   if (!mParameters.ui.specComplete) return;

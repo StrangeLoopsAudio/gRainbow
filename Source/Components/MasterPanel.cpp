@@ -57,6 +57,7 @@ mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
     slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, mParameters.global.macros[i].colour);
     i++;
   }
+  mSliderGain.setTextValueSuffix(" dB");
   mSliderGain.setRange(ParamRanges::GAIN.start, ParamRanges::GAIN.end, 0.01);
   mSliderGain.setDoubleClickReturnValue(true, ParamDefaults::GAIN_DEFAULT);
   mSliderMacro1.setRange(ParamRanges::MACRO.start, ParamRanges::MACRO.end, 0.01);

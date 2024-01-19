@@ -237,18 +237,19 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     const int activeNoteSize = mActiveNotes.size();
     for (int noteIndex = 0; noteIndex < activeNoteSize; noteIndex++) {
       GrainNote* gNote = mActiveNotes[noteIndex];
-
+      // Fix velocity scale (with a slight skew)
+      float velocityGain = juce::jmin(1.0f, juce::Decibels::decibelsToGain( ParamRanges::GAIN.convertFrom0to1(log10(gNote->velocity + 0.1) + 1)));
       // Add contributions from the grains in this generator
       for (size_t genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
         mParamGenerator = mParameters.note.notes[gNote->pitchClass]->generators[genIdx].get();
-        mGain = mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GAIN, true);
+        mGain = juce::Decibels::decibelsToGain(mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GAIN, true));
         mAttack = mParameters.getFloatParam(mParameters.global.ampEnvAttack, true);
         mDecay = mParameters.getFloatParam(mParameters.global.ampEnvDecay, true);
-        mSustain = mParameters.getFloatParam(mParameters.global.ampEnvSustain, true);
+        mSustain = juce::Decibels::decibelsToGain(mParameters.getFloatParam(mParameters.global.ampEnvSustain, true));
         mRelease = mParameters.getFloatParam(mParameters.global.ampEnvRelease, true);
         mGrainGain =
             gNote->genAmpEnvs[genIdx].getAmplitude(mTotalSamps, mAttack * mSampleRate, mDecay * mSampleRate, mSustain,
-                                                   mRelease * mSampleRate) * mGain;
+                                                   mRelease * mSampleRate) * mGain * velocityGain;
         for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
           mGenSampleValue = 0.0f;
           for (Grain* grain : gNote->genGrains[genIdx]) {
@@ -420,7 +421,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           mParamGenerator = mParameters.note.notes[gNote->pitchClass]->generators[i].get();
           mParamCandidate = mParameters.note.notes[gNote->pitchClass]->getCandidate(i);
           mDurSec;
-          mGain = mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GAIN, true);
+          mGain = juce::Decibels::decibelsToGain(mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GAIN, true));
           mGrainRate = mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GRAIN_RATE, true);
           mGrainDuration = mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GRAIN_DURATION, true);
           mGrainSync = mParameters.getBoolParam(mParamGenerator, ParamCommon::Type::GRAIN_SYNC);
@@ -477,7 +478,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
               gNote->genGrains[i].add(grain);
 
               /* Trigger grain in arcspec */
-              mTotalGain = mGain * gNote->genAmpEnvs[i].amplitude * gNote->velocity;
+              mTotalGain = mGain * gNote->genAmpEnvs[i].amplitude;
               mParameters.note.grainCreated(gNote->pitchClass, i, mDurSec / mPbRate, mTotalGain);
             }
           }
@@ -732,6 +733,7 @@ void GranularSynth::extractPitches() {
   mParameters.ui.isLoading = false;
   mProcessedSpecs.fill(nullptr);
   mParameters.ui.isLoading = true;
+  mParameters.note.resetParams(); // TODO: remove this?
   mParameters.note.clearCandidates();
   mParameters.setSelectedParams(&mParameters.global);
   startThread();
@@ -771,6 +773,7 @@ void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumb
     mActiveNotes.add(new GrainNote(midiNoteNumber, velocity, mTotalSamps));
   } else {
     // Already playing note, just reset the envelope
+    (*foundNote)->velocity = velocity;
     (*foundNote)->noteOn(mTotalSamps);
   }
     
