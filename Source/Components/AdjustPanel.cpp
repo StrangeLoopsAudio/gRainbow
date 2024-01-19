@@ -44,7 +44,7 @@ mBtnReverse(parameters, ParamCommon::Type::REVERSE) {
   for (auto& label : labels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
     label.get().setJustificationType(juce::Justification::centredTop);
-    label.get().setFont(juce::Font(14));
+    label.get().setFont(juce::Font(Utils::FONT_HEIGHT).withPointHeight(Utils::FONT_HEIGHT));
     addAndMakeVisible(label.get());
   }
         

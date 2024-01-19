@@ -130,7 +130,7 @@ void TrimSelection::paint(juce::Graphics& g) {
   // Draw selectors
   {
     g.setColour(juce::Colours::black);
-    g.setFont(14.0f);
+    g.setFont(juce::Font(Utils::FONT_HEIGHT).withPointHeight(Utils::FONT_HEIGHT));
     g.drawFittedText(mStartTimeString, mSelectorRect, juce::Justification::bottomLeft, 1);
     g.drawFittedText(juce::String(mSelectedRange.getLength(), 1) + " seconds", mSelectorRect, juce::Justification::centredBottom,
                      1);
