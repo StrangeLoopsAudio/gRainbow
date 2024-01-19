@@ -117,7 +117,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   // Reference tone control
   void startReferenceTone(Utils::PitchClass pitchClass) {
     mReferenceTone.setFrequency(juce::MidiMessage::getMidiNoteInHertz(60 + pitchClass));
-    mReferenceTone.setAmplitude(0.05f);
+    mReferenceTone.setAmplitude(juce::Decibels::decibelsToGain(-20.0f));
   }
   void stopReferenceTone() { mReferenceTone.setAmplitude(0.0f); }
 
