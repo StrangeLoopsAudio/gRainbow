@@ -135,14 +135,16 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   static constexpr int MAX_PITCH_BEND_SEMITONES = 2;  // Max pitch bend semitones allowed
 
   typedef struct GrainNote {
+    int pitch; // MIDI note number
     Utils::PitchClass pitchClass;
     float velocity;
     int removeTs = -1; // Timestamp when note is released
     std::array<Utils::EnvelopeADSR, NUM_GENERATORS> genAmpEnvs;
     std::array<juce::Array<Grain*>, NUM_GENERATORS> genGrains;  // Active grains for note per generator
     std::array<float, NUM_GENERATORS> grainTriggers;           // Keeps track of triggering grains from each generator
-    GrainNote(Utils::PitchClass pitchClass_, float velocity_, int ts)
-        : pitchClass(pitchClass_), velocity(velocity_) {
+    // Pitch in MIDI note #, velocity from 0 to 1, ts as current sample timestamp
+    GrainNote(int _pitch, float _velocity, int ts)
+        : pitch(_pitch), pitchClass(Utils::getPitchClass(_pitch)), velocity(_velocity) {
       // Initialize grain triggering timestamps
       grainTriggers.fill(-1.0f);  // Trigger first set of grains right away
       noteOn(ts);
@@ -183,6 +185,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   int mBeatsPerBar;
   float mDurSec, mGrainRate, mGrainDuration, mGrainSync, mPitchAdjust, mPitchSpray, mPosAdjust, mPosSpray, mPanAdjust, mPanSpray,
   mShape, mTilt, mReverse, mDiv;
+  int mOctaveAdjust;
   float mDurSamples, mPosSprayOffset, mPosOffset, mPosSamples, mPanSprayOffset, mPanOffset, mPitchSprayOffset, mPitchBendOffset,
   mPbRate, mTotalGain;
   juce::Random mRandom;

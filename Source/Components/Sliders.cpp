@@ -71,7 +71,7 @@ CommonSlider::CommonSlider(Parameters& _parameters, ParamCommon::Type type)
       // Reset actual slider value
       setValue(dragStartValue, juce::dontSendNotification);
     } else {
-      ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, (float)getValue());
+      ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, getValue());
       setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, getUsedColour());
       // Update active parameter pointer
       parameter = parameters.getUsedParam(parameters.getSelectedParams(), mType);
@@ -85,7 +85,9 @@ CommonSlider::~CommonSlider() {
 
 void CommonSlider::mouseDoubleClick(const juce::MouseEvent&) {
   const float defaultVal = COMMON_DEFAULTS[mType];
-  const float globalVal = P_FLOAT(parameters.global.common[mType])->get();
+  float globalVal;
+  if (auto* pFloat = P_FLOAT(parameters.global.common[mType])) globalVal = pFloat->get();
+  if (auto* pInt = P_INT(parameters.global.common[mType])) globalVal = pInt->get();
   // Reset value to the level above it
   if (parameters.getSelectedParams()->type == ParamType::GLOBAL) {
     // If global, reset to the parameter's default
@@ -105,7 +107,11 @@ void CommonSlider::mouseDoubleClick(const juce::MouseEvent&) {
       // If gen is used, reset to level above that's used (note or global)
       if (note->isUsed[mType]) {
         // Note is used, reset to its value
-        ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, P_FLOAT(note->common[mType])->get());
+        if (auto* pFloat = P_FLOAT(parameters.global.common[mType])) {
+          ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, pFloat->get());
+        } else if (auto* pInt = P_INT(parameters.global.common[mType])) {
+          ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, pInt->get());
+        }
       } else {
         // Neither gen nor note is used, reset to global
         ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, globalVal);

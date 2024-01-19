@@ -13,6 +13,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
 #include "Sliders.h"
+#include "Buttons.h"
 
 //==============================================================================
 /*
@@ -58,8 +59,9 @@ public juce::Timer {
   juce::Label mLabelPanAdjust;
   CommonSlider mSliderPanSpray;
   juce::Label mLabelPanSpray;
-  juce::ToggleButton mBtnReverse;
-  juce::Label mLabelReverse;
+  CommonSlider mSliderOctaveAdjust;
+  juce::Label mLabelOctaveAdjust;
+  CommonButton mBtnReverse;
   juce::ToggleButton mBtnRefTone;
   juce::Label mLabelRefTone;
 

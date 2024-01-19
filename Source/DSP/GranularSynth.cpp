@@ -433,6 +433,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           mShape = mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GRAIN_SHAPE, true);
           mTilt = mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GRAIN_TILT, true);
           mReverse = mParameters.getBoolParam(mParamGenerator, ParamCommon::Type::REVERSE);
+          mOctaveAdjust = mParameters.getIntParam(mParamGenerator, ParamCommon::Type::OCTAVE_ADJUST);
 
           if (mGrainSync) {
             mDiv = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * (1.0f - ParamRanges::GRAIN_DURATION.convertTo0to1(mGrainDuration))));
@@ -443,6 +444,7 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
           }
           // Skip adding new grain if not enabled or full of grains
           if (mParamCandidate != nullptr && mParameters.note.notes[gNote->pitchClass]->shouldPlayGenerator(i)) {
+            jassert(mParamCandidate->pbRate > 0.1f);
             // Get the next available grain from the pool (if there is one)
             Grain* grain = mGrainPool.getNextAvailableGrain();
             if (grain != nullptr) {
@@ -467,7 +469,8 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
                 mPbRate = -mPbRate; // Flip playback rate if going in reverse
                 mPosSamples += mDurSamples; // Start at the end
               }
-              jassert(mParamCandidate->pbRate > 0.1f);
+              /* Octave correction (centered around 0) */
+              mPbRate *= std::pow(2, (gNote->pitch / 12) - mParamCandidate->octave + mOctaveAdjust); // From candidate and octave adjust
 
               /* Add grain */
               grain->set(mDurSamples, mPbRate, mPosSamples, mTotalSamps, mGain, mPanOffset, mShape, mTilt);
@@ -756,11 +759,11 @@ void GranularSynth::resampleSynthBuffer(juce::AudioBuffer<float>& inputBuffer, j
 
 void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumber, float velocity) {
   mLastPitchClass = Utils::getPitchClass(midiNoteNumber);
-  auto foundNote = std::find_if(mActiveNotes.begin(), mActiveNotes.end(), [this](const GrainNote* gNote) { return gNote->pitchClass == mLastPitchClass; });
+  auto foundNote = std::find_if(mActiveNotes.begin(), mActiveNotes.end(), [this, midiNoteNumber](const GrainNote* gNote) { return gNote->pitch == midiNoteNumber; });
   if (foundNote == mActiveNotes.end()) {
     // New note, start 'er up
     mMidiNotes.add(Utils::MidiNote(mLastPitchClass, velocity));
-    mActiveNotes.add(new GrainNote(mLastPitchClass, velocity, mTotalSamps));
+    mActiveNotes.add(new GrainNote(midiNoteNumber, velocity, mTotalSamps));
   } else {
     // Already playing note, just reset the envelope
     (*foundNote)->noteOn(mTotalSamps);
@@ -779,7 +782,7 @@ void GranularSynth::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNum
   const Utils::PitchClass pitchClass = Utils::getPitchClass(midiNoteNumber);
 
   for (GrainNote* gNote : mActiveNotes) {
-    if (gNote->pitchClass == pitchClass && gNote->removeTs == -1) {
+    if (gNote->pitch == midiNoteNumber && gNote->removeTs == -1) {
       // Set timestamp to delete note based on release time and set note off for all generators
       float release = mParameters.getFloatParam(mParameters.global.ampEnvRelease, true);;
       for (size_t i = 0; i < NUM_GENERATORS; ++i) {

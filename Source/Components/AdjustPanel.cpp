@@ -21,9 +21,11 @@ mSliderPitchSpray(parameters, ParamCommon::Type::PITCH_SPRAY),
 mSliderPosAdjust(parameters, ParamCommon::Type::POS_ADJUST),
 mSliderPosSpray(parameters, ParamCommon::Type::POS_SPRAY),
 mSliderPanAdjust(parameters, ParamCommon::Type::PAN_ADJUST),
-mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY) {
+mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY),
+mSliderOctaveAdjust(parameters, ParamCommon::Type::OCTAVE_ADJUST),
+mBtnReverse(parameters, ParamCommon::Type::REVERSE) {
   // Default slider settings
-  std::vector<std::reference_wrapper<CommonSlider>> sliders = { mSliderPanSpray, mSliderPanAdjust, mSliderPosSpray, mSliderPosAdjust, mSliderPitchSpray, mSliderPitchAdjust };
+  std::vector<std::reference_wrapper<CommonSlider>> sliders = { mSliderPanSpray, mSliderPanAdjust, mSliderPosSpray, mSliderPosAdjust, mSliderPitchSpray, mSliderPitchAdjust, mSliderOctaveAdjust };
   for (auto& slider : sliders) {
     slider.get().setNumDecimalPlacesToDisplay(2);
     slider.get().setPopupDisplayEnabled(true, true, this);
@@ -31,14 +33,14 @@ mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY) {
   }
   
   // Default button settings
-  std::vector<std::reference_wrapper<juce::ToggleButton>> buttons = { mBtnReverse, mBtnRefTone };
+  std::vector<std::reference_wrapper<juce::Button>> buttons = { mBtnReverse, mBtnRefTone };
   for (auto& btn : buttons) {
     btn.get().setColour(juce::ToggleButton::ColourIds::tickColourId, Utils::GLOBAL_COLOUR);
     addAndMakeVisible(btn.get());
   }
   
   // Default label settings
-  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelReverse, mLabelRefTone, mLabelPanSpray, mLabelPanAdjust, mLabelPosSpray, mLabelPosAdjust, mLabelPitchSpray, mLabelPitchAdjust };
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelRefTone, mLabelPanSpray, mLabelPanAdjust, mLabelPosSpray, mLabelPosAdjust, mLabelPitchSpray, mLabelPitchAdjust, mLabelOctaveAdjust };
   for (auto& label : labels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
     label.get().setJustificationType(juce::Justification::centredTop);
@@ -84,12 +86,11 @@ mSliderPanSpray(parameters, ParamCommon::Type::PAN_SPRAY) {
   mSliderPanSpray.setNumDecimalPlacesToDisplay(3);
   mSliderPanSpray.setRange(ParamRanges::PAN_SPRAY.start, ParamRanges::PAN_SPRAY.end, 0.005);
   mLabelPanSpray.setText("pan spray", juce::dontSendNotification);
-        
-  // Reverse playback
-  mBtnReverse.onClick = [this]() {
-    ParamHelper::setParam(P_BOOL(mCurSelectedParams->common[ParamCommon::Type::REVERSE]), mBtnReverse.getToggleState());
-  };
-  mLabelReverse.setText("reverse", juce::dontSendNotification);
+  
+  // Octave adjust
+  mSliderOctaveAdjust.setNumDecimalPlacesToDisplay(0);
+  mSliderOctaveAdjust.setRange(ParamRanges::OCTAVE_ADJUST.start, ParamRanges::OCTAVE_ADJUST.end, 1);
+  mLabelOctaveAdjust.setText("octave adjust", juce::dontSendNotification);
 
   mParameters.addListener(this);
   mCurSelectedParams->addListener(this);
@@ -121,7 +122,10 @@ void AdjustPanel::timerCallback() {
                               juce::dontSendNotification);
     mSliderPanSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PAN_SPRAY),
                              juce::dontSendNotification);
+    mSliderOctaveAdjust.setValue(mParameters.getIntParam(mCurSelectedParams, ParamCommon::Type::OCTAVE_ADJUST),
+                             juce::dontSendNotification);
     mBtnReverse.setToggleState(mParameters.getBoolParam(mCurSelectedParams, ParamCommon::Type::REVERSE), juce::dontSendNotification);
+    mBtnReverse.setButtonText(mBtnReverse.getToggleState() ? "reverse" : "forward");
   }
 }
 
@@ -131,7 +135,6 @@ void AdjustPanel::selectedCommonParamsChanged(ParamCommon* newParams) {
   mCurSelectedParams->addListener(this);
   
   mParamColour = mParameters.getSelectedParamColour();
-  mBtnReverse.setColour(juce::ToggleButton::ColourIds::tickColourId, mParamColour);
   
   Utils::PitchClass selectedPitch = mParameters.getSelectedPitchClass();
   // Turn ref tone off if global parameters
@@ -159,7 +162,7 @@ void AdjustPanel::resized() {
   
   const int knobWidth = r.getWidth() / 3;
   
-  // Left: Pitch spray/adjust and trigger mode
+  // Left: Pitch spray/adjust and octave adjust
   juce::Rectangle<int> knobPanel = r.removeFromLeft(knobWidth);
   mLabelPitchSpray.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPitchSpray.setBounds(knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
@@ -167,8 +170,10 @@ void AdjustPanel::resized() {
   mLabelPitchAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderPitchAdjust.setBounds(
                                knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-  // Trigger mode button
   knobPanel.removeFromBottom(Utils::PADDING);
+  mLabelOctaveAdjust.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
+  mSliderOctaveAdjust.setBounds(
+                               knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   
   // Right: Position spray/adjust and ref tone
   knobPanel = r.removeFromRight(knobWidth);
@@ -193,6 +198,5 @@ void AdjustPanel::resized() {
                              knobPanel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   // Reverse button
   knobPanel.removeFromBottom(Utils::PADDING);
-  mLabelReverse.setBounds(knobPanel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mBtnReverse.setBounds(knobPanel.withSizeKeepingCentre(Utils::BUTTON_WIDTH, Utils::LABEL_HEIGHT));
+  mBtnReverse.setBounds(knobPanel.withSizeKeepingCentre(knobPanel.getWidth() - Utils::PADDING * 2, Utils::LABEL_HEIGHT * 2));
 }

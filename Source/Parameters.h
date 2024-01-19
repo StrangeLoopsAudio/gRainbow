@@ -63,6 +63,7 @@ static juce::String globalPositionSpray{"global_position_spray"};
 static juce::String globalPanAdjust{"global_pan_adjust"};
 static juce::String globalPanSpray{"global_pan_spray"};
 static juce::String globalReverse{"global_reverse"};
+static juce::String globalOctaveAdjust{"global_octave_adjust"};
 // Note params
 static juce::String genSolo{"_solo_gen"};
 static juce::String noteGain{"_note_gain"};
@@ -82,6 +83,7 @@ static juce::String notePositionSpray{"_note_position_spray"};
 static juce::String notePanAdjust{"_note_pan_adjust"};
 static juce::String notePanSpray{"_note_pan_spray"};
 static juce::String noteReverse{"_note_reverse"};
+static juce::String noteOctaveAdjust{"_note_octaveAdjust"};
 // Generator params
 static juce::String genEnable{"_enable_gen_"};
 static juce::String genCandidate{"_candidate_gen_"};
@@ -102,6 +104,7 @@ static juce::String genPositionSpray{"_position_spray_gen_"};
 static juce::String genPanAdjust{"_pan_adjust_gen_"};
 static juce::String genPanSpray{"_pan_spray_gen_"};
 static juce::String genReverse{"_reverse_gen_"};
+static juce::String genOctaveAdjust{"_octave_adjust_gen_"};
 } // namespace ParamIDs
 
 namespace ParamRanges {
@@ -125,6 +128,7 @@ static juce::NormalisableRange<float> POSITION_ADJUST(-0.5f, 0.5f);
 static juce::NormalisableRange<float> POSITION_SPRAY(0.0f, 0.3f);
 static juce::NormalisableRange<float> PAN_ADJUST(-1.0f, 1.0f);
 static juce::NormalisableRange<float> PAN_SPRAY(0.0f, 1.0f);
+static juce::NormalisableRange<float> OCTAVE_ADJUST(-3, 3);
 
 static int SYNC_DIV_MAX = 7;  // pow of 2 division, so 1/16
 }  // namespace ParamRanges
@@ -154,6 +158,7 @@ static float POSITION_SPRAY_DEFAULT = 0.05f;
 static float PAN_ADJUST_DEFAULT = 0.0f;
 static float PAN_SPRAY_DEFAULT = 0.05f;
 static int   REVERSE_DEFAULT = 0;
+static int   OCTAVE_ADJUST_DEFAULT = 0;
 }  // namespace ParamDefaults
 
 enum ParamType { GLOBAL, NOTE, GENERATOR };
@@ -173,10 +178,12 @@ namespace ParamHelper {
 }
   // Utility function to avoid ugly dereferencing code before sending norm value
   // to host
-  static void setParam(juce::AudioParameterFloat* param, float newValue) { *param = newValue; }
-  static void setParam(juce::AudioParameterInt* param, int newValue) { *param = newValue; }
-  static void setParam(juce::AudioParameterBool* param, bool newValue) { *param = newValue; }
-  static void setParam(juce::AudioParameterChoice* param, int newValue) { *param = newValue; }
+  static void setParam(juce::RangedAudioParameter* param, float newValue) {
+    if (auto pFloat = P_FLOAT(param)) *pFloat = (float)newValue;
+    else if (auto pInt = P_INT(param)) *pInt = (int)newValue;
+    else if (auto pBool = P_BOOL(param)) *pBool = (bool)newValue;
+    else if (auto pChoice = P_CHOICE(param)) *pChoice = (int)newValue;
+  }
 }
 
 // Common parameters types used by each generator, note and globally
@@ -199,6 +206,7 @@ class ParamCommon {
     PAN_ADJUST,
     PAN_SPRAY,
     REVERSE,
+    OCTAVE_ADJUST,
     NUM_COMMON
   };
 
@@ -216,6 +224,7 @@ class ParamCommon {
     common[PAN_ADJUST]->addListener(listener);
     common[PAN_SPRAY]->addListener(listener);
     common[REVERSE]->addListener(listener);
+    common[OCTAVE_ADJUST]->addListener(listener);
   }
   void removeListener(juce::AudioProcessorParameter::Listener* listener) {
     common[GAIN]->removeListener(listener);
@@ -231,6 +240,7 @@ class ParamCommon {
     common[PAN_ADJUST]->removeListener(listener);
     common[PAN_SPRAY]->removeListener(listener);
     common[REVERSE]->removeListener(listener);
+    common[OCTAVE_ADJUST]->removeListener(listener);
   }
 
   void resetParams() {
@@ -247,6 +257,7 @@ class ParamCommon {
     ParamHelper::setParam(P_FLOAT(common[GRAIN_DURATION]), ParamDefaults::GRAIN_DURATION_DEFAULT);
     ParamHelper::setParam(P_BOOL(common[GRAIN_SYNC]), ParamDefaults::GRAIN_SYNC_DEFAULT);
     ParamHelper::setParam(P_BOOL(common[REVERSE]), ParamDefaults::REVERSE_DEFAULT);
+    ParamHelper::setParam(P_INT(common[OCTAVE_ADJUST]), ParamDefaults::OCTAVE_ADJUST_DEFAULT);
     for (auto& used : isUsed) { used = false; }
   }
 
@@ -271,7 +282,8 @@ static float COMMON_DEFAULTS[ParamCommon::Type::NUM_COMMON] = {ParamDefaults::GA
   ParamDefaults::POSITION_SPRAY_DEFAULT,
   ParamDefaults::PAN_ADJUST_DEFAULT,
   ParamDefaults::PAN_SPRAY_DEFAULT,
-  (float)ParamDefaults::REVERSE_DEFAULT
+  (float)ParamDefaults::REVERSE_DEFAULT,
+  (float)ParamDefaults::OCTAVE_ADJUST_DEFAULT
 };
 
 static juce::NormalisableRange<float> COMMON_RANGES[ParamCommon::Type::NUM_COMMON] = {ParamRanges::GAIN,
@@ -286,20 +298,13 @@ static juce::NormalisableRange<float> COMMON_RANGES[ParamCommon::Type::NUM_COMMO
   ParamRanges::POSITION_SPRAY,
   ParamRanges::PAN_ADJUST,
   ParamRanges::PAN_SPRAY,
-  juce::NormalisableRange<float>(0.0f, 1.0f) // reverse
+  juce::NormalisableRange<float>(0.0f, 1.0f), // reverse
+  ParamRanges::OCTAVE_ADJUST
 };
 
 namespace ParamHelper {
 [[maybe_unused]] static void setCommonParam(ParamCommon* common, ParamCommon::Type type, float newValue) {
-  ParamHelper::setParam(P_FLOAT(common->common[type]), newValue);
-  common->isUsed[type] = true;
-}
-[[maybe_unused]] static void setCommonParam(ParamCommon* common, ParamCommon::Type type, int newValue) {
-  ParamHelper::setParam(P_CHOICE(common->common[type]), newValue);
-  common->isUsed[type] = true;
-}
-[[maybe_unused]] static void setCommonParam(ParamCommon* common, ParamCommon::Type type, bool newValue) {
-  ParamHelper::setParam(P_BOOL(common->common[type]), newValue);
+  ParamHelper::setParam(common->common[type], newValue);
   common->isUsed[type] = true;
 }
 }
@@ -722,9 +727,11 @@ public:
   // Hierarchy (high to low): global, note, generator
   // Optionally applies modulations before returning value
   float getFloatParam(ParamCommon* common, ParamCommon::Type type, bool withModulations = false);
-  float getFloatParam(juce::RangedAudioParameter* param, bool withModulations = false);
+  float getFloatParam(juce::AudioParameterFloat* param, bool withModulations = false);
+  int getIntParam(ParamCommon* common, ParamCommon::Type type, bool withModulations = false);
+  int getIntParam(juce::AudioParameterInt* param, bool withModulations = false);
   int getChoiceParam(ParamCommon* common, ParamCommon::Type type);
-  int getBoolParam(ParamCommon* common, ParamCommon::Type type);
+  bool getBoolParam(ParamCommon* common, ParamCommon::Type type);
   
 private:
   // Keeps track of the current selected global/note/generator parameters for editing, global by default

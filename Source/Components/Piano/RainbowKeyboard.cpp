@@ -189,11 +189,11 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
     // Hovering over new note, send note off for old note if necessary
     // Will turn off also if mouse exit keyboard
     if (mMouseNote.pitch != Utils::PitchClass::NONE) {
-      mState.noteOff(MIDI_CHANNEL, mMouseNote.pitch, mMouseNote.velocity);
+      mState.noteOff(MIDI_CHANNEL, mMouseNote.pitch + (BASE_OCTAVE * 12), mMouseNote.velocity);
       mMouseNote = Utils::MidiNote();
     }
     if (isDown && isValidNote) {
-      mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch, mHoverNote.velocity);
+      mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch + (BASE_OCTAVE * 12), mHoverNote.velocity);
       mMouseNote = mHoverNote;
       // Select current note for parameter edits and send update
       mParameters.setSelectedParams(mParameters.note.notes[mHoverNote.pitch].get());
@@ -201,11 +201,11 @@ void RainbowKeyboard::updateMouseState(const juce::MouseEvent& e, bool isDown, b
   } else {
     if (isDown && (mMouseNote.pitch == Utils::PitchClass::NONE) && isValidNote) {
       // Note on if pressing current note
-      mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch, mHoverNote.velocity);
+      mState.noteOn(MIDI_CHANNEL, mHoverNote.pitch + (BASE_OCTAVE * 12), mHoverNote.velocity);
       mMouseNote = mHoverNote;
     } else if ((mMouseNote.pitch != Utils::PitchClass::NONE) && !isDown) {
       // Note off if released current note
-      mState.noteOff(MIDI_CHANNEL, mMouseNote.pitch, mMouseNote.velocity);
+      mState.noteOff(MIDI_CHANNEL, mMouseNote.pitch + (BASE_OCTAVE * 12), mMouseNote.velocity);
       mMouseNote = Utils::MidiNote();
     } else {
       // still update state

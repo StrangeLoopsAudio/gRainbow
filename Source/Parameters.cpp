@@ -118,10 +118,19 @@ void Parameters::removeListener(Parameters::Listener* listener)
 // Optionally applies modulations before returning value
 float Parameters::getFloatParam(ParamCommon* common, ParamCommon::Type type, bool withModulations) {
   juce::RangedAudioParameter* param = getUsedParam(common, type);
-  return getFloatParam(param, withModulations);
+  return getFloatParam(P_FLOAT(param), withModulations);
 }
-float Parameters::getFloatParam(juce::RangedAudioParameter* param, bool withModulations) {
-  float value0To1 = param->convertTo0to1(P_FLOAT(param)->get());
+float Parameters::getFloatParam(juce::AudioParameterFloat* param, bool withModulations) {
+  float value0To1 = param->convertTo0to1(param->get());
+  if (withModulations) applyModulations(param, value0To1);
+  return param->convertFrom0to1(value0To1);
+}
+int Parameters::getIntParam(ParamCommon* common, ParamCommon::Type type, bool withModulations) {
+  juce::RangedAudioParameter* param = getUsedParam(common, type);
+  return getIntParam(P_INT(param), withModulations);
+}
+int Parameters::getIntParam(juce::AudioParameterInt* param, bool withModulations) {
+  float value0To1 = param->convertTo0to1(param->get());
   if (withModulations) applyModulations(param, value0To1);
   return param->convertFrom0to1(value0To1);
 }
@@ -129,7 +138,7 @@ int Parameters::getChoiceParam(ParamCommon* common, ParamCommon::Type type) {
   juce::RangedAudioParameter* param = getUsedParam(common, type);
   return P_CHOICE(param)->getIndex();
 }
-int Parameters::getBoolParam(ParamCommon* common, ParamCommon::Type type) {
+bool Parameters::getBoolParam(ParamCommon* common, ParamCommon::Type type) {
   juce::RangedAudioParameter* param = getUsedParam(common, type);
   return P_BOOL(param)->get();
 }
@@ -212,6 +221,7 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
   p.addParameter(common[PAN_SPRAY] = new juce::AudioParameterFloat({ParamIDs::globalPanSpray, 1}, "Master Pan Spray",
                                                                    ParamRanges::PAN_SPRAY, ParamDefaults::PAN_SPRAY_DEFAULT));
   p.addParameter(common[REVERSE] = new juce::AudioParameterBool({ParamIDs::globalReverse, 1}, ParamIDs::globalReverse, ParamDefaults::REVERSE_DEFAULT));
+  p.addParameter(common[OCTAVE_ADJUST] = new juce::AudioParameterInt({ParamIDs::globalOctaveAdjust, 1}, "Master Octave Adjust", ParamRanges::OCTAVE_ADJUST.start, ParamRanges::OCTAVE_ADJUST.end, ParamDefaults::OCTAVE_ADJUST_DEFAULT));
 }
 
 void ParamGenerator::addParams(juce::AudioProcessor& p) {
@@ -258,6 +268,8 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
   p.addParameter(common[GRAIN_SYNC] = new juce::AudioParameterBool({syncId, 1}, syncId, ParamDefaults::GRAIN_SYNC_DEFAULT));
   juce::String reverseId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genReverse + juce::String(genIdx);
   p.addParameter(common[REVERSE] = new juce::AudioParameterBool({reverseId, 1}, reverseId, ParamDefaults::REVERSE_DEFAULT));
+  juce::String octaveAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genOctaveAdjust + juce::String(genIdx);
+  p.addParameter(common[OCTAVE_ADJUST] = new juce::AudioParameterInt({octaveAdjustId, 1}, octaveAdjustId, ParamRanges::OCTAVE_ADJUST.start, ParamRanges::OCTAVE_ADJUST.end, ParamDefaults::OCTAVE_ADJUST_DEFAULT));
 }
 
 void ParamNote::addParams(juce::AudioProcessor& p) {
@@ -300,6 +312,7 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
                      new juce::AudioParameterFloat({notePrefix + ParamIDs::notePanSpray, 1}, notePrefix + ParamIDs::notePanSpray,
                                                    ParamRanges::PAN_SPRAY, ParamDefaults::PAN_SPRAY_DEFAULT));
   p.addParameter(common[REVERSE] = new juce::AudioParameterBool({notePrefix + ParamIDs::noteReverse, 1}, notePrefix + ParamIDs::noteReverse, ParamDefaults::REVERSE_DEFAULT));
+  p.addParameter(common[OCTAVE_ADJUST] = new juce::AudioParameterInt({notePrefix + ParamIDs::noteOctaveAdjust, 1}, notePrefix + ParamIDs::noteOctaveAdjust, ParamRanges::OCTAVE_ADJUST.start, ParamRanges::OCTAVE_ADJUST.end, ParamDefaults::OCTAVE_ADJUST_DEFAULT));
 
   // Then make each of its generators
   for (auto& generator : generators) {
