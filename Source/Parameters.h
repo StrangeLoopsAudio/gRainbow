@@ -181,7 +181,12 @@ namespace ParamHelper {
   static void setParam(juce::RangedAudioParameter* param, float newValue) {
     if (auto pFloat = P_FLOAT(param)) *pFloat = (float)newValue;
     else if (auto pInt = P_INT(param)) *pInt = (int)newValue;
-    else if (auto pBool = P_BOOL(param)) *pBool = (bool)newValue;
+    else if (auto pBool = P_BOOL(param)) {
+      // If bool value doesn't actually change then a notification won't be sent..
+      // But we need the notification for the UI updates, so let's force it.
+      *pBool = !(bool)newValue;
+      *pBool = (bool)newValue;
+    }
     else if (auto pChoice = P_CHOICE(param)) *pChoice = (int)newValue;
   }
 }

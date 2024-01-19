@@ -238,7 +238,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     for (int noteIndex = 0; noteIndex < activeNoteSize; noteIndex++) {
       GrainNote* gNote = mActiveNotes[noteIndex];
       // Fix velocity scale (with a slight skew)
-      float velocityGain = juce::jmin(1.0f, juce::Decibels::decibelsToGain( ParamRanges::GAIN.convertFrom0to1(log10(gNote->velocity + 0.1) + 1)));
+      float velocityGain = juce::jmin(1.0f, juce::Decibels::decibelsToGain( ParamRanges::GAIN.convertFrom0to1(juce::jmin(1.0, log10(gNote->velocity + 0.1) + 1))));
       // Add contributions from the grains in this generator
       for (size_t genIdx = 0; genIdx < NUM_GENERATORS; ++genIdx) {
         mParamGenerator = mParameters.note.notes[gNote->pitchClass]->generators[genIdx].get();
