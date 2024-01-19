@@ -214,7 +214,7 @@ void EnvelopeGrain::resized() {
 
   // Place button
   auto syncPanel = r.removeFromRight(r.getWidth() * 0.25f);
-  mBtnSync.setBounds(syncPanel.withSizeKeepingCentre(syncPanel.getWidth(), Utils::LABEL_HEIGHT));
+  mBtnSync.setBounds(syncPanel.withSizeKeepingCentre(syncPanel.getWidth(), Utils::LABEL_HEIGHT + 4));
 
   r.removeFromRight(Utils::PADDING);
   r.removeFromBottom(Utils::PADDING);
