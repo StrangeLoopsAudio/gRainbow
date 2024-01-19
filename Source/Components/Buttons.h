@@ -36,7 +36,7 @@ public:
   void timerCallback() override {
     if (getToggleState()) {
       mIsBright = !mIsBright;
-      setColour(juce::TextButton::ColourIds::buttonOnColourId, mModSource.colour.brighter(mIsBright ? 0.2f : 0.0f));
+      setColour(juce::TextButton::ColourIds::buttonOnColourId, mModSource.colour.brighter(mIsBright ? 0.3f : 0.0f));
       repaint();
     }
   }

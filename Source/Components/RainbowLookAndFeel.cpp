@@ -41,7 +41,8 @@ void RainbowLookAndFeel::drawTabButtonText(juce::TabBarButton& btn, juce::Graphi
   }
   g.setColour((btn.isFrontTab() || mouseOver) ? textColour : textColour.darker());
   int trim = btn.getExtraComponent() ? btn.getExtraComponent()->getRight() : 0;
-  g.drawFittedText(btn.getButtonText(), btn.getLocalBounds().withTrimmedLeft(trim), juce::Justification::centred, 2, 1.0f);
+  g.setFont(Utils::getFont());
+  g.drawText(btn.getButtonText(), btn.getLocalBounds().withTrimmedLeft(trim), juce::Justification::centred);
 }
 
 // Sliders
@@ -149,6 +150,13 @@ void RainbowLookAndFeel::drawComboBox(juce::Graphics& g, int, int, bool, int, in
   g.drawRoundedRectangle(box.getLocalBounds().toFloat().reduced(1), Utils::ROUNDED_AMOUNT, 2.0f);
 }
 
+void RainbowLookAndFeel::positionComboBoxText(juce::ComboBox& box, juce::Label& labelToPosition) {
+  labelToPosition.setFont(Utils::getFont());
+  labelToPosition.setJustificationType(juce::Justification::centred);
+  labelToPosition.setBounds(box.getLocalBounds());
+}
+
+
 void RainbowLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area, bool, bool, bool isHighlighted,
                                            bool, bool, const juce::String& text, const juce::String&, const juce::Drawable*,
                                            const juce::Colour*) {
@@ -159,11 +167,8 @@ void RainbowLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectan
     g.fillRect(area);
   }
   g.setColour(backgroundColour.contrasting(0.8f));
-  g.drawFittedText(text, area, juce::Justification::centred, 1);
-}
-
-void RainbowLookAndFeel::positionComboBoxText(juce::ComboBox& box, juce::Label& labelToPosition) {
-  labelToPosition.setBounds(box.getLocalBounds());
+  g.setFont(Utils::getFont());
+  g.drawText(text, area, juce::Justification::centred);
 }
 
 //void RainbowLookAndFeel::drawProgressBar(juce::Graphics& g, juce::ProgressBar& progressBar, int width, int height, double progress,

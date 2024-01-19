@@ -36,6 +36,13 @@ static inline juce::Font getFont() {
   return juce::Font(14);
 #endif
 }
+static inline juce::Font getTitleFont() {
+#if _WIN32
+  return juce::Font(30).withPointHeight(30);
+#else _APPLE
+  return juce::Font(32);
+#endif
+}
 static constexpr int KNOB_WIDTH = 25;
 static constexpr int KNOB_HEIGHT = 25;
 static constexpr float ROUNDED_AMOUNT = 6.0f;

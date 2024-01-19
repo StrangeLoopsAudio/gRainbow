@@ -21,7 +21,7 @@ TitlePresetPanel::TitlePresetPanel() {
   
   // Title and version labels
   mLabelTitle.setText("gRainbow", juce::dontSendNotification);
-  mLabelTitle.setFont(juce::Font(32));
+  mLabelTitle.setFont(Utils::getTitleFont());
   mLabelTitle.setJustificationType(juce::Justification::topRight);
   addAndMakeVisible(mLabelTitle);
   mLabelVersion.setText(juce::String("v") + CURRENT_VERSION, juce::dontSendNotification);
@@ -31,7 +31,7 @@ TitlePresetPanel::TitlePresetPanel() {
   
   // Company label
   mLabelCompany.setText("by Strange Loops Audio", juce::dontSendNotification);
-  mLabelCompany.setFont(juce::Font(16));
+  mLabelCompany.setFont(Utils::getFont());
   mLabelCompany.setJustificationType(juce::Justification::centred);
   addAndMakeVisible(mLabelCompany);
   
