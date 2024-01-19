@@ -31,7 +31,6 @@ class TitlePresetPanel : public juce::Component {
  private:
   // Bookkeeping
   juce::Image mProductLogo;
-  juce::Image mCompanyLogo;
 
   // Components
   juce::Label mLabelTitle;
@@ -40,7 +39,6 @@ class TitlePresetPanel : public juce::Component {
   
   // Rectangles remade on resize()
   juce::Rectangle<float> mRectProductLogo;
-  juce::Rectangle<float> mRectCompanyLogo;
   juce::Rectangle<float> mRectPreset;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TitlePresetPanel)

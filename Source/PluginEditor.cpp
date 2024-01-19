@@ -137,7 +137,7 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
 
   // These share the same space, but only 1 is seen at a time
   addChildComponent(mArcSpec);
-  mProgressBar.setColour(juce::ProgressBar::ColourIds::foregroundColourId, juce::Colours::green);
+  mProgressBar.setColour(juce::ProgressBar::ColourIds::foregroundColourId, juce::Colours::blue.withSaturation(0.55f));
   mProgressBar.setColour(juce::ProgressBar::ColourIds::backgroundColourId, juce::Colours::whitesmoke);
   addChildComponent(mProgressBar);
   addChildComponent(mTrimSelection);
@@ -226,9 +226,10 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     mParameters.ui.isLoading = false;
   }
   
-  if (mTitlePresetPanel.labelFileName.getText() != mParameters.ui.loadedFileName) {
+  bool isNotLoaded = mParameters.ui.fileName != mParameters.ui.loadedFileName;
+  if (mTitlePresetPanel.labelFileName.getText() != mParameters.ui.loadedFileName || isNotLoaded) {
     // Set title bar to display new preset name
-    mTitlePresetPanel.labelFileName.setText(mParameters.ui.loadedFileName, juce::dontSendNotification);
+    mTitlePresetPanel.labelFileName.setText(isNotLoaded ? mParameters.ui.fileName : mParameters.ui.loadedFileName, juce::dontSendNotification);
   }
 
   // Get notes being played, send off to each children and then redraw.

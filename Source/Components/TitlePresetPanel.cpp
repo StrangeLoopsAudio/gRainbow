@@ -17,7 +17,6 @@
 //==============================================================================
 TitlePresetPanel::TitlePresetPanel() {
   mProductLogo = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize);
-  mCompanyLogo = juce::PNGImageFormat::loadFrom(BinaryData::company_png, BinaryData::company_pngSize);
   
   // Title and version labels
   mLabelTitle.setText("gRainbow", juce::dontSendNotification);
@@ -25,7 +24,7 @@ TitlePresetPanel::TitlePresetPanel() {
   mLabelTitle.setJustificationType(juce::Justification::topRight);
   addAndMakeVisible(mLabelTitle);
   mLabelVersion.setText(juce::String("v") + CURRENT_VERSION, juce::dontSendNotification);
-  mLabelVersion.setFont(juce::Font(12));
+  mLabelVersion.setFont(Utils::getFont());
   mLabelVersion.setJustificationType(juce::Justification::bottomRight);
   addAndMakeVisible(mLabelVersion);
   
@@ -79,6 +78,7 @@ TitlePresetPanel::TitlePresetPanel() {
   
   // File info label
   //mLabelFileName.setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
+  labelFileName.setFont(Utils::getFont());
   labelFileName.setJustificationType(juce::Justification::centred);
   addAndMakeVisible(labelFileName);
 }
@@ -98,10 +98,6 @@ void TitlePresetPanel::paint(juce::Graphics& g) {
   
   // Draw product logo
   g.drawImage(mProductLogo, mRectProductLogo,
-              juce::RectanglePlacement(juce::RectanglePlacement::yBottom | juce::RectanglePlacement::yTop), false);
-  
-  // Draw company logo
-  g.drawImage(mCompanyLogo, mRectCompanyLogo,
               juce::RectanglePlacement(juce::RectanglePlacement::yBottom | juce::RectanglePlacement::yTop), false);
 }
 
@@ -134,7 +130,6 @@ void TitlePresetPanel::resized() {
   labelFileName.setBounds(presetArea);
   
   // Company logo
-  mRectCompanyLogo = titleRight.removeFromRight(titleRight.getHeight()).toFloat();
   mLabelCompany.setBounds(titleRight);
   
 }
