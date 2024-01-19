@@ -13,69 +13,61 @@
 #include "Utils/Colour.h"
 
 EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
-    : mParameters(parameters),
-      mCurSelectedParams(parameters.getSelectedParams()),
-      mParamColour(Utils::GLOBAL_COLOUR),
-      mSliderShape(parameters, ParamCommon::Type::GRAIN_SHAPE),
-      mSliderTilt(parameters, ParamCommon::Type::GRAIN_TILT),
-      mSliderRate(parameters, ParamCommon::Type::GRAIN_RATE, false),
-      mSliderDuration(parameters, ParamCommon::Type::GRAIN_DURATION, true),
-      mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
+: mParameters(parameters),
+mCurSelectedParams(parameters.getSelectedParams()),
+mParamColour(Utils::GLOBAL_COLOUR),
+mSliderShape(parameters, ParamCommon::Type::GRAIN_SHAPE),
+mSliderTilt(parameters, ParamCommon::Type::GRAIN_TILT),
+mSliderRate(parameters, ParamCommon::Type::GRAIN_RATE, false),
+mSliderDuration(parameters, ParamCommon::Type::GRAIN_DURATION, true),
+mBtnSync(parameters, ParamCommon::Type::GRAIN_SYNC),
+mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
   juce::Colour colour = Utils::GLOBAL_COLOUR;
-  mSliderShape.setNumDecimalPlacesToDisplay(2);
-  mSliderShape.setRange(ParamRanges::GRAIN_SHAPE.start, ParamRanges::GRAIN_SHAPE.end, 0.01);
-  mSliderShape.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderShape);
 
+  // Default slider settings
+  std::vector<std::reference_wrapper<CommonSlider>> sliders = { mSliderShape, mSliderTilt, mSliderRate, mSliderDuration };
+  for (auto& slider : sliders) {
+    slider.get().setNumDecimalPlacesToDisplay(2);
+    slider.get().setPopupDisplayEnabled(true, true, this);
+    addAndMakeVisible(slider.get());
+  }
+  
+  // Default label settings
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelShape, mLabelTilt, mLabelRate, mLabelDuration };
+  for (auto& label : labels) {
+    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
+    label.get().setJustificationType(juce::Justification::centredTop);
+    label.get().setFont(Utils::getFont());
+    addAndMakeVisible(label.get());
+  }
+  
+  // Default button settings
+  std::vector<std::reference_wrapper<juce::Button>> buttons = { mBtnSync };
+  for (auto& btn : buttons) {
+    btn.get().setColour(juce::ToggleButton::ColourIds::tickColourId, Utils::GLOBAL_COLOUR);
+    addAndMakeVisible(btn.get());
+  }
+
+  // Shape
+  mSliderShape.setRange(ParamRanges::GRAIN_SHAPE.start, ParamRanges::GRAIN_SHAPE.end, 0.01);
   mLabelShape.setText("shape", juce::dontSendNotification);
-  mLabelShape.setColour(juce::Label::ColourIds::textColourId, colour);
-  mLabelShape.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelShape);
 
   // Tilt
-  mSliderTilt.setNumDecimalPlacesToDisplay(2);
   mSliderTilt.setRange(ParamRanges::GRAIN_TILT.start, ParamRanges::GRAIN_TILT.end, 0.01);
-  mSliderTilt.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderTilt);
-
   mLabelTilt.setText("tilt", juce::dontSendNotification);
-  mLabelTilt.setColour(juce::Label::ColourIds::textColourId, colour);
-  mLabelTilt.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelTilt);
 
   // Rate
-  mSliderRate.setNumDecimalPlacesToDisplay(2);
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
   mSliderRate.setSuffix("g/s");
-  mSliderRate.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderRate);
-
   mLabelRate.setText("rate", juce::dontSendNotification);
-  mLabelRate.setColour(juce::Label::ColourIds::textColourId, colour);
-  mLabelRate.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelRate);
 
   // Duration
-  mSliderDuration.setNumDecimalPlacesToDisplay(2);
   mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start, ParamRanges::GRAIN_DURATION.end, 0.01);
   mSliderDuration.setSuffix("s");
-  mSliderDuration.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderDuration);
-
   mLabelDuration.setText("duration", juce::dontSendNotification);
-  mLabelDuration.setColour(juce::Label::ColourIds::textColourId, colour);
-  mLabelDuration.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelDuration);
 
   // Sync
   mBtnSync.setButtonText("hz");
-  mBtnSync.setToggleable(true);
-  mBtnSync.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
-  mBtnSync.setColour(juce::TextButton::textColourOnId, juce::Colours::black);
-  mBtnSync.onClick = [this]() {
-    ParamHelper::setCommonParam(mParameters.getSelectedParams(), ParamCommon::Type::GRAIN_SYNC, !mBtnSync.getToggleState());
-  };
-  addAndMakeVisible(mBtnSync);
 
   mParameters.addListener(this);
   mCurSelectedParams->addListener(this);
@@ -116,8 +108,6 @@ void EnvelopeGrain::selectedCommonParamsChanged(ParamCommon* newParams) {
   mCurSelectedParams = newParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  mBtnSync.setColour(juce::TextButton::buttonColourId, mParamColour);
-  mBtnSync.setColour(juce::TextButton::buttonOnColourId, mParamColour.interpolatedWith(juce::Colours::white, 0.6f));
   mParamHasChanged.store(true);
   repaint();
 }

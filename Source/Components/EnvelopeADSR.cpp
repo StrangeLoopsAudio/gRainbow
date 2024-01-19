@@ -46,7 +46,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   for (auto& label : labels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
     label.get().setJustificationType(juce::Justification::centredTop);
-    label.get().setFont(juce::Font(Utils::FONT_HEIGHT).withPointHeight(Utils::FONT_HEIGHT));
+    label.get().setFont(Utils::getFont());
     addAndMakeVisible(label.get());
   }
   mLabelAttack.setText("attack", juce::dontSendNotification);

@@ -73,7 +73,7 @@ mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
   for (auto& label : macroLabels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
     label.get().setJustificationType(juce::Justification::centredTop);
-    label.get().setFont(juce::Font(Utils::FONT_HEIGHT).withPointHeight(Utils::FONT_HEIGHT));
+    label.get().setFont(Utils::getFont());
     addAndMakeVisible(label.get());
   }
   
@@ -178,20 +178,20 @@ void MasterPanel::resized() {
   // Macros 1 and 3
   auto macrosLeft = macroPanel.removeFromLeft(macroPanel.getWidth() / 2);
   topKnob = macrosLeft.removeFromTop(macrosLeft.getHeight() / 2);
-  mBtnMapMacro1.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
+  mBtnMapMacro1.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
   mLabelMacro1.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderMacro1.setBounds(topKnob.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   macrosLeft.removeFromTop(Utils::PADDING);
   mSliderMacro3.setBounds(macrosLeft.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   mLabelMacro3.setBounds(macrosLeft.removeFromTop(Utils::LABEL_HEIGHT));
-  mBtnMapMacro3.setBounds(macrosLeft.removeFromTop(Utils::LABEL_HEIGHT));
+  mBtnMapMacro3.setBounds(macrosLeft.removeFromTop(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
   // Macros 2 and 4
   topKnob = macroPanel.removeFromTop(macroPanel.getHeight() / 2);
-  mBtnMapMacro2.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
+  mBtnMapMacro2.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
   mLabelMacro2.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
   mSliderMacro2.setBounds(topKnob.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   macroPanel.removeFromTop(Utils::PADDING);
   mSliderMacro4.setBounds(macroPanel.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   mLabelMacro4.setBounds(macroPanel.removeFromTop(Utils::LABEL_HEIGHT));
-  mBtnMapMacro4.setBounds(macroPanel.removeFromTop(Utils::LABEL_HEIGHT));
+  mBtnMapMacro4.setBounds(macroPanel.removeFromTop(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
 }

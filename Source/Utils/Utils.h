@@ -29,11 +29,13 @@ static constexpr int TAB_HEIGHT = 30;
 static constexpr int KEYBOARD_HEIGHT = 200;
 static constexpr float PADDING_F = 6.0f;
 static constexpr int LABEL_HEIGHT = 16;
+static inline juce::Font getFont() {
 #if _WIN32
-static constexpr int FONT_HEIGHT = 12;
+  return juce::Font(12).withPointHeight(12);
 #else _APPLE
-static constexpr int FONT_HEIGHT = 14;
+  return juce::Font(14);
 #endif
+}
 static constexpr int KNOB_WIDTH = 25;
 static constexpr int KNOB_HEIGHT = 25;
 static constexpr float ROUNDED_AMOUNT = 6.0f;

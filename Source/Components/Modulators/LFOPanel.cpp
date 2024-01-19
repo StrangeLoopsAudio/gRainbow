@@ -78,7 +78,7 @@ mBtnMap(mParameters, mModLFO) {
   for (auto& label : labels) {
     label.get().setColour(juce::Label::ColourIds::textColourId, mModLFO.colour);
     label.get().setJustificationType(juce::Justification::centredTop);
-    label.get().setFont(juce::Font(Utils::FONT_HEIGHT).withPointHeight(Utils::FONT_HEIGHT));
+    label.get().setFont(Utils::getFont());
     addAndMakeVisible(label.get());
   }
   mLabelShape.setText("shape", juce::dontSendNotification);

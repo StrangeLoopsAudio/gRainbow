@@ -20,7 +20,7 @@ public:
   MapButton(Parameters& parameters, ModSource& modSource): mParameters(parameters), mModSource(modSource) {
     setColour(juce::TextButton::ColourIds::buttonColourId, mModSource.colour);
     setClickingTogglesState(true);
-    setButtonText("MAP");
+    setButtonText("map");
     setTooltip("Once enabled, drag sliders to create modulations");
     startTimer(300);
     onClick = [this]() {
