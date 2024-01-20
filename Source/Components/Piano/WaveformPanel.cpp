@@ -14,10 +14,7 @@
 #include "BinaryData.h"
 
 WaveformPanel::WaveformPanel(Parameters& parameters)
-    : mParameters(parameters),
-      mCurSelectedParams(parameters.getSelectedParams()),
-mParamColour(Utils::GLOBAL_COLOUR) {
-
+    : mParameters(parameters), mCurSelectedParams(parameters.getSelectedParams()), mParamColour(Utils::Colour::GLOBAL) {
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
 
@@ -111,16 +108,17 @@ void WaveformPanel::paint(juce::Graphics& g) {
   auto r = getLocalBounds().toFloat();
 
   // Outline
-  g.setColour(Utils::GLOBAL_COLOUR);
+  g.setColour(Utils::Colour::GLOBAL);
   g.fillRoundedRectangle(r, 10.0f);
-  g.setColour(Utils::BG_COLOUR);
+  g.setColour(Utils::Colour::BACKGROUND);
   g.fillRoundedRectangle(r.reduced(Utils::PADDING / 2.0), 10.0f);
 
   // Wave bars
   if (mBuffer.getNumSamples() == 0) return; // Skip if we don't even have a buffer
-  g.setColour(Utils::GLOBAL_COLOUR);
+  g.setColour(Utils::Colour::GLOBAL);
   for (WaveBar& bar : mWaveBars) {
-    auto barColour = bar.pitchClass == Utils::PitchClass::NONE ? Utils::GLOBAL_COLOUR.darker() : Utils::getRainbow12Colour(bar.pitchClass);
+    auto barColour =
+        bar.pitchClass == Utils::PitchClass::NONE ? Utils::Colour::GLOBAL.darker() : Utils::getRainbow12Colour(bar.pitchClass);
     if (mHoverBar == &bar && bar.pitchClass != Utils::PitchClass::NONE) barColour = barColour.brighter();
     else if (mHoverBar != nullptr && mHoverBar->pitchClass != Utils::PitchClass::NONE) barColour = barColour.darker(0.2f);
     g.setColour(barColour);

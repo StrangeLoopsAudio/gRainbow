@@ -29,7 +29,7 @@
 
 #include <juce_core/juce_core.h>
 
-#include "../Fft.h"
+#include "DSP/Fft.h"
 #include "Utils/Utils.h"
 #include "Utils/PitchClass.h"
 

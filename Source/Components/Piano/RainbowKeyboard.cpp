@@ -9,7 +9,7 @@
 */
 
 #include "RainbowKeyboard.h"
-#include "../Settings.h"
+#include "Components/Settings.h"
 #include "BinaryData.h"
 #include "Utils/Colour.h"
 
@@ -45,13 +45,13 @@ void RainbowKeyboard::paint(juce::Graphics& g) {
 
   // Global select rect
   const bool isGlobal = mParameters.getSelectedParams()->type == ParamType::GLOBAL;
-  auto globalFillColour = isGlobal ? Utils::GLOBAL_COLOUR : juce::Colours::transparentBlack;
-  if (mHoverGlobal && !isGlobal) globalFillColour = Utils::GLOBAL_COLOUR.withAlpha(0.2f);
+  auto globalFillColour = isGlobal ? Utils::Colour::GLOBAL : juce::Colours::transparentBlack;
+  if (mHoverGlobal && !isGlobal) globalFillColour = Utils::Colour::GLOBAL.withAlpha(0.2f);
   g.setColour(globalFillColour);
   g.fillRoundedRectangle(mGlobalRect, 5);
-  g.setColour(Utils::GLOBAL_COLOUR);
+  g.setColour(Utils::Colour::GLOBAL);
   g.drawRoundedRectangle(mGlobalRect, 5, 2);
-  auto globalTextColour = isGlobal ? Utils::BG_COLOUR : Utils::GLOBAL_COLOUR;
+  auto globalTextColour = isGlobal ? Utils::Colour::BACKGROUND : Utils::Colour::GLOBAL;
   g.setColour(globalTextColour);
   g.drawText("global", mGlobalRect, juce::Justification::centred);
 }

@@ -1,43 +1,46 @@
 #pragma once
+#include <vector>
+#include <juce_core/system/juce_PlatformDefs.h>
+#include <stddef.h>
 
 // Ripped from essentia utils
 class BPF {
  protected:
-  std::vector<float> _xPoints;
-  std::vector<float> _yPoints;
-  std::vector<float> _slopes;
+  std::vector<float> mXPoints;
+  std::vector<float> mYPoints;
+  std::vector<float> mSlopes;
 
  public:
   BPF() {}
   BPF(std::vector<float> xPoints, std::vector<float> yPoints) { init(xPoints, yPoints); }
   void init(std::vector<float> xPoints, std::vector<float> yPoints) {
-    _xPoints = xPoints;
-    _yPoints = yPoints;
+    mXPoints = xPoints;
+    mYPoints = yPoints;
 
-    jassert(_xPoints.size() == _yPoints.size());
-    jassert(_xPoints.size() >= 2);
-    for (size_t i = 1; i < _xPoints.size(); ++i) {
-      jassert(_xPoints[i - 1] < _xPoints[i]);
+    jassert(mXPoints.size() == mYPoints.size());
+    jassert(mXPoints.size() >= 2);
+    for (size_t i = 1; i < mXPoints.size(); ++i) {
+      jassert(mXPoints[i - 1] < mXPoints[i]);
     }
 
-    _slopes.resize(_xPoints.size() - 1);
+    mSlopes.resize(mXPoints.size() - 1);
 
-    for (size_t j = 1; j < _xPoints.size(); ++j) {
+    for (size_t j = 1; j < mXPoints.size(); ++j) {
       // this never gives a division by zero as we checked just before that
       // x[i-1] < x[i]
-      _slopes[j - 1] = (_yPoints[j] - _yPoints[j - 1]) / (_xPoints[j] - _xPoints[j - 1]);
+      mSlopes[j - 1] = (mYPoints[j] - mYPoints[j - 1]) / (mXPoints[j] - mXPoints[j - 1]);
     }
   }
 
   inline float operator()(float x) {
-    jassert(x >= _xPoints[0]);
-    jassert(x <= _xPoints.back());
+    jassert(x >= mXPoints[0]);
+    jassert(x <= mXPoints.back());
 
     std::vector<float>::size_type j = 0;
-    while (x > _xPoints[j + 1]) {
+    while (x > mXPoints[j + 1]) {
       j += 1;
     }
 
-    return (x - _xPoints[j]) * _slopes[j] + _yPoints[j];
+    return (x - mXPoints[j]) * mSlopes[j] + mYPoints[j];
   }
 };

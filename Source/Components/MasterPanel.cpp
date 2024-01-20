@@ -13,19 +13,19 @@
 #include "Utils/Colour.h"
 
 MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meterSource)
-: mParameters(parameters),
-mCurSelectedParams(parameters.getSelectedParams()),
-mParamColour(Utils::GLOBAL_COLOUR),
-mSliderGain(mParameters, ParamCommon::Type::GAIN),
-mSliderMacro1(mParameters, mParameters.global.macros[0].macro),
-mSliderMacro2(mParameters, mParameters.global.macros[1].macro),
-mSliderMacro3(mParameters, mParameters.global.macros[2].macro),
-mSliderMacro4(mParameters, mParameters.global.macros[3].macro),
-mBtnMapMacro1(mParameters, mParameters.global.macros[0]),
-mBtnMapMacro2(mParameters, mParameters.global.macros[1]),
-mBtnMapMacro3(mParameters, mParameters.global.macros[2]),
-mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
-  juce::Colour colour = Utils::GLOBAL_COLOUR;
+    : mParameters(parameters),
+      mCurSelectedParams(parameters.getSelectedParams()),
+      mParamColour(Utils::Colour::GLOBAL),
+      mSliderGain(mParameters, ParamCommon::Type::GAIN),
+      mSliderMacro1(mParameters, mParameters.global.macros[0].macro),
+      mSliderMacro2(mParameters, mParameters.global.macros[1].macro),
+      mSliderMacro3(mParameters, mParameters.global.macros[2].macro),
+      mSliderMacro4(mParameters, mParameters.global.macros[3].macro),
+      mBtnMapMacro1(mParameters, mParameters.global.macros[0]),
+      mBtnMapMacro2(mParameters, mParameters.global.macros[1]),
+      mBtnMapMacro3(mParameters, mParameters.global.macros[2]),
+      mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
+  juce::Colour colour = Utils::Colour::GLOBAL;
 
   // Titles
   mLabelTitle.setText("master", juce::dontSendNotification);
@@ -49,7 +49,7 @@ mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
     slider.get().setPopupDisplayEnabled(true, true, this);
     addAndMakeVisible(slider.get());
   }
-        
+
   // Macro slider settings
   std::vector<std::reference_wrapper<ParamSlider>> macroSliders = {mSliderMacro1, mSliderMacro2, mSliderMacro3, mSliderMacro4};
   int i = 0;
@@ -72,12 +72,12 @@ mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> macroLabels = { mLabelGain, mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };
   for (auto& label : macroLabels) {
-    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
+    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::Colour::GLOBAL);
     label.get().setJustificationType(juce::Justification::centredTop);
     label.get().setFont(Utils::getFont());
     addAndMakeVisible(label.get());
   }
-  
+
   // Macro label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelMacro1, mLabelMacro2, mLabelMacro3, mLabelMacro4 };
   i = 0;
@@ -144,18 +144,18 @@ void MasterPanel::selectedCommonParamsChanged(ParamCommon* newParams) {
   mCurSelectedParams = newParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-    
+
   mParamHasChanged.store(true);
   repaint();
 }
 
 void MasterPanel::paint(juce::Graphics& g) {
   // Panel rectangle
-  g.setColour(Utils::PANEL_COLOUR);
+  g.setColour(Utils::Colour::PANEL);
   g.fillRoundedRectangle(getLocalBounds().toFloat(), 10);
 
   // Separator line between master and macros
-  g.setColour(Utils::BG_COLOUR);
+  g.setColour(Utils::Colour::BACKGROUND);
   g.drawLine(getWidth() / 2, Utils::PADDING, getWidth() / 2, getHeight() - Utils::PADDING, 2);
 }
 

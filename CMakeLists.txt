@@ -191,7 +191,6 @@ set(SOURCE_DSP
     Source/DSP/PitchDetection/Features.cpp
     Source/DSP/PitchDetection/Notes.h
     Source/DSP/PitchDetection/Notes.cpp
-    Source/DSP/PitchDetection/Utils.h
 )
 
 set(SOURCE_PLUGIN

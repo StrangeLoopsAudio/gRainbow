@@ -13,8 +13,8 @@ ParamSlider::ParamSlider(Parameters& _parameters, juce::RangedAudioParameter* _p
   setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
   setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag);
   setRotaryParameters(rotaryParams);
-  setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::GLOBAL_COLOUR);
-  setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
+  setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::Colour::GLOBAL);
+  setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::Colour::GLOBAL);
   if (!parameter) return;
   setSkewFactor(parameter->getNormalisableRange().skew);
   onValueChange = [this] {
@@ -43,7 +43,7 @@ ParamSlider::ParamSlider(Parameters& _parameters, juce::RangedAudioParameter* _p
 CommonSlider::CommonSlider(Parameters& _parameters, ParamCommon::Type type)
 : ParamSlider(_parameters, _parameters.global.common[type]), mType(type) {
   parameters.addListener(this);
-  
+
   // Knob params
   auto rotaryParams = juce::Slider::RotaryParameters();
   rotaryParams.startAngleRadians = 1.4f * juce::MathConstants<float>::pi;
@@ -53,8 +53,8 @@ CommonSlider::CommonSlider(Parameters& _parameters, ParamCommon::Type type)
   setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag);
   setRotaryParameters(rotaryParams);
   setSkewFactor(parameters.global.common[mType]->getNormalisableRange().skew);
-  setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::GLOBAL_COLOUR);
-  setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
+  setColour(juce::Slider::ColourIds::rotarySliderFillColourId, Utils::Colour::GLOBAL);
+  setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::Colour::GLOBAL);
   onValueChange = [this] {
     if (parameters.getMappingModSource()) {
       int idx = parameter->getParameterIndex();
@@ -150,5 +150,5 @@ juce::Colour CommonSlider::getUsedColour() {
   else if (auto* gen = dynamic_cast<ParamGenerator*>(parameters.getSelectedParams())) {
     if (parameters.note.notes[gen->noteIdx]->isUsed[mType]) return parameters.getSelectedParamColour();
   }
-  return Utils::GLOBAL_COLOUR;
+  return Utils::Colour::GLOBAL;
 }

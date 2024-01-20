@@ -13,16 +13,16 @@
 #include "Utils/Colour.h"
 
 EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
-: mParameters(parameters),
-mCurSelectedParams(parameters.getSelectedParams()),
-mParamColour(Utils::GLOBAL_COLOUR),
-mSliderShape(parameters, ParamCommon::Type::GRAIN_SHAPE),
-mSliderTilt(parameters, ParamCommon::Type::GRAIN_TILT),
-mSliderRate(parameters, ParamCommon::Type::GRAIN_RATE, false),
-mSliderDuration(parameters, ParamCommon::Type::GRAIN_DURATION, true),
-mBtnSync(parameters, ParamCommon::Type::GRAIN_SYNC),
-mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
-  juce::Colour colour = Utils::GLOBAL_COLOUR;
+    : mParameters(parameters),
+      mCurSelectedParams(parameters.getSelectedParams()),
+      mParamColour(Utils::Colour::GLOBAL),
+      mSliderShape(parameters, ParamCommon::Type::GRAIN_SHAPE),
+      mSliderTilt(parameters, ParamCommon::Type::GRAIN_TILT),
+      mSliderRate(parameters, ParamCommon::Type::GRAIN_RATE, false),
+      mSliderDuration(parameters, ParamCommon::Type::GRAIN_DURATION, true),
+      mBtnSync(parameters, ParamCommon::Type::GRAIN_SYNC),
+      mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
+  juce::Colour colour = Utils::Colour::GLOBAL;
 
   // Default slider settings
   std::vector<std::reference_wrapper<CommonSlider>> sliders = { mSliderShape, mSliderTilt, mSliderRate, mSliderDuration };
@@ -31,20 +31,20 @@ mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::
     slider.get().setPopupDisplayEnabled(true, true, this);
     addAndMakeVisible(slider.get());
   }
-  
+
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelShape, mLabelTilt, mLabelRate, mLabelDuration };
   for (auto& label : labels) {
-    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
+    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::Colour::GLOBAL);
     label.get().setJustificationType(juce::Justification::centredTop);
     label.get().setFont(Utils::getFont());
     addAndMakeVisible(label.get());
   }
-  
+
   // Default button settings
   std::vector<std::reference_wrapper<juce::Button>> buttons = { mBtnSync };
   for (auto& btn : buttons) {
-    btn.get().setColour(juce::ToggleButton::ColourIds::tickColourId, Utils::GLOBAL_COLOUR);
+    btn.get().setColour(juce::ToggleButton::ColourIds::tickColourId, Utils::Colour::GLOBAL);
     addAndMakeVisible(btn.get());
   }
 
@@ -114,13 +114,13 @@ void EnvelopeGrain::selectedCommonParamsChanged(ParamCommon* newParams) {
 
 void EnvelopeGrain::paint(juce::Graphics& g) {
   juce::Colour colour = mParamColour;
-  
+
   // Panel rectangle
-  g.setColour(Utils::PANEL_COLOUR);
+  g.setColour(Utils::Colour::PANEL);
   g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
-  
+
   // Visualization rect
-  g.setColour(Utils::BG_COLOUR);
+  g.setColour(Utils::Colour::BACKGROUND);
   g.fillRect(mVizRect);
 
   float durSec, rateSec;
@@ -134,12 +134,12 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
     durSec = mSliderDuration.getValue();
     rateSec = 1.0f / mSliderRate.getValue();
   }
-  
+
   float envWidth = (durSec / WINDOW_SECONDS) * mVizRect.getWidth();
   float envOffset = (rateSec / WINDOW_SECONDS) * mVizRect.getWidth();
 
   float shapeWidth = envWidth * mSliderShape.getValue() / 2.0f;
-  
+
   juce::Path clipPath;
   clipPath.addRectangle(mVizRect);
   auto envBounds = mVizRect.reduced(2, 2);
@@ -208,6 +208,6 @@ void EnvelopeGrain::resized() {
 
   r.removeFromRight(Utils::PADDING);
   r.removeFromBottom(Utils::PADDING);
-  
+
   mVizRect = r.toFloat();
 }

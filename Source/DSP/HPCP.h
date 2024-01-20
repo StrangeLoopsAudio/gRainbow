@@ -41,20 +41,20 @@ class HPCP {
   static constexpr double MAGNITUDE_THRESHOLD = 0.00001;
   static constexpr int PITCH_CLASS_OFFSET = 9;  // Offset from reference freq A to lowest class C
   static constexpr int PITCH_CLASS_OFFSET_BINS = (NUM_HPCP_BINS / 12) * PITCH_CLASS_OFFSET;
-  
+
   typedef struct Peak {
     float binNum;  // Bin number in frame
     float gain;
     Peak() : binNum(-1), gain(0) {}
     Peak(float binNum_, float gain_) : binNum(binNum_), gain(gain_) {}
   } Peak;
-  
+
   typedef struct HarmonicWeight {
     float semitone;
     float gain;
     HarmonicWeight(float semitone_, float gain_) : semitone(semitone_), gain(gain_) {}
   } HarmonicWeight;
-  
+
   void initHarmonicWeights();
   std::vector<Peak> getPeaks(int numPeaks, std::vector<float>& frame);
   void interpolatePeak(const float leftVal, const float middleVal, const float rightVal, int currentBin, float& resultVal,

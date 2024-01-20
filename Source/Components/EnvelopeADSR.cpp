@@ -26,7 +26,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   for (auto& slider : sliders) {
     slider.get().setNumDecimalPlacesToDisplay(2);
     slider.get().setPopupDisplayEnabled(true, true, this);
-    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
+    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::Colour::GLOBAL);
     addAndMakeVisible(slider.get());
   }
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end, 0.01);
@@ -41,11 +41,11 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
   mSliderRelease.setDoubleClickReturnValue(true, ParamDefaults::RELEASE_DEFAULT_SEC);
   mSliderRelease.setTextValueSuffix(" s");
-  
+
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelAttack, mLabelDecay, mLabelSustain, mLabelRelease };
   for (auto& label : labels) {
-    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
+    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::Colour::GLOBAL);
     label.get().setJustificationType(juce::Justification::centredTop);
     label.get().setFont(Utils::getFont());
     addAndMakeVisible(label.get());
@@ -54,7 +54,7 @@ EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
   mLabelDecay.setText("decay", juce::dontSendNotification);
   mLabelSustain.setText("sustain", juce::dontSendNotification);
   mLabelRelease.setText("release", juce::dontSendNotification);
-  
+
   mParameters.global.ampEnvAttack->addListener(this);
   mParameters.global.ampEnvDecay->addListener(this);
   mParameters.global.ampEnvSustain->addListener(this);
@@ -85,14 +85,14 @@ void EnvelopeADSR::timerCallback() {
 }
 
 void EnvelopeADSR::paint(juce::Graphics& g) {
-  juce::Colour colour = Utils::GLOBAL_COLOUR;
+  juce::Colour colour = Utils::Colour::GLOBAL;
 
   // Panel rectangle
-  g.setColour(Utils::PANEL_COLOUR);
+  g.setColour(Utils::Colour::PANEL);
   g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
-  
+
   // Visualization rect
-  g.setColour(Utils::BG_COLOUR);
+  g.setColour(Utils::Colour::BACKGROUND);
   g.fillRect(mVizRect);
 
   const float attack = ParamRanges::ATTACK.convertTo0to1(mSliderAttack.getValue());

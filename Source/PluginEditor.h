@@ -60,7 +60,7 @@ juce::Timer {
   static constexpr int PROGRESS_SIZE = 80;
   static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
   static constexpr const char* MANUAL_URL = "https://github.com/StrangeLoopsAudio/gRainbow/blob/main/README.md";
-                                       
+
   // DSP Modules
   GranularSynth& mSynth;
 //  AudioRecorder mRecorder;

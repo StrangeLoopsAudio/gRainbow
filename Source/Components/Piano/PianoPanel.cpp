@@ -17,7 +17,7 @@ PianoPanel::PianoPanel(juce::MidiKeyboardState& state, Parameters& parameters)
       keyboard(state, parameters),
       mParameters(parameters),
       mCurSelectedParams(parameters.getSelectedParams()),
-      mParamColour(Utils::GLOBAL_COLOUR) {
+      mParamColour(Utils::Colour::GLOBAL) {
   addAndMakeVisible(keyboard);
   addAndMakeVisible(waveform);
 
@@ -47,16 +47,16 @@ void PianoPanel::selectedCommonParamsChanged(ParamCommon* newParams) {
   mCurSelectedParams = newParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  
+
   waveform.updateSelectedParams();
-  
+
   mParamHasChanged.store(true);
   repaint();
 }
 
 void PianoPanel::paint(juce::Graphics& g) {
   // Panel outline
-  g.setColour(Utils::PANEL_COLOUR);
+  g.setColour(Utils::Colour::PANEL);
   g.fillRoundedRectangle(getLocalBounds().toFloat(), 10);
 }
 

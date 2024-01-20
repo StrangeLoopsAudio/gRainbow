@@ -12,8 +12,8 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
-#include "../Sliders.h"
-#include "../Buttons.h"
+#include "Components/Sliders.h"
+#include "Components/Buttons.h"
 
 //==============================================================================
 /*
@@ -35,9 +35,9 @@ class LFOPanel : public juce::Component, juce::AudioProcessorParameter::Listener
  private:
   static constexpr int NUM_LFO_SAMPLES = 250; // # samples in the LFO buffer
   static constexpr double WINDOW_SECONDS = Utils::UI_REFRESH_INTERVAL * 0.001 * NUM_LFO_SAMPLES; // Width in seconds of the display window
-  
+
   void updateLfoPath();
-  
+
   // Bookkeeping
   Parameters& mParameters;
   LFOModSource& mModLFO;
@@ -45,7 +45,7 @@ class LFOPanel : public juce::Component, juce::AudioProcessorParameter::Listener
   juce::Path mLfoPath;
   int mBufDepthWrPos = 0;
   std::vector<float> mBufDepth; // LFO depth buffer
-  
+
   // Components
   juce::ComboBox mChoiceShape;
   QuantizedGlobalSlider mSliderRate;

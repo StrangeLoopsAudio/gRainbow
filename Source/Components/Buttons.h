@@ -1,10 +1,10 @@
 /*
  ==============================================================================
- 
+
  Sliders.h
  Created: 23 Dec 2023 8:34:54pm
  Author:  brady
- 
+
  ==============================================================================
  */
 
@@ -32,7 +32,7 @@ public:
     mParameters.removeListener(this);
     stopTimer();
   }
-  
+
   void timerCallback() override {
     if (getToggleState()) {
       mIsBright = !mIsBright;
@@ -40,7 +40,7 @@ public:
       repaint();
     }
   }
-  
+
   void mappingSourceChanged(ModSource* mod) override {
     if (mod == &mModSource) {
       mIsBright = true;
@@ -51,12 +51,12 @@ public:
       setColour(juce::TextButton::ColourIds::buttonOnColourId, mModSource.colour);
     }
   }
-  
+
 private:
   Parameters& mParameters;
   ModSource& mModSource;
   bool mIsBright = false;
-  
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MapButton)
 };
 
@@ -65,11 +65,11 @@ class CommonButton : public juce::TextButton, public Parameters::Listener {
 public:
   CommonButton(Parameters& _parameters, ParamCommon::Type type) : parameters(_parameters), parameter(_parameters.global.common[type]), mType(type) {
     setToggleable(true);
-    setColour(juce::TextButton::textColourOffId, Utils::GLOBAL_COLOUR);
+    setColour(juce::TextButton::textColourOffId, Utils::Colour::GLOBAL);
     setColour(juce::TextButton::textColourOnId, juce::Colours::black);
-    setColour(juce::TextButton::buttonColourId, Utils::GLOBAL_COLOUR);
-    setColour(juce::TextButton::buttonOnColourId, Utils::GLOBAL_COLOUR);
-    
+    setColour(juce::TextButton::buttonColourId, Utils::Colour::GLOBAL);
+    setColour(juce::TextButton::buttonOnColourId, Utils::Colour::GLOBAL);
+
     onClick = [this]() {
       ParamHelper::setCommonParam(parameters.getSelectedParams(), mType, !getToggleState());
       juce::Colour usedColour = getUsedColour();
@@ -82,7 +82,7 @@ public:
     parameters.addListener(this);
   }
   ~CommonButton() { parameters.removeListener(this); }
-  
+
   ParamCommon* getParam() { return parameters.getSelectedParams(); }
   bool getIsUsed() { return parameters.getSelectedParams()->isUsed[mType]; }
   void mouseDoubleClick(const juce::MouseEvent&) override {
@@ -131,7 +131,7 @@ public:
     parameters.getSelectedParams()->isUsed[mType] = false;
     selectedCommonParamsChanged(parameters.getSelectedParams());
   }
-  
+
   // Update button colours for new selected group
   void selectedCommonParamsChanged(ParamCommon* newParams) override {
     juce::Colour usedColour = getUsedColour();
@@ -141,7 +141,7 @@ public:
     parameter = parameters.getUsedParam(newParams, mType);
   }
   juce::RangedAudioParameter* getParameter() { return parameter; }
-  
+
 private:
   // Get the colour of the parameter at the level that's used (global, note)
   juce::Colour getUsedColour() {
@@ -150,13 +150,12 @@ private:
     else if (auto* gen = dynamic_cast<ParamGenerator*>(parameters.getSelectedParams())) {
       if (parameters.note.notes[gen->noteIdx]->isUsed[mType]) return parameters.getSelectedParamColour();
     }
-    return Utils::GLOBAL_COLOUR;
+    return Utils::Colour::GLOBAL;
   }
-  
+
   Parameters& parameters;
   juce::RangedAudioParameter* parameter;
   ParamCommon::Type mType;
-  
-  
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CommonButton)
 };

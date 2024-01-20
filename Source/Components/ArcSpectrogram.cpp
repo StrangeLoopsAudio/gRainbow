@@ -69,11 +69,11 @@ ArcSpectrogram::~ArcSpectrogram() {
 
 void ArcSpectrogram::paint(juce::Graphics& g) {
   // Set gradient
-  g.setColour(Utils::BG_COLOUR);
+  g.setColour(Utils::Colour::BACKGROUND);
   g.fillAll();
 
   // Panel outline
-  g.setColour(Utils::PANEL_COLOUR.darker(0.2f));
+  g.setColour(Utils::Colour::PANEL.darker(0.2f));
   g.fillRoundedRectangle(getLocalBounds().toFloat(), 10);
 
   // If nothing has been loaded skip image, progress bar will fill in void space
@@ -89,12 +89,12 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     g.drawImage(mParameters.ui.specImages[imageIndex], mRainbowRect.toFloat(),
                 juce::RectanglePlacement(juce::RectanglePlacement::fillDestination), false);
   }
-  
+
   mSpecType.setVisible(mParameters.ui.specComplete);
 
   // Note and Candidate can be null while loading new values
   if (!mParameters.ui.specComplete) return;
-  
+
   // Draw border arcs under clouds
   ParamNote* note = nullptr;
   int genIdx = -1; // Currently selected generator. If >= 0, darken generator's line
@@ -108,15 +108,15 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
     case ParamType::GLOBAL: break; // Do nothing, leave note as nullptr
     default: break; // do nothing
   }
-  
+
   // Draw clouds
   g.drawImage(mCloudLeft.getImage(), mCloudLeft.rect, juce::RectanglePlacement::fillDestination);
   g.drawImage(mCloudRight.getImage(), mCloudRight.rect, juce::RectanglePlacement::fillDestination);
-  
+
   // Draw position lines from active note
   if (note != nullptr) {
     float startRadians = (1.5f * juce::MathConstants<float>::pi);
-    
+
     juce::Colour noteColour = mParameters.getSelectedParamColour();
     // Draw generator position lines
     for (int i = 0; i < NUM_GENERATORS; ++i) {

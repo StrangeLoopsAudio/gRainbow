@@ -18,14 +18,14 @@ FilterControl::FilterControl(Parameters& parameters)
       mSliderCutoff(parameters, mParameters.global.filterCutoff),
       mSliderResonance(parameters, mParameters.global.filterRes),
       mPathStroke(3, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
-  juce::Colour colour = Utils::GLOBAL_COLOUR;
+  juce::Colour colour = Utils::Colour::GLOBAL;
 
   // Default slider settings
   std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderCutoff, mSliderResonance };
   for (auto& slider : sliders) {
     slider.get().setNumDecimalPlacesToDisplay(2);
     slider.get().setPopupDisplayEnabled(true, true, this);
-    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::GLOBAL_COLOUR);
+    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::Colour::GLOBAL);
     addAndMakeVisible(slider.get());
   }
   mSliderCutoff.setRange(ParamRanges::FILT_CUTOFF.start, ParamRanges::FILT_CUTOFF.end, 0.01);
@@ -33,11 +33,11 @@ FilterControl::FilterControl(Parameters& parameters)
   mSliderCutoff.setDoubleClickReturnValue(true, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
   mSliderResonance.setRange(ParamRanges::FILT_RESONANCE.start, ParamRanges::FILT_RESONANCE.end, 0.01);
   mSliderResonance.setDoubleClickReturnValue(true, ParamDefaults::FILTER_RESONANCE_DEFAULT);
-  
+
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelCutoff, mLabelResonance };
   for (auto& label : labels) {
-    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
+    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::Colour::GLOBAL);
     label.get().setJustificationType(juce::Justification::centredTop);
     label.get().setFont(juce::Font(14));
     addAndMakeVisible(label.get());
@@ -55,7 +55,7 @@ FilterControl::FilterControl(Parameters& parameters)
     ParamHelper::setParam(mParameters.global.filterType, type);
   };
   addAndMakeVisible(mFilterType);
-  
+
   mParameters.global.filterType->addListener(this);
   mParameters.global.filterCutoff->addListener(this);
   mParameters.global.filterRes->addListener(this);
@@ -88,14 +88,14 @@ void FilterControl::timerCallback() {
 }
 
 void FilterControl::paint(juce::Graphics& g) {
-  juce::Colour colour = Utils::GLOBAL_COLOUR;
-  
-  g.setColour(Utils::PANEL_COLOUR);
+  juce::Colour colour = Utils::Colour::GLOBAL;
+
+  g.setColour(Utils::Colour::PANEL);
   g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
-  
-  g.setColour(Utils::BG_COLOUR);
+
+  g.setColour(Utils::Colour::BACKGROUND);
   g.fillRect(mVizRect);
-  
+
   // Set gradient
   g.setFillType(juce::ColourGradient(colour.withAlpha(0.35f), mVizRect.getTopLeft(), colour.withAlpha(0.05f), mVizRect.getBottomLeft(), false));
   g.fillPath(mFilterPath);
@@ -128,7 +128,7 @@ void FilterControl::resized() {
 
 void FilterControl::updateFilterPath() {
   auto drawRect = mVizRect.reduced(Utils::PADDING * 2, Utils::PADDING * 2);
-  
+
   // Draw selected filter path
   mFilterPath.clear();
   int resPadding = drawRect.getHeight() * 0.3f; // both width and height max size of resonance peak
@@ -136,11 +136,11 @@ void FilterControl::updateFilterPath() {
   ParamRanges::FILT_CUTOFF.convertTo0to1(mSliderCutoff.getValue());
   float resHeight =
   drawRect.getHeight() * 0.3f * ParamRanges::FILT_RESONANCE.convertTo0to1(mSliderResonance.getValue());
-  
+
   juce::Point<float> startPt = drawRect.getBottomLeft();
   juce::Point<float> midPt1, midPt2, midPt3, midPt4;
   juce::Point<float> endPt = drawRect.getBottomRight();
-  
+
   switch (mFilterType.getSelectedId() - 1) {
     case (Utils::FilterType::LOWPASS):
       midPt1 = juce::Point<float>(drawRect.getX(), drawRect.getY() + resPadding);
@@ -170,13 +170,13 @@ void FilterControl::updateFilterPath() {
       midPt4 = juce::Point<float>(drawRect.getTopRight().translated(0, resPadding));
       break;
   }
-  
+
   // I'm not happy with this either, clean it up if possible
   midPt1.setXY(juce::jlimit(drawRect.getX(), drawRect.getRight(), midPt1.x), juce::jlimit(drawRect.getY(), drawRect.getBottom(), midPt1.y));
   midPt2.setXY(juce::jlimit(drawRect.getX(), drawRect.getRight(), midPt2.x), juce::jlimit(drawRect.getY(), drawRect.getBottom(), midPt2.y));
   midPt3.setXY(juce::jlimit(drawRect.getX(), drawRect.getRight(), midPt3.x), juce::jlimit(drawRect.getY(), drawRect.getBottom(), midPt3.y));
   midPt4.setXY(juce::jlimit(drawRect.getX(), drawRect.getRight(), midPt4.x), juce::jlimit(drawRect.getY(), drawRect.getBottom(), midPt4.y));
-  
+
   // Make path from points
   if (startPt.x < midPt1.x) startPt.x = midPt1.x + 5;
   if (endPt.x > midPt4.x) endPt.x = midPt4.x - 5;

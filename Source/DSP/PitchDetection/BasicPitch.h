@@ -37,7 +37,7 @@ public:
      * @param inNumSamples Number of input samples available.
      */
     void transcribeToMIDI(float* inAudio, int inNumSamples);
-  
+
     /**
      * Retrieve the number of frames used in the transcription
      */

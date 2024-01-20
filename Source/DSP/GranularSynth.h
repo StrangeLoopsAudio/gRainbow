@@ -29,7 +29,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   public:
     GrainPool() {}
     ~GrainPool() {}
-    
+
     Grain* getNextAvailableGrain() {
       auto nextGrain = std::find_if(mGrains.begin(), mGrains.end(), [](Grain& g) { return !g.isActive; });
       if (nextGrain != mGrains.end()) {
@@ -44,7 +44,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
         }
       }
     }
-    
+
   private:
     std::array<Grain, Utils::MAX_GRAINS> mGrains;
   };
@@ -55,7 +55,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   //=====================start-inherited-functions================================
   void prepareToPlay(double sampleRate, int samplesPerBlock) override;
   void releaseResources() override;
-  
+
   void run() override;
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -83,7 +83,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
   //=====================end-inherited-functions==================================
-  
+
   foleys::LevelMeterSource& getMeterSource() { return mMeterSource; }
 
   void getPresetParamsXml(juce::MemoryBlock& destData);
@@ -149,7 +149,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
       grainTriggers.fill(-1.0f);  // Trigger first set of grains right away
       noteOn(ts);
     }
-    
+
     void noteOn(int ts) {
       for (size_t i = 0; i < NUM_GENERATORS; ++i) {
         genAmpEnvs[i].noteOn(ts);  // Set note on for each position as well
@@ -175,7 +175,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   bool mNeedsResample = false;
   float mBarsPerSec = (1.0f / DEFAULT_BPM) * 60.0f * DEFAULT_BEATS_PER_BAR;
   float mCurPitchBendSemitones = 0.0f; // Current pitch bend value from MIDI in semitones
-  
+
   // Process block variables saved to avoid alloc every block, should not be used outside of it EVER
   ParamGenerator* mParamGenerator;
   ParamCandidate* mParamCandidate;

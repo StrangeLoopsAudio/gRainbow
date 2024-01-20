@@ -13,11 +13,7 @@
 #include "Utils/Colour.h"
 
 FxPanel::FxPanel(Parameters& parameters)
-    : mParameters(parameters),
-      mCurSelectedParams(parameters.selectedParams),
-      mParamColour(Utils::GLOBAL_COLOUR) {
-  
-
+    : mParameters(parameters), mCurSelectedParams(parameters.selectedParams), mParamColour(Utils::Colour::GLOBAL) {
   mCurSelectedParams->addListener(this);
   updateSelectedParams();
 
@@ -34,7 +30,6 @@ void FxPanel::parameterValueChanged(int, float) { mParamHasChanged.store(true); 
 void FxPanel::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    
   }
 }
 
@@ -49,7 +44,7 @@ void FxPanel::updateSelectedParams() {
 }
 
 void FxPanel::paint(juce::Graphics& g) {
-  g.setColour(Utils::PANEL_COLOUR);
+  g.setColour(Utils::Colour::PANEL);
   g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
 }
 
@@ -57,6 +52,4 @@ void FxPanel::resized() {
   juce::Rectangle<float> r = getLocalBounds().toFloat();
   // Remove padding
   r = r.reduced(Utils::PADDING, Utils::PADDING);
-
-  
 }

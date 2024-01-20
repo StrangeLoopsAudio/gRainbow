@@ -108,14 +108,14 @@ void TrimSelection::paint(juce::Graphics& g) {
   {
     const int channelHeight = thumbnailHeight / numChannels;
     // draw an outline around the thumbnail
-    g.setColour(Utils::GLOBAL_COLOUR);
+    g.setColour(Utils::Colour::GLOBAL);
     g.drawRect(mThumbnailRect, 2);
 
     for (int i = 0; i < numChannels; i++) {
       juce::Rectangle<int> channelBounds = mThumbnailRect.withTrimmedTop(channelHeight * i).withHeight(channelHeight);
 
-      g.setGradientFill(juce::ColourGradient(Utils::GLOBAL_COLOUR, channelBounds.getTopLeft().toFloat(),
-                                             Utils::GLOBAL_COLOUR.darker(), channelBounds.getBottomLeft().toFloat(), false));
+      g.setGradientFill(juce::ColourGradient(Utils::Colour::GLOBAL, channelBounds.getTopLeft().toFloat(),
+                                             Utils::Colour::GLOBAL.darker(), channelBounds.getBottomLeft().toFloat(), false));
       mThumbnail.drawChannel(g, channelBounds, 0.0f, mVisibleRange.getEnd(), i, 1.0f);
     }
   }
@@ -130,7 +130,7 @@ void TrimSelection::paint(juce::Graphics& g) {
 
   // Draw selectors
   {
-    g.setColour(Utils::GLOBAL_COLOUR);
+    g.setColour(Utils::Colour::GLOBAL);
     g.setFont(Utils::getFont());
     g.drawFittedText(mStartTimeString, mSelectorRect, juce::Justification::bottomLeft, 1);
     g.drawFittedText(juce::String(mSelectedRange.getLength(), 1) + " seconds", mSelectorRect, juce::Justification::centredBottom,

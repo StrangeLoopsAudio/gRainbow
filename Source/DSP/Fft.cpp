@@ -37,7 +37,7 @@ Utils::SpecBuffer* Fft::process(const juce::AudioBuffer<float>* audioBuffer) {
   int curSample = 0;
   bool hasData = numInputSamples > mFftFrame.size();
   float curMax = std::numeric_limits<float>::min();
-  
+
   while (hasData) {
 //    updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(curSample) / static_cast<double>(numInputSamples))));
     const float* startSample = &pBuffer[curSample];
@@ -49,10 +49,10 @@ Utils::SpecBuffer* Fft::process(const juce::AudioBuffer<float>* audioBuffer) {
     mFftFrame.resize(mWindowSize * 2, 0.0f);
     memcpy(mFftFrame.data(), startSample, numSamples);
     mWindowEnvelope.multiplyWithWindowingTable(mFftFrame.data(), mFftFrame.size());
-    
+
     // then render our FFT data..
     mForwardFFT.performFrequencyOnlyForwardTransform(mFftFrame.data());
-    
+
     // Add fft data to our master array
     std::vector<float> newFrame = std::vector<float>(mFftFrame.begin(), mFftFrame.begin() + (mWindowSize / 2));
     float frameMax = juce::FloatVectorOperations::findMaximum(mFftFrame.data(), mFftFrame.size());
@@ -62,12 +62,12 @@ Utils::SpecBuffer* Fft::process(const juce::AudioBuffer<float>* audioBuffer) {
     for (size_t i = 0; i < mFftData.back().size(); ++i) {
       mFftData.back()[i] /= curMax;
     }
-    
+
     curSample += mHopSize;
     if (curSample > numInputSamples) {
       hasData = false;
     }
   }
-  
+
   return &mFftData;
 }

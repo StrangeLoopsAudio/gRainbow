@@ -1,14 +1,14 @@
 /*
  ==============================================================================
- 
+
  Modulators.h
  Created: 01 Jan 2024 8:34:54pm
  Author:  brady
- 
+
  Influenced by (but not copied from) Surge XT's modulation code
- 
+
  Made abstract enough to be reasonably portable to other applications
- 
+
  ==============================================================================
  */
 
@@ -23,21 +23,21 @@
 class ModSource {
 public:
   ModSource(): mSampleRate(48000), mBlockSize(512), mOutput(0.0f) {}
-  
+
   virtual void processBlock() = 0;
   virtual juce::Range<float> getRange() = 0;
   // Mod sources can override this to let UI elements show the source's progression
   virtual float getPhase() { return 0.0f; }
-  
+
   void prepare(int blockSize, double sampleRate) {
     mBlockSize = blockSize;
     mSampleRate = sampleRate;
     mRadPerBlock = juce::MathConstants<double>::twoPi * (static_cast<double>(mBlockSize) / mSampleRate);
   }
   float getOutput() { return mOutput; }
-  
+
   juce::Colour colour; // Colour of mod source (shown on sliders when modulations are applied)
-  
+
 protected:
   double mSampleRate;
   int mBlockSize;
@@ -62,20 +62,20 @@ public:
     juce::String name;
     std::function<float (float x)> calc;
   } Shape;
-  
+
   static constexpr int NUM_LFO_SHAPES = 4; // Increment when adding more shapes
   static const std::array<const Shape, NUM_LFO_SHAPES> LFO_SHAPES;
-  
+
   LFOModSource() { colour = juce::Colour(0xffe7d1c9); }
-  
+
   void processBlock() override;
   juce::Range<float> getRange() override;
   float getPhase() override;
-  
+
   // Sets the sync rate of in blocks/bar using 1/(bars/sec * samp/block * sec/samp)
   void setSyncRate(float barsPerSec) { mBarsPerSec = barsPerSec; }
   void checkRetrigger() { if (retrigger && retrigger->get()) mCurPhase = phase->get(); }
-  
+
   // Must be initialized externally (in this app done in Parameters.cpp)
   juce::AudioParameterChoice* shape;
   juce::AudioParameterFloat* rate;
@@ -83,7 +83,7 @@ public:
   juce::AudioParameterBool* sync;
   juce::AudioParameterBool* bipolar;
   juce::AudioParameterBool* retrigger;
-  
+
 private:
   // LFO shape calculation functions (all bipolar -1.0 to 1.0)
   static float calcSine(float x) {
@@ -99,7 +99,7 @@ private:
     const float scaledX = (x - M_PI) / juce::MathConstants<float>::twoPi;
     return 2.0f * (scaledX - floorf(0.5f + scaledX));
   }
-  
+
   float mBarsPerSec = 1.0f; // Rate of blocks/bar when synced to host bpm
   double mCurPhase = 0.0; // Phase in radians
 };
@@ -107,13 +107,12 @@ private:
 // Envelope modulation source
 class EnvModSource : public ModSource {
 public:
-  
   EnvModSource() { colour = juce::Colour(0xffd0b49f); }
-  
+
   void processBlock() override;
   juce::Range<float> getRange() override;
   float getPhase() override { return (float)mEnv.state; }
-  
+
   void handleNoteOn(int ts) {
     mEnv.noteOn(ts);
     mCurTs = ts;
@@ -122,13 +121,13 @@ public:
     mEnv.noteOff(ts);
     mCurTs = ts;
   }
-  
+
   // Must be initialized externally (in this app done in Parameters.cpp)
   juce::AudioParameterFloat* attack;
   juce::AudioParameterFloat* decay;
   juce::AudioParameterFloat* sustain;
   juce::AudioParameterFloat* release;
-  
+
 private:
   Utils::EnvelopeADSR mEnv;
   int mCurTs = 0;
@@ -137,12 +136,11 @@ private:
 // Macro modulation source
 class MacroModSource : public ModSource {
 public:
-  
   MacroModSource() { colour = juce::Colour(0xffdeeae8); }
-  
+
   void processBlock() override;
   juce::Range<float> getRange() override;
-  
+
   // Must be initialized externally (in this app done in Parameters.cpp)
   juce::AudioParameterFloat* macro;
 };

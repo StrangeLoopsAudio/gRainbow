@@ -13,14 +13,13 @@
 #include "Utils/Colour.h"
 
 EnvPanel::EnvPanel(int modIdx, Parameters& parameters)
-: mParameters(parameters),
-mModEnv(mParameters.global.modEnvs[modIdx]),
-mSliderAttack(mParameters, mModEnv.attack),
-mSliderDecay(mParameters, mModEnv.decay),
-mSliderSustain(mParameters, mModEnv.sustain),
-mSliderRelease(mParameters, mModEnv.release),
-mBtnMap(mParameters, mModEnv) {
-  
+    : mParameters(parameters),
+      mModEnv(mParameters.global.modEnvs[modIdx]),
+      mSliderAttack(mParameters, mModEnv.attack),
+      mSliderDecay(mParameters, mModEnv.decay),
+      mSliderSustain(mParameters, mModEnv.sustain),
+      mSliderRelease(mParameters, mModEnv.release),
+      mBtnMap(mParameters, mModEnv) {
   // Default slider settings
   std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderAttack, mSliderDecay, mSliderSustain, mSliderRelease };
   for (auto& slider : sliders) {
@@ -41,7 +40,7 @@ mBtnMap(mParameters, mModEnv) {
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
   mSliderRelease.setDoubleClickReturnValue(true, ParamDefaults::RELEASE_DEFAULT_SEC);
   mSliderRelease.setTextValueSuffix(" s");
-  
+
   // Default button settings
   std::vector<std::reference_wrapper<juce::TextButton>> buttons = { mBtnMap };
   for (auto& button : buttons) {
@@ -52,7 +51,7 @@ mBtnMap(mParameters, mModEnv) {
     button.get().setColour(juce::TextButton::buttonOnColourId, mModEnv.colour);
     addAndMakeVisible(button.get());
   }
-  
+
   // Default label settings
   std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelAttack, mLabelDecay, mLabelSustain, mLabelRelease };
   for (auto& label : labels) {
@@ -65,13 +64,13 @@ mBtnMap(mParameters, mModEnv) {
   mLabelDecay.setText("decay", juce::dontSendNotification);
   mLabelSustain.setText("sustain", juce::dontSendNotification);
   mLabelRelease.setText("release", juce::dontSendNotification);
-  
+
   mModEnv.attack->addListener(this);
   mModEnv.decay->addListener(this);
   mModEnv.sustain->addListener(this);
   mModEnv.release->addListener(this);
   mParamHasChanged.store(true); // Init param values
-  
+
   startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
@@ -102,27 +101,27 @@ void EnvPanel::timerCallback() {
 }
 
 void EnvPanel::paint(juce::Graphics& g) {
-  g.setColour(Utils::PANEL_COLOUR);
+  g.setColour(Utils::Colour::PANEL);
   g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
-  
-  g.setColour(Utils::BG_COLOUR);
+
+  g.setColour(Utils::Colour::BACKGROUND);
   g.fillRect(mVizRect);
-  
+
   float attack = ParamRanges::ATTACK.convertTo0to1(mSliderAttack.getValue());
   float decay = ParamRanges::DECAY.convertTo0to1(mSliderDecay.getValue());
   float sustain = ParamRanges::SUSTAIN.convertTo0to1(mSliderSustain.getValue());
   float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
-  
+
   // Draw ADSR path
   auto adsrRect = mVizRect.reduced(Utils::PADDING * 2, Utils::PADDING * 2);
-  
+
   juce::Path adsrPath;
   juce::Point<float> startPt = adsrRect.getBottomLeft();
   juce::Point<float> attackPt = startPt.translated(attack * adsrRect.getWidth() * 0.375f, -adsrRect.getHeight());
   juce::Point<float> decayPt = attackPt.translated(decay * adsrRect.getWidth() * 0.375f, (1.0f - sustain) * (adsrRect.getHeight()));
   juce::Point<float> sustainPt = adsrRect.getBottomLeft().translated(adsrRect.getWidth() * 0.75f, -sustain * (adsrRect.getHeight()));
   juce::Point<float> endPt = sustainPt.translated(release * adsrRect.getWidth() * 0.25f, 0.0f).withY(adsrRect.getBottom());
-  
+
   adsrPath.startNewSubPath(startPt);
   adsrPath.lineTo(attackPt);
   adsrPath.lineTo(decayPt);
@@ -143,7 +142,7 @@ void EnvPanel::resized() {
   mLabelDecay.setBounds(labelPanel.removeFromLeft(labelWidth));
   mLabelSustain.setBounds(labelPanel.removeFromLeft(labelWidth));
   mLabelRelease.setBounds(labelPanel.removeFromLeft(labelWidth));
-  
+
   // Sliders
   auto knobPanel = r.removeFromBottom(Utils::KNOB_HEIGHT);
   const int knobWidth = knobPanel.getWidth() / 4;
@@ -151,14 +150,14 @@ void EnvPanel::resized() {
   mSliderDecay.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   mSliderSustain.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   mSliderRelease.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-  
+
   auto rightPanel = r.removeFromRight(r.getWidth() * 0.25f);
-    
+
   r.removeFromRight(Utils::PADDING);
   r.removeFromBottom(Utils::PADDING);
-  
+
   mVizRect = r.toFloat();
-  
+
   mBtnMap.setBounds(rightPanel.removeFromTop(mVizRect.getHeight() / 2));
 
 }

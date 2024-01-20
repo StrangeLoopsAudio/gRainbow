@@ -65,7 +65,7 @@ Utils::PitchClass Parameters::getSelectedPitchClass() {
 juce::Colour Parameters::getSelectedParamColour() {
   switch (getSelectedParams()->type) {
     case ParamType::GLOBAL:
-      return Utils::GLOBAL_COLOUR;
+      return Utils::Colour::GLOBAL;
     case ParamType::NOTE:
       return Utils::getRainbow12Colour(dynamic_cast<ParamNote*>(getSelectedParams())->noteIdx);
     case ParamType::GENERATOR:
@@ -278,7 +278,7 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
   // First the note's common parameters
   p.addParameter(common[GAIN] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteGain, 1}, notePrefix + ParamIDs::noteGain,
                                                               ParamRanges::GAIN, ParamDefaults::GAIN_DEFAULT));
-  
+
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteGrainShape, 1}, notePrefix + ParamIDs::noteGrainShape,
                                                    ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
   p.addParameter(common[GRAIN_TILT] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteGrainTilt, 1}, notePrefix + ParamIDs::noteGrainTilt,

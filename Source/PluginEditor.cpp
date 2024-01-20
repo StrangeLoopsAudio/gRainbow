@@ -47,8 +47,8 @@ mModLFO3(2, synth.getParams()),
 mMasterPanel(synth.getParams(), synth.getMeterSource()),
 mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
-  mRainbowLookAndFeel.setColour(juce::ComboBox::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
-  mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
+  mRainbowLookAndFeel.setColour(juce::ComboBox::ColourIds::backgroundColourId, Utils::Colour::GLOBAL);
+  mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::Colour::GLOBAL);
   juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(RainbowLookAndFeel::getCustomTypeface());
 
   mErrorMessage.clear();
@@ -67,38 +67,38 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   auto* tabImageComp = new juce::ImageComponent();
   tabImageComp->setInterceptsMouseClicks(false, false);
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
-  mTabsGrains.addTab("grain env", Utils::BG_COLOUR, &mEnvGrain, false);
+  mTabsGrains.addTab("grain env", Utils::Colour::BACKGROUND, &mEnvGrain, false);
   mTabsGrains.getTabbedButtonBar().getTabButton(0)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
 
   tabImage = juce::PNGImageFormat::loadFrom(BinaryData::adjust_png, BinaryData::adjust_pngSize);
   tabImageComp = new juce::ImageComponent();
   tabImageComp->setInterceptsMouseClicks(false, false);
   tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
-  mTabsGrains.addTab("adjust", Utils::BG_COLOUR, &mAdjustPanel, false);
+  mTabsGrains.addTab("adjust", Utils::Colour::BACKGROUND, &mAdjustPanel, false);
   mTabsGrains.getTabbedButtonBar().getTabButton(1)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
-  mTabsGrains.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::tabTextColourId, Utils::GLOBAL_COLOUR);
-  mTabsGrains.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::frontTextColourId, Utils::GLOBAL_COLOUR);
+  mTabsGrains.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::tabTextColourId, Utils::Colour::GLOBAL);
+  mTabsGrains.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::frontTextColourId, Utils::Colour::GLOBAL);
   mTabsGrains.setTabBarDepth(Utils::TAB_HEIGHT);
   mTabsGrains.setOutline(0);
   addAndMakeVisible(mTabsGrains);
 
   // Mod LFO tabs
   mTabsLFOs.setTabBarDepth(Utils::TAB_HEIGHT);
-  mTabsLFOs.addTab("lfo 1", Utils::BG_COLOUR, &mModLFO1, false);
+  mTabsLFOs.addTab("lfo 1", Utils::Colour::BACKGROUND, &mModLFO1, false);
   mTabsLFOs.getTabbedButtonBar().getTabButton(0)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modLFOs[0].colour);
-  mTabsLFOs.addTab("lfo 2", Utils::BG_COLOUR, &mModLFO2, false);
+  mTabsLFOs.addTab("lfo 2", Utils::Colour::BACKGROUND, &mModLFO2, false);
   mTabsLFOs.getTabbedButtonBar().getTabButton(1)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modLFOs[1].colour);
-  mTabsLFOs.addTab("lfo 3", Utils::BG_COLOUR, &mModLFO3, false);
+  mTabsLFOs.addTab("lfo 3", Utils::Colour::BACKGROUND, &mModLFO3, false);
   mTabsLFOs.getTabbedButtonBar().getTabButton(2)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modLFOs[2].colour);
   mTabsLFOs.setOutline(0);
   addAndMakeVisible(mTabsLFOs);
 
   // Mod enveople tabs
   mTabsEnvs.setTabBarDepth(Utils::TAB_HEIGHT);
-  mTabsEnvs.addTab("env amp", Utils::BG_COLOUR, &mEnvAdsr, false);
-  mTabsEnvs.addTab("env 2", Utils::BG_COLOUR, &mModEnv1, false);
+  mTabsEnvs.addTab("env amp", Utils::Colour::BACKGROUND, &mEnvAdsr, false);
+  mTabsEnvs.addTab("env 2", Utils::Colour::BACKGROUND, &mModEnv1, false);
   mTabsEnvs.getTabbedButtonBar().getTabButton(1)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[0].colour);
-  mTabsEnvs.addTab("env 3", Utils::BG_COLOUR, &mModEnv2, false);
+  mTabsEnvs.addTab("env 3", Utils::Colour::BACKGROUND, &mModEnv2, false);
   mTabsEnvs.getTabbedButtonBar().getTabButton(2)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[1].colour);
   mTabsEnvs.setOutline(0);
   addAndMakeVisible(mTabsEnvs);
@@ -184,7 +184,7 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
     mDialogWindow->exitModalState(0);
     delete mDialogWindow;
   }
-  
+
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   auto recordFile = parentDir.getChildFile(FILE_RECORDING);
   recordFile.deleteFile();
@@ -225,7 +225,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
     mTitlePresetPanel.btnSavePreset.setEnabled(true);
     mParameters.ui.isLoading = false;
   }
-  
+
   bool isNotLoaded = mParameters.ui.fileName != mParameters.ui.loadedFileName;
   if (mTitlePresetPanel.labelFileName.getText() != mParameters.ui.loadedFileName || isNotLoaded) {
     // Set title bar to display new preset name
@@ -277,7 +277,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
 //==============================================================================
 void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   // Set gradient
-  g.setColour(Utils::BG_COLOUR);
+  g.setColour(Utils::Colour::BACKGROUND);
   g.fillRect(getLocalBounds());
 }
 

@@ -430,7 +430,7 @@ struct ParamNote : ParamCommon {
     }
     ParamHelper::setParam(soloIdx, SOLO_NONE);
   }
-  
+
   void clearCandidates() {
     candidates.clear();
   }
@@ -481,7 +481,7 @@ struct ParamsNote {
       note->resetParams();
     }
   }
-  
+
   void clearCandidates() {
     for (auto& note : notes) {
       note->clearCandidates();
@@ -536,7 +536,7 @@ struct ParamGlobal : ParamCommon {
   ~ParamGlobal() {}
 
   void addParams(juce::AudioProcessor& p);
-  
+
   void resetParams() {
     ParamCommon::resetParams();
     ParamHelper::setParam(ampEnvAttack, ParamDefaults::ATTACK_DEFAULT_SEC);
@@ -561,7 +561,7 @@ struct ParamGlobal : ParamCommon {
       ParamHelper::setParam(macro.macro, ParamDefaults::MACRO_DEFAULT);
     }
   }
-  
+
   // Global parameters
   juce::AudioParameterFloat* ampEnvAttack;
   juce::AudioParameterFloat* ampEnvDecay;
@@ -679,33 +679,33 @@ public:
     // Called when the current modulator mapping source changes
     virtual void mappingSourceChanged(ModSource* mod) {}
   };
-  
+
   Parameters() {
     mSelectedParams = &global; // Init to using global params
   }
-  
+
   // The 3 types of parameter sets
   ParamUI ui;
   ParamGlobal global;
   ParamsNote note;
-  
+
   void resetParams() {
     global.resetParams();
     note.resetParams();
   }
-  
+
   juce::HashMap<int, Modulation> modulations;
-  
+
   ModSource* getMappingModSource() { return mMappingModSource; }
   void setMappingModSource(ModSource* mod) {
     mMappingModSource = mod;
     mListeners.call(&Parameters::Listener::mappingSourceChanged, mMappingModSource);
   }
-  
+
   // Listeners for callbacks relating to parameters
   void addListener(Parameters::Listener* listener);
   void removeListener(Parameters::Listener* listener);
-  
+
   // Returns the currently selected pitch class, or NONE if global selected
   Utils::PitchClass getSelectedPitchClass();
   juce::Colour getSelectedParamColour();
@@ -717,15 +717,15 @@ public:
     mSelectedParams = params;
     mListeners.call(&Parameters::Listener::selectedCommonParamsChanged, mSelectedParams);
   }
-  
+
   // Modulation processing
   void prepareModSources(int blockSize, double sampleRate);
   void processModSources();
   void applyModulations(juce::RangedAudioParameter* param, float& value0To1);
-  
+
   // Returns the candidate used in a given generator
   ParamCandidate* getGeneratorCandidate(ParamGenerator* gen);
-  
+
   juce::RangedAudioParameter* getUsedParam(ParamCommon* common, ParamCommon::Type type);
 
   // Finds the lowest level parameter that's different from its parent
@@ -737,13 +737,13 @@ public:
   int getIntParam(juce::AudioParameterInt* param, bool withModulations = false);
   int getChoiceParam(ParamCommon* common, ParamCommon::Type type);
   bool getBoolParam(ParamCommon* common, ParamCommon::Type type);
-  
+
 private:
   // Keeps track of the current selected global/note/generator parameters for editing, global by default
   ParamCommon* mSelectedParams = &global;
-  
+
   ModSource* mMappingModSource = nullptr; // If not null, then a modulator is waiting to be mapped
-  
+
   // Listener list for our callbacks
   juce::ListenerList<Listener> mListeners;
 };

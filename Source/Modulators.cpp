@@ -1,12 +1,12 @@
 /*
  ==============================================================================
- 
+
  Modulators.cpp
  Created: 01 Jan 2024 8:34:54pm
  Author:  brady
- 
+
  Influenced by but not copied from Surge XT's modulation code
- 
+
  ==============================================================================
  */
 
@@ -27,7 +27,7 @@ void LFOModSource::processBlock() {
   // Calculate LFO output
   mOutput = LFO_SHAPES[shape->getIndex()].calc(mCurPhase) / 2.0f;
   if (!bipolar->get()) mOutput = mOutput + 0.5f; // Make unipolar if needed
-  
+
   // Update phase for the next block
   if (sync->get()) {
     const float divInBars = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * rate->convertTo0to1(rate->get())));
@@ -35,7 +35,7 @@ void LFOModSource::processBlock() {
   } else {
     mCurPhase += mRadPerBlock * rate->get();
   }
-  
+
   // Wrap phase to keep it in the range [0, 2PI)
   if (mCurPhase >= juce::MathConstants<double>::twoPi) mCurPhase -= juce::MathConstants<double>::twoPi;
 }

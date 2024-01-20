@@ -22,22 +22,22 @@ Utils::SpecBuffer* HPCP::process(Utils::SpecBuffer* spec, double sampleRate) {
   for (size_t frame = 0; frame < spec->size(); ++frame) {
 //    updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(frame) / static_cast<double>(spec->size()))));
     mHPCP.emplace_back(std::vector<float>(NUM_HPCP_BINS, 0.0f));
-    
+
     std::vector<float>& specFrame = (*spec)[frame];
-    
+
     // Find local peaks to compute HPCP with
     std::vector<Peak> peaks = getPeaks(MAX_SPEC_PEAKS, specFrame);
-    
+
     float curMax = 0.0;
     for (size_t i = 0; i < peaks.size(); ++i) {
       float peakFreq = ((peaks[i].binNum / (specFrame.size() - 1)) * mSampleRate) / 2;
       if (peakFreq < MIN_FREQ || peakFreq > MAX_FREQ) continue;
-      
+
       // Create sum for each pitch class
       for (int pc = 0; pc < NUM_HPCP_BINS; ++pc) {
         int pcIdx = (pc + PITCH_CLASS_OFFSET_BINS) % NUM_HPCP_BINS;
         float centerFreq = REF_FREQ * std::pow(2.0f, pc / (float)NUM_HPCP_BINS);
-        
+
         // Add contribution from each harmonic
         for (size_t hIdx = 0; hIdx < mHarmonicWeights.size(); ++hIdx) {
           float freq = peakFreq * pow(2., -mHarmonicWeights[hIdx].semitone / 12.0);
@@ -51,7 +51,7 @@ Utils::SpecBuffer* HPCP::process(Utils::SpecBuffer* spec, double sampleRate) {
         }
       }
     }
-    
+
     // Normalize HPCP frame and clear low energy frames
     float totalEnergy = 0.0f;
     if (curMax > 0.0f) {
@@ -73,25 +73,25 @@ Utils::SpecBuffer* HPCP::process(Utils::SpecBuffer* spec, double sampleRate) {
 // Strength of 1.0.
 void HPCP::initHarmonicWeights() {
   mHarmonicWeights.clear();
-  
+
   // Populate _harmonicPeaks with the semitonal positions of each of the
   // harmonics.
   for (int i = 0; i <= NUM_HARMONIC_WEIGHTS; i++) {
     float semitone = 12.0 * log2(i + 1.0);
     float octweight = std::max(1.0, (semitone / 12.0) * 0.5);
-    
+
     // Get the semitone within the range
     // (0-HARMONIC_PRECISION, 12.0-HARMONIC_PRECISION]
     while (semitone >= 12.0 - HARMONIC_PRECISION) {
       semitone -= 12.0;
     }
-    
+
     // Check to see if the semitone has already been added to weights
     std::vector<HarmonicWeight>::iterator it;
     for (it = mHarmonicWeights.begin(); it != mHarmonicWeights.end(); it++) {
       if ((*it).semitone > semitone - HARMONIC_PRECISION && (*it).semitone < semitone + HARMONIC_PRECISION) break;
     }
-    
+
     if (it == mHarmonicWeights.end()) {
       // no harmonic peak found for this frequency; add it
       mHarmonicWeights.emplace_back(HarmonicWeight(semitone, (1.0f / octweight)));
@@ -105,58 +105,58 @@ void HPCP::initHarmonicWeights() {
 std::vector<HPCP::Peak> HPCP::getPeaks(int numPeaks, std::vector<float>& frame) {
   int size = frame.size();
   const float scale = 1.0 / (float)(size - 1);
-  
+
   std::vector<Peak> peaks;
   peaks.reserve(size);
-  
+
   // we want to round up to the next integer instead of simple truncation,
   // otherwise the peak frequency at i can be lower than _minPos
   int i = 0;
-  
+
   // first check the boundaries:
   if (i + 1 < size && frame[i] > frame[i + 1]) {
     if (frame[i] > MAGNITUDE_THRESHOLD) {
       peaks.emplace_back(Peak(i, frame[i]));
     }
   }
-  
+
   while (true) {
     // going down
     while (i + 1 < size - 1 && frame[i] >= frame[i + 1]) {
       i++;
     }
-    
+
     // now we're climbing
     while (i + 1 < size - 1 && frame[i] < frame[i + 1]) {
       i++;
     }
-    
+
     // not anymore, go through the plateau
     int j = i;
     while (j + 1 < size - 1 && (frame[j] == frame[j + 1])) {
       j++;
     }
-    
+
     // end of plateau, do we go up or down?
     if (j + 1 < size - 1 && frame[j + 1] < frame[j] && frame[j] > MAGNITUDE_THRESHOLD) {  // going down again
       float resultBin = 0.0;
       float resultVal = 0.0;
-      
+
       if (j != i) {  // plateau peak between i and j
         resultBin = (i + j) * 0.5;
         resultVal = frame[i];
       } else {  // interpolate peak at i-1, i and i+1
         interpolatePeak(frame[j - 1], frame[j], frame[j + 1], j, resultVal, resultBin);
       }
-      
+
       if (resultBin > size - 1) break;
-      
+
       peaks.emplace_back(Peak(resultBin, resultVal));
     }
-    
+
     // nothing found, start loop again
     i = j;
-    
+
     if (i + 1 >= size - 1) {  // check the one just before the last position
       if (i == size - 2 && frame[i - 1] < frame[i] && frame[i + 1] < frame[i] && frame[i] > MAGNITUDE_THRESHOLD) {
         float resultBin = 0.0;
@@ -167,7 +167,7 @@ std::vector<HPCP::Peak> HPCP::getPeaks(int numPeaks, std::vector<float>& frame) 
       break;
     }
   }
-  
+
   // check upper boundary here, so peaks are already sorted by position
   float pos = 1.0 / scale;
   if (size - 2 < pos && pos <= size - 1 && frame[size - 1] > frame[size - 2]) {
@@ -175,7 +175,7 @@ std::vector<HPCP::Peak> HPCP::getPeaks(int numPeaks, std::vector<float>& frame) 
       peaks.emplace_back(Peak((size - 1), frame[size - 1]));
     }
   }
-  
+
   // we only want this many peaks
   int nWantedPeaks = juce::jmin(numPeaks, (int)peaks.size());
   std::sort(peaks.begin(), peaks.end(), [](Peak self, Peak other) { return self.gain > other.gain; });

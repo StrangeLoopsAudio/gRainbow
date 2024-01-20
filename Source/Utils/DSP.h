@@ -15,10 +15,10 @@ static void resampleAudioBuffer(juce::AudioBuffer<float>& inputBuffer, juce::Aud
   // The output buffer needs to be size that matches the new sample rate
   const int resampleSize = static_cast<int>(static_cast<double>(inputBuffer.getNumSamples()) * ratioToOutput);
   outputBuffer.setSize(inputBuffer.getNumChannels(), resampleSize);
-  
+
   const float* const* inputs = inputBuffer.getArrayOfReadPointers();
   float* const* outputs = outputBuffer.getArrayOfWritePointers();
-  
+
   std::unique_ptr<juce::LagrangeInterpolator> resampler = std::make_unique<juce::LagrangeInterpolator>();
   for (int c = 0; c < outputBuffer.getNumChannels(); c++) {
     resampler->reset();

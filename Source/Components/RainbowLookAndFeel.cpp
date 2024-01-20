@@ -24,7 +24,7 @@ juce::Rectangle<int> RainbowLookAndFeel::getTabButtonExtraComponentBounds(const 
 
 void RainbowLookAndFeel::drawTabButton(juce::TabBarButton& btn, juce::Graphics& g, bool mouseOver, bool mouseDown) {
   auto r = btn.getLocalBounds();
-  auto tabColour = btn.isFrontTab() ? Utils::PANEL_COLOUR : Utils::PANEL_COLOUR.darker(0.15);
+  auto tabColour = btn.isFrontTab() ? Utils::Colour::PANEL : Utils::Colour::PANEL.darker(0.15);
   if (mouseOver && !btn.isFrontTab()) tabColour = tabColour.brighter(0.1);
   g.setColour(tabColour);
   g.fillRoundedRectangle(r.withHeight(50).toFloat(), 10);
@@ -35,7 +35,7 @@ void RainbowLookAndFeel::drawTabButton(juce::TabBarButton& btn, juce::Graphics& 
 void RainbowLookAndFeel::drawTabAreaBehindFrontButton(juce::TabbedButtonBar&, juce::Graphics&, int, int) {}  // Do nothing
 
 void RainbowLookAndFeel::drawTabButtonText(juce::TabBarButton& btn, juce::Graphics& g, bool mouseOver, bool) {
-  auto textColour = Utils::GLOBAL_COLOUR;
+  auto textColour = Utils::Colour::GLOBAL;
   if (btn.isColourSpecified(juce::TextButton::ColourIds::textColourOnId)) {
     textColour = btn.findColour(juce::TextButton::ColourIds::textColourOnId);
   }
@@ -71,7 +71,7 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
       g.drawRoundedRectangle(slider.getLocalBounds().reduced(1, 0).toFloat(), 5, 1);
     }
   }
-  
+
   ParamSlider* paramSlider = dynamic_cast<ParamSlider*>(&slider);
   if (paramSlider && paramSlider->getParameter()) {
     // Check for modulations on this param and visualize them
@@ -111,7 +111,7 @@ void RainbowLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton&
   const bool enabled = btn.isEnabled();  // not being used
   const bool on = btn.getToggleState();  // on/off
 
-  juce::Colour fillColour = enabled ? btn.findColour(juce::ToggleButton::ColourIds::tickColourId) : Utils::BG_COLOUR;
+  juce::Colour fillColour = enabled ? btn.findColour(juce::ToggleButton::ColourIds::tickColourId) : Utils::Colour::BACKGROUND;
   g.setColour(fillColour);
 
   auto bounds = btn.getLocalBounds().toFloat();

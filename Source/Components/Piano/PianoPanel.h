@@ -14,7 +14,7 @@
 #include "Parameters.h"
 #include "RainbowKeyboard.h"
 #include "WaveformPanel.h"
-#include "../Sliders.h"
+#include "Components/Sliders.h"
 
 //==============================================================================
 /*
@@ -32,7 +32,7 @@ public juce::Timer {
 
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
-  
+
   void selectedCommonParamsChanged(ParamCommon* newParams) override;
 
   void timerCallback() override;

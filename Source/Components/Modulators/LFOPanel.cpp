@@ -14,14 +14,13 @@
 #include "Modulators.h"
 
 LFOPanel::LFOPanel(int modIdx, Parameters& parameters)
-: mParameters(parameters),
-mModLFO(mParameters.global.modLFOs[modIdx]),
-mSliderRate(mParameters, mParameters.global.modLFOs[modIdx].rate, ParamRanges::LFO_RATE, false),
-mSliderPhase(mParameters, mModLFO.phase),
-mBtnMap(mParameters, mModLFO) {
-    
+    : mParameters(parameters),
+      mModLFO(mParameters.global.modLFOs[modIdx]),
+      mSliderRate(mParameters, mParameters.global.modLFOs[modIdx].rate, ParamRanges::LFO_RATE, false),
+      mSliderPhase(mParameters, mModLFO.phase),
+      mBtnMap(mParameters, mModLFO) {
   mBufDepth.resize(NUM_LFO_SAMPLES, 0.0f);
-    
+
   int shapeId = 1;
   for (const LFOModSource::Shape &shape : LFOModSource::LFO_SHAPES) {
     mChoiceShape.addItem(shape.name, shapeId++);
@@ -34,7 +33,7 @@ mBtnMap(mParameters, mModLFO) {
   };
   mChoiceShape.setJustificationType(juce::Justification::centred);
   addAndMakeVisible(mChoiceShape);
-    
+
   // Default slider settings
   std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderRate, mSliderPhase };
   for (auto& slider : sliders) {
@@ -49,7 +48,7 @@ mBtnMap(mParameters, mModLFO) {
   mSliderRate.setDoubleClickReturnValue(true, ParamDefaults::LFO_RATE_DEFAULT);
   mSliderPhase.setRange(ParamRanges::LFO_PHASE.start, ParamRanges::LFO_PHASE.end, 0.01);
   mSliderPhase.setDoubleClickReturnValue(true, ParamDefaults::LFO_PHASE_DEFAULT);
-  
+
   // Default button settings
   std::vector<std::reference_wrapper<juce::TextButton>> buttons = { mBtnSync, mBtnBipolar, mBtnRetrigger, mBtnMap };
   for (auto& button : buttons) {
@@ -84,7 +83,7 @@ mBtnMap(mParameters, mModLFO) {
   mLabelShape.setText("shape", juce::dontSendNotification);
   mLabelRate.setText("rate", juce::dontSendNotification);
   mLabelPhase.setText("phase", juce::dontSendNotification);
-  
+
   // Add listeners for relevant params
   mModLFO.shape->addListener(this);
   mModLFO.rate->addListener(this);
@@ -92,9 +91,9 @@ mBtnMap(mParameters, mModLFO) {
   mModLFO.sync->addListener(this);
   mModLFO.bipolar->addListener(this);
   mModLFO.retrigger->addListener(this);
-    
+
   mParamHasChanged.store(true); // Init param values
-  
+
   startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
@@ -147,21 +146,21 @@ void LFOPanel::timerCallback() {
 }
 
 void LFOPanel::paint(juce::Graphics& g) {
-  g.setColour(Utils::PANEL_COLOUR);
+  g.setColour(Utils::Colour::PANEL);
   g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
-  
-  g.setColour(Utils::BG_COLOUR);
+
+  g.setColour(Utils::Colour::BACKGROUND);
   g.fillRect(mVizRect);
-  
+
   // Draw bipolar/unipolar line
   g.setColour(mModLFO.colour.withAlpha(0.5f));
   const int poleY = mBtnBipolar.getToggleState() ? mVizRect.getCentreY() : mVizRect.getBottom();
   g.drawHorizontalLine(poleY, mVizRect.getX(), mVizRect.getRight());
-  
+
   // Draw LFO path
   g.setColour(mModLFO.colour);
   g.strokePath(mLfoPath, juce::PathStrokeType(2, juce::PathStrokeType::JointStyle::curved));
-  
+
   // Draw circle at current phase
   auto pathDrawRect = mVizRect.reduced(Utils::PADDING);
   auto phaseRect = juce::Rectangle<float>(6, 6);
@@ -196,9 +195,9 @@ void LFOPanel::paint(juce::Graphics& g) {
 
 void LFOPanel::resized() {
   auto r = getLocalBounds().reduced(Utils::PADDING);
-  
+
   auto rightPanel = r.removeFromRight(r.getWidth() * 0.25f);
-  
+
   // Labels
   auto labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT);
   const int labelWidth = labelPanel.getWidth() / 3;
@@ -213,16 +212,16 @@ void LFOPanel::resized() {
   mChoiceShape.setBounds(knobPanel.removeFromLeft(knobWidth).withTrimmedBottom(Utils::PADDING));
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   mSliderPhase.setBounds(knobPanel.removeFromLeft(knobWidth).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-  
+
   r.removeFromRight(Utils::PADDING);
   r.removeFromBottom(Utils::PADDING);
-    
+
   mVizRect = r.toFloat();
-  
+
   // Map button
   mBtnMap.setBounds(rightPanel.removeFromTop(mVizRect.getHeight() / 2));
   rightPanel.removeFromTop(Utils::PADDING);
-  
+
   // Sync, polarity and retrigger buttons
   auto btnPanel = rightPanel;
   int btnWidth = btnPanel.getWidth();
@@ -247,7 +246,7 @@ void LFOPanel::updateLfoPath() {
     }
     const float numPeriods = WINDOW_SECONDS / periodSec;
     const int depthPx = drawRect.getHeight() / 2.0f;
-    
+
     float pxPerSamp = drawRect.getWidth() / NUM_LFO_SAMPLES;
     float radPerSamp = (2.0f * M_PI * numPeriods) / NUM_LFO_SAMPLES;
     float curX = drawRect.getX();
@@ -266,7 +265,7 @@ void LFOPanel::updateLfoPath() {
     mBufDepth[mBufDepthWrPos] = mModLFO.getOutput();
     // Increment write pos
     mBufDepthWrPos = (mBufDepthWrPos == (NUM_LFO_SAMPLES - 1)) ? 0 : mBufDepthWrPos + 1;
-    
+
     // Create LFO path
     const float pxPerSamp = drawRect.getWidth() / NUM_LFO_SAMPLES;
     int maxDepthPx = drawRect.getHeight();
