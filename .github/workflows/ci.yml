@@ -40,14 +40,14 @@ jobs:
           - name: Windows
             os: windows-latest
             pluginval-binary: ./pluginval.exe
-            generator: "\"Visual Studio 17 2022\""
+            generator: "\"Visual Studio 17 2022\" -T v143"
             ccache: sccache
 
     steps:
       
     # This is just easier than debugging different compilers on different platforms
     - name: Set up Clang
-      if: ${{ matrix.name != 'macOS' }}
+      if: ${{ matrix.name == 'Linux' }}
       uses: egor-tensin/setup-clang@v1
 
     # This also starts up our "fake" display Xvfb, needed for pluginval
@@ -83,10 +83,10 @@ jobs:
     #    
     # This lets us use sscache on Windows
     # We need to install ccache here for Windows to grab the right version
-    - name: Install Ninja (Windows)
+    - name: Install ccache (Windows)
       if: runner.os == 'Windows'
       shell: bash
-      run: choco install ninja ccache
+      run: choco install ccache
 
     - name: Install macOS Deps
       if: ${{ matrix.name == 'macOS' }}
