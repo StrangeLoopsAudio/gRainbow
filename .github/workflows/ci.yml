@@ -31,13 +31,16 @@ jobs:
           - name: Linux
             os: ubuntu-22.04
             pluginval-binary: ./pluginval
+            generator: Ninja
             ccache: ccache
           - name: macOS
             os: macos-12
+            generator: Ninja
             ccache: ccache
           - name: Windows
             os: windows-latest
             pluginval-binary: ./pluginval.exe
+            generator: "Visual Studio 17 2022"
             ccache: sccache
 
     steps:
@@ -119,7 +122,7 @@ jobs:
 
     - name: Configure
       shell: bash
-      run: cmake -B ${{ env.BUILD_DIR }} -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} -DCMAKE_C_COMPILER_LAUNCHER=${{ matrix.ccache }} -DCMAKE_CXX_COMPILER_LAUNCHER=${{ matrix.ccache }} -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" .
+      run: cmake -B ${{ env.BUILD_DIR }} -G ${{ matrix.generator }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} -DCMAKE_C_COMPILER_LAUNCHER=${{ matrix.ccache }} -DCMAKE_CXX_COMPILER_LAUNCHER=${{ matrix.ccache }} -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" .
 
     - name: Build
       shell: bash

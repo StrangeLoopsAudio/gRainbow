@@ -45,7 +45,9 @@ SET(GRAINBOW_BINARY_NAME "${CMAKE_PROJECT_NAME}" CACHE STRING "Override plugin n
 # https://github.com/juce-framework/JUCE/commit/6b1b4cf7f6b1008db44411f2c8887d71a3348889
 set_property(GLOBAL PROPERTY USE_FOLDERS YES)
 
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+if (MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif ()
 
 # OPTIONS -------
 
