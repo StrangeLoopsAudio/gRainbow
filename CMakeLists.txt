@@ -65,19 +65,19 @@ if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime)
     if (APPLE)
         FetchContent_Declare(
             ONNXRuntime
-            URL      https://github.com/tiborvass/libonnxruntime-neuralnote/releases/download/v1.14.1-neuralnote.2/onnxruntime-v1.14.1-neuralnote.2-macOS-universal.tar.gz
+            URL      https://github.com/StrangeLoopsAudio/libonnxruntime-basicpitch/releases/download/release/onnxruntime-v1.14.1-basicpitch-macOS-universal.tar.gz
             SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime
         )
     elseif (UNIX AND NOT APPLE)
         FetchContent_Declare(
             ONNXRuntime
-            URL      https://github.com/StrangeLoopsAudio/libonnxruntime-basicpitch/releases/download/release/onnxruntime-v1.14.1-neuralnote.0-linux-x86_64.tar.gz
+            URL      https://github.com/StrangeLoopsAudio/libonnxruntime-basicpitch/releases/download/release/onnxruntime-v1.14.1-basicpitch-linux-x86_64.tar.gz
             SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime
         )
     elseif (WIN32)
         FetchContent_Declare(
             ONNXRuntime
-            URL      https://github.com/tiborvass/libonnxruntime-neuralnote/releases/download/v1.14.1-neuralnote.1/onnxruntime-v1.14.1-neuralnote.1-windows-x86_64.tar.gz
+            URL      https://github.com/StrangeLoopsAudio/libonnxruntime-basicpitch/releases/download/release/onnxruntime-v1.14.1-basicpitch-windows-x86_64.zip
             SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime
         )
     endif ()
