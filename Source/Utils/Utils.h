@@ -32,14 +32,18 @@ static constexpr int LABEL_HEIGHT = 16;
 static inline juce::Font getFont() {
 #if _WIN32
   return juce::Font(12).withPointHeight(12);
-#else _APPLE
+#elif _APPLE
+  return juce::Font(14);
+#else
   return juce::Font(14);
 #endif
 }
 static inline juce::Font getTitleFont() {
 #if _WIN32
   return juce::Font(30).withPointHeight(30);
-#else _APPLE
+#elif _APPLE
+  return juce::Font(32);
+#else
   return juce::Font(32);
 #endif
 }

@@ -101,27 +101,27 @@ void GranularSynth::changeProgramName(int, const juce::String&) {}
 void GranularSynth::run() {
   // Resample the audio buffer for feeding into the pitch detector
   Utils::resampleAudioBuffer(mAudioBuffer, mDownsampledAudio, mSampleRate, BASIC_PITCH_SAMPLE_RATE);
-  
+
   // Then use BasicPitch ML to extract note events
   mPitchDetector.transcribeToMIDI(mDownsampledAudio.getWritePointer(0),
                                   mDownsampledAudio.getNumSamples());
-  
+
   if (threadShouldExit()) return;
-  
+
   createCandidates(); // Create candidates from MIDI events
-  
+
   if (threadShouldExit()) return;
-  
+
   // Finally, calc FFT and HPCP
   mProcessedSpecs[ParamUI::SpecType::SPECTROGRAM] = mFft.process(&mAudioBuffer);
   mProcessedSpecs[ParamUI::SpecType::HPCP] = mHPCP.process(mFft.getSpectrum(), mSampleRate);
   makePitchSpec();
   mProcessedSpecs[ParamUI::SpecType::DETECTED] = &mPitchSpecBuffer;
-  
+
   if (threadShouldExit()) return;
-  
+
   //mPitchDetector.reset();
-  
+
   mParameters.ui.specComplete = false; // Make arc spec render the specs into images
   // Arc spec turns off isLoading once images are rendered as well
 }
@@ -133,7 +133,7 @@ void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
     // Make a temporary buffer copy for resampling
     juce::AudioSampleBuffer inputBuffer = mInputBuffer;
     resampleSynthBuffer(inputBuffer, mInputBuffer, mSampleRate, sampleRate);
-    
+
     // Convert time to sample range
     const double sampleLength = static_cast<double>(mInputBuffer.getNumSamples());
     const double secondLength = sampleLength / sampleRate;
@@ -183,7 +183,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   auto totalNumInputChannels = getTotalNumInputChannels();
   auto totalNumOutputChannels = getTotalNumOutputChannels();
   const int bufferNumSample = buffer.getNumSamples();
-  
+
   // Update mod source values once per block
   mParameters.processModSources();
 
@@ -266,7 +266,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   for (int i = 0; i < buffer.getNumChannels(); i++) {
     juce::FloatVectorOperations::clip(buffer.getWritePointer(i), buffer.getReadPointer(i), -1.0f, 1.0f, bufferNumSample);
   }
-  
+
   mBpm = DEFAULT_BPM;
   mBeatsPerBar = DEFAULT_BEATS_PER_BAR;
   mPlayhead = getPlayHead();
@@ -328,7 +328,7 @@ void GranularSynth::setStateInformation(const void* data, int sizeInBytes) {
   if (this->wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
     return;  // reloadPluginState() can try loading old/bad/stale info and crash at launch
   }
-  
+
   juce::MemoryBlock block(data, sizeInBytes);
   Utils::Result r = loadPreset(block);
   if (!r.success) DBG(juce::String("Error during getStateInformation(): ") + r.message);
@@ -356,7 +356,7 @@ void GranularSynth::setPresetParamsXml(const void* data, int sizeInBytes) {
   // Reset all params and candidates
   mParameters.resetParams();
   mParameters.note.clearCandidates();
-  
+
   auto xml = getXmlFromBinary(data, sizeInBytes);
   if (xml != nullptr) {
     auto params = xml->getChildByName("AudioParams");
@@ -365,7 +365,7 @@ void GranularSynth::setPresetParamsXml(const void* data, int sizeInBytes) {
         param->setValueNotifyingHost(params->getDoubleAttribute(ParamHelper::getParamID(param), param->getValue()));
       }
     }
-    
+
     // Set isUsed for each common parameter based on param values
     for (int i = 0; i < ParamCommon::Type::NUM_COMMON; ++i) {
       for (auto& note: mParameters.note.notes) {
@@ -420,7 +420,6 @@ void GranularSynth::handleGrainAddRemove(int blockSize) {
         if (gNote->grainTriggers[i] <= 0) {
           mParamGenerator = mParameters.note.notes[gNote->pitchClass]->generators[i].get();
           mParamCandidate = mParameters.note.notes[gNote->pitchClass]->getCandidate(i);
-          mDurSec;
           mGain = juce::Decibels::decibelsToGain(mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GAIN, true));
           mGrainRate = mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GRAIN_RATE, true);
           mGrainDuration = mParameters.getFloatParam(mParamGenerator, ParamCommon::Type::GRAIN_DURATION, true);
@@ -685,7 +684,7 @@ Utils::Result GranularSynth::savePreset(juce::MemoryBlock& block) {
   header.audioBufferNumberOfSamples = mAudioBuffer.getNumSamples();
   header.audioBufferChannel = mAudioBuffer.getNumChannels();
   header.audioBufferSize = header.audioBufferNumberOfSamples * header.audioBufferChannel * sizeof(float);
-  
+
   // There is no way in JUCE to be able to know the size of the
   // png/imageFormat blob until after it is written into the outstream which
   // is too late. To keep things working, just do a double copy to a
@@ -696,25 +695,25 @@ Utils::Result GranularSynth::savePreset(juce::MemoryBlock& block) {
     return {false, "Unable to write spectrogram image out the file" };
   }
   header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
-  
+
   juce::MemoryOutputStream hpcpStaging;
   if (!mParameters.ui.saveSpecImage(hpcpStaging, ParamUI::SpecType::HPCP)) {
     return {false, "Unable to write HPCP image out the file"};
   }
   header.specImageHpcpSize = hpcpStaging.getDataSize();
-  
+
   juce::MemoryOutputStream detectedStaging;
   if (!mParameters.ui.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED)) {
     return {false, "Unable to write Detected image out the file"};
   }
   header.specImageDetectedSize = detectedStaging.getDataSize();
-  
+
   // XML structure of preset contains all audio related information
   // These include not just AudioParams but also other params not exposes to
   // the DAW or UI directly
   juce::MemoryBlock xmlMemoryBlock;
   getPresetParamsXml(xmlMemoryBlock);
-  
+
   // Write data out section by section
   juce::MemoryOutputStream blockStream(block, true);
   blockStream.write(&header, sizeof(header));
@@ -776,7 +775,7 @@ void GranularSynth::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumb
     (*foundNote)->velocity = velocity;
     (*foundNote)->noteOn(mTotalSamps);
   }
-    
+
   // Retrigger modulators
   for (auto& lfo : mParameters.global.modLFOs) {
     lfo.checkRetrigger();

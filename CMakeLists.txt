@@ -69,7 +69,11 @@ if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime)
             SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime
         )
     elseif (UNIX AND NOT APPLE)
-        # TODO: get Linux model
+        FetchContent_Declare(
+            ONNXRuntime
+            URL      https://github.com/StrangeLoopsAudio/libonnxruntime-basicpitch/releases/download/release/onnxruntime-v1.14.1-neuralnote.0-linux-x86_64.tar.gz
+            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime
+        )
     elseif (WIN32)
         FetchContent_Declare(
             ONNXRuntime
@@ -259,6 +263,9 @@ juce_add_binary_data(Assets SOURCES ${BINARY_RESOURCES})
 add_library(BasicPitchCNN STATIC ${CMAKE_CURRENT_LIST_DIR}/Source/DSP/PitchDetection/BasicPitchCNN.cpp)
 target_include_directories(BasicPitchCNN PRIVATE ${CMAKE_CURRENT_LIST_DIR}/external/RTNeural)
 
+if (UNIX AND NOT APPLE)
+    target_compile_options(BasicPitchCNN PUBLIC -fPIC) # Otherwise will class with nlohmann::json in RTNeural
+endif ()
 if ((CMAKE_BUILD_TYPE STREQUAL "Debug") AND RTNeural_Release)
     if (MSVC)
         target_compile_options(BasicPitchCNN PUBLIC /O2) # or maybe /Ox
@@ -325,7 +332,7 @@ set(JUCE_DEPENDENCIES
     juce::juce_audio_utils
     juce::juce_dsp
     ff_meters)
-    
+
 add_compile_definitions(_USE_MATH_DEFINES)
 
 target_compile_definitions(gRainbow

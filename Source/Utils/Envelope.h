@@ -15,13 +15,13 @@ namespace Utils {
 static constexpr int ENV_LUT_SIZE = 64;  // grain env lookup table size
 typedef std::array<float, ENV_LUT_SIZE> GrainEnv;
 
-/* 
+/*
  Makes a simple grain envelope LUT divided into 3 parts
- 
+
     1.0   -----
  rampUp  /     \  rampDown
         /       \
- 
+
  @arg shape: (0.0, 1.0), triangle env at 0, square env at 1.0
  @arg tilt: (-1.0, 1.0), left edge triangle at -1.0, right edge triangle at 1.0
  */
@@ -103,6 +103,9 @@ typedef struct EnvelopeADSR {
         }
         break;
       }
+      default:
+        jassertfalse;
+        break;
     }
     return amplitude;
   }
