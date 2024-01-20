@@ -6,6 +6,8 @@ Note: This synth has recently been redesigned! This page reflects the most recen
 
 ![gRainbow](Source/Resources/logo.png)
 
+Get the latest version for free on our [Gumroad](https://strangeloopsaudio.gumroad.com/) or grab it from the releases page on the right.
+
 ## Why?
 
 gRainbow was created to overcome a few shortcomings of traditional granular synths.
