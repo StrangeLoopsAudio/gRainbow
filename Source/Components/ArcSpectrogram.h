@@ -46,7 +46,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void loadWaveformBuffer(juce::AudioBuffer<float> *audioBuffer);  // Raw audio samples from file
   void loadPreset();
   void setMidiNotes(const juce::Array<Utils::MidiNote> &midiNotes);
-  void setSpecType(ParamUI::SpecType type) { mSpecType.setSelectedId(type + 1, juce::sendNotificationAsync); }
+  void setSpecType(ParamUI::SpecType type) { mSpecType.setSelectedId(type + 1, juce::sendNotificationSync); }
 
   //============================================================================
   void run() override;

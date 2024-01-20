@@ -77,7 +77,7 @@ void ArcSpectrogram::paint(juce::Graphics& g) {
   g.fillRoundedRectangle(getLocalBounds().toFloat(), 10);
 
   // If nothing has been loaded skip image, progress bar will fill in void space
-  if (mParameters.ui.specType != ParamUI::SpecType::INVALID) {
+  if (mParameters.ui.specComplete) {
     int imageIndex = mSpecType.getSelectedId() - 1;
     // When loading up a plugin a second time, need to set the ComboBox state,
     // but can't in the constructor so there is the first spot we can enforce
