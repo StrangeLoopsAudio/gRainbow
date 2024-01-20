@@ -40,7 +40,7 @@ jobs:
           - name: Windows
             os: windows-latest
             pluginval-binary: ./pluginval.exe
-            generator: "\"Visual Studio 17 2022\" -T v143"
+            generator: "\"Visual Studio 17 2022\" -T v143,version=14.35"
             ccache: sccache
 
     steps:
