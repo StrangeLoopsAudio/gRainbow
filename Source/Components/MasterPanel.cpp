@@ -155,44 +155,43 @@ void MasterPanel::paint(juce::Graphics& g) {
   g.fillRoundedRectangle(getLocalBounds().toFloat(), 10);
 
   // Separator line between master and macros
-  g.setColour(Utils::Colour::BACKGROUND);
-  g.drawLine(getWidth() / 2, Utils::PADDING, getWidth() / 2, getHeight() - Utils::PADDING, 2);
+//  g.setColour(Utils::Colour::BACKGROUND);
+//  g.drawLine(getWidth() * 0.75, Utils::PADDING, getWidth() * 0.75, getHeight() - Utils::PADDING, 2);
 }
 
 void MasterPanel::resized() {
   auto r = getLocalBounds().reduced(Utils::PADDING);
 
-  auto masterPanel = r.removeFromRight(r.getWidth() / 2);
+  auto masterPanel = r.removeFromRight(r.getWidth() * 0.25 + Utils::PADDING);
+  masterPanel.removeFromLeft(Utils::PADDING);
   mLabelTitle.setBounds(masterPanel.removeFromTop(Utils::TAB_HEIGHT));
-  // Meter
-  mMeter.setBounds(masterPanel.removeFromRight(masterPanel.getWidth() / 2).reduced(Utils::PADDING * 2, Utils::PADDING * 2));
-
+  
   // Gain
-  auto topKnob = masterPanel.removeFromTop(masterPanel.getHeight() / 2);
-  topKnob.removeFromBottom(Utils::LABEL_HEIGHT); // TODO: put something here
-  mLabelGain.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
-  mSliderGain.setBounds(topKnob.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-  masterPanel.removeFromTop(Utils::PADDING);
+  mSliderGain.setBounds(masterPanel.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+  mLabelGain.setBounds(masterPanel.removeFromTop(Utils::LABEL_HEIGHT));
+  // Meter
+  mMeter.setBounds(masterPanel.reduced(Utils::PADDING * 2, Utils::PADDING * 2));
 
   auto macroPanel = r;
   mLabelMacros.setBounds(macroPanel.removeFromTop(Utils::TAB_HEIGHT));
   // Macros 1 and 3
   auto macrosLeft = macroPanel.removeFromLeft(macroPanel.getWidth() / 2);
-  topKnob = macrosLeft.removeFromTop(macrosLeft.getHeight() / 2);
-  mBtnMapMacro1.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
-  mLabelMacro1.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
-  mSliderMacro1.setBounds(topKnob.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-  macrosLeft.removeFromTop(Utils::PADDING);
+  auto topKnob = macrosLeft.removeFromTop(macrosLeft.getHeight() / 2);
+  mSliderMacro1.setBounds(topKnob.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+  mLabelMacro1.setBounds(topKnob.removeFromTop(Utils::LABEL_HEIGHT));
+  mBtnMapMacro1.setBounds(topKnob.reduced(Utils::PADDING));
+
   mSliderMacro3.setBounds(macrosLeft.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   mLabelMacro3.setBounds(macrosLeft.removeFromTop(Utils::LABEL_HEIGHT));
-  mBtnMapMacro3.setBounds(macrosLeft.removeFromTop(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
+  mBtnMapMacro3.setBounds(macrosLeft.reduced(Utils::PADDING));
+  
   // Macros 2 and 4
   topKnob = macroPanel.removeFromTop(macroPanel.getHeight() / 2);
-  mBtnMapMacro2.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
-  mLabelMacro2.setBounds(topKnob.removeFromBottom(Utils::LABEL_HEIGHT));
-  mSliderMacro2.setBounds(topKnob.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-  macroPanel.removeFromTop(Utils::PADDING);
+  mSliderMacro2.setBounds(topKnob.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+  mLabelMacro2.setBounds(topKnob.removeFromTop(Utils::LABEL_HEIGHT));
+  mBtnMapMacro2.setBounds(topKnob.reduced(Utils::PADDING));
+  
   mSliderMacro4.setBounds(macroPanel.removeFromTop(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
   mLabelMacro4.setBounds(macroPanel.removeFromTop(Utils::LABEL_HEIGHT));
-  mBtnMapMacro4.setBounds(macroPanel.removeFromTop(Utils::LABEL_HEIGHT).reduced(Utils::PADDING, 0));
+  mBtnMapMacro4.setBounds(macroPanel.reduced(Utils::PADDING));
 }

@@ -122,6 +122,8 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
   // Visualization rect
   g.setColour(Utils::Colour::BACKGROUND);
   g.fillRect(mVizRect);
+  
+  auto drawRect = mVizRect.reduced(Utils::PADDING);
 
   float durSec, rateSec;
   if (mBtnSync.getToggleState()) {
@@ -135,14 +137,14 @@ void EnvelopeGrain::paint(juce::Graphics& g) {
     rateSec = 1.0f / mSliderRate.getValue();
   }
 
-  float envWidth = (durSec / WINDOW_SECONDS) * mVizRect.getWidth();
-  float envOffset = (rateSec / WINDOW_SECONDS) * mVizRect.getWidth();
+  float envWidth = (durSec / WINDOW_SECONDS) * drawRect.getWidth();
+  float envOffset = (rateSec / WINDOW_SECONDS) * drawRect.getWidth();
 
   float shapeWidth = envWidth * mSliderShape.getValue() / 2.0f;
 
   juce::Path clipPath;
-  clipPath.addRectangle(mVizRect);
-  auto envBounds = mVizRect.reduced(2, 2);
+  clipPath.addRectangle(drawRect);
+  auto envBounds = drawRect.reduced(2, 2);
 
   // Draw darker odd numbered envelopes
   float tiltWidth = (envWidth * 0.5f) + (mSliderTilt.getValue() * envWidth * 0.5f);

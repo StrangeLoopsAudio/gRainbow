@@ -77,7 +77,7 @@ if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime)
     elseif (WIN32)
         FetchContent_Declare(
             ONNXRuntime
-            URL      https://github.com/StrangeLoopsAudio/libonnxruntime-basicpitch/releases/download/release/onnxruntime-v1.14.1-basicpitch-windows-x86_64.zip
+            URL      https://github.com/StrangeLoopsAudio/libonnxruntime-basicpitch/releases/download/release/onnxruntime-v1.14.1-basicpitch-windows-x86_64.tar.gz
             SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/external/ONNXRuntime
         )
     endif ()
