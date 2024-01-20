@@ -2,6 +2,8 @@
 
 A synthesizer that uses pitch detection to choose candidates for granular synthesis or sampling.
 
+Note: This synth has recently been redesigned! This page reflects the most recent information about the project.
+
 ![gRainbow](Source/Resources/logo.png)
 
 ## Why?
@@ -14,17 +16,36 @@ gRainbow was created to overcome a few shortcomings of traditional granular synt
 
 Instead, gRainbow prefers longer, pitch-diverse audio clips (1), automatically produces harmonics matched for MIDI input (2) and avoids too much timestretching by generating harmonics that are already near their target pitch (3). Voila!
 
+## Features
+
+- Full MIDI range, polyphonic voicing
+- Quick and reliable pitch detection using Spotify's BasicPitch machine learning model
+- Up to 100 grains playing at once
+- Ultra-customizable parameters that can be overriden at the per-note and per-generator level
+    - Grain envelope shape, tilt, rate and duration parameters
+    - Pitch, pan and grain position spray and adjustment parameters
+    - Play grains in forward or reverse
+    - Option to sync rate parameters to the host BPM
+    - Option to play a reference tone for each note to help dial in pitches
+    - and more!
+- Full internal modulation and mapping system
+    - Amplitude envelope and 2 additional envelope modulators
+    - 3 LFO modulators
+    - 4 macros
+- Working preset loading and saving system that bundles the audio sample into the preset for you
+- Cute clouds that sing!
+
 ## Some terminology
 
-- notes: one of 12 notes in the chromatic scale. gRainbow repeats its single octave over all MIDI notes, though that may change in the future using a more advanced pitch detection algorithm.
+- notes: one of 12 notes in the chromatic scale. gRainbow can now play the full range of MIDI notes, but its note parameters are set on a 12-tone basis.
 - generators: create grains for a particular note at a particular position in the audio clip.
 - candidates: a collection of viable positions in the audio clip where the pitch is harmonic with a particular note.
-- parameters: just like usual ones, but organized a bit differently. Parameters use their global value by default, but can be overridden at both the note and generator level. The lowest-level parameter that is different from its default value is used, in the order of global->note->generator. In this way, you'll only have to change the lower-level parameters when you need to without losing any flexibility.
+- parameters: just like usual ones, but organized a bit differently. Parameters use their global value by default, but can be overridden at both the note and generator level. The lowest-level parameter that is different from its default value is used, in the order of global->note->generator. In this way, you'll only have to change the lower-level parameters when you need to without losing any flexibility. You can always double click on a knob to reset it to a higher level too!
 
 ## Plugin flow
 
 When an audio file is loaded into gRainbow, a pitch detection analysis is ran to segment the clip into discrete pitches over time. Next, gRainbow finds up to 6 pitch-matched position candidates for each note, guaranteeing harmonically agreeable grains. Finally, the user customizes each note and its generators (i.e. changing parameters and candidates) to their liking, and can save everything into a preset to avoid processing things again next time.
 
-![gRainbow gui](docs/gRainbow0_4_0.png)
+![gRainbow gui](docs/gRainbow1_0_0.png)
 
 Is anything important missing or needed? Open an [Issue](github.com/bboettcher3/gRainbow/issues) and let us know!

@@ -698,7 +698,6 @@ void GranularSynth::extractPitches() {
   mParameters.ui.isLoading = false;
   mProcessedSpecs.fill(nullptr);
   mParameters.ui.isLoading = true;
-  mParameters.note.resetParams(); // TODO: remove this?
   mParameters.note.clearCandidates();
   mParameters.setSelectedParams(&mParameters.global);
   startThread();
