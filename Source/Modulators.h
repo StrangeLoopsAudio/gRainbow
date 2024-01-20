@@ -52,7 +52,7 @@ typedef struct Modulation {
   Modulation(): source(nullptr), depth(0.0f) {}
   Modulation(ModSource* _source, float _depth): source(_source), depth(_depth) {}
   ModSource* source; // Would like to make as a ref but since it's hashed it needs a default constructor
-  float depth;
+  float depth; // Can be positive (to the right) or negative (to the left)
 } Modulation;
 
 // LFO modulation source

@@ -80,8 +80,8 @@ void RainbowLookAndFeel::drawRotarySlider(juce::Graphics& g, int, int, int, int,
       Modulation& mod = paramSlider->parameters.modulations.getReference(idx);
       // Draw inner arc representing modulation range
       juce::Range<float> modRange = mod.source->getRange();
-      float lowerVal = juce::jmax(0.0f, sliderPosProportional + (mod.depth * modRange.getStart()));
-      float upperVal = juce::jmin(1.0f, sliderPosProportional + (mod.depth * modRange.getEnd()));
+      float lowerVal = juce::jlimit(0.0f, 1.0f, sliderPosProportional + (mod.depth * modRange.getStart()));
+      float upperVal = juce::jlimit(0.0f, 1.0f, sliderPosProportional + (mod.depth * modRange.getEnd()));
       const float lowerPosRadians = startRadians + lowerVal * (endRadians - startRadians);
       const float upperPosRadians = startRadians + upperVal * (endRadians - startRadians);
       g.setColour(mod.source->colour);

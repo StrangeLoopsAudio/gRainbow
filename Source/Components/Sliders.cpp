@@ -27,7 +27,7 @@ ParamSlider::ParamSlider(Parameters& _parameters, juce::RangedAudioParameter* _p
         // Increment/decrement its depth
         double diff = parameter->convertTo0to1(getValue()) - parameter->convertTo0to1(dragStartValue);
         double scale = getRange().getLength() / (getRange().getEnd() - dragStartValue);
-        float depth = juce::jlimit(0.0, 1.0, diff * scale);
+        float depth = juce::jlimit(-1.0, 1.0, diff * scale);
         parameters.modulations.set(idx, Modulation(parameters.getMappingModSource(), depth));
       }
       // Reset actual slider value
@@ -66,7 +66,7 @@ CommonSlider::CommonSlider(Parameters& _parameters, ParamCommon::Type type)
         Modulation& mod = parameters.modulations.getReference(idx);
         double diff = parameter->convertTo0to1(getValue()) - parameter->convertTo0to1(dragStartValue);
         double scale = getRange().getLength() / (getRange().getEnd() - dragStartValue);
-        mod.depth = juce::jlimit(0.0, 1.0, diff * scale);
+        mod.depth = juce::jlimit(-1.0, 1.0, diff * scale);
       }
       // Reset actual slider value
       setValue(dragStartValue, juce::dontSendNotification);
