@@ -609,24 +609,10 @@ Utils::Result GranularSynth::loadPreset(juce::MemoryBlock& block) {
     curBlockPos += header.audioBufferSize;
     sampleRate = header.audioBufferSamplerRate;
 
-    // Get offsets and load all png for spec images
-    uint32_t maxSpecImageSize =
-        juce::jmax(header.specImageSpectrogramSize, header.specImageHpcpSize, header.specImageDetectedSize);
-    void* specImageData = malloc(maxSpecImageSize);
-    jassert(specImageData != nullptr);
-    block.copyTo(specImageData, curBlockPos, header.specImageSpectrogramSize);
+    // The image data is saved in the XML, for backward compatibility might need to ignore duplciated image data
     curBlockPos += header.specImageSpectrogramSize;
-    mParameters.ui.specImages[ParamUI::SpecType::SPECTROGRAM] =
-        juce::PNGImageFormat::loadFrom(specImageData, header.specImageSpectrogramSize);
-    block.copyTo(specImageData, curBlockPos, header.specImageHpcpSize);
     curBlockPos += header.specImageHpcpSize;
-    mParameters.ui.specImages[ParamUI::SpecType::HPCP] = juce::PNGImageFormat::loadFrom(specImageData, header.specImageHpcpSize);
-    block.copyTo(specImageData, curBlockPos, header.specImageDetectedSize);
     curBlockPos += header.specImageDetectedSize;
-    mParameters.ui.specImages[ParamUI::SpecType::DETECTED] =
-        juce::PNGImageFormat::loadFrom(specImageData, header.specImageDetectedSize);
-    mParameters.ui.specComplete = true;
-    free(specImageData);
 
     // juce::FileInputStream uses 'int' to read
     int xmlSize = static_cast<int>(block.getSize() - curBlockPos);
@@ -635,6 +621,7 @@ Utils::Result GranularSynth::loadPreset(juce::MemoryBlock& block) {
     block.copyTo(xmlData, curBlockPos, xmlSize);
     curBlockPos += xmlSize;
     setPresetParamsXml(xmlData, xmlSize);
+    mParameters.ui.specComplete = true;
     free(xmlData);
   } else {
     juce::String error = "The file is .gbow version " + juce::String(header.versionMajor) + "." +
@@ -683,28 +670,10 @@ Utils::Result GranularSynth::savePreset(juce::MemoryBlock& block) {
   header.audioBufferChannel = mAudioBuffer.getNumChannels();
   header.audioBufferSize = header.audioBufferNumberOfSamples * header.audioBufferChannel * sizeof(float);
 
-  // There is no way in JUCE to be able to know the size of the
-  // png/imageFormat blob until after it is written into the outstream which
-  // is too late. To keep things working, just do a double copy to a
-  // internal memory object so the size is know prior to writing the image
-  // data to the stream.
-  juce::MemoryOutputStream spectrogramStaging;
-  if (!mParameters.ui.saveSpecImage(spectrogramStaging, ParamUI::SpecType::SPECTROGRAM)) {
-    return {false, "Unable to write spectrogram image out the file" };
-  }
-  header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
-
-  juce::MemoryOutputStream hpcpStaging;
-  if (!mParameters.ui.saveSpecImage(hpcpStaging, ParamUI::SpecType::HPCP)) {
-    return {false, "Unable to write HPCP image out the file"};
-  }
-  header.specImageHpcpSize = hpcpStaging.getDataSize();
-
-  juce::MemoryOutputStream detectedStaging;
-  if (!mParameters.ui.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED)) {
-    return {false, "Unable to write Detected image out the file"};
-  }
-  header.specImageDetectedSize = detectedStaging.getDataSize();
+  // For backward compatibility keep values and just have them be zero
+  header.specImageSpectrogramSize = 0;
+  header.specImageHpcpSize = 0;
+  header.specImageDetectedSize = 0;
 
   // XML structure of preset contains all audio related information
   // These include not just AudioParams but also other params not exposes to
@@ -715,10 +684,9 @@ Utils::Result GranularSynth::savePreset(juce::MemoryBlock& block) {
   // Write data out section by section
   juce::MemoryOutputStream blockStream(block, true);
   blockStream.write(&header, sizeof(header));
-  if (mAudioBuffer.getNumSamples() > 0)
-    blockStream.write(reinterpret_cast<const void*>(mAudioBuffer.getReadPointer(0)), header.audioBufferSize);  blockStream.write(spectrogramStaging.getData(), header.specImageSpectrogramSize);
-  blockStream.write(hpcpStaging.getData(), header.specImageHpcpSize);
-  blockStream.write(detectedStaging.getData(), header.specImageDetectedSize);
+  if (mAudioBuffer.getNumSamples() > 0) {
+    blockStream.write(reinterpret_cast<const void*>(mAudioBuffer.getReadPointer(0)), header.audioBufferSize);
+  }
   blockStream.write(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
   blockStream.flush();
 

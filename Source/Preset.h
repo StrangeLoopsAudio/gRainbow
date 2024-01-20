@@ -39,9 +39,9 @@ struct Header {
   int32_t audioBufferNumberOfSamples;
   int32_t audioBufferChannel;
 
-  // UI Spec image info
-  // for now instead of creating linked list structure, just list the images
-  // used
+  // DEPRECATED
+  // The image are now saved in the XML
+  // For backward compatibility (until 1.0) just keep and set to zero for future
   uint32_t specImageSpectrogramSize;
   uint32_t specImageHpcpSize;
   uint32_t specImageDetectedSize;
@@ -53,7 +53,7 @@ struct Header {
 // ------------------
 // - Header
 // - Encoded audio buffer blob
-// - List of UI spec images as png blob
+// - List of UI spec images as png blob (DEPRECATED - new files won't have anything here)
 // - XML of user param (binary form)
 
 }  // namespace Preset
