@@ -13,18 +13,18 @@
 #include "Utils/Colour.h"
 
 MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meterSource)
-    : mParameters(parameters),
-      mCurSelectedParams(parameters.getSelectedParams()),
-      mParamColour(Utils::Colour::GLOBAL),
-      mSliderGain(mParameters, ParamCommon::Type::GAIN),
-      mSliderMacro1(mParameters, mParameters.global.macros[0].macro),
-      mSliderMacro2(mParameters, mParameters.global.macros[1].macro),
-      mSliderMacro3(mParameters, mParameters.global.macros[2].macro),
-      mSliderMacro4(mParameters, mParameters.global.macros[3].macro),
-      mBtnMapMacro1(mParameters, mParameters.global.macros[0]),
-      mBtnMapMacro2(mParameters, mParameters.global.macros[1]),
-      mBtnMapMacro3(mParameters, mParameters.global.macros[2]),
-      mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
+: mParameters(parameters),
+mCurSelectedParams(parameters.getSelectedParams()),
+mParamColour(Utils::Colour::GLOBAL),
+mSliderGain(mParameters, ParamCommon::Type::GAIN),
+mSliderMacro1(mParameters, mParameters.global.macros[0].macro),
+mSliderMacro2(mParameters, mParameters.global.macros[1].macro),
+mSliderMacro3(mParameters, mParameters.global.macros[2].macro),
+mSliderMacro4(mParameters, mParameters.global.macros[3].macro),
+mBtnMapMacro1(mParameters, mParameters.global.macros[0]),
+mBtnMapMacro2(mParameters, mParameters.global.macros[1]),
+mBtnMapMacro3(mParameters, mParameters.global.macros[2]),
+mBtnMapMacro4(mParameters, mParameters.global.macros[3]) {
   juce::Colour colour = Utils::Colour::GLOBAL;
 
   // Titles
@@ -40,6 +40,8 @@ MasterPanel::MasterPanel(Parameters& parameters, foleys::LevelMeterSource& meter
   // Meter
   mMeter.setMeterSource(&meterSource);
   mMeter.setLookAndFeel(&mMeterLookAndFeel);
+  mMeterLookAndFeel.setColour(foleys::LevelMeter::lmMeterOutlineColour, juce::Colours::transparentBlack);
+  mMeterLookAndFeel.setColour(foleys::LevelMeter::lmMeterBackgroundColour, Utils::Colour::BACKGROUND);
   addAndMakeVisible(mMeter);
 
   // Default slider settings
@@ -153,10 +155,6 @@ void MasterPanel::paint(juce::Graphics& g) {
   // Panel rectangle
   g.setColour(Utils::Colour::PANEL);
   g.fillRoundedRectangle(getLocalBounds().toFloat(), 10);
-
-  // Separator line between master and macros
-//  g.setColour(Utils::Colour::BACKGROUND);
-//  g.drawLine(getWidth() * 0.75, Utils::PADDING, getWidth() * 0.75, getHeight() - Utils::PADDING, 2);
 }
 
 void MasterPanel::resized() {
