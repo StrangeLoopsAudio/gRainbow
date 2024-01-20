@@ -657,21 +657,19 @@ Utils::Result GranularSynth::loadPreset(juce::MemoryBlock& block) {
 }
 
 Utils::Result GranularSynth::savePreset(juce::File file) {
-  if (file.hasWriteAccess()) {
-    file.deleteFile();  // clear file if replacing
-    juce::String lastFileName = mParameters.ui.loadedFileName;
-    // Set ui fields so they're correctly saved
-    mParameters.ui.fileName = file.getFileName();
-    mParameters.ui.loadedFileName = mParameters.ui.fileName;
-    juce::MemoryBlock block;
-    Utils::Result r = savePreset(block);
-    if (r.success) file.replaceWithData(block.getData(), block.getSize());
-    else mParameters.ui.loadedFileName = lastFileName; // Reset filename if failed
-    return r;
+  file.deleteFile();  // clear file if replacing
+  juce::String lastFileName = mParameters.ui.loadedFileName;
+  // Set ui fields so they're correctly saved
+  mParameters.ui.fileName = file.getFileName();
+  mParameters.ui.loadedFileName = mParameters.ui.fileName;
+  juce::MemoryBlock block;
+  Utils::Result r = savePreset(block);
+  if (r.success) {
+    file.replaceWithData(block.getData(), block.getSize());
   } else {
-    juce::String error = "The file does not have write access: " + file.getFullPathName();
-    return {true, error};
+    mParameters.ui.loadedFileName = lastFileName;  // Reset filename if failed
   }
+  return r;
 }
 
 Utils::Result GranularSynth::savePreset(juce::MemoryBlock& block) {

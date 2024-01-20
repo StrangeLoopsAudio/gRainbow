@@ -209,6 +209,7 @@ void ArcSpectrogram::resized() {
   // Spec type combobox
   mSpecType.setBounds(r.removeFromRight(SPEC_TYPE_WIDTH).removeFromTop(SPEC_TYPE_HEIGHT));
 
+  mStartPoint = juce::Point<int>(mRainbowRect.getWidth() / 2, mRainbowRect.getHeight());
   mCenterPoint = juce::Point<float>(getWidth() / 2.0f, mRainbowRect.getBottom());
   mStartRadius = (mRainbowRect.getWidth() / 2.0f) / 2.6f;
   mEndRadius = mRainbowRect.getWidth() / 2.0f;
@@ -232,7 +233,6 @@ void ArcSpectrogram::mouseExit(const juce::MouseEvent&) {
 
 void ArcSpectrogram::run() {
   // Initialize rainbow parameters
-  juce::Point<int> startPoint(mRainbowRect.getWidth() / 2, mRainbowRect.getHeight());
   mParameters.ui.specImages[mParameters.ui.specType] = juce::Image(juce::Image::ARGB, mRainbowRect.getWidth(), mRainbowRect.getHeight(), true);
   juce::Graphics g(mParameters.ui.specImages[mParameters.ui.specType]);
 
@@ -243,8 +243,8 @@ void ArcSpectrogram::run() {
     float maxMagnitude = audioBuffer->getMagnitude(0, audioBuffer->getNumSamples());
 
     // Draw NUM_COLS worth of audio samples
-    juce::Point<float> prevPoint = startPoint.getPointOnCircumference(mStartRadius + mBowWidth / 2, mStartRadius + mBowWidth / 2,
-                                                                      -(juce::MathConstants<float>::pi / 2.0f));
+    juce::Point<float> prevPoint = mStartPoint.getPointOnCircumference(mStartRadius + mBowWidth / 2, mStartRadius + mBowWidth / 2,
+                                                                       -(juce::MathConstants<float>::pi / 2.0f));
     juce::Colour prevColour = juce::Colours::black;
     for (auto i = 0; i < NUM_COLS; ++i) {
       if (threadShouldExit()) { mIsProcessing = false; return; }
@@ -259,7 +259,7 @@ void ArcSpectrogram::run() {
       // Draw a line connecting to the previous point, blending colours between them
       float xPerc = ((float)i / NUM_COLS);
       float angleRad = (juce::MathConstants<float>::pi * xPerc) - (juce::MathConstants<float>::pi / 2.0f);
-      juce::Point<float> p = startPoint.getPointOnCircumference(sampleRadius, sampleRadius, angleRad);
+      juce::Point<float> p = mStartPoint.getPointOnCircumference(sampleRadius, sampleRadius, angleRad);
       juce::ColourGradient gradient = juce::ColourGradient(prevColour, prevPoint, rainbowColour, p, false);
       g.setGradientFill(gradient);
       g.drawLine(juce::Line<float>(prevPoint, p), 2.0f);
@@ -294,7 +294,7 @@ void ArcSpectrogram::run() {
         float angleRad = (juce::MathConstants<float>::pi * xPerc) - (juce::MathConstants<float>::pi / 2.0f);
 
         // Create and rotate a rectangle to represent the "pixel"
-        juce::Point<float> p = startPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
+        juce::Point<float> p = mStartPoint.getPointOnCircumference(curRadius, curRadius, angleRad);
         juce::AffineTransform rotation = juce::AffineTransform();
         rotation = rotation.rotated(angleRad, p.x, p.y);
         juce::Rectangle<float> rect = juce::Rectangle<float>(2, 2);

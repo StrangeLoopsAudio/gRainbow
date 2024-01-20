@@ -96,6 +96,7 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
 
   // UI values saved on resize
   juce::Rectangle<int> mRainbowRect;
+  juce::Point<int> mStartPoint;
   juce::Point<float> mCenterPoint;
   int mStartRadius = 0;
   int mEndRadius = 0;
