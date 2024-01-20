@@ -10,22 +10,25 @@
 
 #include "Fft.h"
 
-Fft::Fft(int windowSize, int hopSize, double startProgress, double endProgress)
-    : juce::Thread("fft thread"),
-      mStartProgress(startProgress),
-      mEndProgress(endProgress),
-      mDiffProgress(mEndProgress - mStartProgress),
-      mWindowSize(windowSize),
+Fft::Fft(int windowSize, int hopSize)
+    : mWindowSize(windowSize),
       mHopSize(hopSize),
       mForwardFFT(std::log2(windowSize)),
       mWindowEnvelope(windowSize, juce::dsp::WindowingFunction<float>::WindowingMethod::blackmanHarris) {}
 
 Fft::~Fft() {}
 
-// Once a buffer is loaded, will run to produce mFftData and then will async
-// notify when done
-void Fft::run() {
-  if (mInputBuffer == nullptr) return;
+void Fft::clear(bool clearData) {
+  mFftFrame.clear();
+  if (clearData) {
+    // The FFT can take up a lot of memory, need to not just clear, but have STD deallocate it
+    mFftData.clear();
+    mFftData.shrink_to_fit();
+  }
+}
+
+Utils::SpecBuffer* Fft::process(const juce::AudioBuffer<float>* audioBuffer) {
+  mInputBuffer = audioBuffer;
   clear(true);
   // Runs with first channel
   const int numInputSamples = mInputBuffer->getNumSamples();
@@ -35,8 +38,8 @@ void Fft::run() {
   bool hasData = numInputSamples > mFftFrame.size();
   float curMax = std::numeric_limits<float>::min();
 
-  while (hasData && !threadShouldExit()) {
-    updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(curSample) / static_cast<double>(numInputSamples))));
+  while (hasData) {
+//    updateProgress(mStartProgress + (mDiffProgress * (static_cast<double>(curSample) / static_cast<double>(numInputSamples))));
     const float* startSample = &pBuffer[curSample];
     int numSamples = mFftFrame.size();
     if (curSample + mFftFrame.size() > numInputSamples) {
@@ -66,28 +69,5 @@ void Fft::run() {
     }
   }
 
-  if (onProcessingComplete != nullptr) {
-    onProcessingComplete(mFftData);
-  }
-}
-
-void Fft::clear(bool clearData) {
-  mFftFrame.clear();
-  if (clearData) {
-    // The FFT can take up a lot of memory, need to not just clear, but have STD deallocate it
-    mFftData.clear();
-    mFftData.shrink_to_fit();
-  }
-}
-
-void Fft::updateProgress(double progress) {
-  if (onProgressUpdated != nullptr) {
-    onProgressUpdated(progress);
-  }
-}
-
-void Fft::process(const juce::AudioBuffer<float>* audioBuffer) {
-  stopThread(4000);
-  mInputBuffer = audioBuffer;
-  startThread();
+  return &mFftData;
 }

@@ -13,12 +13,14 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "Parameters.h"
-#include "RainbowSlider.h"
+#include "Sliders.h"
 
 //==============================================================================
 /*
  */
-class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::Listener, juce::Timer {
+class EnvelopeADSR : public juce::Component,
+public juce::AudioProcessorParameter::Listener,
+public juce::Timer {
  public:
   EnvelopeADSR(Parameters& parameters);
   ~EnvelopeADSR();
@@ -28,32 +30,25 @@ class EnvelopeADSR : public juce::Component, juce::AudioProcessorParameter::List
 
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
-
+  
   void timerCallback() override;
 
-  void updateSelectedParams();
-
  private:
-  static constexpr const char* SECTION_TITLE = "amplitude envelope";
-
   // Bookkeeping
   Parameters& mParameters;
-  ParamCommon* mCurSelectedParams;
   std::atomic<bool> mParamHasChanged;
-  juce::Colour mParamColour;
 
   // Components
-  RainbowSlider mSliderAttack;
-  RainbowSlider mSliderDecay;
-  RainbowSlider mSliderSustain;
-  RainbowSlider mSliderRelease;
+  ParamSlider mSliderAttack;
+  ParamSlider mSliderDecay;
+  ParamSlider mSliderSustain;
+  ParamSlider mSliderRelease;
   juce::Label mLabelAttack;
   juce::Label mLabelDecay;
   juce::Label mLabelSustain;
   juce::Label mLabelRelease;
 
   // UI rects updated at resize()
-  juce::Rectangle<float> mTitleRect;
   juce::Rectangle<float> mVizRect;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeADSR)

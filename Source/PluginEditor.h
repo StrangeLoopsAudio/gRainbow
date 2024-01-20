@@ -12,42 +12,31 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 
-#include "Components/ArcSpectrogram.h"
-#include "Components/RainbowKeyboard.h"
+#include "Components/TitlePresetPanel.h"
 #include "Components/EnvelopeADSR.h"
 #include "Components/EnvelopeGrain.h"
-#include "Components/GrainControl.h"
-#include "Components/FilterControl.h"
+#include "Components/AdjustPanel.h"
+#include "Components/Modulators/EnvPanel.h"
+#include "Components/Modulators/LFOPanel.h"
+#include "Components/MasterPanel.h"
 #include "Components/TrimSelection.h"
+#include "Components/ArcSpectrogram.h"
+#include "Components/Piano/PianoPanel.h"
 #include "Components/Settings.h"
 #include "Components/RainbowLookAndFeel.h"
-#include "DSP/AudioRecorder.h"
+//#include "DSP/AudioRecorder.h"
 #include "DSP/Fft.h"
-#include "DSP/TransientDetector.h"
 #include "DSP/GranularSynth.h"
 #include "Utils/Utils.h"
-
-/**
- * @brief Used on startup to fill unused area with the logo
- */
-class GRainbowLogo : public juce::Component {
- public:
-  GRainbowLogo();
-  ~GRainbowLogo() {}
-  void paint(juce::Graphics& g) override;
-  void resized() override {}
-
- private:
-  juce::Image mLogoImage;
-};
+#include "Utils/DSP.h"
 
 //==============================================================================
 /**
  * @brief The "Main component" that parents all UI elements.
  */
 class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                     public juce::FileDragAndDropTarget,
-                                     juce::Timer {
+public juce::FileDragAndDropTarget,
+juce::Timer {
  public:
   GRainbowAudioProcessorEditor(GranularSynth& synth);
   ~GRainbowAudioProcessorEditor() override;
@@ -70,32 +59,31 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   static constexpr int BTN_PANEL_HEIGHT = 65;
   static constexpr int PROGRESS_SIZE = 80;
   static constexpr auto FILE_RECORDING = "gRainbow_user_recording.wav";
-  static constexpr const char* MANUAL_URL = "https://github.com/bboettcher3/gRainbow/blob/development/README.md";
+  static constexpr const char* MANUAL_URL = "https://github.com/StrangeLoopsAudio/gRainbow/blob/main/README.md";
 
   // DSP Modules
   GranularSynth& mSynth;
-  AudioRecorder mRecorder;
+//  AudioRecorder mRecorder;
 
   // Synth owns, but need to grab params on reloading of plugin
   Parameters& mParameters;
 
   // main center UI component
-  GRainbowLogo mLogo;
   ArcSpectrogram mArcSpec;
   TrimSelection mTrimSelection;
   juce::ProgressBar mProgressBar;
+  double PROGRESS_VALUE = -1.0; // Makes indeterminate spinning, shouldn't change
 
   // UI Components
-  juce::ImageButton mBtnOpenFile;
-  juce::ImageButton mBtnRecord;
-  juce::ImageButton mBtnInfo;
-  juce::ImageButton mBtnSavePreset;
-  juce::Label mLabelFileName;
-  RainbowKeyboard mKeyboard;
+  TitlePresetPanel mTitlePresetPanel;
+  juce::TabbedComponent mTabsGrains, mTabsLFOs, mTabsEnvs;
   EnvelopeADSR mEnvAdsr;
   EnvelopeGrain mEnvGrain;
-  GrainControl mGrainControl;
-  FilterControl mFilterControl;
+  AdjustPanel mAdjustPanel;
+  EnvPanel mModEnv1, mModEnv2;
+  LFOPanel mModLFO1, mModLFO2, mModLFO3;
+  MasterPanel mMasterPanel;
+  PianoPanel mPianoPanel;
   juce::SharedResourcePointer<juce::TooltipWindow> mTooltipWindow;
   SettingsComponent mSettings;
 
@@ -106,11 +94,7 @@ class GRainbowAudioProcessorEditor : public juce::AudioProcessorEditor,
   RainbowLookAndFeel mRainbowLookAndFeel;
   juce::Path mBorderPath;
 
-  juce::Image mCloudLeftImage;
-  juce::Image mCloudRightImage;
   juce::Image mRainImage;
-  juce::Rectangle<float> mCloudLeftTargetArea;
-  juce::Rectangle<float> mCloudRightTargetArea;
   juce::Rectangle<float> mLeftRain;
   juce::Rectangle<float> mRightRain;
   int mLeftRainDeltY = 0;

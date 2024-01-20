@@ -49,35 +49,36 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
                        [this](const juce::MouseEvent& e) { this->ThumbnailMouseUp(e); }),
       mParamUI(paramUI),
       mStartMarker(
-          "S", juce::Colours::green, [this](PointMarker& m, const juce::MouseEvent& e) { this->MarkerMouseDragged(m, e); },
+          "S", juce::Colours::green.withSaturation(0.55f), [this](PointMarker& m, const juce::MouseEvent& e) { this->MarkerMouseDragged(m, e); },
           [this](PointMarker& m, const juce::MouseEvent& e) { this->MarkerMouseUp(m, e); }),
       mEndMarker(
-          "E", juce::Colours::red, [this](PointMarker& m, const juce::MouseEvent& e) { this->MarkerMouseDragged(m, e); },
+          "E", juce::Colours::red.withSaturation(0.55f), [this](PointMarker& m, const juce::MouseEvent& e) { this->MarkerMouseDragged(m, e); },
           [this](PointMarker& m, const juce::MouseEvent& e) { this->MarkerMouseUp(m, e); }) {
-  mBtnCancel.setButtonText("Cancel");
-  mBtnCancel.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
-  mBtnCancel.setColour(juce::TextButton::buttonOnColourId, juce::Colours::red);
+  mBtnCancel.setButtonText("cancel");
+  mBtnCancel.setColour(juce::TextButton::buttonColourId, juce::Colours::red.withSaturation(0.55f));
+  mBtnCancel.setColour(juce::TextButton::buttonOnColourId, juce::Colours::red.withSaturation(0.55f));
   mBtnCancel.onClick = [this] {
     onCancel();
     cleanup();
   };
   addAndMakeVisible(mBtnCancel);
 
-  mBtnPlayback.setButtonText("Play/Stop");
-  mBtnPlayback.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
-  mBtnPlayback.setColour(juce::TextButton::buttonOnColourId, juce::Colours::red);
+  mBtnPlayback.setButtonText("play");
+  mBtnPlayback.setColour(juce::TextButton::buttonColourId, juce::Colours::green.withSaturation(0.55f));
+  mBtnPlayback.setColour(juce::TextButton::buttonOnColourId, juce::Colours::red.withSaturation(0.55f));
   mBtnPlayback.setClickingTogglesState(true);
   mBtnPlayback.onClick = [this] {
     mParamUI.trimPlaybackOn = !mParamUI.trimPlaybackOn;
     if (mParamUI.trimPlaybackOn) {
       mParamUI.trimPlaybackSample = timeToSample(mSelectedRange.getStart());
     }
+    mBtnPlayback.setButtonText(mBtnPlayback.getToggleState() ? "stop" : "play");
   };
   addAndMakeVisible(mBtnPlayback);
 
-  mBtnSetSelection.setButtonText("Set Selection");
-  mBtnSetSelection.setColour(juce::TextButton::buttonColourId, juce::Colours::blue);
-  mBtnSetSelection.setColour(juce::TextButton::buttonOnColourId, juce::Colours::blue);
+  mBtnSetSelection.setButtonText("make it grain!");
+  mBtnSetSelection.setColour(juce::TextButton::buttonColourId, juce::Colours::blue.withSaturation(0.55f));
+  mBtnSetSelection.setColour(juce::TextButton::buttonOnColourId, juce::Colours::blue.withSaturation(0.55f));
   mBtnSetSelection.onClick = [this] {
     onProcessSelection(mSelectedRange);
     cleanup();
@@ -88,7 +89,7 @@ TrimSelection::TrimSelection(juce::AudioFormatManager& formatManager, ParamUI& p
   addAndMakeVisible(mEndMarker);
   addAndMakeVisible(mThumbnailShadow);
 
-  mPlaybackMarker.setFill(juce::Colours::black.withAlpha(0.9f));
+  mPlaybackMarker.setFill(juce::Colours::white.withAlpha(0.9f));
   addAndMakeVisible(mPlaybackMarker);
 }
 
@@ -107,14 +108,14 @@ void TrimSelection::paint(juce::Graphics& g) {
   {
     const int channelHeight = thumbnailHeight / numChannels;
     // draw an outline around the thumbnail
-    g.setColour(juce::Colours::black);
+    g.setColour(Utils::Colour::GLOBAL);
     g.drawRect(mThumbnailRect, 2);
 
     for (int i = 0; i < numChannels; i++) {
       juce::Rectangle<int> channelBounds = mThumbnailRect.withTrimmedTop(channelHeight * i).withHeight(channelHeight);
 
-      g.setGradientFill(juce::ColourGradient(juce::Colours::grey, channelBounds.getTopLeft().toFloat(),
-                                             juce::Colours::black, channelBounds.getBottomLeft().toFloat(), false));
+      g.setGradientFill(juce::ColourGradient(Utils::Colour::GLOBAL, channelBounds.getTopLeft().toFloat(),
+                                             Utils::Colour::GLOBAL.darker(), channelBounds.getBottomLeft().toFloat(), false));
       mThumbnail.drawChannel(g, channelBounds, 0.0f, mVisibleRange.getEnd(), i, 1.0f);
     }
   }
@@ -129,8 +130,8 @@ void TrimSelection::paint(juce::Graphics& g) {
 
   // Draw selectors
   {
-    g.setColour(juce::Colours::black);
-    g.setFont(14.0f);
+    g.setColour(Utils::Colour::GLOBAL);
+    g.setFont(Utils::getFont());
     g.drawFittedText(mStartTimeString, mSelectorRect, juce::Justification::bottomLeft, 1);
     g.drawFittedText(juce::String(mSelectedRange.getLength(), 1) + " seconds", mSelectorRect, juce::Justification::centredBottom,
                      1);
@@ -177,24 +178,22 @@ void TrimSelection::resized() {
   // - Selector
   // - buttons
 
-  juce::Rectangle<int> r = getLocalBounds();
-  // just enough padding to not be on the side borders
-  r = r.reduced(Utils::PADDING);
-  mThumbnailRect = r.removeFromTop((2 * r.getHeight()) / 3);
+  juce::Rectangle<int> r = getLocalBounds().reduced(Utils::PADDING);
+  mThumbnailRect = r.removeFromTop((2 * r.getHeight()) / 3).reduced(Utils::PADDING);
   mThumbnailShadow.setBounds(mThumbnailRect);
   r.removeFromTop(Utils::PADDING);
   // extra 20 comes from 14 point font for text and some padding
   r.removeFromTop(PointMarker::height());
   mSelectorRect = r.removeFromTop(Utils::LABEL_HEIGHT);
 
-  const int btnWidth = (r.getWidth() - Utils::PADDING * 2) / 3;
+  const int btnWidth = (r.getWidth() - Utils::PADDING * 2) / 4;
 
   r.removeFromTop(Utils::PADDING);
   mBtnCancel.setBounds(r.removeFromLeft(btnWidth));
   r.removeFromLeft(Utils::PADDING);
   mBtnPlayback.setBounds(r.removeFromLeft(btnWidth));
   r.removeFromLeft(Utils::PADDING);
-  mBtnSetSelection.setBounds(r.removeFromLeft(btnWidth));
+  mBtnSetSelection.setBounds(r);
 }
 
 void TrimSelection::updatePointMarker() {

@@ -4,3 +4,6 @@
 [submodule "libs/ff_meters"]
 	path = external/ff_meters
 	url = https://github.com/ffAudio/ff_meters.git
+[submodule "external/RTNeural"]
+	path = external/RTNeural
+	url = https://github.com/jatinchowdhury18/RTNeural.git

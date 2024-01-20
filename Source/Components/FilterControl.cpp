@@ -15,33 +15,35 @@
 //==============================================================================
 FilterControl::FilterControl(Parameters& parameters)
     : mParameters(parameters),
-      mCurSelectedParams(parameters.selectedParams),
-      mParamColour(Utils::GLOBAL_COLOUR),
-      mSliderCutoff(parameters, ParamCommon::Type::FILT_CUTOFF),
-      mSliderResonance(parameters, ParamCommon::Type::FILT_RESONANCE) {
-  juce::Colour colour = Utils::GLOBAL_COLOUR;
+      mSliderCutoff(parameters, mParameters.global.filterCutoff),
+      mSliderResonance(parameters, mParameters.global.filterRes),
+      mPathStroke(3, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
+  juce::Colour colour = Utils::Colour::GLOBAL;
 
-  mSliderCutoff.setNumDecimalPlacesToDisplay(2);
-  mSliderCutoff.setRange(ParamRanges::CUTOFF.start, ParamRanges::CUTOFF.end, 0.01);
-  mSliderCutoff.setTextValueSuffix("Hz");
-  mSliderCutoff.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderCutoff);
+  // Default slider settings
+  std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderCutoff, mSliderResonance };
+  for (auto& slider : sliders) {
+    slider.get().setNumDecimalPlacesToDisplay(2);
+    slider.get().setPopupDisplayEnabled(true, true, this);
+    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::Colour::GLOBAL);
+    addAndMakeVisible(slider.get());
+  }
+  mSliderCutoff.setRange(ParamRanges::FILT_CUTOFF.start, ParamRanges::FILT_CUTOFF.end, 0.01);
+  mSliderCutoff.setTextValueSuffix("hz");
+  mSliderCutoff.setDoubleClickReturnValue(true, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ);
+  mSliderResonance.setRange(ParamRanges::FILT_RESONANCE.start, ParamRanges::FILT_RESONANCE.end, 0.01);
+  mSliderResonance.setDoubleClickReturnValue(true, ParamDefaults::FILTER_RESONANCE_DEFAULT);
 
+  // Default label settings
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelCutoff, mLabelResonance };
+  for (auto& label : labels) {
+    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::Colour::GLOBAL);
+    label.get().setJustificationType(juce::Justification::centredTop);
+    label.get().setFont(juce::Font(14));
+    addAndMakeVisible(label.get());
+  }
   mLabelCutoff.setText("cutoff", juce::dontSendNotification);
-  mLabelCutoff.setColour(juce::Label::ColourIds::textColourId, colour);
-  mLabelCutoff.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelCutoff);
-
-  // Resonance
-  mSliderResonance.setNumDecimalPlacesToDisplay(2);
-  mSliderResonance.setRange(ParamRanges::RESONANCE.start, ParamRanges::RESONANCE.end, 0.01);
-  mSliderResonance.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderResonance);
-
   mLabelResonance.setText("resonance", juce::dontSendNotification);
-  mLabelResonance.setColour(juce::Label::ColourIds::textColourId, colour);
-  mLabelResonance.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelResonance);
 
   mFilterType.setJustificationType(juce::Justification::centred);
   mFilterType.setColour(juce::ComboBox::ColourIds::backgroundColourId, colour);
@@ -50,18 +52,23 @@ FilterControl::FilterControl(Parameters& parameters)
   }
   mFilterType.onChange = [this]() {
     int type = mFilterType.getSelectedId() - 1;
-    ParamHelper::setCommonParam(mCurSelectedParams, ParamCommon::Type::FILT_TYPE, type);
+    ParamHelper::setParam(mParameters.global.filterType, type);
   };
   addAndMakeVisible(mFilterType);
 
-  mCurSelectedParams->addListener(this);
-  updateSelectedParams();
+  mParameters.global.filterType->addListener(this);
+  mParameters.global.filterCutoff->addListener(this);
+  mParameters.global.filterRes->addListener(this);
 
-  startTimer(100);
+  mParamHasChanged.store(true); // Init param values
+
+  startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 FilterControl::~FilterControl() {
-  mCurSelectedParams->removeListener(this);
+  mParameters.global.filterType->removeListener(this);
+  mParameters.global.filterCutoff->removeListener(this);
+  mParameters.global.filterRes->removeListener(this);
   stopTimer();
 }
 
@@ -70,82 +77,109 @@ void FilterControl::parameterValueChanged(int, float) { mParamHasChanged.store(t
 void FilterControl::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    mSliderCutoff.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::FILT_CUTOFF), juce::dontSendNotification);
-    mSliderResonance.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::FILT_RESONANCE),
+    mSliderCutoff.setValue(mParameters.global.filterCutoff->get(), juce::dontSendNotification);
+    mSliderResonance.setValue(mParameters.global.filterRes->get(),
                               juce::dontSendNotification);
-    mFilterType.setSelectedId(mParameters.getChoiceParam(mCurSelectedParams, ParamCommon::Type::FILT_TYPE) + 1,
+    mFilterType.setSelectedId(mParameters.global.filterType->getIndex() + 1,
                               juce::dontSendNotification);
+    updateFilterPath();
     repaint();
   }
 }
 
-void FilterControl::updateSelectedParams() {
-  if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
-  mCurSelectedParams = mParameters.selectedParams;
-  mCurSelectedParams->addListener(this);
-  mParamColour = mParameters.getSelectedParamColour();
-  mSliderCutoff.updateSelectedParams();
-  mSliderResonance.updateSelectedParams();
-  mFilterType.setColour(juce::ComboBox::ColourIds::backgroundColourId, mParamColour);
-  mParamHasChanged.store(true);
+void FilterControl::paint(juce::Graphics& g) {
+  juce::Colour colour = Utils::Colour::GLOBAL;
+
+  g.setColour(Utils::Colour::PANEL);
+  g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
+
+  g.setColour(Utils::Colour::BACKGROUND);
+  g.fillRect(mVizRect);
+
+  // Set gradient
+  g.setFillType(juce::ColourGradient(colour.withAlpha(0.35f), mVizRect.getTopLeft(), colour.withAlpha(0.05f), mVizRect.getBottomLeft(), false));
+  g.fillPath(mFilterPath);
+
+  // Stroke highlight on path
+  g.setColour(colour);
+  g.strokePath(mFilterPath, mPathStroke);
+
 }
 
-void FilterControl::paint(juce::Graphics& g) {
-  juce::Colour colour = mParamColour;
-  g.setFont(14.0f);
+void FilterControl::resized() {
+  auto r = getLocalBounds().reduced(Utils::PADDING);
 
-  // Section title
-  g.setColour(Utils::GLOBAL_COLOUR);
-  g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
-  g.setColour(colour);
-  g.drawRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT, 2.0f);
-  g.setColour(juce::Colours::white);
-  g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
+  int panelWidth = r.getWidth() / 3.0f;
+  juce::Rectangle<int> knobPanel = r.removeFromBottom(Utils::LABEL_HEIGHT + Utils::KNOB_HEIGHT);
+  juce::Rectangle<int> panel = knobPanel.removeFromRight(panelWidth);
+  mLabelResonance.setBounds(panel.removeFromBottom(Utils::LABEL_HEIGHT));
+  mSliderResonance.setBounds(
+                             panel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+  panel = knobPanel.removeFromRight(panelWidth);
+  mLabelCutoff.setBounds(panel.removeFromBottom(Utils::LABEL_HEIGHT));
+  mSliderCutoff.setBounds(panel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
+
+  mFilterType.setBounds(knobPanel);
+
+  r.removeFromBottom(Utils::PADDING);
+
+  mVizRect = r.toFloat();
+}
+
+void FilterControl::updateFilterPath() {
+  auto drawRect = mVizRect.reduced(Utils::PADDING * 2, Utils::PADDING * 2);
 
   // Draw selected filter path
-  juce::Path mFilterPath;
-  int resPadding = mVizRect.getHeight() * 0.3f; // both width and height max size of resonance peak
-  float cutoffWidth = mVizRect.getWidth() *
-                      ParamRanges::CUTOFF.convertTo0to1(mSliderCutoff.getValue());
+  mFilterPath.clear();
+  int resPadding = drawRect.getHeight() * 0.3f; // both width and height max size of resonance peak
+  float cutoffWidth = drawRect.getWidth() *
+  ParamRanges::FILT_CUTOFF.convertTo0to1(mSliderCutoff.getValue());
   float resHeight =
-      mVizRect.getHeight() * 0.3f * ParamRanges::RESONANCE.convertTo0to1(mSliderResonance.getValue());
+  drawRect.getHeight() * 0.3f * ParamRanges::FILT_RESONANCE.convertTo0to1(mSliderResonance.getValue());
 
-  juce::Point<float> startPt = mVizRect.getBottomLeft();
+  juce::Point<float> startPt = drawRect.getBottomLeft();
   juce::Point<float> midPt1, midPt2, midPt3, midPt4;
-  juce::Point<float> endPt = mVizRect.getBottomRight();
+  juce::Point<float> endPt = drawRect.getBottomRight();
 
   switch (mFilterType.getSelectedId() - 1) {
     case (Utils::FilterType::LOWPASS):
-      midPt1 = juce::Point<float>(mVizRect.getX(), mVizRect.getY() + resPadding);
-      midPt2 = juce::Point<float>(mVizRect.getX() + cutoffWidth - resPadding / 2, mVizRect.getY() + resPadding);
-      midPt3 = juce::Point<float>(mVizRect.getX() + cutoffWidth, mVizRect.getY() + (resPadding - resHeight));
-      midPt4 = juce::Point<float>(juce::jmin(mVizRect.getRight(), mVizRect.getX() + cutoffWidth + resPadding / 2), mVizRect.getBottom());
+      midPt1 = juce::Point<float>(drawRect.getX(), drawRect.getY() + resPadding);
+      midPt2 = juce::Point<float>(drawRect.getX() + cutoffWidth - resPadding / 2, drawRect.getY() + resPadding);
+      midPt3 = juce::Point<float>(drawRect.getX() + cutoffWidth, drawRect.getY() + (resPadding - resHeight));
+      midPt4 = juce::Point<float>(drawRect.getX() + cutoffWidth + resPadding / 2, drawRect.getBottom());
       break;
     case (Utils::FilterType::HIGHPASS):
-      cutoffWidth = mVizRect.getWidth() - cutoffWidth; // Reverse for HP
-      midPt1 = juce::Point<float>(juce::jmax(mVizRect.getX(), mVizRect.getRight() - cutoffWidth - resPadding / 2), mVizRect.getBottom());
-      midPt2 = juce::Point<float>(mVizRect.getRight() - cutoffWidth, mVizRect.getY() + (resPadding - resHeight));
-      midPt3 = juce::Point<float>(mVizRect.getRight() - cutoffWidth + resPadding / 2, mVizRect.getY() + resPadding);
-      midPt4 = juce::Point<float>(mVizRect.getRight(), mVizRect.getY() + resPadding);
+      cutoffWidth = drawRect.getWidth() - cutoffWidth; // Reverse for HP
+      midPt1 = juce::Point<float>(drawRect.getRight() - cutoffWidth - resPadding / 2, drawRect.getBottom());
+      midPt2 = juce::Point<float>(drawRect.getRight() - cutoffWidth, drawRect.getY() + (resPadding - resHeight));
+      midPt3 = juce::Point<float>(drawRect.getRight() - cutoffWidth + resPadding / 2, drawRect.getY() + resPadding);
+      midPt4 = juce::Point<float>(drawRect.getRight(), drawRect.getY() + resPadding);
       break;
     case (Utils::FilterType::BANDPASS):
-      midPt1 = juce::Point<float>(juce::jmax(mVizRect.getX(), mVizRect.getCentreX() - cutoffWidth / 2 - resPadding / 2),
-                                  mVizRect.getBottom());
-      midPt2 = juce::Point<float>(mVizRect.getCentreX() - cutoffWidth / 2, mVizRect.getY() + (resPadding - resHeight));
-      midPt3 = juce::Point<float>(mVizRect.getCentreX() + cutoffWidth / 2, mVizRect.getY() + (resPadding - resHeight));
-      midPt4 = juce::Point<float>(juce::jmin(mVizRect.getRight(), mVizRect.getCentreX() + cutoffWidth / 2 + resPadding / 2),
-                                  mVizRect.getBottom());
+      midPt1 = juce::Point<float>(drawRect.getCentreX() - cutoffWidth / 2 - resPadding / 2,
+                                  drawRect.getBottom());
+      midPt2 = juce::Point<float>(drawRect.getCentreX() - cutoffWidth / 2, drawRect.getY() + (resPadding - resHeight));
+      midPt3 = juce::Point<float>(drawRect.getCentreX() + cutoffWidth / 2, drawRect.getY() + (resPadding - resHeight));
+      midPt4 = juce::Point<float>(drawRect.getCentreX() + cutoffWidth / 2 + resPadding / 2,
+                                  drawRect.getBottom());
       break;
     case (Utils::FilterType::NO_FILTER):
-      midPt1 = juce::Point<float>(mVizRect.getTopLeft().translated(0, resPadding));
-      midPt2 = juce::Point<float>(mVizRect.getTopLeft().translated(0, resPadding));
-      midPt3 = juce::Point<float>(mVizRect.getTopRight().translated(0, resPadding));
-      midPt4 = juce::Point<float>(mVizRect.getTopRight().translated(0, resPadding));
+      midPt1 = juce::Point<float>(drawRect.getTopLeft().translated(0, resPadding));
+      midPt2 = juce::Point<float>(drawRect.getTopLeft().translated(10, resPadding));
+      midPt3 = juce::Point<float>(drawRect.getTopRight().translated(-10, resPadding));
+      midPt4 = juce::Point<float>(drawRect.getTopRight().translated(0, resPadding));
       break;
   }
 
-  // Set gradient
-  g.setFillType(juce::ColourGradient(colour, mVizRect.getTopLeft(), colour.withAlpha(0.4f), mVizRect.getBottomLeft(), false));
+  // I'm not happy with this either, clean it up if possible
+  midPt1.setXY(juce::jlimit(drawRect.getX(), drawRect.getRight(), midPt1.x), juce::jlimit(drawRect.getY(), drawRect.getBottom(), midPt1.y));
+  midPt2.setXY(juce::jlimit(drawRect.getX(), drawRect.getRight(), midPt2.x), juce::jlimit(drawRect.getY(), drawRect.getBottom(), midPt2.y));
+  midPt3.setXY(juce::jlimit(drawRect.getX(), drawRect.getRight(), midPt3.x), juce::jlimit(drawRect.getY(), drawRect.getBottom(), midPt3.y));
+  midPt4.setXY(juce::jlimit(drawRect.getX(), drawRect.getRight(), midPt4.x), juce::jlimit(drawRect.getY(), drawRect.getBottom(), midPt4.y));
+
+  // Make path from points
+  if (startPt.x < midPt1.x) startPt.x = midPt1.x + 5;
+  if (endPt.x > midPt4.x) endPt.x = midPt4.x - 5;
   mFilterPath.startNewSubPath(startPt);
   mFilterPath.lineTo(midPt1);
   mFilterPath.lineTo(midPt2);
@@ -153,46 +187,5 @@ void FilterControl::paint(juce::Graphics& g) {
   mFilterPath.lineTo(midPt4);
   mFilterPath.lineTo(endPt);
   mFilterPath.closeSubPath();
-  g.fillPath(mFilterPath);
-
-  // Draw highlight over path
-  float highlightWidth = 3.0f;
-  g.setColour(colour);
-  g.drawLine(juce::Line<float>(startPt, midPt1), highlightWidth);
-  g.drawLine(juce::Line<float>(midPt1, midPt2), highlightWidth);
-  g.drawLine(juce::Line<float>(midPt2, midPt3), highlightWidth);
-  g.drawLine(juce::Line<float>(midPt3, midPt4), highlightWidth);
-  g.drawLine(juce::Line<float>(midPt4, endPt), highlightWidth);
-
-  g.setColour(colour);
-  g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f);
-}
-
-void FilterControl::resized() {
-  juce::Rectangle<int> r = getLocalBounds();
-  // Remove padding
-  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().getCentre());
-
-  // Make title rect
-  mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT).toFloat();
-
-  r.removeFromTop(Utils::PADDING);
-
-  int panelWidth = r.getWidth() / 3.0f;
-  juce::Rectangle<int> knobPanel = r.removeFromBottom(Utils::LABEL_HEIGHT + Utils::KNOB_HEIGHT);
-  juce::Rectangle<int> panel = knobPanel.removeFromLeft(panelWidth);
-  mLabelCutoff.setBounds(panel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mSliderCutoff.setBounds(panel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-
-  panel = knobPanel.removeFromRight(panelWidth);
-  mLabelResonance.setBounds(panel.removeFromBottom(Utils::LABEL_HEIGHT));
-  mSliderResonance.setBounds(
-      panel.removeFromBottom(Utils::KNOB_HEIGHT).withSizeKeepingCentre(Utils::KNOB_HEIGHT * 2, Utils::KNOB_HEIGHT));
-
-
-  mFilterType.setBounds(knobPanel);
-
-  r.removeFromBottom(Utils::PADDING);
-
-  mVizRect = r.toFloat();
+  mFilterPath = mFilterPath.createPathWithRoundedCorners(5);
 }

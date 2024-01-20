@@ -10,29 +10,188 @@
 
 #include "Parameters.h"
 
+void Parameters::prepareModSources(int blockSize, double sampleRate) {
+  for (auto& lfo : global.modLFOs) {
+    lfo.prepare(blockSize, sampleRate);
+  }
+  for (auto& env : global.modEnvs) {
+    env.prepare(blockSize, sampleRate);
+  }
+  for (auto& macro : global.macros) {
+    macro.prepare(blockSize, sampleRate);
+  }
+}
+void Parameters::processModSources() {
+  for (auto& lfo : global.modLFOs) {
+    lfo.processBlock();
+  }
+  for (auto& env : global.modEnvs) {
+    env.processBlock();
+  }
+  for (auto& macro : global.macros) {
+    macro.processBlock();
+  }
+}
+void Parameters::applyModulations(juce::RangedAudioParameter* param, float& value0To1) {
+  const int idx = param->getParameterIndex();
+  if (param && modulations.contains(idx)) {
+    Modulation& mod = modulations.getReference(idx);
+    if (mod.source) {
+      value0To1 = juce::jlimit(0.0f, 1.0f, value0To1 + (mod.depth * mod.source->getOutput()));
+    }
+  }
+}
+
+// Returns the candidate used in a given generator
+ParamCandidate* Parameters::getGeneratorCandidate(ParamGenerator* gen) {
+  if (gen == nullptr) return nullptr;
+  return &note.notes[gen->noteIdx]->candidates[gen->candidate->get()];
+}
+
+// Returns the currently selected pitch class, or NONE if global selected
+Utils::PitchClass Parameters::getSelectedPitchClass() {
+  switch (getSelectedParams()->type) {
+    case ParamType::GLOBAL:
+      return Utils::PitchClass::NONE;
+    case ParamType::NOTE:
+      return (Utils::PitchClass) dynamic_cast<ParamNote*>(getSelectedParams())->noteIdx;
+    case ParamType::GENERATOR:
+      ParamGenerator* gen = dynamic_cast<ParamGenerator*>(getSelectedParams());
+      return (Utils::PitchClass)gen->noteIdx;
+  }
+  return Utils::PitchClass::NONE;
+}
+// Keeps track of the current selected global/note/generator parameters for editing, global by default
+juce::Colour Parameters::getSelectedParamColour() {
+  switch (getSelectedParams()->type) {
+    case ParamType::GLOBAL:
+      return Utils::Colour::GLOBAL;
+    case ParamType::NOTE:
+      return Utils::getRainbow12Colour(dynamic_cast<ParamNote*>(getSelectedParams())->noteIdx);
+    case ParamType::GENERATOR:
+      ParamGenerator* gen = dynamic_cast<ParamGenerator*>(getSelectedParams());
+      return Utils::getRainbow12Colour(gen->noteIdx);
+  }
+  return juce::Colours::black;
+}
+
+juce::RangedAudioParameter* Parameters::getUsedParam(ParamCommon* common, ParamCommon::Type type) {
+  const ParamGenerator* pGen = dynamic_cast<ParamGenerator*>(common);
+  ParamNote* pNote = dynamic_cast<ParamNote*>(common);
+  juce::RangedAudioParameter* param = nullptr;
+  bool keepLooking = true;
+  if (pGen) {
+    // If gen param is used, use it
+    if (pGen->isUsed[type]) {
+      param = pGen->common[type];
+      keepLooking = false;
+    }
+    pNote = note.notes[pGen->noteIdx].get();
+  }
+  if (pNote && keepLooking) {
+    // Otherwise if note param is used, use it
+    if (pNote->isUsed[type]) {
+      param = pNote->common[type];
+      keepLooking = false;
+    }
+  }
+  if (keepLooking) {
+    // If neither used, just use global param
+    param = global.common[type];
+  }
+  jassert(param);
+  return param;
+}
+
+void Parameters::addListener(Parameters::Listener* listener)
+{
+  mListeners.add(listener);
+}
+
+void Parameters::removeListener(Parameters::Listener* listener)
+{
+  mListeners.remove(listener);
+}
+
+// Finds the lowest level parameter that's different from its parent
+// Hierarchy (high to low): global, note, generator
+// Optionally applies modulations before returning value
+float Parameters::getFloatParam(ParamCommon* common, ParamCommon::Type type, bool withModulations) {
+  juce::RangedAudioParameter* param = getUsedParam(common, type);
+  return getFloatParam(P_FLOAT(param), withModulations);
+}
+float Parameters::getFloatParam(juce::AudioParameterFloat* param, bool withModulations) {
+  float value0To1 = param->convertTo0to1(param->get());
+  if (withModulations) applyModulations(param, value0To1);
+  return param->convertFrom0to1(value0To1);
+}
+int Parameters::getIntParam(ParamCommon* common, ParamCommon::Type type, bool withModulations) {
+  juce::RangedAudioParameter* param = getUsedParam(common, type);
+  return getIntParam(P_INT(param), withModulations);
+}
+int Parameters::getIntParam(juce::AudioParameterInt* param, bool withModulations) {
+  float value0To1 = param->convertTo0to1(param->get());
+  if (withModulations) applyModulations(param, value0To1);
+  return param->convertFrom0to1(value0To1);
+}
+int Parameters::getChoiceParam(ParamCommon* common, ParamCommon::Type type) {
+  juce::RangedAudioParameter* param = getUsedParam(common, type);
+  return P_CHOICE(param)->getIndex();
+}
+bool Parameters::getBoolParam(ParamCommon* common, ParamCommon::Type type) {
+  juce::RangedAudioParameter* param = getUsedParam(common, type);
+  return P_BOOL(param)->get();
+}
+
+// Parameter classes init
 void ParamGlobal::addParams(juce::AudioProcessor& p) {
+  // Global amp env
+  p.addParameter(ampEnvAttack = new juce::AudioParameterFloat({ParamIDs::ampEnvAttack, 1}, "Amp Env Attack",
+                                                                   ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
+  p.addParameter(ampEnvDecay = new juce::AudioParameterFloat({ParamIDs::ampEnvDecay, 1}, "Amp Env Decay",
+                                                                  ParamRanges::DECAY, ParamDefaults::DECAY_DEFAULT_SEC));
+  p.addParameter(ampEnvSustain = new juce::AudioParameterFloat({ParamIDs::ampEnvSustain, 1}, "Amp Env Sustain",
+                                                                    ParamRanges::SUSTAIN, ParamDefaults::SUSTAIN_DEFAULT));
+  p.addParameter(ampEnvRelease = new juce::AudioParameterFloat({ParamIDs::ampEnvRelease, 1}, "Amp Env Release",
+                                                                    ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
+  // Modulators
+  // LFOs
+  for (int i = 0; i < modLFOs.size(); ++i) {
+    auto strI = juce::String(i);
+    p.addParameter(modLFOs[i].shape = new juce::AudioParameterChoice({ParamIDs::lfoShape + strI, 1}, "LFO " + strI + " Shape",
+                                                                     LFO_SHAPE_NAMES, ParamDefaults::LFO_SHAPE_DEFAULT));
+    p.addParameter(modLFOs[i].rate = new juce::AudioParameterFloat({ParamIDs::lfoRate + strI, 1}, "LFO " + strI + " Rate",
+                                                                   ParamRanges::LFO_RATE, ParamDefaults::LFO_RATE_DEFAULT));
+    p.addParameter(modLFOs[i].phase = new juce::AudioParameterFloat({ParamIDs::lfoPhase + strI, 1}, "LFO " + strI + " Phase",
+                                                                    ParamRanges::LFO_PHASE, ParamDefaults::LFO_PHASE_DEFAULT));
+    p.addParameter(modLFOs[i].sync = new juce::AudioParameterBool({ParamIDs::lfoSync + strI, 1}, "LFO " + strI + " Sync",
+                                                                  ParamDefaults::LFO_SYNC_DEFAULT));
+    p.addParameter(modLFOs[i].bipolar = new juce::AudioParameterBool({ParamIDs::lfoBipolar + strI, 1}, "LFO " + strI + " Bipolar",
+                                                                     ParamDefaults::LFO_BIPOLAR_DEFAULT));
+    p.addParameter(modLFOs[i].retrigger = new juce::AudioParameterBool(
+                                                                       {ParamIDs::lfoRetrigger + strI, 1}, "LFO " + strI + " Retrigger", ParamDefaults::LFO_RETRIGGER_DEFAULT));
+  }
+  // Mod envelopes
+  for (int i = 0; i < modEnvs.size(); ++i) {
+    auto strI = juce::String(i);
+    p.addParameter(modEnvs[i].attack = new juce::AudioParameterFloat({ParamIDs::modEnvAttack + strI, 1}, "Env " + strI + " Attack",
+                                                                     ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
+    p.addParameter(modEnvs[i].decay = new juce::AudioParameterFloat({ParamIDs::modEnvDecay + strI, 1}, "Env " + strI + " Decay",
+                                                                    ParamRanges::DECAY, ParamDefaults::DECAY_DEFAULT_SEC));
+    p.addParameter(modEnvs[i].sustain = new juce::AudioParameterFloat({ParamIDs::modEnvSustain + strI, 1}, "Env " + strI + " Sustain",
+                                                                      ParamRanges::SUSTAIN, ParamDefaults::SUSTAIN_DEFAULT));
+    p.addParameter(modEnvs[i].release = new juce::AudioParameterFloat({ParamIDs::modEnvRelease + strI, 1}, "Env " + strI + " Release",
+                                                                      ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
+  }
+  // Macros
+  for (int i = 0; i < macros.size(); ++i) {
+    auto strI = juce::String(i);
+    p.addParameter(macros[i].macro = new juce::AudioParameterFloat({ParamIDs::macro + strI, 1}, "Macro " + strI, ParamRanges::MACRO,
+                                                                   ParamDefaults::MACRO_DEFAULT));
+  }
+  // Common
   p.addParameter(common[GAIN] = new juce::AudioParameterFloat({ParamIDs::globalGain, 1}, "Master Gain", ParamRanges::GAIN,
                                                               ParamDefaults::GAIN_DEFAULT));
-  p.addParameter(common[ATTACK] = new juce::AudioParameterFloat({ParamIDs::globalAttack, 1}, "Master Attack", ParamRanges::ATTACK,
-                                                                ParamDefaults::ATTACK_DEFAULT_SEC));
-  p.addParameter(common[DECAY] = new juce::AudioParameterFloat({ParamIDs::globalDecay, 1}, "Master Decay", ParamRanges::DECAY,
-                                                               ParamDefaults::DECAY_DEFAULT_SEC));
-  p.addParameter(common[SUSTAIN] = new juce::AudioParameterFloat({ParamIDs::globalSustain, 1}, "Master Sustain", ParamRanges::SUSTAIN,
-                                                                 ParamDefaults::SUSTAIN_DEFAULT));
-  p.addParameter(common[RELEASE] = new juce::AudioParameterFloat({ParamIDs::globalRelease, 1}, "Master Release", ParamRanges::RELEASE,
-                                                                 ParamDefaults::RELEASE_DEFAULT_SEC));
-  p.addParameter(common[FILT_CUTOFF] =
-                     new juce::AudioParameterFloat({ParamIDs::globalFilterCutoff, 1}, "Master Filter Cutoff", ParamRanges::CUTOFF,
-                                                   ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
-  common[FILT_CUTOFF]->addListener(this);
-  p.addParameter(common[FILT_RESONANCE] =
-                     new juce::AudioParameterFloat({ParamIDs::globalFilterResonance, 1}, "Master Filter Resonance",
-                                                   ParamRanges::RESONANCE, ParamDefaults::FILTER_RESONANCE_DEFAULT));
-  common[FILT_RESONANCE]->addListener(this);
-  p.addParameter(common[FILT_TYPE] =
-                     new juce::AudioParameterChoice({ParamIDs::globalFilterType, 1}, "Master Filter Type", FILTER_TYPE_NAMES, 0));
-  common[FILT_TYPE]->addListener(this);
-
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat({ParamIDs::globalGrainShape, 1}, "Master Grain Shape",
                                                                      ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
   p.addParameter(common[GRAIN_TILT] = new juce::AudioParameterFloat({ParamIDs::globalGrainTilt, 1}, "Master Grain Tilt",
@@ -61,40 +220,18 @@ void ParamGlobal::addParams(juce::AudioProcessor& p) {
                                                                     ParamRanges::PAN_ADJUST, ParamDefaults::PAN_ADJUST_DEFAULT));
   p.addParameter(common[PAN_SPRAY] = new juce::AudioParameterFloat({ParamIDs::globalPanSpray, 1}, "Master Pan Spray",
                                                                    ParamRanges::PAN_SPRAY, ParamDefaults::PAN_SPRAY_DEFAULT));
+  p.addParameter(common[REVERSE] = new juce::AudioParameterBool({ParamIDs::globalReverse, 1}, ParamIDs::globalReverse, ParamDefaults::REVERSE_DEFAULT));
+  p.addParameter(common[OCTAVE_ADJUST] = new juce::AudioParameterInt({ParamIDs::globalOctaveAdjust, 1}, "Master Octave Adjust", ParamRanges::OCTAVE_ADJUST.start, ParamRanges::OCTAVE_ADJUST.end, ParamDefaults::OCTAVE_ADJUST_DEFAULT));
 }
 
 void ParamGenerator::addParams(juce::AudioProcessor& p) {
   juce::String enableId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genEnable + juce::String(genIdx);
-  p.addParameter(enable = new juce::AudioParameterBool({enableId, 1}, enableId, genIdx == 0));
+  p.addParameter(enable = new juce::AudioParameterBool({enableId, 1}, enableId, true));
   juce::String candidateId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genCandidate + juce::String(genIdx);
   p.addParameter(candidate = new juce::AudioParameterInt({candidateId, 1}, candidateId, 0, MAX_CANDIDATES - 1, 0));
 
   juce::String gainId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGain + juce::String(genIdx);
   p.addParameter(common[GAIN] = new juce::AudioParameterFloat({gainId, 1}, gainId, ParamRanges::GAIN, ParamDefaults::GAIN_DEFAULT));
-  juce::String attackId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genAttack + juce::String(genIdx);
-  p.addParameter(common[ATTACK] =
-                     new juce::AudioParameterFloat({attackId, 1}, attackId, ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
-  juce::String decayId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genDecay + juce::String(genIdx);
-  p.addParameter(common[DECAY] =
-                     new juce::AudioParameterFloat({decayId, 1}, decayId, ParamRanges::DECAY, ParamDefaults::DECAY_DEFAULT_SEC));
-  juce::String sustainId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genSustain + juce::String(genIdx);
-  p.addParameter(common[SUSTAIN] =
-                     new juce::AudioParameterFloat({sustainId, 1}, sustainId, ParamRanges::SUSTAIN, ParamDefaults::SUSTAIN_DEFAULT));
-  juce::String releaseId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genRelease + juce::String(genIdx);
-  p.addParameter(common[RELEASE] =
-                     new juce::AudioParameterFloat({releaseId, 1}, releaseId, ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
-  // Filter params have listeners to set juce::dsp::StateVariableFilter parameters when changed
-  juce::String cutoffId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterCutoff + juce::String(genIdx);
-  p.addParameter(common[FILT_CUTOFF] = new juce::AudioParameterFloat({cutoffId, 1}, cutoffId, ParamRanges::CUTOFF,
-                                                                     ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
-  common[FILT_CUTOFF]->addListener(this);
-  juce::String resonanceId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterResonance + juce::String(genIdx);
-  p.addParameter(common[FILT_RESONANCE] = new juce::AudioParameterFloat({resonanceId, 1}, resonanceId, ParamRanges::RESONANCE,
-                                                                        ParamDefaults::FILTER_RESONANCE_DEFAULT));
-  common[FILT_RESONANCE]->addListener(this);
-  juce::String filterTypeId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genFilterType + juce::String(genIdx);
-  p.addParameter(common[FILT_TYPE] = new juce::AudioParameterChoice({filterTypeId, 1}, filterTypeId, FILTER_TYPE_NAMES, 0));
-  common[FILT_TYPE]->addListener(this);
   juce::String pitchAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genPitchAdjust + juce::String(genIdx);
   p.addParameter(common[PITCH_ADJUST] = new juce::AudioParameterFloat({pitchAdjustId, 1}, pitchAdjustId, ParamRanges::PITCH_ADJUST,
                                                                       ParamDefaults::PITCH_ADJUST_DEFAULT));
@@ -129,6 +266,10 @@ void ParamGenerator::addParams(juce::AudioProcessor& p) {
                                                                         ParamDefaults::GRAIN_DURATION_DEFAULT));
   juce::String syncId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genGrainSync + juce::String(genIdx);
   p.addParameter(common[GRAIN_SYNC] = new juce::AudioParameterBool({syncId, 1}, syncId, ParamDefaults::GRAIN_SYNC_DEFAULT));
+  juce::String reverseId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genReverse + juce::String(genIdx);
+  p.addParameter(common[REVERSE] = new juce::AudioParameterBool({reverseId, 1}, reverseId, ParamDefaults::REVERSE_DEFAULT));
+  juce::String octaveAdjustId = PITCH_CLASS_NAMES[noteIdx] + ParamIDs::genOctaveAdjust + juce::String(genIdx);
+  p.addParameter(common[OCTAVE_ADJUST] = new juce::AudioParameterInt({octaveAdjustId, 1}, octaveAdjustId, ParamRanges::OCTAVE_ADJUST.start, ParamRanges::OCTAVE_ADJUST.end, ParamDefaults::OCTAVE_ADJUST_DEFAULT));
 }
 
 void ParamNote::addParams(juce::AudioProcessor& p) {
@@ -137,28 +278,6 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
   // First the note's common parameters
   p.addParameter(common[GAIN] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteGain, 1}, notePrefix + ParamIDs::noteGain,
                                                               ParamRanges::GAIN, ParamDefaults::GAIN_DEFAULT));
-  p.addParameter(common[ATTACK] =
-                     new juce::AudioParameterFloat({notePrefix + ParamIDs::noteAttack, 1}, notePrefix + ParamIDs::noteAttack,
-                                                   ParamRanges::ATTACK, ParamDefaults::ATTACK_DEFAULT_SEC));
-  p.addParameter(common[DECAY] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteDecay, 1}, notePrefix + ParamIDs::noteDecay,
-                                                               ParamRanges::DECAY, ParamDefaults::DECAY_DEFAULT_SEC));
-  p.addParameter(common[SUSTAIN] =
-                     new juce::AudioParameterFloat({notePrefix + ParamIDs::noteSustain, 1}, notePrefix + ParamIDs::noteSustain,
-                                                   ParamRanges::SUSTAIN, ParamDefaults::SUSTAIN_DEFAULT));
-  p.addParameter(common[RELEASE] =
-                     new juce::AudioParameterFloat({notePrefix + ParamIDs::noteRelease, 1}, notePrefix + ParamIDs::noteRelease,
-                                                   ParamRanges::RELEASE, ParamDefaults::RELEASE_DEFAULT_SEC));
-  p.addParameter(common[FILT_CUTOFF] =
-                     new juce::AudioParameterFloat({notePrefix + ParamIDs::noteFilterCutoff, 1}, notePrefix + ParamIDs::noteFilterCutoff,
-                                                   ParamRanges::CUTOFF, ParamDefaults::FILTER_LP_CUTOFF_DEFAULT_HZ));
-  common[FILT_CUTOFF]->addListener(this);
-  p.addParameter(common[FILT_RESONANCE] = new juce::AudioParameterFloat({
-                     notePrefix + ParamIDs::noteFilterResonance, 1}, notePrefix + ParamIDs::noteFilterResonance, ParamRanges::RESONANCE,
-                     ParamDefaults::FILTER_RESONANCE_DEFAULT));
-  common[FILT_RESONANCE]->addListener(this);
-  p.addParameter(common[FILT_TYPE] = new juce::AudioParameterChoice({notePrefix + ParamIDs::noteFilterType, 1},
-                                                                    notePrefix + ParamIDs::noteFilterType, FILTER_TYPE_NAMES, 0));
-  common[FILT_TYPE]->addListener(this);
 
   p.addParameter(common[GRAIN_SHAPE] = new juce::AudioParameterFloat({notePrefix + ParamIDs::noteGrainShape, 1}, notePrefix + ParamIDs::noteGrainShape,
                                                    ParamRanges::GRAIN_SHAPE, ParamDefaults::GRAIN_SHAPE_DEFAULT));
@@ -192,6 +311,8 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
   p.addParameter(common[PAN_SPRAY] =
                      new juce::AudioParameterFloat({notePrefix + ParamIDs::notePanSpray, 1}, notePrefix + ParamIDs::notePanSpray,
                                                    ParamRanges::PAN_SPRAY, ParamDefaults::PAN_SPRAY_DEFAULT));
+  p.addParameter(common[REVERSE] = new juce::AudioParameterBool({notePrefix + ParamIDs::noteReverse, 1}, notePrefix + ParamIDs::noteReverse, ParamDefaults::REVERSE_DEFAULT));
+  p.addParameter(common[OCTAVE_ADJUST] = new juce::AudioParameterInt({notePrefix + ParamIDs::noteOctaveAdjust, 1}, notePrefix + ParamIDs::noteOctaveAdjust, ParamRanges::OCTAVE_ADJUST.start, ParamRanges::OCTAVE_ADJUST.end, ParamDefaults::OCTAVE_ADJUST_DEFAULT));
 
   // Then make each of its generators
   for (auto& generator : generators) {
@@ -202,7 +323,7 @@ void ParamNote::addParams(juce::AudioProcessor& p) {
 }
 
 ParamCandidate* ParamNote::getCandidate(int genIdx) {
-  if (candidates.empty()) return nullptr;
+  if (candidates.size() <= genIdx) return nullptr;
   return &candidates[generators[genIdx]->candidate->get()];
 }
 

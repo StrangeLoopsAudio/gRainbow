@@ -55,6 +55,12 @@ def parseInfo(filePath):
       # Also need to remove trailing byte from doing a .join()
       xmlData = xmlData[xmlData.index("<?xml"):-1]
       xmlDom = xml.dom.minidom.parseString(xmlData)
+
+      images = xmlDom.getElementsByTagName('Images')
+      for image in images:
+        parent_node = image.parentNode
+        parent_node.removeChild(image)
+
       print(xmlDom.toprettyxml())
 
   else:

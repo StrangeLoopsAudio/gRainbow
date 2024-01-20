@@ -14,75 +14,70 @@
 
 EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
     : mParameters(parameters),
-      mCurSelectedParams(parameters.selectedParams),
-      mParamColour(Utils::GLOBAL_COLOUR),
+      mCurSelectedParams(parameters.getSelectedParams()),
+      mParamColour(Utils::Colour::GLOBAL),
       mSliderShape(parameters, ParamCommon::Type::GRAIN_SHAPE),
       mSliderTilt(parameters, ParamCommon::Type::GRAIN_TILT),
-      mSliderRate(parameters, ParamCommon::Type::GRAIN_RATE),
-      mSliderDuration(parameters, ParamCommon::Type::GRAIN_DURATION),
+      mSliderRate(parameters, ParamCommon::Type::GRAIN_RATE, false),
+      mSliderDuration(parameters, ParamCommon::Type::GRAIN_DURATION, true),
+      mBtnSync(parameters, ParamCommon::Type::GRAIN_SYNC),
       mPathStroke(2, juce::PathStrokeType::JointStyle::mitered, juce::PathStrokeType::EndCapStyle::rounded) {
-  juce::Colour colour = Utils::GLOBAL_COLOUR;
-  mSliderShape.setNumDecimalPlacesToDisplay(2);
-  mSliderShape.setRange(0, 1, 0.01);
-  mSliderShape.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderShape);
+  juce::Colour colour = Utils::Colour::GLOBAL;
 
+  // Default slider settings
+  std::vector<std::reference_wrapper<CommonSlider>> sliders = { mSliderShape, mSliderTilt, mSliderRate, mSliderDuration };
+  for (auto& slider : sliders) {
+    slider.get().setNumDecimalPlacesToDisplay(2);
+    slider.get().setPopupDisplayEnabled(true, true, this);
+    addAndMakeVisible(slider.get());
+  }
+
+  // Default label settings
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelShape, mLabelTilt, mLabelRate, mLabelDuration };
+  for (auto& label : labels) {
+    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::Colour::GLOBAL);
+    label.get().setJustificationType(juce::Justification::centredTop);
+    label.get().setFont(Utils::getFont());
+    addAndMakeVisible(label.get());
+  }
+
+  // Default button settings
+  std::vector<std::reference_wrapper<juce::Button>> buttons = { mBtnSync };
+  for (auto& btn : buttons) {
+    btn.get().setColour(juce::ToggleButton::ColourIds::tickColourId, Utils::Colour::GLOBAL);
+    addAndMakeVisible(btn.get());
+  }
+
+  // Shape
+  mSliderShape.setRange(ParamRanges::GRAIN_SHAPE.start, ParamRanges::GRAIN_SHAPE.end, 0.01);
   mLabelShape.setText("shape", juce::dontSendNotification);
-  mLabelShape.setColour(juce::Label::ColourIds::textColourId, colour);
-  mLabelShape.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelShape);
 
   // Tilt
-  mSliderTilt.setNumDecimalPlacesToDisplay(2);
-  mSliderTilt.setRange(0, 1, 0.01);
-  mSliderTilt.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderTilt);
-
+  mSliderTilt.setRange(ParamRanges::GRAIN_TILT.start, ParamRanges::GRAIN_TILT.end, 0.01);
   mLabelTilt.setText("tilt", juce::dontSendNotification);
-  mLabelTilt.setColour(juce::Label::ColourIds::textColourId, colour);
-  mLabelTilt.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelTilt);
 
   // Rate
-  mSliderRate.setNumDecimalPlacesToDisplay(2);
   mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
-  mSliderRate.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderRate);
-
+  mSliderRate.setSuffix("g/s");
   mLabelRate.setText("rate", juce::dontSendNotification);
-  mLabelRate.setColour(juce::Label::ColourIds::textColourId, colour);
-  mLabelRate.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelRate);
 
   // Duration
-  mSliderDuration.setNumDecimalPlacesToDisplay(2);
   mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start, ParamRanges::GRAIN_DURATION.end, 0.01);
   mSliderDuration.setSuffix("s");
-  mSliderDuration.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderDuration);
-
   mLabelDuration.setText("duration", juce::dontSendNotification);
-  mLabelDuration.setColour(juce::Label::ColourIds::textColourId, colour);
-  mLabelDuration.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelDuration);
 
   // Sync
-  mBtnSync.setButtonText("free");
-  mBtnSync.setToggleable(true);
-  mBtnSync.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
-  mBtnSync.setColour(juce::TextButton::textColourOnId, juce::Colours::black);
-  mBtnSync.onClick = [this]() {
-    ParamHelper::setCommonParam(mParameters.selectedParams, ParamCommon::Type::GRAIN_SYNC, !mBtnSync.getToggleState());
-  };
-  addAndMakeVisible(mBtnSync);
+  mBtnSync.setButtonText("hz");
 
+  mParameters.addListener(this);
   mCurSelectedParams->addListener(this);
-  updateSelectedParams();
+  selectedCommonParamsChanged(mCurSelectedParams);
 
-  startTimer(100);
+  startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 EnvelopeGrain::~EnvelopeGrain() {
+  mParameters.removeListener(this);
   mCurSelectedParams->removeListener(this);
   stopTimer();
 }
@@ -100,23 +95,19 @@ void EnvelopeGrain::timerCallback() {
                              juce::dontSendNotification);
     mBtnSync.setToggleState(mParameters.getBoolParam(mCurSelectedParams, ParamCommon::Type::GRAIN_SYNC),
                             juce::dontSendNotification);
-    mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "free");
+    mBtnSync.setButtonText(mBtnSync.getToggleState() ? "sync" : "hz");
     mSliderRate.setSync(mBtnSync.getToggleState());
+    mSliderRate.setRange(mSliderRate.getRange(), mBtnSync.getToggleState() ? mSliderRate.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX) : 0.01);
     mSliderDuration.setSync(mBtnSync.getToggleState());
+    mSliderDuration.setRange(mSliderDuration.getRange(), mBtnSync.getToggleState() ? mSliderDuration.getRange().getLength() / (ParamRanges::SYNC_DIV_MAX) : 0.01);
   }
 }
 
-void EnvelopeGrain::updateSelectedParams() {
+void EnvelopeGrain::selectedCommonParamsChanged(ParamCommon* newParams) {
   if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
-  mCurSelectedParams = mParameters.selectedParams;
+  mCurSelectedParams = newParams;
   mCurSelectedParams->addListener(this);
   mParamColour = mParameters.getSelectedParamColour();
-  mSliderShape.updateSelectedParams();
-  mSliderTilt.updateSelectedParams();
-  mSliderRate.updateSelectedParams();
-  mSliderDuration.updateSelectedParams();
-  mBtnSync.setColour(juce::TextButton::buttonColourId, mParamColour);
-  mBtnSync.setColour(juce::TextButton::buttonOnColourId, mParamColour.interpolatedWith(juce::Colours::white, 0.6f));
   mParamHasChanged.store(true);
   repaint();
 }
@@ -124,90 +115,81 @@ void EnvelopeGrain::updateSelectedParams() {
 void EnvelopeGrain::paint(juce::Graphics& g) {
   juce::Colour colour = mParamColour;
 
-  // Section title
-  g.setColour(Utils::GLOBAL_COLOUR);
-  g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
-  g.setColour(colour);
-  g.drawRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT, 2.0f);
-  g.setColour(juce::Colours::white);
-  g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
+  // Panel rectangle
+  g.setColour(Utils::Colour::PANEL);
+  g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
 
-  float duration = mSliderDuration.getValue();
-  float rate = mSliderRate.getValue();
+  // Visualization rect
+  g.setColour(Utils::Colour::BACKGROUND);
+  g.fillRect(mVizRect);
+  
+  auto drawRect = mVizRect.reduced(Utils::PADDING);
 
-  float envWidth;
-  float envOffset;
+  float durSec, rateSec;
   if (mBtnSync.getToggleState()) {
-    float durDiv = std::pow(2, (int)(duration));
-    envWidth = mVizRect.getWidth() / durDiv;
-    float rateDiv = std::pow(2, (int)(rate));
-    envOffset = envWidth / rateDiv;
+    float div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * (1.0f - ParamRanges::GRAIN_DURATION.convertTo0to1(mSliderDuration.getValue()))));
+    // Find synced duration/rate using fixed 120 bpm and 4 beats per bar (different from actual synthesis, just for vis)
+    durSec = (1.0f / 120) * 60.0f * (4 / div);
+    div = std::pow(2, juce::roundToInt(ParamRanges::SYNC_DIV_MAX * ParamRanges::GRAIN_RATE.convertTo0to1(mSliderRate.getValue())));
+    rateSec = (1.0f / 120) * 60.0f * (4 / div);
   } else {
-    envWidth = juce::jmap(duration,
-                          mVizRect.getWidth() / MAX_NUM_ENVS, mVizRect.getWidth());
-    envOffset = juce::jmap(rate, envWidth * MIN_RATE_RATIO,
-                           envWidth * MAX_RATE_RATIO);
+    durSec = mSliderDuration.getValue();
+    rateSec = 1.0f / mSliderRate.getValue();
   }
+
+  float envWidth = (durSec / WINDOW_SECONDS) * drawRect.getWidth();
+  float envOffset = (rateSec / WINDOW_SECONDS) * drawRect.getWidth();
 
   float shapeWidth = envWidth * mSliderShape.getValue() / 2.0f;
-  
+
   juce::Path clipPath;
-  clipPath.addRectangle(mVizRect.expanded(2).withCentre(mVizRect.getCentre()));
+  clipPath.addRectangle(drawRect);
+  auto envBounds = drawRect.reduced(2, 2);
 
   // Draw darker odd numbered envelopes
-  float tilt = mSliderTilt.getValue();
-  float curXStart = mVizRect.getX() + envOffset;
+  float tiltWidth = (envWidth * 0.5f) + (mSliderTilt.getValue() * envWidth * 0.5f);
+  float curXStart = envBounds.getX() + envOffset;
   juce::Colour envColour = colour.darker(0.5f);
-  while (curXStart < mVizRect.getWidth()) {
+  while (curXStart < envBounds.getWidth()) {
     juce::Path envPath;
-    juce::Point<float> lastPt = juce::Point<float>(curXStart, mVizRect.getBottom());
-    juce::Point<float> pt = juce::Point<float>(juce::jmax(curXStart, curXStart + (tilt * envWidth) - shapeWidth), mVizRect.getY());
+    juce::Point<float> lastPt = juce::Point<float>(curXStart, envBounds.getBottom());
+    juce::Point<float> pt = juce::Point<float>(juce::jmax(curXStart, curXStart + tiltWidth - shapeWidth), envBounds.getY());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     lastPt = pt;
-    pt = juce::Point<float>(juce::jmin(curXStart + envWidth, curXStart + (tilt * envWidth) + shapeWidth), mVizRect.getY());
+    pt = juce::Point<float>(juce::jmin(curXStart + envWidth, curXStart + tiltWidth + shapeWidth), envBounds.getY());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     lastPt = pt;
-    pt = juce::Point<float>(curXStart + envWidth, mVizRect.getBottom());
+    pt = juce::Point<float>(curXStart + envWidth, envBounds.getBottom());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     g.setColour(envColour);
-    g.strokePath(envPath, mPathStroke);
+    g.strokePath(envPath.createPathWithRoundedCorners(5), mPathStroke);
     curXStart += (envOffset * 2.0f);
   }
-  curXStart = mVizRect.getX();
+  curXStart = envBounds.getX();
   // Draw brighter even numbered envelopes
   envColour = colour.brighter(0.5f);
-  while (curXStart < mVizRect.getWidth()) {
+  while (curXStart < envBounds.getWidth()) {
     juce::Path envPath;
-    juce::Point<float> lastPt = juce::Point<float>(curXStart, mVizRect.getBottom());
-    juce::Point<float> pt = juce::Point<float>(juce::jmax(curXStart, curXStart + (tilt * envWidth) - shapeWidth), mVizRect.getY());
+    juce::Point<float> lastPt = juce::Point<float>(curXStart, envBounds.getBottom());
+    juce::Point<float> pt = juce::Point<float>(juce::jmax(curXStart, curXStart + tiltWidth - shapeWidth), envBounds.getY());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     lastPt = pt;
-    pt = juce::Point<float>(juce::jmin(curXStart + envWidth, curXStart + (tilt * envWidth) + shapeWidth), mVizRect.getY());
+    pt = juce::Point<float>(juce::jmin(curXStart + envWidth, curXStart + tiltWidth + shapeWidth), envBounds.getY());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     lastPt = pt;
-    pt = juce::Point<float>(curXStart + envWidth, mVizRect.getBottom());
+    pt = juce::Point<float>(curXStart + envWidth, envBounds.getBottom());
     envPath.addLineSegment(clipPath.getClippedLine(juce::Line(lastPt, pt), false), 1.0f);
     g.setColour(envColour);
-    g.strokePath(envPath, mPathStroke);
+    g.strokePath(envPath.createPathWithRoundedCorners(5), mPathStroke);
     curXStart += (envOffset * 2.0f);
   }
-
-  g.setColour(envColour);
-  g.strokePath(clipPath, juce::PathStrokeType(2.0f));
 }
 
 void EnvelopeGrain::resized() {
-  juce::Rectangle<float> r = getLocalBounds().toFloat();
-  // Remove padding
-  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().toFloat().getCentre());
-
-  // Make title rect
-  mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT);
-
-  r.removeFromTop(Utils::PADDING);
+  auto r = getLocalBounds().reduced(Utils::PADDING);
 
   // Place labels
-  juce::Rectangle<int> labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT).toNearestInt();
+  auto labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT);
   int labelWidth = labelPanel.getWidth() / 4;
   mLabelShape.setBounds(labelPanel.removeFromLeft(labelWidth));
   mLabelTilt.setBounds(labelPanel.removeFromLeft(labelWidth));
@@ -215,19 +197,19 @@ void EnvelopeGrain::resized() {
   mLabelDuration.setBounds(labelPanel.removeFromLeft(labelWidth));
 
   // Place sliders
-  juce::Rectangle<int> knobPanel = r.removeFromBottom(Utils::KNOB_HEIGHT).toNearestInt();
+  auto knobPanel = r.removeFromBottom(Utils::KNOB_HEIGHT);
   int knobWidth = knobPanel.getWidth() / 4;
   mSliderShape.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderTilt.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderRate.setBounds(knobPanel.removeFromLeft(knobWidth));
   mSliderDuration.setBounds(knobPanel.removeFromLeft(knobWidth));
 
+  // Place button
+  auto syncPanel = r.removeFromRight(r.getWidth() * 0.25f);
+  mBtnSync.setBounds(syncPanel.withSizeKeepingCentre(syncPanel.getWidth(), Utils::LABEL_HEIGHT + 4));
+
+  r.removeFromRight(Utils::PADDING);
   r.removeFromBottom(Utils::PADDING);
 
-  // Place button
-  juce::Rectangle<int> syncPanel = r.removeFromRight(r.getWidth() * 0.25f).toNearestInt();
-  mBtnSync.changeWidthToFitText(Utils::LABEL_HEIGHT);
-  mBtnSync.setCentrePosition(syncPanel.getCentre());
-
-  mVizRect = r;
+  mVizRect = r.toFloat();
 }

@@ -22,6 +22,7 @@
 #include "DSP/Fft.h"
 #include "Parameters.h"
 #include "Utils/Utils.h"
+#include "Utils/DSP.h"
 #include "Utils/MidiNote.h"
 
 //==============================================================================
@@ -36,26 +37,26 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
   void paint(juce::Graphics &) override;
   void resized() override;
 
+  void mouseMove(const juce::MouseEvent& evt) override;
+  void mouseExit(const juce::MouseEvent&) override;
+
   void reset();
   bool shouldLoadImage(ParamUI::SpecType type) { return !mIsProcessing && !mImagesComplete[type]; }
   void loadSpecBuffer(Utils::SpecBuffer *buffer, ParamUI::SpecType type);
   void loadWaveformBuffer(juce::AudioBuffer<float> *audioBuffer);  // Raw audio samples from file
   void loadPreset();
   void setMidiNotes(const juce::Array<Utils::MidiNote> &midiNotes);
-  void setSpecType(ParamUI::SpecType type) { mSpecType.setSelectedItemIndex(type, juce::dontSendNotification); }
+  void setSpecType(ParamUI::SpecType type) { mSpecType.setSelectedId(type + 1, juce::sendNotificationSync); }
 
   //============================================================================
   void run() override;
-
-  // Callback functions when all images are created
-  std::function<void(void)> onImagesComplete = nullptr;
 
  private:
   static constexpr auto BUFFER_PROCESS_TIMEOUT = 10000;
   static constexpr auto REFRESH_RATE_FPS = 30;
 
   // UI variables
-  static constexpr auto SPEC_TYPE_HEIGHT = 40;
+  static constexpr auto SPEC_TYPE_HEIGHT = 30;
   static constexpr auto SPEC_TYPE_WIDTH = 100;
   static constexpr auto CANDIDATE_BUBBLE_SIZE = 14;
   static constexpr auto NUM_COLS = 600;
@@ -70,21 +71,32 @@ class ArcSpectrogram : public juce::AnimatedAppComponent, juce::Thread {
         : paramGenerator(paramGenerator_), gain(gain_), pitchClass(pitchClass_) {}
   } ArcGrain;
 
+  enum CloudType { WAIT, SINGING, TOUCH, COUNT };
+
+  typedef struct Cloud {
+    std::array<juce::Image, CloudType::COUNT> images;
+    CloudType type = CloudType::WAIT;
+    juce::Rectangle<float> rect;
+    juce::Image& getImage() { return images[type]; }
+  } Cloud;
+
   // Parameters
   // Use to save state since if the plugin is closed and open, will need these
   // to restore the state
   Parameters& mParameters;
 
+  // Bookkeeping
   // Buffers used to generate the images
   std::array<void *, ParamUI::SpecType::COUNT> mBuffers;
-
-  // Bookkeeping
   std::bitset<Utils::PitchClass::COUNT> mActivePitchClass;
   juce::Array<ArcGrain> mArcGrains;
   bool mIsProcessing = false;
   bool mImagesComplete[ParamUI::SpecType::COUNT];
+  Cloud mCloudLeft, mCloudRight;
 
   // UI values saved on resize
+  juce::Rectangle<int> mRainbowRect;
+  juce::Point<int> mStartPoint;
   juce::Point<float> mCenterPoint;
   int mStartRadius = 0;
   int mEndRadius = 0;

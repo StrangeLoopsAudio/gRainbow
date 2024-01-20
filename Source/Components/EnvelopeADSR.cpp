@@ -11,71 +11,64 @@
 #include "EnvelopeADSR.h"
 #include "Utils/Utils.h"
 
+// Just like EnvelopePanel but for the amp env (no map button and global params)
+// TODO: can probably consolidate the 2 classes in a clever way
 //==============================================================================
 EnvelopeADSR::EnvelopeADSR(Parameters& parameters)
     : mParameters(parameters),
-      mCurSelectedParams(parameters.selectedParams),
-      mSliderAttack(parameters, ParamCommon::Type::ATTACK),
-      mSliderDecay(parameters, ParamCommon::Type::DECAY),
-      mSliderSustain(parameters, ParamCommon::Type::SUSTAIN),
-      mSliderRelease(parameters, ParamCommon::Type::RELEASE)
+      mSliderAttack(mParameters, mParameters.global.ampEnvAttack),
+      mSliderDecay(mParameters, mParameters.global.ampEnvDecay),
+      mSliderSustain(mParameters, mParameters.global.ampEnvSustain),
+      mSliderRelease(mParameters, mParameters.global.ampEnvRelease)
 {
-  juce::Colour knobColour = Utils::GLOBAL_COLOUR;
-  // Attack
-  mSliderAttack.setNumDecimalPlacesToDisplay(2);
+  // Default slider settings
+  std::vector<std::reference_wrapper<juce::Slider>> sliders = { mSliderAttack, mSliderDecay, mSliderSustain, mSliderRelease };
+  for (auto& slider : sliders) {
+    slider.get().setNumDecimalPlacesToDisplay(2);
+    slider.get().setPopupDisplayEnabled(true, true, this);
+    slider.get().setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, Utils::Colour::GLOBAL);
+    addAndMakeVisible(slider.get());
+  }
   mSliderAttack.setRange(ParamRanges::ATTACK.start, ParamRanges::ATTACK.end, 0.01);
-  mSliderAttack.setTextValueSuffix("s");
-  mSliderAttack.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderAttack);
-
-  mLabelAttack.setText("attack", juce::dontSendNotification);
-  mLabelAttack.setColour(juce::Label::ColourIds::textColourId, knobColour);
-  mLabelAttack.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelAttack);
-
-  // Decay
-  mSliderDecay.setNumDecimalPlacesToDisplay(2);
+  mSliderAttack.setDoubleClickReturnValue(true, ParamDefaults::ATTACK_DEFAULT_SEC);
+  mSliderAttack.setTextValueSuffix(" s");
   mSliderDecay.setRange(ParamRanges::DECAY.start, ParamRanges::DECAY.end, 0.01);
-  mSliderDecay.setTextValueSuffix("s");
-  mSliderDecay.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderDecay);
-
-  mLabelDecay.setText("decay", juce::dontSendNotification);
-  mLabelDecay.setColour(juce::Label::ColourIds::textColourId, knobColour);
-  mLabelDecay.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelDecay);
-
-  // Sustain
-  mSliderSustain.setNumDecimalPlacesToDisplay(2);
-  mSliderSustain.setRange(0.0, 1.0, 0.01);
-  mSliderSustain.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderSustain);
-
-  mLabelSustain.setText("sustain", juce::dontSendNotification);
-  mLabelSustain.setColour(juce::Label::ColourIds::textColourId, knobColour);
-  mLabelSustain.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelSustain);
-
-  // Release
-  mSliderRelease.setNumDecimalPlacesToDisplay(2);
+  mSliderDecay.setDoubleClickReturnValue(true, ParamDefaults::DECAY_DEFAULT_SEC);
+  mSliderDecay.setTextValueSuffix(" s");
+  mSliderSustain.setRange(ParamRanges::SUSTAIN.start, ParamRanges::SUSTAIN.end, 0.01);
+  mSliderSustain.setDoubleClickReturnValue(true, ParamDefaults::SUSTAIN_DEFAULT);
+  mSliderSustain.setTextValueSuffix(" dB");
   mSliderRelease.setRange(ParamRanges::RELEASE.start, ParamRanges::RELEASE.end, 0.01);
-  mSliderRelease.setTextValueSuffix("s");
-  mSliderRelease.setPopupDisplayEnabled(true, true, this);
-  addAndMakeVisible(mSliderRelease);
+  mSliderRelease.setDoubleClickReturnValue(true, ParamDefaults::RELEASE_DEFAULT_SEC);
+  mSliderRelease.setTextValueSuffix(" s");
 
+  // Default label settings
+  std::vector<std::reference_wrapper<juce::Label>> labels = { mLabelAttack, mLabelDecay, mLabelSustain, mLabelRelease };
+  for (auto& label : labels) {
+    label.get().setColour(juce::Label::ColourIds::textColourId, Utils::Colour::GLOBAL);
+    label.get().setJustificationType(juce::Justification::centredTop);
+    label.get().setFont(Utils::getFont());
+    addAndMakeVisible(label.get());
+  }
+  mLabelAttack.setText("attack", juce::dontSendNotification);
+  mLabelDecay.setText("decay", juce::dontSendNotification);
+  mLabelSustain.setText("sustain", juce::dontSendNotification);
   mLabelRelease.setText("release", juce::dontSendNotification);
-  mLabelRelease.setColour(juce::Label::ColourIds::textColourId, knobColour);
-  mLabelRelease.setJustificationType(juce::Justification::centredTop);
-  addAndMakeVisible(mLabelRelease);
 
-  mCurSelectedParams->addListener(this);
-  updateSelectedParams();
+  mParameters.global.ampEnvAttack->addListener(this);
+  mParameters.global.ampEnvDecay->addListener(this);
+  mParameters.global.ampEnvSustain->addListener(this);
+  mParameters.global.ampEnvRelease->addListener(this);
+  mParamHasChanged.store(true); // Init param values
 
-  startTimer(100);
+  startTimer(Utils::UI_REFRESH_INTERVAL);
 }
 
 EnvelopeADSR::~EnvelopeADSR() {
-  mCurSelectedParams->removeListener(this);
+  mParameters.global.ampEnvAttack->removeListener(this);
+  mParameters.global.ampEnvDecay->removeListener(this);
+  mParameters.global.ampEnvSustain->removeListener(this);
+  mParameters.global.ampEnvRelease->removeListener(this);
   stopTimer();
 }
 
@@ -84,52 +77,38 @@ void EnvelopeADSR::parameterValueChanged(int, float) { mParamHasChanged.store(tr
 void EnvelopeADSR::timerCallback() {
   if (mParamHasChanged.load()) {
     mParamHasChanged.store(false);
-    mSliderAttack.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::ATTACK), juce::dontSendNotification);
-    mSliderDecay.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::DECAY), juce::dontSendNotification);
-    mSliderSustain.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::SUSTAIN), juce::dontSendNotification);
-    mSliderRelease.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::RELEASE), juce::dontSendNotification);
+    mSliderAttack.setValue(mParameters.global.ampEnvAttack->get(), juce::dontSendNotification);
+    mSliderDecay.setValue(mParameters.global.ampEnvDecay->get(), juce::dontSendNotification);
+    mSliderSustain.setValue(mParameters.global.ampEnvSustain->get(), juce::dontSendNotification);
+    mSliderRelease.setValue(mParameters.global.ampEnvRelease->get(), juce::dontSendNotification);
   }
 }
 
-void EnvelopeADSR::updateSelectedParams() {
-  if (mCurSelectedParams != nullptr) mCurSelectedParams->removeListener(this);
-  mCurSelectedParams = mParameters.selectedParams;
-  mCurSelectedParams->addListener(this);
-  mParamColour = mParameters.getSelectedParamColour();
-  mSliderAttack.updateSelectedParams();
-  mSliderDecay.updateSelectedParams();
-  mSliderSustain.updateSelectedParams();
-  mSliderRelease.updateSelectedParams();
-  mParamHasChanged.store(true);
-  repaint();
-}
-
 void EnvelopeADSR::paint(juce::Graphics& g) {
-  juce::Colour colour = mParamColour;
+  juce::Colour colour = Utils::Colour::GLOBAL;
 
-  // Section title
-  g.setColour(Utils::GLOBAL_COLOUR);
-  g.fillRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT);
-  g.setColour(colour);
-  g.drawRoundedRectangle(mTitleRect, Utils::ROUNDED_AMOUNT, 2.0f);
-  g.setColour(juce::Colours::white);
-  g.drawText(juce::String(SECTION_TITLE), mTitleRect, juce::Justification::centred);
+  // Panel rectangle
+  g.setColour(Utils::Colour::PANEL);
+  g.fillRoundedRectangle(getLocalBounds().expanded(0, 20).translated(0, -20).toFloat(), 10);
 
-  // TODO: include other non-global values as well
-  float attack = ParamRanges::ATTACK.convertTo0to1(mSliderAttack.getValue());
-  float decay = ParamRanges::DECAY.convertTo0to1(mSliderDecay.getValue());
-  float sustain = ParamRanges::SUSTAIN.convertTo0to1(mSliderSustain.getValue());
-  float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
+  // Visualization rect
+  g.setColour(Utils::Colour::BACKGROUND);
+  g.fillRect(mVizRect);
+
+  const float attack = ParamRanges::ATTACK.convertTo0to1(mSliderAttack.getValue());
+  const float decay = ParamRanges::DECAY.convertTo0to1(mSliderDecay.getValue());
+  const float sustain = ParamRanges::SUSTAIN.convertTo0to1(mSliderSustain.getValue());
+  const float release = ParamRanges::RELEASE.convertTo0to1(mSliderRelease.getValue());
 
   // Draw ADSR path
-  g.setFillType(juce::ColourGradient(colour, mVizRect.getTopLeft(), colour.withAlpha(0.4f), mVizRect.getBottomLeft(), false));
+  auto adsrRect = mVizRect.reduced(Utils::PADDING * 2, Utils::PADDING * 2);
 
   juce::Path adsrPath;
-  juce::Point<float> startPt = mVizRect.getBottomLeft();
-  juce::Point<float> attackPt = startPt.translated(attack * mVizRect.getWidth() * 0.375f, -mVizRect.getHeight());
-  juce::Point<float> decayPt = attackPt.translated(decay * mVizRect.getWidth() * 0.375f, (1.0f - sustain) * (mVizRect.getHeight()));
-  juce::Point<float> sustainPt = mVizRect.getBottomLeft().translated(mVizRect.getWidth() * 0.75f, -sustain * (mVizRect.getHeight()));
-  juce::Point<float> endPt = sustainPt.translated(release * mVizRect.getWidth() * 0.25f, 0.0f).withY(mVizRect.getBottom());
+  juce::Point<float> startPt = adsrRect.getBottomLeft();
+  juce::Point<float> attackPt = startPt.translated(attack * adsrRect.getWidth() * 0.375f, -adsrRect.getHeight());
+  juce::Point<float> decayPt = attackPt.translated(decay * adsrRect.getWidth() * 0.375f, (1.0f - sustain) * (adsrRect.getHeight()));
+  juce::Point<float> sustainPt = adsrRect.getBottomLeft().translated(adsrRect.getWidth() * 0.75f, -sustain * (adsrRect.getHeight()));
+  juce::Point<float> endPt = sustainPt.translated(release * adsrRect.getWidth() * 0.25f, 0.0f).withY(adsrRect.getBottom());
 
   adsrPath.startNewSubPath(startPt);
   adsrPath.lineTo(attackPt);
@@ -137,27 +116,12 @@ void EnvelopeADSR::paint(juce::Graphics& g) {
   adsrPath.lineTo(sustainPt);
   adsrPath.lineTo(endPt);
   adsrPath.closeSubPath();
-  g.fillPath(adsrPath);
-
-  // Draw highlight lines on top of each segment
-  float highlightWidth = 3.0f;
   g.setColour(colour);
-  g.drawLine(juce::Line<float>(startPt, attackPt), highlightWidth);
-  g.drawLine(juce::Line<float>(attackPt, decayPt), highlightWidth);
-  g.drawLine(juce::Line<float>(decayPt, sustainPt), highlightWidth);
-  g.drawLine(juce::Line<float>(sustainPt.translated(0, -1), endPt), highlightWidth);
-
-  g.drawRect(mVizRect.expanded(2).withCentre(mVizRect.getCentre()), 2.0f);
+  g.strokePath(adsrPath.createPathWithRoundedCorners(5), juce::PathStrokeType(3));
 }
 
 void EnvelopeADSR::resized() {
-  juce::Rectangle<int> r = getLocalBounds();
-  // Remove padding
-  r = r.reduced(Utils::PADDING, Utils::PADDING).withCentre(getLocalBounds().getCentre());
-  // Make title rect
-  mTitleRect = r.removeFromTop(Utils::TITLE_HEIGHT).toFloat();
-
-  r.removeFromTop(Utils::PADDING);
+  auto r = getLocalBounds().reduced(Utils::PADDING);
 
   // Place labels
   juce::Rectangle<int> labelPanel = r.removeFromBottom(Utils::LABEL_HEIGHT);

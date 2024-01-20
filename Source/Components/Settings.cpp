@@ -12,7 +12,7 @@
 
 void PowerUserSettings::resetParameters() {
   if (mSynth != nullptr) {
-    mSynth->resetParameters(false);
+    mSynth->getParams().resetParams();
   }
 }
 

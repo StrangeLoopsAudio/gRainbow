@@ -13,6 +13,7 @@
 #include "BinaryData.h"
 #include "Utils/Colour.h"
 #include "Utils/MidiNote.h"
+#include "Utils/DSP.h"
 
 // Used for getting memory usage
 #ifdef __linux__
@@ -24,115 +25,89 @@
 #include <Psapi.h>
 #endif
 
-GRainbowLogo::GRainbowLogo() { mLogoImage = juce::PNGImageFormat::loadFrom(BinaryData::logo_png, BinaryData::logo_pngSize); }
-
-void GRainbowLogo::paint(juce::Graphics& g) {
-  g.fillAll(juce::Colours::transparentBlack);
-  g.drawImage(mLogoImage, getLocalBounds().toFloat(),
-              juce::RectanglePlacement(juce::RectanglePlacement::yBottom | juce::RectanglePlacement::yTop), false);
-}
-
 //==============================================================================
 GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
-    : AudioProcessorEditor(&synth),
-      mSynth(synth),
-      mParameters(synth.getParams()),
-      mArcSpec(synth.getParams()),
-      mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
-      mProgressBar(mParameters.ui.loadingProgress),
-      mKeyboard(synth.getKeyboardState(), synth.getParams()),
-      mEnvAdsr(synth.getParams()),
-      mEnvGrain(synth.getParams()),
-      mGrainControl(synth.getParams(), synth.getMeterSource()),
-      mFilterControl(synth.getParams()) {
+: AudioProcessorEditor(&synth),
+mSynth(synth),
+mParameters(synth.getParams()),
+mArcSpec(synth.getParams()),
+mTrimSelection(synth.getFormatManager(), synth.getParamUI()),
+mProgressBar(PROGRESS_VALUE),
+mTabsGrains(juce::TabbedButtonBar::Orientation::TabsAtTop),
+mTabsLFOs(juce::TabbedButtonBar::Orientation::TabsAtTop),
+mTabsEnvs(juce::TabbedButtonBar::Orientation::TabsAtTop),
+mEnvAdsr(synth.getParams()),
+mEnvGrain(synth.getParams()),
+mAdjustPanel(synth.getParams()),
+mModEnv1(0, synth.getParams()),
+mModEnv2(1, synth.getParams()),
+mModLFO1(0, synth.getParams()),
+mModLFO2(1, synth.getParams()),
+mModLFO3(2, synth.getParams()),
+mMasterPanel(synth.getParams(), synth.getMeterSource()),
+mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   setLookAndFeel(&mRainbowLookAndFeel);
-  mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::GLOBAL_COLOUR);
-
-  // Search for better fonts
-  {
-    juce::Array<juce::Font> fonts;
-    juce::Font::findFonts(fonts);
-    for (size_t i = 0; i < fonts.size(); i++) {
-      // Ordred by fonts we want to use first if found
-      juce::String fontName = fonts[i].getTypefaceName();
-      if (fontName.equalsIgnoreCase("Century Gothic")) {
-        juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(fontName);
-        break;
-      } else if (fontName.equalsIgnoreCase("Ubuntu")) {
-        juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(fontName);
-        break;
-      }
-    }
-  }
+  mRainbowLookAndFeel.setColour(juce::ComboBox::ColourIds::backgroundColourId, Utils::Colour::GLOBAL);
+  mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, Utils::Colour::GLOBAL);
+  juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(RainbowLookAndFeel::getCustomTypeface());
 
   mErrorMessage.clear();
 
-  // Open file button
-  juce::Image normal = juce::PNGImageFormat::loadFrom(BinaryData::openFileNormal_png, BinaryData::openFileNormal_pngSize);
-  juce::Image over = juce::PNGImageFormat::loadFrom(BinaryData::openFileOver_png, BinaryData::openFileOver_pngSize);
-  mBtnOpenFile.setImages(false, true, true, normal, 1.0f, juce::Colours::transparentBlack, over, 1.0f,
-                         juce::Colours::transparentBlack, over, 1.0f, juce::Colours::transparentBlack);
-  mBtnOpenFile.onClick = [this] { openNewFile(); };
-  mBtnOpenFile.setTooltip("Load new sample from file or preset");
-  addAndMakeVisible(mBtnOpenFile);
+  // Title and preset panel
+  mTitlePresetPanel.btnOpenFile.onClick = [this] { openNewFile(); };
+  mTitlePresetPanel.btnSavePreset.onClick = [this] { savePreset(); };
+  addAndMakeVisible(mTitlePresetPanel);
 
-  // Recording button
-  normal = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
-  over = juce::PNGImageFormat::loadFrom(BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
-  mBtnRecord.setImages(false, true, true, normal, 1.0f, juce::Colours::transparentBlack, over, 1.0f,
-                       juce::Colours::transparentBlack, over, 1.0f, juce::Colours::transparentBlack);
-  mBtnRecord.onClick = [this] {
-    if (mRecorder.isRecording()) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  };
-  mBtnRecord.setTooltip("Record to add new sample");
-  addAndMakeVisible(mBtnRecord);
-
-  // Preset button
-  normal = juce::PNGImageFormat::loadFrom(BinaryData::presetNormal_png, BinaryData::presetNormal_pngSize);
-  over = juce::PNGImageFormat::loadFrom(BinaryData::presetOver_png, BinaryData::presetOver_pngSize);
-  mBtnSavePreset.setImages(false, true, true, normal, 1.0f, juce::Colours::transparentBlack, over, 1.0f,
-                       juce::Colours::transparentBlack, over, 1.0f, juce::Colours::transparentBlack);
-  mBtnSavePreset.onClick = [this] { savePreset(); };
-  mBtnSavePreset.setTooltip("Save everything as a preset");
-  addAndMakeVisible(mBtnSavePreset);
-  // if reloading and images are done, then enable right away
-  mBtnSavePreset.setEnabled(mParameters.ui.specComplete);
-
-  // Plugin info button
-  normal = juce::PNGImageFormat::loadFrom(BinaryData::infoNormal_png, BinaryData::infoNormal_pngSize);
-  over = juce::PNGImageFormat::loadFrom(BinaryData::infoOver_png, BinaryData::infoOver_pngSize);
-  mBtnInfo.setImages(false, true, true, normal, 1.0f, juce::Colours::transparentBlack, over, 1.0f,
-                           juce::Colours::transparentBlack, over, 1.0f, juce::Colours::transparentBlack);
-  mBtnInfo.onClick = [] { juce::URL(MANUAL_URL).launchInDefaultBrowser(); };
-  mBtnInfo.setTooltip("Open gRainbow manual");
-  addAndMakeVisible(mBtnInfo);
-
-  // File info label
-  mLabelFileName.setColour(juce::Label::ColourIds::textColourId, Utils::GLOBAL_COLOUR);
-  mLabelFileName.setJustificationType(juce::Justification::centred);
   if (!mParameters.ui.fileName.isEmpty()) {
-    // Set if saved from reopening plugin
-    mLabelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
+    mTitlePresetPanel.labelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
   }
-  addAndMakeVisible(mLabelFileName);
 
-  // Arc spectrogram
-  mArcSpec.onImagesComplete = [this]() {
-    const juce::MessageManagerLock lock;
-    jassert(mParameters.ui.specComplete);
-    mArcSpec.setSpecType(ParamUI::SpecType::WAVEFORM);
-    mBtnSavePreset.setEnabled(true);
-  };
+  // Envelope/adjust tabs
+  juce::Image tabImage = juce::PNGImageFormat::loadFrom(BinaryData::grainEnv_png, BinaryData::grainEnv_pngSize);
+  auto* tabImageComp = new juce::ImageComponent();
+  tabImageComp->setInterceptsMouseClicks(false, false);
+  tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
+  mTabsGrains.addTab("grain env", Utils::Colour::BACKGROUND, &mEnvGrain, false);
+  mTabsGrains.getTabbedButtonBar().getTabButton(0)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
+
+  tabImage = juce::PNGImageFormat::loadFrom(BinaryData::adjust_png, BinaryData::adjust_pngSize);
+  tabImageComp = new juce::ImageComponent();
+  tabImageComp->setInterceptsMouseClicks(false, false);
+  tabImageComp->setImage(tabImage, juce::RectanglePlacement::onlyReduceInSize);
+  mTabsGrains.addTab("adjust", Utils::Colour::BACKGROUND, &mAdjustPanel, false);
+  mTabsGrains.getTabbedButtonBar().getTabButton(1)->setExtraComponent(tabImageComp, juce::TabBarButton::ExtraComponentPlacement::beforeText);
+  mTabsGrains.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::tabTextColourId, Utils::Colour::GLOBAL);
+  mTabsGrains.getTabbedButtonBar().setColour(juce::TabbedButtonBar::ColourIds::frontTextColourId, Utils::Colour::GLOBAL);
+  mTabsGrains.setTabBarDepth(Utils::TAB_HEIGHT);
+  mTabsGrains.setOutline(0);
+  addAndMakeVisible(mTabsGrains);
+
+  // Mod LFO tabs
+  mTabsLFOs.setTabBarDepth(Utils::TAB_HEIGHT);
+  mTabsLFOs.addTab("lfo 1", Utils::Colour::BACKGROUND, &mModLFO1, false);
+  mTabsLFOs.getTabbedButtonBar().getTabButton(0)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modLFOs[0].colour);
+  mTabsLFOs.addTab("lfo 2", Utils::Colour::BACKGROUND, &mModLFO2, false);
+  mTabsLFOs.getTabbedButtonBar().getTabButton(1)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modLFOs[1].colour);
+  mTabsLFOs.addTab("lfo 3", Utils::Colour::BACKGROUND, &mModLFO3, false);
+  mTabsLFOs.getTabbedButtonBar().getTabButton(2)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modLFOs[2].colour);
+  mTabsLFOs.setOutline(0);
+  addAndMakeVisible(mTabsLFOs);
+
+  // Mod enveople tabs
+  mTabsEnvs.setTabBarDepth(Utils::TAB_HEIGHT);
+  mTabsEnvs.addTab("env amp", Utils::Colour::BACKGROUND, &mEnvAdsr, false);
+  mTabsEnvs.addTab("env 2", Utils::Colour::BACKGROUND, &mModEnv1, false);
+  mTabsEnvs.getTabbedButtonBar().getTabButton(1)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[0].colour);
+  mTabsEnvs.addTab("env 3", Utils::Colour::BACKGROUND, &mModEnv2, false);
+  mTabsEnvs.getTabbedButtonBar().getTabButton(2)->setColour(juce::TextButton::ColourIds::textColourOnId, mParameters.global.modEnvs[1].colour);
+  mTabsEnvs.setOutline(0);
+  addAndMakeVisible(mTabsEnvs);
 
   mTrimSelection.onCancel = [this]() {
     // if nothing was ever loaded, got back to the logo
-    updateCenterComponent((mParameters.ui.specComplete) ? ParamUI::CenterComponent::ARC_SPEC : ParamUI::CenterComponent::LOGO);
+    updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
     mParameters.ui.fileName = mParameters.ui.loadedFileName;
-    mLabelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
+    mTitlePresetPanel.labelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
   };
 
   mTrimSelection.onProcessSelection = [this](juce::Range<double> range) {
@@ -146,14 +121,11 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
       displayError("Attempted to select an empty range");
     } else {
       mParameters.ui.trimPlaybackOn = false;
-      mSynth.resetParameters();
-      mSynth.trimAudioBuffer(mSynth.getInputBuffer(), mSynth.getAudioBuffer(), juce::Range<juce::int64>(start, end));
-      mSynth.extractSpectrograms();
+      Utils::trimAudioBuffer(mSynth.getInputBuffer(), mSynth.getAudioBuffer(), juce::Range<juce::int64>(start, end));
       mSynth.extractPitches();
-      mSynth.getInputBuffer();
       // Reset any UI elements that will need to wait until processing
       mArcSpec.reset();
-      mBtnSavePreset.setEnabled(false);
+      mTitlePresetPanel.btnSavePreset.setEnabled(false);
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
       mArcSpec.loadWaveformBuffer(&mSynth.getAudioBuffer());
       mParameters.ui.loadedFileName = mParameters.ui.fileName;
@@ -161,35 +133,23 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
     }
   };
 
-  // Let other components know when the selected note or generator has been updated
-  mParameters.onSelectedChange = [this]() {
-    mEnvAdsr.updateSelectedParams();
-    mEnvGrain.updateSelectedParams();
-    mFilterControl.updateSelectedParams();
-    mGrainControl.updateSelectedParams();
-    mRainbowLookAndFeel.setColour(juce::PopupMenu::ColourIds::backgroundColourId, mParameters.getSelectedParamColour());
-  };
-  addAndMakeVisible(mKeyboard);
+  addAndMakeVisible(mPianoPanel);
 
   // These share the same space, but only 1 is seen at a time
-  addAndMakeVisible(mLogo);
   addChildComponent(mArcSpec);
+  mProgressBar.setColour(juce::ProgressBar::ColourIds::foregroundColourId, juce::Colours::blue.withSaturation(0.55f));
+  mProgressBar.setColour(juce::ProgressBar::ColourIds::backgroundColourId, juce::Colours::whitesmoke);
   addChildComponent(mProgressBar);
   addChildComponent(mTrimSelection);
 
-  addAndMakeVisible(mEnvAdsr);
-  addAndMakeVisible(mEnvGrain);
-  addAndMakeVisible(mFilterControl);
-  mGrainControl.onRefToneOn =[this](){
+  mAdjustPanel.onRefToneOn = [this](){
     mSynth.startReferenceTone(mParameters.getSelectedPitchClass());
   };
-  mGrainControl.onRefToneOff = [this](){
+  mAdjustPanel.onRefToneOff = [this](){
     mSynth.stopReferenceTone();
   };
-  addAndMakeVisible(mGrainControl);
+  addAndMakeVisible(mMasterPanel);
 
-  mCloudLeftImage = juce::PNGImageFormat::loadFrom(BinaryData::cloudLeft_png, BinaryData::cloudLeft_pngSize);
-  mCloudRightImage = juce::PNGImageFormat::loadFrom(BinaryData::cloudRight_png, BinaryData::cloudRight_pngSize);
   mRainImage = juce::PNGImageFormat::loadFrom(BinaryData::rain_png, BinaryData::rain_pngSize);
   // Use different offsets to start to make look like different images
   mLeftRainDeltY = mRainImage.getHeight() / 2;
@@ -200,6 +160,8 @@ GRainbowAudioProcessorEditor::GRainbowAudioProcessorEditor(GranularSynth& synth)
   if (mSynth.wrapperType == GranularSynth::WrapperType::wrapperType_Standalone) {
     setWantsKeyboardFocus(true);
   }
+
+  mPianoPanel.waveform.load(mSynth.getAudioBuffer());
 
   mTooltipWindow->setMillisecondsBeforeTipAppears(500);  // default is 700ms
 
@@ -226,15 +188,15 @@ GRainbowAudioProcessorEditor::~GRainbowAudioProcessorEditor() {
   auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
   auto recordFile = parentDir.getChildFile(FILE_RECORDING);
   recordFile.deleteFile();
-  mAudioDeviceManager.removeAudioCallback(&mRecorder);
+//  mAudioDeviceManager.removeAudioCallback(&mRecorder);
   setLookAndFeel(nullptr);
 
   mSynth.stopReferenceTone();
+  mParameters.setMappingModSource(nullptr);
 }
 
 void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponent component) {
   mParameters.ui.centerComponent = component;
-  mLogo.setVisible(component == ParamUI::CenterComponent::LOGO);
   mArcSpec.setVisible(component == ParamUI::CenterComponent::ARC_SPEC);
   mTrimSelection.setVisible(component == ParamUI::CenterComponent::TRIM_SELECTION);
 }
@@ -242,9 +204,10 @@ void GRainbowAudioProcessorEditor::updateCenterComponent(ParamUI::CenterComponen
 void GRainbowAudioProcessorEditor::timerCallback() {
   // Update progress bar when loading audio clip
   // Will overlay on the other center components
-  if (mParameters.ui.loadingProgress < 1.0 && mParameters.ui.loadingProgress > 0.0) {
+  if (mParameters.ui.isLoading) {
     mProgressBar.setVisible(true);
-  } else {
+  } else if (mProgressBar.isVisible()) {
+    mPianoPanel.waveform.load(mSynth.getAudioBuffer());
     mProgressBar.setVisible(false);
   }
 
@@ -252,9 +215,21 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   if (!mParameters.ui.specComplete) {
     std::vector<Utils::SpecBuffer*> specs = mSynth.getProcessedSpecs();
     for (size_t i = 0; i < specs.size(); ++i) {
-      if (specs[i] != nullptr && mArcSpec.shouldLoadImage((ParamUI::SpecType)i))
+      if (specs[i] != nullptr && mArcSpec.shouldLoadImage((ParamUI::SpecType)i)) {
         mArcSpec.loadSpecBuffer(specs[i], (ParamUI::SpecType)i);
+      }
     }
+  } else if (mParameters.ui.isLoading) {
+    // Spec complete, we're done loading
+    mArcSpec.setSpecType(ParamUI::SpecType::HPCP);
+    mTitlePresetPanel.btnSavePreset.setEnabled(true);
+    mParameters.ui.isLoading = false;
+  }
+
+  bool isNotLoaded = mParameters.ui.fileName != mParameters.ui.loadedFileName;
+  if (mTitlePresetPanel.labelFileName.getText() != mParameters.ui.loadedFileName || isNotLoaded) {
+    // Set title bar to display new preset name
+    mTitlePresetPanel.labelFileName.setText(isNotLoaded ? mParameters.ui.fileName : mParameters.ui.loadedFileName, juce::dontSendNotification);
   }
 
   // Get notes being played, send off to each children and then redraw.
@@ -264,7 +239,7 @@ void GRainbowAudioProcessorEditor::timerCallback() {
   const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
   // Each component has has a different use for the midi notes, so just give them the notes and have them do what logic they want
   // with it
-  mKeyboard.setMidiNotes(midiNotes);
+  mPianoPanel.keyboard.setMidiNotes(midiNotes);
   mArcSpec.setMidiNotes(midiNotes);
 
   /* if (PowerUserSettings::get().getResourceUsage()) {
@@ -302,24 +277,8 @@ void GRainbowAudioProcessorEditor::timerCallback() {
 //==============================================================================
 void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
   // Set gradient
-  g.setFillType(Utils::getBgGradient(getBounds(), mParameters.ui.loadingProgress));
+  g.setColour(Utils::Colour::BACKGROUND);
   g.fillRect(getLocalBounds());
-  /*
-  // Draw background for open file button
-  g.setColour(juce::Colours::darkgrey);
-  g.fillRoundedRectangle(mBtnOpenFile.getBounds().toFloat(), 14);
-
-  // Draw background for record button
-  g.setColour(mRecorder.isRecording() ? juce::Colours::red : juce::Colours::darkgrey);
-  g.fillRoundedRectangle(mBtnRecord.getBounds().toFloat(), 14);
-
-  // Draw background for preset button
-  g.setColour(juce::Colours::darkgrey);
-  g.fillRoundedRectangle(mBtnSavePreset.getBounds().toFloat(), 14);
-
-  // Draw background for info button
-  g.setColour(juce::Colours::darkgrey);
-  g.fillRoundedRectangle(mBtnInfo.getBounds().toFloat(), 14);*/
 }
 
 /**
@@ -328,48 +287,6 @@ void GRainbowAudioProcessorEditor::paint(juce::Graphics& g) {
 void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
   // Right now just give last note played, not truely polyphony yet
   // TODO: new note displaying
-  /*
-  const juce::Array<Utils::MidiNote>& midiNotes = mSynth.getMidiNotes();
-  if (!midiNotes.isEmpty()) {
-    // If there are not candidates, will just not draw any arrows/lines
-    std::vector<ParamCandidate*> candidates = mSynth.getActiveCandidates();
-    if (!candidates.empty()) {
-      // Draw position arrows
-      juce::Colour pitchColour = Utils::getRainbow12Colour(mSynth.getLastPitchClass());
-      for (int i = 0; i < candidates.size(); ++i) {
-        if (candidates[i] == nullptr) continue;
-        // TODO: fix this coloring below
-        g.setColour(pitchColour);
-        //g.setColour((i == mGeneratorsBox.getSelectedGenerator()) ? pitchColour.brighter() : pitchColour.darker().darker());
-        auto middlePos = candidates[i]->posRatio + (candidates[i]->duration / 2.0f);
-        float angleRad = (juce::MathConstants<float>::pi * middlePos) - (juce::MathConstants<float>::pi / 2.0f);
-        juce::Point<float> startPoint = juce::Point<float>(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
-        juce::Point<float> endPoint = startPoint.getPointOnCircumference(mArcSpec.getHeight() / 4.5f, angleRad);
-        g.drawArrow(juce::Line<float>(startPoint, endPoint), 4.0f, 10.0f, 6.0f);
-      }
-
-      // Draw path from rainbow key to the arrow's base
-      for (const Utils::MidiNote& midiNote : midiNotes) {
-        const Utils::PitchClass pitchClass = midiNote.pitch;
-        // if more than 1 note played, the last note will be empathized
-        const bool empathized = (midiNote == midiNotes.getLast());
-
-        float noteX = mKeyboard.getBounds().getX() + (mKeyboard.getWidth() * mKeyboard.getPitchXRatio(pitchClass));
-        juce::Path displayPath;
-        displayPath.startNewSubPath(noteX, mNoteDisplayRect.getBottom());
-        displayPath.lineTo(noteX, mNoteDisplayRect.getBottom() - (NOTE_DISPLAY_HEIGHT / 2.0f));
-        displayPath.lineTo(mNoteDisplayRect.getCentre());
-        displayPath.lineTo(mNoteDisplayRect.getCentreX(), mNoteDisplayRect.getY());
-        const float alpha = (empathized) ? 1.0f : 0.3f;
-        g.setColour(Utils::getRainbow12Colour(pitchClass).withAlpha(alpha));
-        g.strokePath(displayPath, juce::PathStrokeType(4.0f));
-        if (empathized) {
-          g.fillEllipse(mNoteDisplayRect.getCentreX() - (NOTE_BULB_SIZE / 2.0f), mNoteDisplayRect.getY() - (NOTE_BULB_SIZE / 2.0f),
-                        NOTE_BULB_SIZE, NOTE_BULB_SIZE);
-        }
-      }
-    }
-  }*/
 
   // When dragging a file over, give feedback it will be accepted when released
   if (mIsFileHovering) {
@@ -377,15 +294,8 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
     g.fillRect(getLocalBounds());
   }
 
-  // Border path
-  g.setColour(Utils::GLOBAL_COLOUR);
-  g.strokePath(mBorderPath, juce::PathStrokeType(2));
-
-  // Clouds
+  // Rain
   if (mParameters.ui.centerComponent == ParamUI::CenterComponent::ARC_SPEC) {
-    g.drawImage(mCloudLeftImage, mCloudLeftTargetArea, juce::RectanglePlacement::fillDestination);
-    g.drawImage(mCloudRightImage, mCloudRightTargetArea, juce::RectanglePlacement::fillDestination);
-
     // Make it rain girl (while loading)
     if (mProgressBar.isVisible()) {
       g.setColour(juce::Colours::blue);
@@ -397,7 +307,7 @@ void GRainbowAudioProcessorEditor::paintOverChildren(juce::Graphics& g) {
                   rainHeight);
 
       // make rain slow up as closer to full progress (which is the value 1.0)
-      const int speed = 20 - static_cast<int>(18.0 * mParameters.ui.loadingProgress);
+      const int speed = 10;
       mLeftRainDeltY -= speed;
       mRightRainDeltY -= speed;
       if (mLeftRainDeltY < rainHeight) {
@@ -417,95 +327,25 @@ void GRainbowAudioProcessorEditor::resized() {
   mSettings.setBounds(r.removeFromBottom(mSettings.getHeight()));
 #endif
 
-  // Rainbow keyboard
-  juce::Rectangle<int> keyboardRect = r.removeFromBottom(Utils::KEYBOARD_HEIGHT);
-  mKeyboard.setBounds(keyboardRect);
+  mTitlePresetPanel.setBounds(r.removeFromTop(Utils::PRESET_PANEL_HEIGHT));
 
   // Left and right panels
-  auto leftPanel = r.removeFromLeft(Utils::PANEL_WIDTH);
-  mEnvGrain.setBounds(leftPanel.removeFromTop(leftPanel.getHeight() / 2.0f));
-  mEnvAdsr.setBounds(leftPanel);
+  auto leftPanel = r.removeFromLeft(Utils::PANEL_WIDTH).reduced(Utils::PADDING, Utils::PADDING);
+  mTabsGrains.setBounds(leftPanel.removeFromTop(Utils::PANEL_HEIGHT));
+  mTabsEnvs.setBounds(leftPanel.removeFromBottom(Utils::PANEL_HEIGHT));
 
-  auto rightPanel = r.removeFromRight(Utils::PANEL_WIDTH);
+
+  auto rightPanel = r.removeFromRight(Utils::PANEL_WIDTH).reduced(Utils::PADDING, Utils::PADDING);
   // TODO: add back in resource usage
-  // TODO: add modulators
-  mGrainControl.setBounds(rightPanel.removeFromTop(rightPanel.getHeight() / 2.0f));
-  mFilterControl.setBounds(rightPanel);
-
-  // Open and record buttons
-  auto filePanel = r.removeFromTop(BTN_PANEL_HEIGHT).reduced(Utils::PADDING);
-  const int btnWidth = filePanel.getHeight();
-  mBtnOpenFile.setBounds(filePanel.removeFromLeft(btnWidth));
-  filePanel.removeFromLeft(Utils::PADDING);
-  mBtnRecord.setBounds(filePanel.removeFromLeft(btnWidth));
-  // preset button
-  mBtnSavePreset.setBounds(filePanel.removeFromRight(btnWidth));
-  filePanel.removeFromLeft(Utils::PADDING);
-  // info button
-  mBtnInfo.setBounds(filePanel.removeFromRight(btnWidth));
-  // remaining space on sides remaing is for file information
-  mLabelFileName.setBounds(filePanel);
+  mMasterPanel.setBounds(rightPanel.removeFromTop(Utils::PANEL_HEIGHT));
+  mTabsLFOs.setBounds(rightPanel.removeFromBottom(Utils::PANEL_HEIGHT));
 
   // Center middle space
-  mLogo.setBounds(r.reduced(r.getHeight() / 4.0f));
-  const juce::Rectangle<int> centerRect = r.removeFromTop(r.getWidth() / 2.0f);
-  mArcSpec.setBounds(centerRect);
-  mTrimSelection.setBounds(centerRect);
-  mProgressBar.setBounds(centerRect.withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
-
-  // Border path around children
-  const float halfRound = Utils::ROUNDED_AMOUNT / 2.0f;
-  mBorderPath.clear();
-  auto mArcBounds = mArcSpec.getBounds().toFloat();
-  mBorderPath.startNewSubPath(mArcBounds.getTopLeft().translated(Utils::ROUNDED_AMOUNT, 0));
-  auto point = mArcBounds.getTopRight().translated(-Utils::ROUNDED_AMOUNT, 0);
-  mBorderPath.lineTo(point);
-  mBorderPath.cubicTo(point.translated(halfRound, 0), point.translated(Utils::ROUNDED_AMOUNT, halfRound),
-                      point.translated(Utils::ROUNDED_AMOUNT, Utils::ROUNDED_AMOUNT));
-  point = mArcBounds.getBottomRight().withY(mKeyboard.getBounds().getY() - Utils::ROUNDED_AMOUNT);
-  mBorderPath.lineTo(point);
-  mBorderPath.cubicTo(point.translated(0, halfRound), point.translated(halfRound, Utils::ROUNDED_AMOUNT),
-                      point.translated(Utils::ROUNDED_AMOUNT, Utils::ROUNDED_AMOUNT));
-  point = mKeyboard.getBounds().getTopRight().toFloat().translated(-Utils::ROUNDED_AMOUNT, 0);
-  mBorderPath.lineTo(point);
-  mBorderPath.cubicTo(point.translated(halfRound, 0), point.translated(Utils::ROUNDED_AMOUNT, halfRound),
-                      point.translated(Utils::ROUNDED_AMOUNT, Utils::ROUNDED_AMOUNT));
-  mBorderPath.lineTo(getBounds().getBottomRight().toFloat());
-  mBorderPath.lineTo(getBounds().getBottomLeft().toFloat());
-  point = mKeyboard.getBounds().getTopLeft().toFloat().translated(0, Utils::ROUNDED_AMOUNT);
-  mBorderPath.lineTo(point);
-  mBorderPath.cubicTo(point.translated(0, -halfRound), point.translated(halfRound, -Utils::ROUNDED_AMOUNT),
-                      point.translated(Utils::ROUNDED_AMOUNT, -Utils::ROUNDED_AMOUNT));
-  point = mArcBounds.getBottomLeft().withY(mKeyboard.getBounds().getY()).translated(-Utils::ROUNDED_AMOUNT, 0);
-  mBorderPath.lineTo(point);
-  mBorderPath.cubicTo(point.translated(halfRound, 0), point.translated(Utils::ROUNDED_AMOUNT, -halfRound),
-                      point.translated(Utils::ROUNDED_AMOUNT, -Utils::ROUNDED_AMOUNT));
-  point = mArcBounds.getTopLeft().translated(0, Utils::ROUNDED_AMOUNT);
-  mBorderPath.lineTo(point);
-  mBorderPath.cubicTo(point.translated(0, -halfRound), point.translated(halfRound, -Utils::ROUNDED_AMOUNT),
-                      point.translated(Utils::ROUNDED_AMOUNT, -Utils::ROUNDED_AMOUNT));
-
-  // Cloud centers
-  {
-    const int expansion = mCloudLeftImage.getWidth() / 4.0f;
-    const int translation = expansion * 2;
-    const auto leftCenter = mArcSpec.getBounds().getBottomLeft().translated(translation, 0);
-    const auto rightCenter = mArcSpec.getBounds().getBottomRight().translated(-translation, 0);
-    mCloudLeftTargetArea = mCloudLeftImage.getBounds().expanded(expansion).withCentre(leftCenter).toFloat();
-    mCloudRightTargetArea = mCloudRightImage.getBounds().expanded(expansion).withCentre(rightCenter).toFloat();
-
-    // This was sfigured out by using drawRect() until saw the area it should be
-    const float leftCloudWidth = mCloudLeftTargetArea.getWidth();
-    const float leftCloudHeight = mCloudLeftTargetArea.getHeight();
-    mLeftRain = mCloudLeftTargetArea.translated(leftCloudWidth / 3.8f, leftCloudHeight / 1.7f)
-                    .withWidth(leftCloudWidth / 2.0f)
-                    .withHeight(leftCloudHeight / 1.6f);
-    const float rightCloudWidth = mCloudRightTargetArea.getWidth();
-    const float rightCloudHeight = mCloudRightTargetArea.getHeight();
-    mRightRain = mCloudRightTargetArea.translated(rightCloudWidth / 4.2f, rightCloudHeight / 1.7f)
-                     .withWidth(rightCloudWidth / 2.0f)
-                     .withHeight(rightCloudHeight / 1.6f);
-  }
+  auto centerPanel = r.reduced(0, Utils::PADDING);
+  mPianoPanel.setBounds(centerPanel.removeFromBottom(Utils::PANEL_HEIGHT));
+  mArcSpec.setBounds(centerPanel.removeFromTop(Utils::PANEL_HEIGHT));
+  mTrimSelection.setBounds(mArcSpec.getBounds());
+  mProgressBar.setBounds(mArcSpec.getBounds().withSizeKeepingCentre(PROGRESS_SIZE, PROGRESS_SIZE));
 }
 
 bool GRainbowAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files) {
@@ -555,70 +395,69 @@ void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
   }
 }
 
-void GRainbowAudioProcessorEditor::startRecording() {
-  if (!juce::RuntimePermissions::isGranted(juce::RuntimePermissions::writeExternalStorage)) {
-    SafePointer<GRainbowAudioProcessorEditor> safeThis(this);
-
-    juce::RuntimePermissions::request(juce::RuntimePermissions::writeExternalStorage, [safeThis](bool granted) mutable {
-      if (granted) safeThis->startRecording();
-    });
-    return;
-  }
-
-  mAudioDeviceManager.initialiseWithDefaultDevices(1, 0);
-  mAudioDeviceManager.addAudioCallback(&mRecorder);
-
-  auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
-  parentDir.getChildFile(FILE_RECORDING).deleteFile();
-  mRecordedFile = parentDir.getChildFile(FILE_RECORDING);
-
-  mRecorder.startRecording(mRecordedFile);
-
-  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
-  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f, juce::Colours::red, recordIcon, 1.0f, juce::Colours::red, recordIcon,
-                       1.0f, juce::Colours::red);
-  repaint();
-}
-
-void GRainbowAudioProcessorEditor::stopRecording() {
-  mRecorder.stop();
-
-  loadFile(mRecordedFile);
-
-  mAudioDeviceManager.removeAudioCallback(&mRecorder);
-  mAudioDeviceManager.closeAudioDevice();
-
-  mRecordedFile = juce::File();
-
-  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
-  juce::Image recordOver = juce::PNGImageFormat::loadFrom(BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
-  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f, juce::Colours::transparentBlack, recordOver, 1.0f,
-                       juce::Colours::transparentBlack, recordOver, 1.0f, juce::Colours::transparentBlack);
-  repaint();
-}
+// TODO: re-enable me when recording is back in
+//void GRainbowAudioProcessorEditor::startRecording() {
+//  if (!juce::RuntimePermissions::isGranted(juce::RuntimePermissions::writeExternalStorage)) {
+//    SafePointer<GRainbowAudioProcessorEditor> safeThis(this);
+//
+//    juce::RuntimePermissions::request(juce::RuntimePermissions::writeExternalStorage, [safeThis](bool granted) mutable {
+//      if (granted) safeThis->startRecording();
+//    });
+//    return;
+//  }
+//
+//  mAudioDeviceManager.initialiseWithDefaultDevices(1, 0);
+//  mAudioDeviceManager.addAudioCallback(&mRecorder);
+//
+//  auto parentDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
+//  parentDir.getChildFile(FILE_RECORDING).deleteFile();
+//  mRecordedFile = parentDir.getChildFile(FILE_RECORDING);
+//
+//  mRecorder.startRecording(mRecordedFile);
+//
+//  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
+//  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f, juce::Colours::red, recordIcon, 1.0f, juce::Colours::red, recordIcon,
+//                       1.0f, juce::Colours::red);
+//  repaint();
+//}
+//
+//void GRainbowAudioProcessorEditor::stopRecording() {
+//  mRecorder.stop();
+//
+//  loadFile(mRecordedFile);
+//
+//  mAudioDeviceManager.removeAudioCallback(&mRecorder);
+//  mAudioDeviceManager.closeAudioDevice();
+//
+//  mRecordedFile = juce::File();
+//
+//  juce::Image recordIcon = juce::PNGImageFormat::loadFrom(BinaryData::microphone_png, BinaryData::microphone_pngSize);
+//  juce::Image recordOver = juce::PNGImageFormat::loadFrom(BinaryData::microphoneOver_png, BinaryData::microphoneOver_pngSize);
+//  mBtnRecord.setImages(false, true, true, recordIcon, 1.0f, juce::Colours::transparentBlack, recordOver, 1.0f,
+//                       juce::Colours::transparentBlack, recordOver, 1.0f, juce::Colours::transparentBlack);
+//  repaint();
+//}
 
 void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
 
   if (file.getFileExtension() == ".gbow") {
-    Utils::Result r = mSynth.loadPreset(file);
-    if (r.success) {
-      mBtnSavePreset.setEnabled(true);
+    Utils::Result res = mSynth.loadPreset(file);
+    if (res.success) {
+      mTitlePresetPanel.btnSavePreset.setEnabled(true);
       mArcSpec.loadPreset();
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
-      mParameters.ui.loadedFileName = file.getFullPathName();
-      mParameters.ui.fileName = mParameters.ui.loadedFileName;
-      mLabelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
+      mPianoPanel.waveform.load(mSynth.getAudioBuffer());
+      mTitlePresetPanel.labelFileName.setText(mParameters.ui.loadedFileName, juce::sendNotificationAsync);
       resized();
     } else {
-      displayError(r.message);
+      displayError(res.message);
     }
   } else {
     Utils::Result r = mSynth.loadAudioFile(file, true);
     if (r.success) {
       // Show users which file is being loaded/processed
       mParameters.ui.fileName = file.getFullPathName();
-      mLabelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
-
+      mTitlePresetPanel.labelFileName.setText(mParameters.ui.fileName, juce::dontSendNotification);
       mTrimSelection.parse(mSynth.getInputBuffer(), mSynth.getSampleRate(), mErrorMessage);
       if (mErrorMessage.isEmpty()) {
         // display screen to trim sample
@@ -643,64 +482,16 @@ void GRainbowAudioProcessorEditor::savePreset() {
 
   mFileChooser->launchAsync(saveFlags, [this](const juce::FileChooser& fc) {
     juce::File file = fc.getResult().withFileExtension("gbow");
-    file.deleteFile();  // clear file if replacing
-    juce::FileOutputStream outputStream(file);
-
-    if (file.hasWriteAccess() && outputStream.openedOk()) {
-      Preset::Header header;
-      header.magic = Preset::MAGIC;
-      header.versionMajor = Preset::VERSION_MAJOR;
-      header.versionMinor = Preset::VERSION_MINOR;
-      // Audio buffer data is grabbed from current synth
-      const juce::AudioBuffer<float>& audioBuffer = mSynth.getAudioBuffer();
-      header.audioBufferSamplerRate = mSynth.getSampleRate();
-      header.audioBufferNumberOfSamples = audioBuffer.getNumSamples();
-      header.audioBufferChannel = audioBuffer.getNumChannels();
-      header.audioBufferSize = header.audioBufferNumberOfSamples * header.audioBufferChannel * sizeof(float);
-
-      // There is no way in JUCE to be able to know the size of the
-      // png/imageFormat blob until after it is written into the outstream which
-      // is too late. To keep things working, just do a double copy to a
-      // internal memory object so the size is know prior to writing the image
-      // data to the stream.
-      juce::MemoryOutputStream spectrogramStaging;
-      if (!mParameters.ui.saveSpecImage(spectrogramStaging, ParamUI::SpecType::SPECTROGRAM)) {
-        displayError("Unable to write spectrogram image out the file");
-        return;
+    if (file.hasWriteAccess()) {
+      Utils::Result r = mSynth.savePreset(file);  // Ask synth to do the proper saving
+      if (!r.success) {
+        displayError(
+            juce::String::formatted("%s failed to save: %s", file.getFullPathName().toRawUTF8(), r.message.toStdString().c_str()));
       }
-      header.specImageSpectrogramSize = spectrogramStaging.getDataSize();
-
-      juce::MemoryOutputStream hpcpStaging;
-      if (!mParameters.ui.saveSpecImage(hpcpStaging, ParamUI::SpecType::HPCP)) {
-        displayError("Unable to write HPCP image out the file");
-        return;
-      }
-      header.specImageHpcpSize = hpcpStaging.getDataSize();
-
-      juce::MemoryOutputStream detectedStaging;
-      if (!mParameters.ui.saveSpecImage(detectedStaging, ParamUI::SpecType::DETECTED)) {
-        displayError("Unable to write Detected image out the file");
-        return;
-      }
-      header.specImageDetectedSize = detectedStaging.getDataSize();
-
-      // XML structure of preset contains all audio related information
-      // These include not just AudioParams but also other params not exposes to
-      // the DAW or UI directly
-      juce::MemoryBlock xmlMemoryBlock;
-      mSynth.getPresetParamsXml(xmlMemoryBlock);
-
-      // Write data out section by section
-      outputStream.write(&header, sizeof(header));
-      outputStream.write(reinterpret_cast<const void*>(audioBuffer.getReadPointer(0)), header.audioBufferSize);
-      outputStream.write(spectrogramStaging.getData(), header.specImageSpectrogramSize);
-      outputStream.write(hpcpStaging.getData(), header.specImageHpcpSize);
-      outputStream.write(detectedStaging.getData(), header.specImageDetectedSize);
-      outputStream.write(xmlMemoryBlock.getData(), xmlMemoryBlock.getSize());
     } else {
-      displayError(juce::String::formatted("Unable to open %s to write", file.getFullPathName().toRawUTF8()));
-      return;
+      displayError(juce::String::formatted("%s oes not have write access", file.getFullPathName().toRawUTF8()));
     }
+
   });
 }
 

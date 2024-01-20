@@ -1,10 +1,14 @@
 /Builds/*
 /build/*
+/build_r/*
 /dist/*
 /JuceLibraryCode/*
 .vs/*
 .vscode/*
 out/*
+Source/Version.h
+Source/Resources/features_model.ort
+external/ONNXRuntime/*
 
 *.DS_Store
 
