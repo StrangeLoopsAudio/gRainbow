@@ -12,8 +12,8 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Parameters.h"
-#include "../Sliders.h"
-#include "../Buttons.h"
+#include "Components/Sliders.h"
+#include "Components/Buttons.h"
 
 //==============================================================================
 /*
@@ -31,7 +31,7 @@ public juce::Timer {
   void parameterValueChanged(int idx, float value) override;
   void parameterGestureChanged(int, bool) override {}
   void visibilityChanged() override;
-  
+
   void timerCallback() override;
 
  private:
