@@ -156,10 +156,14 @@ void RainbowLookAndFeel::positionComboBoxText(juce::ComboBox& box, juce::Label& 
   labelToPosition.setBounds(box.getLocalBounds());
 }
 
-
-void RainbowLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area, bool, bool, bool isHighlighted,
-                                           bool, bool, const juce::String& text, const juce::String&, const juce::Drawable*,
-                                           const juce::Colour*) {
+void RainbowLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area, bool isSeparator, bool,
+                                           bool isHighlighted, bool, bool, const juce::String& text, const juce::String&,
+                                           const juce::Drawable*, const juce::Colour*) {
+  if (isSeparator) {
+    g.setColour(juce::Colours::black);
+    g.fillRect(area);
+    return;
+  }
   // Fill background
   juce::Colour backgroundColour = findColour(juce::PopupMenu::ColourIds::backgroundColourId);
   if (isHighlighted) {
