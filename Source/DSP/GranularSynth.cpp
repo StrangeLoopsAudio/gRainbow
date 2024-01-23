@@ -632,6 +632,7 @@ Utils::Result GranularSynth::loadPreset(juce::MemoryBlock& block) {
   }
 
   if (mSampleRate != INVALID_SAMPLE_RATE) {
+    mNeedsResample = false;
     mAudioBuffer.clear();
     Utils::resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
   } else {
