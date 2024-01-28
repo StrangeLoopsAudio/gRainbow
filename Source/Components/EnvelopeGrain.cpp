@@ -53,16 +53,21 @@ EnvelopeGrain::EnvelopeGrain(Parameters& parameters)
   mLabelShape.setText("shape", juce::dontSendNotification);
 
   // Tilt
+  mSliderTilt.textFromValueFunction = [](double value) {
+    return juce::String(abs(value), 2);
+  };
   mSliderTilt.setRange(ParamRanges::GRAIN_TILT.start, ParamRanges::GRAIN_TILT.end, 0.01);
   mLabelTilt.setText("tilt", juce::dontSendNotification);
 
   // Rate
-  mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.01);
+  mSliderRate.setNumDecimalPlacesToDisplay(3);
+  mSliderRate.setRange(ParamRanges::GRAIN_RATE.start, ParamRanges::GRAIN_RATE.end, 0.001);
   mSliderRate.setSuffix("g/s");
   mLabelRate.setText("rate", juce::dontSendNotification);
 
   // Duration
-  mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start, ParamRanges::GRAIN_DURATION.end, 0.01);
+  mSliderDuration.setNumDecimalPlacesToDisplay(3);
+  mSliderDuration.setRange(ParamRanges::GRAIN_DURATION.start, ParamRanges::GRAIN_DURATION.end, 0.001);
   mSliderDuration.setSuffix("s");
   mLabelDuration.setText("duration", juce::dontSendNotification);
 
@@ -90,6 +95,9 @@ void EnvelopeGrain::timerCallback() {
     mSliderShape.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GRAIN_SHAPE),
                           juce::dontSendNotification);
     mSliderTilt.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GRAIN_TILT), juce::dontSendNotification);
+    juce::String tiltSuffix = mSliderTilt.getValue() < 0.0 ? " L" : " R";
+    if (juce::isWithin(0.0, mSliderTilt.getValue(), 0.001)) tiltSuffix = " C";
+    mSliderTilt.setTextValueSuffix(tiltSuffix);
     mSliderRate.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GRAIN_RATE), juce::dontSendNotification);
     mSliderDuration.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::GRAIN_DURATION),
                              juce::dontSendNotification);

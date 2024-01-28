@@ -58,17 +58,19 @@ AdjustPanel::AdjustPanel(Parameters& parameters)
   mLabelRefTone.setText("ref tone", juce::dontSendNotification);
 
   // Adjust pitch
-  mSliderPitchAdjust.setRange(ParamRanges::PITCH_ADJUST.start, ParamRanges::PITCH_ADJUST.end, 0.01);
+  mSliderPitchAdjust.setRange(ParamRanges::PITCH_ADJUST.start, ParamRanges::PITCH_ADJUST.end, 0.001);
+  mSliderPitchAdjust.setNumDecimalPlacesToDisplay(3);
   mLabelPitchAdjust.setText("tune adjust", juce::dontSendNotification);
 
   // Pitch spray
   mSliderPitchSpray.setTextValueSuffix(" cents");
   mSliderPitchSpray.setNumDecimalPlacesToDisplay(3);
-  mSliderPitchSpray.setRange(ParamRanges::PITCH_SPRAY.start, ParamRanges::PITCH_SPRAY.end, 0.005);
+  mSliderPitchSpray.setRange(ParamRanges::PITCH_SPRAY.start, ParamRanges::PITCH_SPRAY.end, 0.001);
   mLabelPitchSpray.setText("tune spray", juce::dontSendNotification);
 
   // Adjust position
-  mSliderPosAdjust.setRange(ParamRanges::POSITION_ADJUST.start, ParamRanges::POSITION_ADJUST.end, 0.01);
+  mSliderPosAdjust.setRange(ParamRanges::POSITION_ADJUST.start, ParamRanges::POSITION_ADJUST.end, 0.001);
+  mSliderPosAdjust.setNumDecimalPlacesToDisplay(3);
   mLabelPosAdjust.setText("pos adjust", juce::dontSendNotification);
 
   // Position spray
@@ -78,13 +80,15 @@ AdjustPanel::AdjustPanel(Parameters& parameters)
   mLabelPosSpray.setText("pos spray", juce::dontSendNotification);
 
   // Adjust pan
+  mSliderPanAdjust.textFromValueFunction = [](double value) {
+    return juce::String(abs(value), 2);
+  };
   mSliderPanAdjust.setRange(ParamRanges::PAN_ADJUST.start, ParamRanges::PAN_ADJUST.end, 0.01);
   mLabelPanAdjust.setText("pan adjust", juce::dontSendNotification);
 
   // Pan spray
-  mSliderPanSpray.setTextValueSuffix(" s");
   mSliderPanSpray.setNumDecimalPlacesToDisplay(3);
-  mSliderPanSpray.setRange(ParamRanges::PAN_SPRAY.start, ParamRanges::PAN_SPRAY.end, 0.005);
+  mSliderPanSpray.setRange(ParamRanges::PAN_SPRAY.start, ParamRanges::PAN_SPRAY.end, 0.001);
   mLabelPanSpray.setText("pan spray", juce::dontSendNotification);
 
   // Octave adjust
@@ -120,6 +124,9 @@ void AdjustPanel::timerCallback() {
                              juce::dontSendNotification);
     mSliderPanAdjust.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PAN_ADJUST),
                               juce::dontSendNotification);
+    juce::String panSuffix = mSliderPanAdjust.getValue() < 0.0 ? " L" : " R";
+    if (juce::isWithin(0.0, mSliderPanAdjust.getValue(), 0.001)) panSuffix = " C";
+    mSliderPanAdjust.setTextValueSuffix(panSuffix);
     mSliderPanSpray.setValue(mParameters.getFloatParam(mCurSelectedParams, ParamCommon::Type::PAN_SPRAY),
                              juce::dontSendNotification);
     mSliderOctaveAdjust.setValue(mParameters.getIntParam(mCurSelectedParams, ParamCommon::Type::OCTAVE_ADJUST),

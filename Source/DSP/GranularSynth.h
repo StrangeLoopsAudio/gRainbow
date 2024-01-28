@@ -130,7 +130,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   // Param bounds
   static constexpr float MIN_CANDIDATE_SALIENCE = 0.5f;
   static constexpr int MAX_MIDI_NOTE = 127;
-  static constexpr int MAX_GRAINS = 100;  // Max grains active at once
+  static constexpr int MAX_GRAINS = 200;  // Max grains active at once
   static constexpr double INVALID_SAMPLE_RATE = -1.0;  // Max grains active at once
   static constexpr int MAX_PITCH_BEND_SEMITONES = 2;  // Max pitch bend semitones allowed
 
