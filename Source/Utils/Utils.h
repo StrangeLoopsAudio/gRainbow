@@ -51,9 +51,6 @@ static constexpr int KNOB_WIDTH = 25;
 static constexpr int KNOB_HEIGHT = 25;
 static constexpr float ROUNDED_AMOUNT = 6.0f;
 
-// Grain envelopes and limits
-static constexpr int MAX_GRAINS = 20;  // Max grains active at once
-
 typedef struct Result {
   bool success;
   juce::String message;

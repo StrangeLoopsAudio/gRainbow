@@ -14,7 +14,7 @@ typedef struct {
 static const std::array<const PresetEntry, 2> PRESETS = {
   {
     {"chromatic saw", BinaryData::chromatic_saw_gbow, BinaryData::chromatic_saw_gbowSize},
-    {"billie", BinaryData::billie_gbow, BinaryData::billie_gbowSize}
+//    {"billie", BinaryData::billie_gbow, BinaryData::billie_gbowSize}
   }
 };
 

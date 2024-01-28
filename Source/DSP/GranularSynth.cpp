@@ -291,7 +291,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   handleGrainAddRemove(bufferNumSample);
 
   // Reset timestamps if no grains active to keep numbers low
-  if (mActiveNotes.isEmpty()) {
+  if (mGrainPool.getNumUsedGrains() == 0) {
     mTotalSamps = 0;
   } else {
     // Normalize the block before sending onward

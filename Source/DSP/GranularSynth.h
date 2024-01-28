@@ -25,28 +25,49 @@
 
 class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardState::Listener, public juce::Thread {
  public:
+  static constexpr int MAX_GRAINS = 150;  // Max grains active at once
   class GrainPool {
   public:
-    GrainPool() {}
+    GrainPool() {
+      // Reserve to avoid re-alloc in process block
+      mGrainsActive.reserve(MAX_GRAINS);
+      mGrainsInactive.reserve(MAX_GRAINS);
+      for (Grain& g : mGrains) {
+        mGrainsInactive.push_back(&g);
+      }
+    }
     ~GrainPool() {}
 
     Grain* getNextAvailableGrain() {
-      auto nextGrain = std::find_if(mGrains.begin(), mGrains.end(), [](Grain& g) { return !g.isActive; });
-      if (nextGrain != mGrains.end()) {
-        return &(*nextGrain);
+      if (mGrainsInactive.size() > 0) {
+        mGrainsActive.push_back(mGrainsInactive.back());
+        mGrainsInactive.pop_back();
+        return mGrainsActive.back();
       }
       return nullptr;
     }
     void reclaimExpiredGrains(int totalSamples) {
-      for (Grain& g : mGrains) {
-        if (totalSamples > (g.trigTs + g.duration)) {
-          g.isActive = false;
+      
+      for (auto it = mGrainsActive.begin(); it != mGrainsActive.end(); ) {
+        Grain* g = *it;
+        if (totalSamples > (g->trigTs + g->duration)) {
+          g->isActive = false;
+          mGrainsInactive.push_back(*it);
+          it = mGrainsActive.erase(it);
+        } else {
+          it++;
         }
       }
     }
+    
+    int getNumUsedGrains() {
+      return mGrainsActive.size();
+    }
 
   private:
-    std::array<Grain, Utils::MAX_GRAINS> mGrains;
+    std::array<Grain, MAX_GRAINS> mGrains;
+    std::vector<Grain*> mGrainsActive;
+    std::vector<Grain*> mGrainsInactive;
   };
 
   GranularSynth();
@@ -120,6 +141,10 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
     mReferenceTone.setAmplitude(juce::Decibels::decibelsToGain(-20.0f));
   }
   void stopReferenceTone() { mReferenceTone.setAmplitude(0.0f); }
+  
+  int getNumUsedGrains() {
+    return mGrainPool.getNumUsedGrains();
+  }
 
  private:
   // DSP constants
@@ -130,7 +155,6 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   // Param bounds
   static constexpr float MIN_CANDIDATE_SALIENCE = 0.5f;
   static constexpr int MAX_MIDI_NOTE = 127;
-  static constexpr int MAX_GRAINS = 200;  // Max grains active at once
   static constexpr double INVALID_SAMPLE_RATE = -1.0;  // Max grains active at once
   static constexpr int MAX_PITCH_BEND_SEMITONES = 2;  // Max pitch bend semitones allowed
 

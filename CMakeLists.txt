@@ -254,7 +254,7 @@ set(BINARY_RESOURCES
 )
 
 # Set preset paths (also binary resources)
-file(GLOB PRESETS "presets/*")
+file(GLOB PRESETS "presets/chromatic saw.gbow")
 
 list(APPEND BINARY_RESOURCES ${PRESETS})
 
