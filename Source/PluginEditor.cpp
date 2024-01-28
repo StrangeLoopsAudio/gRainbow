@@ -14,6 +14,7 @@
 #include "Utils/Colour.h"
 #include "Utils/MidiNote.h"
 #include "Utils/DSP.h"
+#include "Utils/Files.h"
 
 // Used for getting memory usage
 #ifdef __linux__
@@ -379,7 +380,10 @@ void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files, 
 */
 void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
   if (path == nullptr) {
-    mFileChooser = std::make_unique<juce::FileChooser>("Select a file to granulize...", juce::File::getCurrentWorkingDirectory(),
+    auto recentFiles = Utils::getRecentFiles();
+    juce::var mostRecentFile = recentFiles.getArray()->getLast();
+
+    mFileChooser = std::make_unique<juce::FileChooser>("Select a file to granulize...", juce::File(mostRecentFile),
                                                        "*.wav;*.mp3;*.gbow", true);
 
     int openFlags =

@@ -12,6 +12,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include "GranularSynth.h"
 #include "Preset.h"
+#include "Utils/Files.h"
 #include "Utils/Presets.h"
 #include "PluginEditor.h"
 #include "Components/Settings.h"
@@ -31,6 +32,8 @@ GranularSynth::GranularSynth()
       // only care about tracking the processing of the DSP, not the spectrogram
 juce::Thread("pitch detection"),
 mFft(FFT_SIZE, HOP_SIZE) {
+  
+  Utils::FILE_RECENT_FILES.create(); // Creates recent files if it doesn't exist
 
   mParameters.note.addParams(*this);
   mParameters.global.addParams(*this);
@@ -580,6 +583,7 @@ Utils::Result GranularSynth::loadPreset(juce::File file) {
     if (r.success) {
       mParameters.ui.fileName = file.getFullPathName();
       mParameters.ui.loadedFileName = file.getFileName();
+      Utils::addRecentFile(mParameters.ui.fileName); // Save recent file to list
     }
     return r;
   } else {
@@ -654,6 +658,7 @@ Utils::Result GranularSynth::savePreset(juce::File file) {
   Utils::Result r = savePreset(block);
   if (r.success) {
     file.replaceWithData(block.getData(), block.getSize());
+    Utils::addRecentFile(mParameters.ui.fileName); // Save recent file to list
   } else {
     mParameters.ui.loadedFileName = lastFileName;  // Reset filename if failed
   }

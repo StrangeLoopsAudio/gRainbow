@@ -135,6 +135,7 @@ set(SOURCE_UTILS
     Source/Utils/PitchClass.h
     Source/Utils/Presets.h
     Source/Utils/DSP.h
+    Source/Utils/Files.h
 )
 
 # Manually list all .h and .cpp files for the plugin
