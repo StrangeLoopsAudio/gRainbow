@@ -106,18 +106,15 @@ void TrimSelection::paint(juce::Graphics& g) {
   // Draw thumbnail
   const int thumbnailHeight = mThumbnailRect.getHeight();
   {
-    const int channelHeight = thumbnailHeight / numChannels;
     // draw an outline around the thumbnail
     g.setColour(Utils::Colour::GLOBAL);
     g.drawRect(mThumbnailRect, 2);
 
-    for (int i = 0; i < numChannels; i++) {
-      juce::Rectangle<int> channelBounds = mThumbnailRect.withTrimmedTop(channelHeight * i).withHeight(channelHeight);
+    auto thumbnailBounds = mThumbnailRect.reduced(Utils::PADDING);
 
-      g.setGradientFill(juce::ColourGradient(Utils::Colour::GLOBAL, channelBounds.getTopLeft().toFloat(),
-                                             Utils::Colour::GLOBAL.darker(), channelBounds.getBottomLeft().toFloat(), false));
-      mThumbnail.drawChannel(g, channelBounds, 0.0f, mVisibleRange.getEnd(), i, 1.0f);
-    }
+    g.setGradientFill(juce::ColourGradient(Utils::Colour::GLOBAL, thumbnailBounds.getTopLeft().toFloat(),
+                                             Utils::Colour::GLOBAL.darker(), thumbnailBounds.getBottomLeft().toFloat(), false));
+    mThumbnail.drawChannel(g, thumbnailBounds, 0.0f, mVisibleRange.getEnd(), 0, 0.9f);
   }
 
   // Darken areas outside of selectors
