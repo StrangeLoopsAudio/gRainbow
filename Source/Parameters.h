@@ -362,6 +362,10 @@ struct ParamGenerator : ParamCommon {
 
   void resetParams() {
     ParamCommon::resetParams();
+    resetCandidate();
+  }
+  
+  void resetCandidate() {
     ParamHelper::setParam(enable, true);
     ParamHelper::setParam(candidate, genIdx);
   }
@@ -433,6 +437,9 @@ struct ParamNote : ParamCommon {
 
   void clearCandidates() {
     candidates.clear();
+    for (auto& generator : generators) {
+      generator->resetCandidate();
+    }
   }
 
   bool shouldPlayGenerator(int genIdx);
