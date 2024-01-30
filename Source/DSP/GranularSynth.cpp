@@ -54,7 +54,9 @@ mFft(FFT_SIZE, HOP_SIZE) {
   loadPreset(block);
 }
 
-GranularSynth::~GranularSynth() {}
+GranularSynth::~GranularSynth() {
+  stopThread(10000);
+}
 
 //==============================================================================
 const juce::String GranularSynth::getName() const { return JucePlugin_Name; }
