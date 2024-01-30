@@ -131,24 +131,29 @@ void GranularSynth::run() {
 
 //==============================================================================
 void GranularSynth::prepareToPlay(double sampleRate, int samplesPerBlock) {
-  if (mNeedsResample) {
+  bool needsTrim = false;
+  // Make a temporary buffer copy for resampling
+  if (mFileSampleRate != INVALID_SAMPLE_RATE) {
     // File loaded from state but couldn't resample and trim until now
-    // Make a temporary buffer copy for resampling
     juce::AudioSampleBuffer inputBuffer = mInputBuffer;
-    resampleSynthBuffer(inputBuffer, mInputBuffer, mSampleRate, sampleRate);
-
-    // Convert time to sample range
+    needsTrim = true;
+    resampleSynthBuffer(inputBuffer, mInputBuffer, mFileSampleRate, sampleRate);
+    // Trim: Convert time to sample range
     const double sampleLength = static_cast<double>(mInputBuffer.getNumSamples());
     const double secondLength = sampleLength / sampleRate;
     juce::int64 start = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getStart() / secondLength));
     juce::int64 end = static_cast<juce::int64>(sampleLength * (mParameters.ui.trimRange.getEnd() / secondLength));
     Utils::trimAudioBuffer(mInputBuffer, mAudioBuffer, juce::Range<juce::int64>(start, end));
     mInputBuffer.clear();
-    mNeedsResample = false;
+    mFileSampleRate = INVALID_SAMPLE_RATE; // Clear this temp sample rate
+  } else {
+    // Resample main buffer
+    juce::AudioSampleBuffer inputBuffer = mAudioBuffer;
+    resampleSynthBuffer(inputBuffer, mAudioBuffer, mSampleRate, sampleRate);
   }
 
   mSampleRate = sampleRate;
-
+  
   const juce::dsp::ProcessSpec filtConfig = {sampleRate, (juce::uint32)samplesPerBlock, (unsigned int)getTotalNumOutputChannels()};
   mMeterSource.resize(getTotalNumOutputChannels(), sampleRate * 0.1 / samplesPerBlock);
   mReferenceTone.prepareToPlay(samplesPerBlock, sampleRate);
@@ -564,8 +569,8 @@ Utils::Result GranularSynth::loadAudioFile(juce::File file, bool process) {
     }
     else {
       mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
-      mSampleRate = formatReader->sampleRate;  // A bit hacky, but we need to store the file's sample rate for resampling
-      mNeedsResample = true;
+      mFileSampleRate = formatReader->sampleRate;  // Store the file's sample rate for resampling
+      // Expect prepareToPlay() to be called with the correct sample rate and resample it for us
     }
   }
   // should not need the file anymore as we want to work with the resampled input buffer across the rest of the plugin
@@ -636,13 +641,15 @@ Utils::Result GranularSynth::loadPreset(juce::MemoryBlock& block) {
   }
 
   if (mSampleRate != INVALID_SAMPLE_RATE) {
-    mNeedsResample = false;
+    // Clear in case it was filled but waiting to be resampled
+    mFileSampleRate = INVALID_SAMPLE_RATE;
+    mInputBuffer.clear();
     mAudioBuffer.clear();
     Utils::resampleAudioBuffer(fileAudioBuffer, mAudioBuffer, sampleRate, mSampleRate);
   } else {
     mInputBuffer = fileAudioBuffer;  // Save for resampling once prepareToPlay() has been called
-    mSampleRate = sampleRate;        // A bit hacky, but we need to store the file's sample rate for resampling
-    mNeedsResample = true;
+    mFileSampleRate = sampleRate;    // Store the file's sample rate for resampling
+    // Expect prepareToPlay() to be called with the correct sample rate and resample it for us
   }
   jassert(!mParameters.ui.isLoading);
   return {true, ""};
@@ -658,7 +665,7 @@ Utils::Result GranularSynth::savePreset(juce::File file) {
   Utils::Result r = savePreset(block);
   if (r.success) {
     file.replaceWithData(block.getData(), block.getSize());
-    Utils::addRecentFile(mParameters.ui.fileName); // Save recent file to list
+    Utils::addRecentFile(file.getFullPathName()); // Save recent file to list
   } else {
     mParameters.ui.loadedFileName = lastFileName;  // Reset filename if failed
   }

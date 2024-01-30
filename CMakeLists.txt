@@ -343,6 +343,7 @@ target_compile_definitions(gRainbow
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_USE_MP3AUDIOFORMAT=1
     JUCE_CATCH_UNHANDLED_EXCEPTIONS=1
+    JUCE_COPY_PLUGIN_AFTER_BUILD=1
 )
 
 target_link_libraries(gRainbow

@@ -194,9 +194,9 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   juce::AudioBuffer<float> mAudioBuffer;  // final buffer used for actual synth
   std::array<Utils::SpecBuffer*, ParamUI::SpecType::COUNT> mProcessedSpecs;
   double mSampleRate = INVALID_SAMPLE_RATE;
+  double mFileSampleRate = INVALID_SAMPLE_RATE; // Input file sample rate
   juce::MidiKeyboardState mKeyboardState;
   juce::AudioFormatManager mFormatManager;
-  bool mNeedsResample = false;
   float mBarsPerSec = (1.0f / DEFAULT_BPM) * 60.0f * DEFAULT_BEATS_PER_BAR;
   float mCurPitchBendSemitones = 0.0f; // Current pitch bend value from MIDI in semitones
 

@@ -381,9 +381,9 @@ void GRainbowAudioProcessorEditor::filesDropped(const juce::StringArray& files, 
 void GRainbowAudioProcessorEditor::openNewFile(const char* path) {
   if (path == nullptr) {
     auto recentFiles = Utils::getRecentFiles();
-    juce::var mostRecentFile = recentFiles.getArray()->getLast();
+    auto mostRecentFile = juce::File(recentFiles.getArray()->getLast().toString()).getParentDirectory();
 
-    mFileChooser = std::make_unique<juce::FileChooser>("Select a file to granulize...", juce::File(mostRecentFile),
+    mFileChooser = std::make_unique<juce::FileChooser>("Select a file to granulize...", mostRecentFile,
                                                        "*.wav;*.mp3;*.gbow", true);
 
     int openFlags =
@@ -478,7 +478,9 @@ void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
 }
 
 void GRainbowAudioProcessorEditor::savePreset() {
-  mFileChooser = std::make_unique<juce::FileChooser>("Save gRainbow presets to a file", juce::File::getCurrentWorkingDirectory(),
+  auto recentFiles = Utils::getRecentFiles();
+  auto mostRecentFile = juce::File(recentFiles.getArray()->getLast().toString()).getParentDirectory();
+  mFileChooser = std::make_unique<juce::FileChooser>("Save gRainbow presets to a file", mostRecentFile,
                                                      "*.gbow", true);
 
   int saveFlags =
@@ -486,16 +488,17 @@ void GRainbowAudioProcessorEditor::savePreset() {
 
   mFileChooser->launchAsync(saveFlags, [this](const juce::FileChooser& fc) {
     juce::File file = fc.getResult().withFileExtension("gbow");
-    if (file.hasWriteAccess()) {
-      Utils::Result r = mSynth.savePreset(file);  // Ask synth to do the proper saving
-      if (!r.success) {
-        displayError(
-            juce::String::formatted("%s failed to save: %s", file.getFullPathName().toRawUTF8(), r.message.toStdString().c_str()));
+    if (file.exists()) {
+      if (file.hasWriteAccess()) {
+        Utils::Result r = mSynth.savePreset(file);  // Ask synth to do the proper saving
+        if (!r.success) {
+          displayError(
+                       juce::String::formatted("%s failed to save: %s", file.getFullPathName().toRawUTF8(), r.message.toStdString().c_str()));
+        }
+      } else {
+        displayError(juce::String::formatted("%s does not have write access", file.getFullPathName().toRawUTF8()));
       }
-    } else {
-      displayError(juce::String::formatted("%s oes not have write access", file.getFullPathName().toRawUTF8()));
     }
-
   });
 }
 
