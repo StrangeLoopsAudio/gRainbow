@@ -112,25 +112,17 @@ mPianoPanel(synth.getKeyboardState(), synth.getParams()) {
   };
 
   mTrimSelection.onProcessSelection = [this](juce::Range<double> range) {
-    // Convert time to sample range
-    const double sampleLength = static_cast<double>(mSynth.getInputBuffer().getNumSamples());
-    const double secondLength = sampleLength / mSynth.getSampleRate();
-    juce::int64 start = static_cast<juce::int64>(sampleLength * (range.getStart() / secondLength));
-    juce::int64 end = static_cast<juce::int64>(sampleLength * (range.getEnd() / secondLength));
-    // TODO - if small enough, it will get stuck trying to load
-    if (start == end) {
+    // If small enough, it will get stuck trying to load
+    if (range.getLength() == 0.0) {
       displayError("Attempted to select an empty range");
     } else {
-      mParameters.ui.trimPlaybackOn = false;
-      Utils::trimAudioBuffer(mSynth.getInputBuffer(), mSynth.getAudioBuffer(), juce::Range<juce::int64>(start, end));
-      mSynth.extractPitches();
+      mSynth.trimAndExtractPitches(range);
       // Reset any UI elements that will need to wait until processing
       mArcSpec.reset();
       mTitlePresetPanel.btnSavePreset.setEnabled(false);
       updateCenterComponent(ParamUI::CenterComponent::ARC_SPEC);
       mArcSpec.loadWaveformBuffer(&mSynth.getAudioBuffer());
       mParameters.ui.loadedFileName = mParameters.ui.fileName;
-      mParameters.ui.trimRange = range;
     }
   };
 
@@ -457,7 +449,7 @@ void GRainbowAudioProcessorEditor::loadFile(juce::File file) {
       displayError(res.message);
     }
   } else {
-    Utils::Result r = mSynth.loadAudioFile(file, true);
+    Utils::Result r = mSynth.loadAudioFile(file);
     if (r.success) {
       // Show users which file is being loaded/processed
       mParameters.ui.fileName = file.getFullPathName();

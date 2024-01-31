@@ -115,13 +115,13 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   juce::MidiKeyboardState& getKeyboardState() { return mKeyboardState; }
   juce::AudioFormatManager& getFormatManager() { return mFormatManager; }
   juce::AudioBuffer<float>& getInputBuffer() { return mInputBuffer; }
-  Utils::Result loadAudioFile(juce::File file, bool process);
+  Utils::Result loadAudioFile(juce::File file);
   Utils::Result loadPreset(juce::File file);
   Utils::Result loadPreset(juce::MemoryBlock& fromBlock);
   Utils::Result savePreset(juce::File file);
   Utils::Result savePreset(juce::MemoryBlock& intoBlock);
 
-  void extractPitches();
+  void trimAndExtractPitches(juce::Range<double> range);
   std::vector<Utils::SpecBuffer*> getProcessedSpecs() {
     return std::vector<Utils::SpecBuffer*>(mProcessedSpecs.begin(), mProcessedSpecs.end());
   }
@@ -155,7 +155,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   // Param bounds
   static constexpr float MIN_CANDIDATE_SALIENCE = 0.5f;
   static constexpr int MAX_MIDI_NOTE = 127;
-  static constexpr double INVALID_SAMPLE_RATE = -1.0;  // Max grains active at once
+  static constexpr double DEFAULT_SAMPLE_RATE = 48000;  // Sample rate to use before it's officially set in prepareToPlay()
   static constexpr int MAX_PITCH_BEND_SEMITONES = 2;  // Max pitch bend semitones allowed
 
   typedef struct GrainNote {
@@ -193,8 +193,7 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   juce::AudioBuffer<float> mInputBuffer;  // incoming buffer from file or other source
   juce::AudioBuffer<float> mAudioBuffer;  // final buffer used for actual synth
   std::array<Utils::SpecBuffer*, ParamUI::SpecType::COUNT> mProcessedSpecs;
-  double mSampleRate = INVALID_SAMPLE_RATE;
-  double mFileSampleRate = INVALID_SAMPLE_RATE; // Input file sample rate
+  double mSampleRate = DEFAULT_SAMPLE_RATE;
   juce::MidiKeyboardState mKeyboardState;
   juce::AudioFormatManager mFormatManager;
   float mBarsPerSec = (1.0f / DEFAULT_BPM) * 60.0f * DEFAULT_BEATS_PER_BAR;
@@ -234,8 +233,6 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   // Parameters
   Parameters mParameters;
 
-  void resampleSynthBuffer(juce::AudioBuffer<float>& inputBuffer, juce::AudioBuffer<float>& outputBuffer,
-                           double inputSampleRate, double outputSampleRate, bool clearInput = false);
   void handleNoteOn(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
   void handleNoteOff(juce::MidiKeyboardState* state, int midiChannel, int midiNoteNumber, float velocity) override;
   void handleGrainAddRemove(int blockSize);

@@ -653,7 +653,6 @@ struct ParamUI {
 
   juce::String fileName = "-- init --";        // currently being viewed
   juce::String loadedFileName = "";  // name of what was loaded last
-  juce::Range<double> trimRange;
   // default when new instance is loaded
   int pitchClass = Utils::PitchClass::C;
 
@@ -670,9 +669,10 @@ struct ParamUI {
   CenterComponent centerComponent = CenterComponent::ARC_SPEC;
 
   // trim selection status to pass information to the synth so it can pipe the audio out the main output
-  bool trimPlaybackOn = false;
+  bool playingTrimSelection = false;
   int trimPlaybackSample;  // sampling buffer index position
-  int trimPlaybackMaxSample;
+  juce::Range<double> trimRange; // Trim range in seconds
+
 };
 
 class Parameters {

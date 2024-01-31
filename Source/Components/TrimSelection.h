@@ -82,11 +82,12 @@ class TrimSelection : public juce::Component {
   juce::AudioThumbnailCache mThumbnailCache;
   juce::AudioThumbnail mThumbnail;
   AudioThumbnailShadow mThumbnailShadow;
+  double mSampleRate;
 
   ParamUI& mParamUI;
 
   // For the UI everything is in seconds as a double
-  juce::Range<double> mVisibleRange;
+  double audioSampleDuration; // Total audio sample length in seconds, not trimmed
   juce::Range<double> mSelectedRange;
 
   juce::TextButton mBtnCancel;
