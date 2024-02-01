@@ -480,16 +480,14 @@ void GRainbowAudioProcessorEditor::savePreset() {
 
   mFileChooser->launchAsync(saveFlags, [this](const juce::FileChooser& fc) {
     juce::File file = fc.getResult().withFileExtension("gbow");
-    if (file.exists()) {
-      if (file.hasWriteAccess()) {
-        Utils::Result r = mSynth.savePreset(file);  // Ask synth to do the proper saving
-        if (!r.success) {
-          displayError(
-                       juce::String::formatted("%s failed to save: %s", file.getFullPathName().toRawUTF8(), r.message.toStdString().c_str()));
-        }
-      } else {
-        displayError(juce::String::formatted("%s does not have write access", file.getFullPathName().toRawUTF8()));
+    if (file.hasWriteAccess()) {
+      Utils::Result r = mSynth.savePreset(file);  // Ask synth to do the proper saving
+      if (!r.success) {
+        displayError(
+                     juce::String::formatted("%s failed to save: %s", file.getFullPathName().toRawUTF8(), r.message.toStdString().c_str()));
       }
+    } else {
+      displayError(juce::String::formatted("%s does not have write access", file.getFullPathName().toRawUTF8()));
     }
   });
 }

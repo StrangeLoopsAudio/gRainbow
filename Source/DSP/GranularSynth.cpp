@@ -289,7 +289,7 @@ void GranularSynth::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
   handleGrainAddRemove(bufferNumSample);
 
   // Reset timestamps if no grains active to keep numbers low
-  if (mGrainPool.getNumUsedGrains() == 0) {
+  if (mGrainPool.getNumUsedGrains() == 0 && mActiveNotes.size() == 0) {
     mTotalSamps = 0;
   } else {
     // Normalize the block before sending onward
@@ -348,6 +348,7 @@ void GranularSynth::getPresetParamsXml(juce::MemoryBlock& destData) {
   xml.addChildElement(audioParams);
   xml.addChildElement(mParameters.note.getXml());
   xml.addChildElement(mParameters.ui.getXml());
+  xml.addChildElement(mParameters.getModulationsXml());
 
   copyXmlToBinary(xml, destData);
 }
@@ -389,6 +390,11 @@ void GranularSynth::setPresetParamsXml(const void* data, int sizeInBytes) {
     params = xml->getChildByName("ParamUI");
     if (params != nullptr) {
       mParameters.ui.setXml(params);
+    }
+    
+    params = xml->getChildByName("ParamModulations");
+    if (params != nullptr) {
+      mParameters.setModulationsXml(params);
     }
   }
 }

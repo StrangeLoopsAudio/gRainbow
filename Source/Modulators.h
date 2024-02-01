@@ -19,11 +19,19 @@
 #include "Utils/Envelope.h"
 #include <math.h>
 
+enum ModSourceType {
+  LFO,
+  ENV,
+  MACRO
+};
+
 // Base class for modulator sources.. processBlock() should be called once per block and the output can be grabbed with getOutput()
 class ModSource {
 public:
-  ModSource(): mSampleRate(48000), mBlockSize(512), mOutput(0.0f) {}
+  ModSource(int idx, juce::Colour _colour): mIdx(idx), colour(_colour), mSampleRate(48000), mBlockSize(512), mOutput(0.0f) {}
 
+  int getIdx() { return mIdx; }
+  virtual ModSourceType getType() = 0;
   virtual void processBlock() = 0;
   virtual juce::Range<float> getRange() = 0;
   // Mod sources can override this to let UI elements show the source's progression
@@ -39,6 +47,7 @@ public:
   juce::Colour colour; // Colour of mod source (shown on sliders when modulations are applied)
 
 protected:
+  int mIdx; // Index of the mod source among elements of the same ModSourceType (e.g., LFO idx goes from 0 to 2, ENV goes from 0 - 1)
   double mSampleRate;
   int mBlockSize;
   float mOutput;
@@ -66,8 +75,9 @@ public:
   static constexpr int NUM_LFO_SHAPES = 4; // Increment when adding more shapes
   static const std::array<const Shape, NUM_LFO_SHAPES> LFO_SHAPES;
 
-  LFOModSource() { colour = juce::Colour(0xffe7d1c9); }
+  LFOModSource(int idx, juce::Colour _colour): ModSource(idx, _colour) {}
 
+  ModSourceType getType() { return ModSourceType::LFO; }
   void processBlock() override;
   juce::Range<float> getRange() override;
   float getPhase() override;
@@ -107,8 +117,9 @@ private:
 // Envelope modulation source
 class EnvModSource : public ModSource {
 public:
-  EnvModSource() { colour = juce::Colour(0xffd0b49f); }
+  EnvModSource(int idx, juce::Colour _colour): ModSource(idx, _colour) {}
 
+  ModSourceType getType() { return ModSourceType::ENV; }
   void processBlock() override;
   juce::Range<float> getRange() override;
   float getPhase() override { return (float)mEnv.state; }
@@ -136,8 +147,9 @@ private:
 // Macro modulation source
 class MacroModSource : public ModSource {
 public:
-  MacroModSource() { colour = juce::Colour(0xffdeeae8); }
+  MacroModSource(int idx, juce::Colour _colour): ModSource(idx, _colour) {}
 
+  ModSourceType getType() { return ModSourceType::MACRO; }
   void processBlock() override;
   juce::Range<float> getRange() override;
 

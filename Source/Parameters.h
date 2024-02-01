@@ -525,20 +525,33 @@ struct ParamsNote {
 };
 
 struct ParamGlobal : ParamCommon {
-  ParamGlobal() : ParamCommon(ParamType::GLOBAL) {
+  ParamGlobal() : ParamCommon(ParamType::GLOBAL),
+  modLFOs{
+    {
+      LFOModSource(0, juce::Colour(0xffffe8d6)),
+      LFOModSource(1, juce::Colour(0xffddbea9)),
+      LFOModSource(2, juce::Colour(0xffcb997e))
+    }
+  },
+  modEnvs{
+    {
+      EnvModSource(0, juce::Colour(0xff88a9af)), 
+      EnvModSource(1, juce::Colour(0xff7a9e9f))
+    }
+  },
+  macros {
+    {
+      MacroModSource(0, juce::Colour(0xffB9DAC9)), 
+      MacroModSource(1, juce::Colour(0xffA2C3B1)),
+      MacroModSource(2, juce::Colour(0xff85BCA2)), 
+      MacroModSource(3, juce::Colour(0xff7b9d8f))
+    }
+  }
+    {
     // Default to using global parameters
     for (auto& used : isUsed) {
       used = true;
     }
-    modLFOs[0].colour = juce::Colour(0xffffe8d6);
-    modLFOs[1].colour = juce::Colour(0xffddbea9);
-    modLFOs[2].colour = juce::Colour(0xffcb997e);
-    modEnvs[0].colour = juce::Colour(0xff88a9af);
-    modEnvs[1].colour = juce::Colour(0xff7a9e9f);
-    macros[0].colour = juce::Colour(0xffB9DAC9);
-    macros[1].colour = juce::Colour(0xffA2C3B1);
-    macros[2].colour = juce::Colour(0xff85BCA2);
-    macros[3].colour = juce::Colour(0xff7b9d8f);
   }
   ~ParamGlobal() {}
 
@@ -729,6 +742,45 @@ public:
   void prepareModSources(int blockSize, double sampleRate);
   void processModSources();
   void applyModulations(juce::RangedAudioParameter* param, float& value0To1);
+  juce::XmlElement* getModulationsXml() {
+    // Make Xml list of modulations to save in state
+    juce::XmlElement* modXml = new juce::XmlElement("ParamModulations");
+    juce::HashMap<int, Modulation>::Iterator it(modulations);
+    while (it.next()) {
+      juce::XmlElement* xml = new juce::XmlElement("modulation");
+      xml->setAttribute("paramIdx", it.getKey());
+      xml->setAttribute("modSourceType", (int)it.getValue().source->getType());
+      xml->setAttribute("modSourceIdx", it.getValue().source->getIdx());
+      xml->setAttribute("depth", it.getValue().depth);
+      modXml->addChildElement(xml);
+    }
+    return modXml;
+  }
+  void setModulationsXml(juce::XmlElement* modXml) {
+    // Restore modulations from state
+    if (modXml != nullptr) {
+      auto child = modXml->getFirstChildElement();
+      while (child) {
+        // Restore modulation
+        int paramIdx = child->getIntAttribute("paramIdx", -1);
+        ModSourceType type = (ModSourceType)child->getIntAttribute("modSourceType", -1);
+        int modIdx = child->getIntAttribute("modSourceIdx", -1);
+        float depth = child->getDoubleAttribute("depth", 0.0f);
+        if (paramIdx < 0 || type < 0) continue;
+        // TODO: put sources into array based on type so we can index directly and eliminate the need for this switch
+        ModSource* modSource = nullptr;
+        switch (type) {
+            case ModSourceType::LFO : { modSource = &global.modLFOs.at(modIdx); break; }
+            case ModSourceType::ENV : { modSource = &global.macros.at(modIdx); break; }
+            case ModSourceType::MACRO : { modSource = &global.modEnvs.at(modIdx); break; }
+        }
+        if (modSource != nullptr) {
+          modulations.set(paramIdx, Modulation(modSource, depth));
+        }
+        child = child->getNextElement();
+      }
+    }
+  }
 
   // Returns the candidate used in a given generator
   ParamCandidate* getGeneratorCandidate(ParamGenerator* gen);
