@@ -77,7 +77,7 @@ public:
 
   LFOModSource(int idx, juce::Colour _colour): ModSource(idx, _colour) {}
 
-  ModSourceType getType() { return ModSourceType::LFO; }
+  ModSourceType getType() override { return ModSourceType::LFO; }
   void processBlock() override;
   juce::Range<float> getRange() override;
   float getPhase() override;
@@ -119,7 +119,7 @@ class EnvModSource : public ModSource {
 public:
   EnvModSource(int idx, juce::Colour _colour): ModSource(idx, _colour) {}
 
-  ModSourceType getType() { return ModSourceType::ENV; }
+  ModSourceType getType() override { return ModSourceType::ENV; }
   void processBlock() override;
   juce::Range<float> getRange() override;
   float getPhase() override { return (float)mEnv.state; }
@@ -149,7 +149,7 @@ class MacroModSource : public ModSource {
 public:
   MacroModSource(int idx, juce::Colour _colour): ModSource(idx, _colour) {}
 
-  ModSourceType getType() { return ModSourceType::MACRO; }
+  ModSourceType getType() override { return ModSourceType::MACRO; }
   void processBlock() override;
   juce::Range<float> getRange() override;
 
