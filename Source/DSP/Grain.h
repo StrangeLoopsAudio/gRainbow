@@ -39,11 +39,7 @@ class Grain {
   bool isActive;
 
  private:
-  float getAmplitude();
+  float getAmplitude(float timePerc);
   float computeChannelPanningGain(float chanPerc);
   Utils::GrainEnv mEnv;
-  
-  // Bookkeeping to avoid allocation each process() call
-  float mTimePerc, mPanGain, mTotalGain, mSampleIdx, mSampleRem, mAngle, mSampleValue;
-  int mLowSample, mHighSample;
 };

@@ -199,21 +199,6 @@ class GranularSynth : public juce::AudioProcessor, public juce::MidiKeyboardStat
   float mBarsPerSec = (1.0f / DEFAULT_BPM) * 60.0f * DEFAULT_BEATS_PER_BAR;
   float mCurPitchBendSemitones = 0.0f; // Current pitch bend value from MIDI in semitones
 
-  // Process block variables saved to avoid alloc every block, should not be used outside of it EVER
-  ParamGenerator* mParamGenerator;
-  ParamCandidate* mParamCandidate;
-  float mGain, mAttack, mDecay, mSustain, mRelease, mGrainGain, mGenSampleValue;
-  juce::AudioPlayHead* mPlayhead;
-  double mBpm;
-  int mBeatsPerBar;
-  float mDurSec, mGrainRate, mGrainDuration, mGrainSync, mPitchAdjust, mPitchSpray, mPosAdjust, mPosSpray, mPanAdjust, mPanSpray,
-  mShape, mTilt, mReverse, mDiv;
-  int mOctaveAdjust;
-  float mDurSamples, mPosSprayOffset, mPosOffset, mPosSamples, mPanSprayOffset, mPanOffset, mPitchSprayOffset, mPitchBendOffset,
-  mPbRate, mTotalGain;
-  juce::Random mRandom;
-  // ------- avoid using these unless within processBlock^ -------
-
   // Reference sine tone
   juce::ToneGeneratorAudioSource mReferenceTone;
 

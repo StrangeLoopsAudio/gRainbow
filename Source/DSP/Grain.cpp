@@ -11,43 +11,44 @@
 #include "Grain.h"
 
 float Grain::process(float chanPerc, const juce::AudioBuffer<float>& audioBuffer, float envelopeGain, int time) {
-  // Time percentage over duration
-  mTimePerc = juce::jlimit(0.0f, 1.0f, static_cast<float>((time - trigTs)) / duration);
+  const float timePerc = static_cast<float>((time - trigTs)) / duration;
 
   // Panning gain
-  mPanGain = computeChannelPanningGain(chanPerc);
+  const float panGain = computeChannelPanningGain(chanPerc);
 
-  mTotalGain = envelopeGain * mPanGain * getAmplitude();
+  const float totalGain = envelopeGain * panGain * getAmplitude(timePerc);
+  const float* fileBuf = audioBuffer.getReadPointer(0);
 
-  mSampleIdx = duration * pbRate * mTimePerc;
-  mLowSample = std::floor(mSampleIdx);
-  mHighSample = std::ceil(mSampleIdx);
-  mSampleRem = mSampleIdx - mLowSample;
+  const float sampleIdx = duration * pbRate * timePerc;
+  int lowSample = std::floor(sampleIdx);
+  int highSample = std::ceil(sampleIdx);
+  float rem = sampleIdx - lowSample;
   if (pbRate < 0.0f) {
-    std::swap(mLowSample, mHighSample);
-    mSampleRem = fabsf(mLowSample - mSampleIdx);
-    mLowSample += audioBuffer.getNumSamples();
-    mHighSample += audioBuffer.getNumSamples();
+    std::swap(lowSample, highSample);
+    rem = fabsf(lowSample - sampleIdx);
+    lowSample += audioBuffer.getNumSamples();
+    highSample += audioBuffer.getNumSamples();
   }
 
   // Some quick interpolation between sample values
-  const float* fileBuf = audioBuffer.getReadPointer(0);
-  mSampleValue = juce::jmap(mSampleRem, fileBuf[(startPos + mLowSample) % audioBuffer.getNumSamples()],
-                            fileBuf[(startPos + mHighSample) % audioBuffer.getNumSamples()]);
+  float sample = juce::jmap(rem, fileBuf[(startPos + lowSample) % audioBuffer.getNumSamples()],
+                            fileBuf[(startPos + highSample) % audioBuffer.getNumSamples()]);
 
-  mSampleValue *= mTotalGain;
-  return mSampleValue;
+  sample *= totalGain;
+  return sample;
 }
 
-float Grain::getAmplitude() {
+float Grain::getAmplitude(float timePerc) {
   if (mEnv.size() == 0) return 0.0f;
-  return mEnv[mTimePerc * (mEnv.size() - 1)];
+  timePerc = juce::jlimit(0.0f, 1.0f, timePerc);
+  int i = timePerc * (mEnv.size() - 1);
+  return mEnv[i];
 }
 
 float Grain::computeChannelPanningGain(float chanPerc) {
   // Calculate angle based on panning value and channel index
-  mAngle = (pan + 1.0f) * juce::MathConstants<float>::pi / 4.0f + chanPerc * juce::MathConstants<float>::halfPi;
+  float angle = (pan + 1.0f) * juce::MathConstants<float>::pi / 4.0f + chanPerc * juce::MathConstants<float>::halfPi;
 
   // Compute gain for the specific channel
-  return std::abs(std::cos(mAngle));
+  return std::abs(std::cos(angle));
 }
