@@ -44,7 +44,7 @@ jobs:
             ccache: sccache
 
     steps:
-      
+
     # This is just easier than debugging different compilers on different platforms
     - name: Set up Clang
       if: ${{ matrix.name == 'Linux' }}
@@ -80,7 +80,7 @@ jobs:
     #  with:
     #    path: C:\Program Files (x86)\Intel\oneAPI\ipp
     #    key: ipp-v1
-    #    
+    #
     # This lets us use sscache on Windows
     # We need to install ccache here for Windows to grab the right version
     - name: Install ccache (Windows)
@@ -173,12 +173,12 @@ jobs:
       run: |
         npm install -g appdmg
         mkdir -p packaging/dmg
-        
+
         # Move built files to dmg folder
         mv "${{ env.BUILD_DIR }}/${{ env.STANDALONE_PATH }}" packaging/dmg
         mv "${{ env.BUILD_DIR }}/${{ env.VST3_PATH }}" packaging/dmg
         mv "${{ env.BUILD_DIR }}/${{ env.AU_PATH }}" packaging/dmg
-        
+
         # Run appdmg to create the .dmg
         cd packaging && appdmg dmg.json ${{ env.PRODUCT_NAME}}.dmg
         codesign -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" --timestamp -i com.StrangeLoops.gRainbow --force ${{ env.PRODUCT_NAME }}.dmg
@@ -196,7 +196,7 @@ jobs:
       run: |
         iscc "packaging\installer.iss"
         mv "packaging/Output/${{ env.PRODUCT_NAME }}.exe" "${{ env.ARTIFACTS_PATH }}/"
-        #dotnet tool install --global AzureSignTool 
+        #dotnet tool install --global AzureSignTool
         #AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v "${{ env.ARTIFACTS_PATH }}/${{ env.PRODUCT_NAME }}.exe"
 
     - name: Upload Exe (Windows)
